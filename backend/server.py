@@ -14,10 +14,13 @@ import jwt
 import bcrypt
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, WebSocket, WebSocketDisconnect
+from fastapi import (FastAPI, APIRouter, HTTPException, Depends, Request,
+                     WebSocket, WebSocketDisconnect, UploadFile, File, Form, Header, Query, Response)
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
+import uuid
+import requests
 
 
 # ---------------------------------------------------------------------------
@@ -26,6 +29,51 @@ from pydantic import BaseModel, Field
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# ---- Emergent Object Storage ----
+STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
+STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
+EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
+APP_NAME = "central-taxis"
+storage_key = None
+
+
+def init_storage(force: bool = False):
+    global storage_key
+    if storage_key and not force:
+        return storage_key
+    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_KEY}, timeout=30)
+    resp.raise_for_status()
+    storage_key = resp.json()["storage_key"]
+    return storage_key
+
+
+def put_object(path: str, data: bytes, content_type: str) -> dict:
+    key = init_storage()
+    resp = requests.put(
+        f"{STORAGE_URL}/objects/{path}",
+        headers={"X-Storage-Key": key, "Content-Type": content_type},
+        data=data, timeout=120,
+    )
+    if resp.status_code == 404:
+        key = init_storage(force=True)
+        resp = requests.put(
+            f"{STORAGE_URL}/objects/{path}",
+            headers={"X-Storage-Key": key, "Content-Type": content_type},
+            data=data, timeout=120,
+        )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def get_object(path: str):
+    key = init_storage()
+    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
+    if resp.status_code == 404:
+        key = init_storage(force=True)
+        resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
+    resp.raise_for_status()
+    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
 
 app = FastAPI(title="Central de Taxis - API")
 api_router = APIRouter(prefix="/api")
@@ -507,6 +555,118 @@ async def asignar_servicio(servicio_id: str, body: AsignarBody):
 
 
 # ---------------------------------------------------------------------------
+# Reportes de objetos olvidados
+# ---------------------------------------------------------------------------
+@api_router.post("/reportes")
+async def crear_reporte(
+    operador_id: str = Form(...),
+    descripcion: Optional[str] = Form(None),
+    foto: UploadFile = File(...),
+):
+    ext = (foto.filename or "").split(".")[-1].lower() if "." in (foto.filename or "") else "jpg"
+    path = f"{APP_NAME}/reportes/{operador_id}/{uuid.uuid4().hex}.{ext}"
+    data = await foto.read()
+    result = put_object(path, data, foto.content_type or "image/jpeg")
+    doc = {
+        "operador_id": operador_id,
+        "storage_path": result["path"],
+        "foto_url": f"/api/files/{result['path']}",
+        "content_type": foto.content_type or "image/jpeg",
+        "descripcion": descripcion,
+        "timestamp": now_iso(),
+        "estado": "pendiente",
+    }
+    res = await db.reportes_objetos.insert_one(doc)
+    doc["_id"] = res.inserted_id
+    out = serialize(doc)
+    await manager.broadcast_terminal({"type": "reporte", "reporte": out})
+    return out
+
+
+@api_router.get("/files/{path:path}")
+async def download_file(path: str):
+    record = await db.reportes_objetos.find_one({"storage_path": path})
+    if not record:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    data, content_type = get_object(path)
+    return Response(content=data, media_type=record.get("content_type", content_type))
+
+
+@api_router.get("/reportes")
+async def list_reportes():
+    docs = await db.reportes_objetos.find().sort("timestamp", -1).to_list(1000)
+    ops = {str(o["_id"]): o for o in await db.operadores.find().to_list(1000)}
+    out = []
+    for d in docs:
+        r = serialize(d)
+        op = ops.get(r.get("operador_id"))
+        r["operador_nombre"] = op["nombre"] if op else "—"
+        r["operador_placa"] = op["placa"] if op else "—"
+        out.append(r)
+    return out
+
+
+@api_router.patch("/reportes/{reporte_id}/resolver")
+async def resolver_reporte(reporte_id: str):
+    res = await db.reportes_objetos.update_one(
+        {"_id": to_oid(reporte_id)}, {"$set": {"estado": "resuelto"}}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Reporte no encontrado")
+    return {"ok": True, "estado": "resuelto"}
+
+
+# ---------------------------------------------------------------------------
+# Chat (reutiliza el ConnectionManager de ubicación/estado)
+# ---------------------------------------------------------------------------
+class MensajeCreate(BaseModel):
+    operador_id: str
+    remitente: str  # "operador" | "terminal"
+    texto: str
+
+
+@api_router.post("/mensajes")
+async def crear_mensaje(body: MensajeCreate):
+    doc = {
+        "operador_id": body.operador_id,
+        "remitente": body.remitente,
+        "texto": body.texto,
+        "timestamp": now_iso(),
+    }
+    res = await db.mensajes_chat.insert_one(doc)
+    doc["_id"] = res.inserted_id
+    out = serialize(doc)
+    await manager.send_operador(body.operador_id, {"type": "mensaje", "mensaje": out})
+    await manager.broadcast_terminal({"type": "mensaje", "mensaje": out})
+    return out
+
+
+@api_router.get("/mensajes")
+async def list_mensajes(operador_id: str):
+    docs = await db.mensajes_chat.find({"operador_id": operador_id}).sort("timestamp", 1).to_list(2000)
+    return [serialize(d) for d in docs]
+
+
+@api_router.get("/conversaciones")
+async def list_conversaciones():
+    msgs = await db.mensajes_chat.find().sort("timestamp", 1).to_list(5000)
+    ops = {str(o["_id"]): o for o in await db.operadores.find().to_list(1000)}
+    convos: Dict[str, dict] = {}
+    for m in msgs:
+        oid = m["operador_id"]
+        op = ops.get(oid)
+        convos[oid] = {
+            "operador_id": oid,
+            "operador_nombre": op["nombre"] if op else "—",
+            "operador_placa": op["placa"] if op else "—",
+            "ultimo_texto": m["texto"],
+            "ultimo_remitente": m["remitente"],
+            "timestamp": m["timestamp"],
+        }
+    return list(convos.values())
+
+
+# ---------------------------------------------------------------------------
 # Seed (manual)
 # ---------------------------------------------------------------------------
 @api_router.post("/seed")
@@ -594,6 +754,11 @@ async def startup():
     await db.operadores.create_index("usuario", unique=True)
     await db.servicios.create_index("cliente_id")
     await db.servicios.create_index("operador_asignado_id")
+    try:
+        init_storage()
+        logger.info("Object storage inicializado")
+    except Exception as e:
+        logger.error(f"Fallo init storage: {e}")
     logger.info("Central de Taxis API iniciada")
 
 

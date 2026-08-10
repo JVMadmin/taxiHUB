@@ -2,11 +2,14 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { api, WS_BASE, ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
+import { timeAgo } from "@/lib/time";
 import { taxiIcon, colorForOperador } from "@/lib/taxiIcon";
 import { ServicioModal } from "@/components/ServicioModal";
+import { TerminalMenu } from "@/components/TerminalMenu";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Radio, PhoneCall, Filter, Car } from "lucide-react";
+import { Radio, PhoneCall, Filter, Car, Search } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847]; // Palenque, Chiapas
 const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
@@ -17,7 +20,17 @@ export default function Terminal() {
   const [filtroRuta, setFiltroRuta] = useState("todas");
   const [connected, setConnected] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [, setTick] = useState(0);
+  const [liveMessage, setLiveMessage] = useState(null);
+  const [liveReporte, setLiveReporte] = useState(null);
   const wsRef = useRef(null);
+
+  // Refresca los "hace X seg" cada 5s
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 5000);
+    return () => clearInterval(t);
+  }, []);
 
   const upsert = useCallback((op) => {
     setOperadores((prev) => ({ ...prev, [op.id]: { ...prev[op.id], ...op } }));
@@ -57,6 +70,11 @@ export default function Terminal() {
             : prev);
         } else if (msg.type === "servicio") {
           toast.info("Servicio actualizado en el sistema");
+        } else if (msg.type === "mensaje") {
+          setLiveMessage(msg.mensaje);
+        } else if (msg.type === "reporte") {
+          setLiveReporte(msg.reporte);
+          toast.info("🎒 Nuevo objeto reportado");
         }
       };
     };
@@ -84,6 +102,14 @@ export default function Terminal() {
     () => lista.filter((o) => o.estado === "libre"),
     [lista]
   );
+
+  const visiblesBuscados = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return visibles;
+    return visibles.filter((o) =>
+      o.nombre.toLowerCase().includes(q) || (o.placa || "").toLowerCase().includes(q)
+    );
+  }, [visibles, busqueda]);
 
   const nombreRuta = (id) => rutas.find((r) => r.id === id)?.nombre || "Taxi libre";
 
@@ -180,15 +206,25 @@ export default function Terminal() {
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-400">
-            Taxis activos ({visibles.length})
+            Taxis activos ({visiblesBuscados.length})
+          </div>
+          <div className="relative mb-2">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+            <Input
+              data-testid="buscar-taxi"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por nombre o unidad"
+              className="h-8 border-zinc-700 bg-zinc-800/70 pl-8 text-xs text-zinc-100 placeholder:text-zinc-500"
+            />
           </div>
           <div className="space-y-1.5">
-            {visibles.length === 0 && (
+            {visiblesBuscados.length === 0 && (
               <div className="rounded-lg border border-dashed border-zinc-800 p-3 text-center text-xs text-zinc-500">
                 No hay taxis en operación
               </div>
             )}
-            {visibles.map((o) => (
+            {visiblesBuscados.map((o) => (
               <div
                 key={o.id}
                 data-testid={`operador-item-${o.id}`}
@@ -199,7 +235,10 @@ export default function Terminal() {
                   style={{ background: ESTADO_COLORS[o.estado] }}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm text-zinc-100">{o.nombre}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="truncate text-sm text-zinc-100">{o.nombre}</div>
+                    <div className="shrink-0 text-[10px] text-zinc-500">{timeAgo(o.ultima_actualizacion)}</div>
+                  </div>
                   <div className="truncate text-xs text-zinc-500">
                     {o.placa} · {ESTADO_LABEL[o.estado]}
                   </div>
@@ -225,6 +264,15 @@ export default function Terminal() {
         onOpenChange={setModalOpen}
         operadoresLibres={operadoresLibres}
         onCreated={() => load()}
+      />
+
+      <TerminalMenu
+        operadores={operadores}
+        rutas={rutas}
+        onRutasChanged={load}
+        onOpenServicio={() => setModalOpen(true)}
+        liveMessage={liveMessage}
+        liveReporte={liveReporte}
       />
     </div>
   );

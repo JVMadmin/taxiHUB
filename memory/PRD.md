@@ -24,6 +24,19 @@ Plataforma de despacho para central de taxis con dos interfaces: Terminal (panel
 - Panel lateral flotante: filtro por ruta + lista de taxis activos + leyenda.
 - Modal "Nueva llamada": registra servicio y lo asigna a un taxi libre.
 
+### Fase 2 — App del operador (2026-08-10)
+- Login JWT, entrar/salir, botones de estado, selector de ruta, geolocalización cada ~9s.
+
+### Fase 4 — Rutas (2026-08-10)
+- Gestión de rutas (crear/editar nombre y color) desde el menú lateral de la Terminal (sección "Rutas").
+- El operador ya selecciona su ruta al iniciar operación.
+
+### Fase 5 — Reportes, chat y menú Terminal (2026-08-10)
+- Backend: modelos `reportes_objetos` y `mensajes_chat`. Subida de foto a **Emergent Object Storage** (`POST /api/reportes`, servido por `GET /api/files/{path}`). Chat reutiliza el `ConnectionManager` (WS) existente vía `POST /api/mensajes` + `GET /api/mensajes`, `GET /api/conversaciones`. Reportes: `GET /api/reportes`, `PATCH /api/reportes/{id}/resolver`.
+- App operador: botón "Reportar objeto" (cámara/galería + descripción), overlay de chat con la central en burbujas, cronómetro de tiempo en operación.
+- Terminal: menú lateral derecho deslizable (no tapa el mapa) con secciones Asignar servicio, Operadores (todos), Clientes (con historial), Objetos reportados (miniatura + resolver), Chat (conversaciones + responder) y Rutas.
+- Mejoras: "hace X seg" en la lista de taxis activos, buscador por nombre/unidad, cronómetro de operación en la app del operador.
+
 ## Backlog
 - P0: Fase 2 — App del operador (login, entrar/salir, botones de estado, selector de ruta, geolocalización cada 8-10s).
 - P1: Fase 4 — Gestión de rutas (crear/editar color) desde Terminal.

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
+import { elapsed } from "@/lib/time";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Car, Power, LogOut, MapPin, Bell } from "lucide-react";
+import { Car, Power, LogOut, MapPin, Bell, Package, MessageSquare, Send, X } from "lucide-react";
 
 const LOC_INTERVAL = 9000; // 8-10s
 
@@ -18,14 +20,34 @@ export default function OperadorApp() {
   const [servicio, setServicio] = useState(null);
   const timerRef = useRef(null);
   const wsRef = useRef(null);
+  const fileRef = useRef(null);
+  const [inicio, setInicio] = useState(null);
+  const [, setSec] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState([]);
+  const [chatText, setChatText] = useState("");
+  const [pendingFile, setPendingFile] = useState(null);
+  const [reportDesc, setReportDesc] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const enOperacion = op && op.estado !== "fuera_de_servicio";
+
+  // Cronómetro de operación
+  useEffect(() => {
+    if (!enOperacion) return;
+    const t = setInterval(() => setSec((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [enOperacion]);
 
   // Carga inicial
   useEffect(() => {
     if (!getToken()) { navigate("/login"); return; }
     Promise.all([api.get("/auth/me"), api.get("/rutas")])
-      .then(([me, rt]) => { setOp(me.data); setRutas(rt.data); })
+      .then(([me, rt]) => {
+        setOp(me.data);
+        setRutas(rt.data);
+        if (me.data.estado !== "fuera_de_servicio") setInicio(Date.now());
+      })
       .catch(() => { logoutOperador(); navigate("/login"); });
   }, [navigate]);
 
@@ -62,6 +84,9 @@ export default function OperadorApp() {
       if (msg.type === "nuevo_servicio") {
         setServicio(msg.servicio);
         toast.info("🚕 Nuevo servicio asignado");
+      } else if (msg.type === "mensaje") {
+        setChatMsgs((m) => (m.some((x) => x.id === msg.mensaje.id) ? m : [...m, msg.mensaje]));
+        if (msg.mensaje.remitente === "terminal") toast.info("💬 Mensaje de la central");
       }
     };
     return () => ws.close();
@@ -73,11 +98,13 @@ export default function OperadorApp() {
   };
 
   const entrar = async () => {
+    setInicio(Date.now());
     await cambiarEstado("libre");
     toast.success("Estás en operación");
   };
   const salir = async () => {
     clearInterval(timerRef.current);
+    setInicio(null);
     await cambiarEstado("fuera_de_servicio");
     toast("Saliste de operación");
   };
@@ -89,6 +116,32 @@ export default function OperadorApp() {
   };
 
   const logout = () => { logoutOperador(); navigate("/login"); };
+
+  const abrirChat = async () => {
+    setChatOpen(true);
+    const { data } = await api.get(`/mensajes?operador_id=${op.id}`);
+    setChatMsgs(data);
+  };
+  const enviarChat = async () => {
+    if (!chatText.trim()) return;
+    const t = chatText; setChatText("");
+    await api.post("/mensajes", { operador_id: op.id, remitente: "operador", texto: t });
+  };
+  const enviarReporte = async () => {
+    if (!pendingFile) return;
+    const fd = new FormData();
+    fd.append("operador_id", op.id);
+    if (reportDesc) fd.append("descripcion", reportDesc);
+    fd.append("foto", pendingFile);
+    setUploading(true);
+    try {
+      await api.post("/reportes", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      toast.success("Objeto reportado a la central");
+      setPendingFile(null); setReportDesc("");
+    } catch (_) {
+      toast.error("No se pudo enviar el reporte");
+    } finally { setUploading(false); }
+  };
 
   if (!op) {
     return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-400">Cargando…</div>;
@@ -129,6 +182,12 @@ export default function OperadorApp() {
             <div className="text-xs uppercase tracking-wide text-zinc-500">Estado</div>
             <div className="text-lg font-semibold">{ESTADO_LABEL[op.estado]}</div>
           </div>
+          {enOperacion && inicio && (
+            <div className="text-right">
+              <div className="text-xs uppercase tracking-wide text-zinc-500">En operación</div>
+              <div data-testid="tiempo-operacion" className="font-mono text-lg font-semibold text-emerald-400">{elapsed(inicio)}</div>
+            </div>
+          )}
         </div>
 
         {/* Selector de ruta */}
@@ -205,6 +264,34 @@ export default function OperadorApp() {
           </div>
         )}
 
+        {/* Acciones: reporte y chat */}
+        <div className="mt-6 grid grid-cols-2 gap-2">
+          <Button
+            data-testid="reportar-objeto-btn"
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            className="h-12 border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
+          >
+            <Package className="mr-2 h-4 w-4" /> Reportar objeto
+          </Button>
+          <Button
+            data-testid="abrir-chat-btn"
+            variant="outline"
+            onClick={abrirChat}
+            className="h-12 border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
+          >
+            <MessageSquare className="mr-2 h-4 w-4" /> Chat central
+          </Button>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => setPendingFile(e.target.files?.[0] || null)}
+        />
+
         <div className="flex-1" />
 
         {/* Estado de ubicación */}
@@ -236,6 +323,64 @@ export default function OperadorApp() {
           </Button>
         )}
       </div>
+
+      {/* Overlay: confirmar reporte */}
+      {pendingFile && (
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="reporte-overlay">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold text-zinc-100">Reportar objeto olvidado</h3>
+              <button onClick={() => setPendingFile(null)} className="text-zinc-400 hover:text-zinc-100"><X className="h-5 w-5" /></button>
+            </div>
+            <img src={URL.createObjectURL(pendingFile)} alt="preview" className="mb-3 max-h-56 w-full rounded-lg object-cover" />
+            <Input
+              data-testid="reporte-descripcion"
+              value={reportDesc}
+              onChange={(e) => setReportDesc(e.target.value)}
+              placeholder="Descripción (opcional)"
+              className="mb-3 bg-zinc-800 border-zinc-700 text-zinc-100"
+            />
+            <Button data-testid="reporte-enviar" onClick={enviarReporte} disabled={uploading} className="h-11 w-full bg-emerald-500 font-semibold text-zinc-950 hover:bg-emerald-400">
+              {uploading ? "Enviando…" : "Enviar reporte"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay: chat */}
+      {chatOpen && (
+        <div className="fixed inset-0 z-[900] flex flex-col bg-zinc-950" data-testid="chat-overlay">
+          <div className="mx-auto flex h-full w-full max-w-md flex-col p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold text-zinc-100">Chat con la central</h3>
+              <button data-testid="chat-cerrar" onClick={() => setChatOpen(false)} className="text-zinc-400 hover:text-zinc-100"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1" data-testid="chat-op-mensajes">
+              {chatMsgs.length === 0 && <div className="mt-6 text-center text-xs text-zinc-500">Aún no hay mensajes</div>}
+              {chatMsgs.map((m) => (
+                <div key={m.id} className={`flex ${m.remitente === "operador" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${m.remitente === "operador" ? "bg-emerald-500 text-zinc-950" : "bg-zinc-800 text-zinc-100"}`}>
+                    {m.texto}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 flex gap-2">
+              <Input
+                data-testid="chat-op-input"
+                value={chatText}
+                onChange={(e) => setChatText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && enviarChat()}
+                placeholder="Escribe un mensaje…"
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
+              <Button data-testid="chat-op-enviar" onClick={enviarChat} size="icon" className="bg-emerald-500 text-zinc-950 hover:bg-emerald-400">
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
