@@ -101,7 +101,7 @@ export default function Terminal() {
             <Marker
               key={o.id}
               position={[o.lat, o.lng]}
-              icon={taxiIcon(colorForOperador(o, rutaSel?.color_hex))}
+              icon={taxiIcon(colorForOperador(o, rutaSel?.color_hex), o.placa)}
             >
               <Popup>
                 <div className="text-sm">
