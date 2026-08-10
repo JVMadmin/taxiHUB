@@ -224,10 +224,29 @@ class ServicioCreate(BaseModel):
     origen: Ubicacion
     destino: Ubicacion
     operador_asignado_id: Optional[str] = None
+    costo: Optional[float] = None
 
 
 class AsignarBody(BaseModel):
     operador_id: str
+
+
+class ServicioOperadorBody(BaseModel):
+    origen_texto: str
+    destino_texto: str
+    costo: Optional[float] = None
+
+
+# ---- Usuarios Terminal (operadoras) ----
+class TerminalUserCreate(BaseModel):
+    nombre: str
+    usuario: str
+    contrasena: str
+
+
+class TerminalLoginBody(BaseModel):
+    usuario: str
+    contrasena: str
 
 
 # ---------------------------------------------------------------------------
@@ -288,6 +307,36 @@ async def login(body: LoginBody):
 @api_router.get("/auth/me")
 async def me(current: dict = Depends(get_current_operador)):
     return current
+
+
+def create_terminal_token(user_id: str, usuario: str) -> str:
+    payload = {"sub": user_id, "usuario": usuario, "scope": "terminal", "iat": datetime.now(timezone.utc)}
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+@api_router.post("/terminal/usuarios")
+async def crear_usuario_terminal(body: TerminalUserCreate):
+    if await db.usuarios_terminal.find_one({"usuario": body.usuario}):
+        raise HTTPException(status_code=409, detail="El usuario ya existe")
+    doc = {"nombre": body.nombre, "usuario": body.usuario, "password_hash": hash_password(body.contrasena)}
+    res = await db.usuarios_terminal.insert_one(doc)
+    doc["_id"] = res.inserted_id
+    return serialize(doc)
+
+
+@api_router.get("/terminal/usuarios")
+async def list_usuarios_terminal():
+    docs = await db.usuarios_terminal.find().to_list(1000)
+    return [serialize(d) for d in docs]
+
+
+@api_router.post("/terminal/login")
+async def terminal_login(body: TerminalLoginBody):
+    u = await db.usuarios_terminal.find_one({"usuario": body.usuario})
+    if not u or not verify_password(body.contrasena, u.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    token = create_terminal_token(str(u["_id"]), u["usuario"])
+    return {"token": token, "usuario": serialize(u)}
 
 
 # ---------------------------------------------------------------------------
@@ -503,6 +552,10 @@ async def create_servicio(body: ServicioCreate):
         "cliente_telefono": body.cliente_telefono,
         "origen": body.origen.model_dump(),
         "destino": body.destino.model_dump(),
+        "origen_texto": body.origen.texto,
+        "destino_texto": body.destino.texto,
+        "costo": body.costo,
+        "tipo": "terminal",
         "operador_asignado_id": body.operador_asignado_id,
         "estado": estado,
         "timestamp_creacion": now_iso(),
@@ -522,6 +575,22 @@ async def list_servicios(estado: Optional[EstadoServicio] = None):
     query = {"estado": estado.value} if estado else {}
     docs = await db.servicios.find(query).to_list(1000)
     return [serialize(d) for d in docs]
+
+
+@api_router.get("/servicios/hoy")
+async def list_servicios_hoy():
+    hoy = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    docs = await db.servicios.find(
+        {"timestamp_creacion": {"$regex": f"^{hoy}"}}
+    ).sort("timestamp_creacion", -1).to_list(1000)
+    ops = {str(o["_id"]): o for o in await db.operadores.find().to_list(1000)}
+    out = []
+    for d in docs:
+        s = serialize(d)
+        op = ops.get(s.get("operador_asignado_id"))
+        s["operador_nombre"] = op["nombre"] if op else None
+        out.append(s)
+    return out
 
 
 @api_router.get("/servicios/{servicio_id}")
@@ -550,6 +619,59 @@ async def asignar_servicio(servicio_id: str, body: AsignarBody):
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
     servicio = serialize(await db.servicios.find_one({"_id": to_oid(servicio_id)}))
     await manager.send_operador(body.operador_id, {"type": "nuevo_servicio", "servicio": servicio})
+    await manager.broadcast_terminal({"type": "servicio", "servicio": servicio})
+    return servicio
+
+
+@api_router.post("/operadores/{operador_id}/servicio")
+async def iniciar_servicio_operador(operador_id: str, body: ServicioOperadorBody):
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)})
+    if not op:
+        raise HTTPException(status_code=404, detail="Operador no encontrado")
+    ts = now_iso()
+    doc = {
+        "cliente_id": None, "cliente_nombre": None, "cliente_telefono": None,
+        "origen": {"texto": body.origen_texto},
+        "destino": {"texto": body.destino_texto},
+        "origen_texto": body.origen_texto,
+        "destino_texto": body.destino_texto,
+        "costo": body.costo,
+        "tipo": "operador",
+        "operador_asignado_id": operador_id,
+        "estado": EstadoServicio.en_curso.value,
+        "timestamp_creacion": ts,
+        "timestamp_asignacion": ts,
+    }
+    res = await db.servicios.insert_one(doc)
+    doc["_id"] = res.inserted_id
+    servicio = serialize(doc)
+    await db.operadores.update_one(
+        {"_id": to_oid(operador_id)},
+        {"$set": {"estado": EstadoOperador.ocupado.value, "ultima_actualizacion": ts}},
+    )
+    await manager.broadcast_terminal({"type": "estado", "operador_id": operador_id, "estado": EstadoOperador.ocupado.value, "ts": ts})
+    await manager.broadcast_terminal({"type": "servicio", "servicio": servicio})
+    return servicio
+
+
+@api_router.post("/servicios/{servicio_id}/terminar")
+async def terminar_servicio(servicio_id: str):
+    s = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+    if not s:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    ts = now_iso()
+    await db.servicios.update_one(
+        {"_id": to_oid(servicio_id)},
+        {"$set": {"estado": EstadoServicio.completado.value, "timestamp_fin": ts}},
+    )
+    oid = s.get("operador_asignado_id")
+    if oid:
+        await db.operadores.update_one(
+            {"_id": to_oid(oid)},
+            {"$set": {"estado": EstadoOperador.libre.value, "ultima_actualizacion": ts}},
+        )
+        await manager.broadcast_terminal({"type": "estado", "operador_id": oid, "estado": EstadoOperador.libre.value, "ts": ts})
+    servicio = serialize(await db.servicios.find_one({"_id": to_oid(servicio_id)}))
     await manager.broadcast_terminal({"type": "servicio", "servicio": servicio})
     return servicio
 
@@ -754,6 +876,11 @@ async def startup():
     await db.operadores.create_index("usuario", unique=True)
     await db.servicios.create_index("cliente_id")
     await db.servicios.create_index("operador_asignado_id")
+    if await db.usuarios_terminal.count_documents({}) == 0:
+        await db.usuarios_terminal.insert_one(
+            {"nombre": "Central", "usuario": "central", "password_hash": hash_password("central123")}
+        )
+    await db.usuarios_terminal.create_index("usuario", unique=True)
     try:
         init_storage()
         logger.info("Object storage inicializado")

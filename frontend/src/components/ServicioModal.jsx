@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -10,15 +10,10 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { PhoneCall } from "lucide-react";
+import { PhoneCall, MapPin, X } from "lucide-react";
 
-const EMPTY = { cliente_nombre: "", cliente_telefono: "", origen: "", destino: "", operador_id: "" };
-
-export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated }) {
-  const [form, setForm] = useState(EMPTY);
+export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated, form, setForm, coords, onPick, onClearPick }) {
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => { if (open) setForm(EMPTY); }, [open]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -87,7 +82,12 @@ export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated 
           </div>
 
           <div className="grid gap-1.5">
-            <Label className="text-zinc-300">Origen *</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-zinc-300">Origen *</Label>
+              <button type="button" data-testid="pick-origen" onClick={() => onPick?.("origen")} className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300">
+                <MapPin className="h-3 w-3" /> Marcar en mapa
+              </button>
+            </div>
             <Input
               data-testid="servicio-origen"
               value={form.origen}
@@ -95,10 +95,21 @@ export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated 
               placeholder="Ej. Parque Central"
               className="bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500"
             />
+            {coords?.origen && (
+              <div className="flex items-center gap-2 text-xs text-emerald-400">
+                <MapPin className="h-3 w-3" /> {coords.origen.lat.toFixed(4)}, {coords.origen.lng.toFixed(4)}
+                <button type="button" onClick={() => onClearPick?.("origen")} className="text-zinc-500 hover:text-zinc-300"><X className="h-3 w-3" /></button>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-1.5">
-            <Label className="text-zinc-300">Destino *</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-zinc-300">Destino *</Label>
+              <button type="button" data-testid="pick-destino" onClick={() => onPick?.("destino")} className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300">
+                <MapPin className="h-3 w-3" /> Marcar en mapa
+              </button>
+            </div>
             <Input
               data-testid="servicio-destino"
               value={form.destino}
@@ -106,6 +117,12 @@ export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated 
               placeholder="Ej. Pakal Ná"
               className="bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500"
             />
+            {coords?.destino && (
+              <div className="flex items-center gap-2 text-xs text-emerald-400">
+                <MapPin className="h-3 w-3" /> {coords.destino.lat.toFixed(4)}, {coords.destino.lng.toFixed(4)}
+                <button type="button" onClick={() => onClearPick?.("destino")} className="text-zinc-500 hover:text-zinc-300"><X className="h-3 w-3" /></button>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-1.5">

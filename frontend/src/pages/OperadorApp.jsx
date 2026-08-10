@@ -4,11 +4,12 @@ import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL } from "@/li
 import { elapsed } from "@/lib/time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Car, Power, LogOut, MapPin, Bell, Package, MessageSquare, Send, X } from "lucide-react";
+import { Car, Power, LogOut, MapPin, Bell, Package, MessageSquare, Send, X, PlayCircle, StopCircle } from "lucide-react";
 
 const LOC_INTERVAL = 9000; // 8-10s
 
@@ -29,6 +30,9 @@ export default function OperadorApp() {
   const [pendingFile, setPendingFile] = useState(null);
   const [reportDesc, setReportDesc] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [servicioPropio, setServicioPropio] = useState(null);
+  const [iniciarOpen, setIniciarOpen] = useState(false);
+  const [iniciarForm, setIniciarForm] = useState({ origen_texto: "", destino_texto: "", costo: "" });
 
   const enOperacion = op && op.estado !== "fuera_de_servicio";
 
@@ -143,6 +147,26 @@ export default function OperadorApp() {
     } finally { setUploading(false); }
   };
 
+  const iniciarServicio = async () => {
+    if (!iniciarForm.origen_texto.trim() || !iniciarForm.destino_texto.trim()) { toast.error("Origen y destino requeridos"); return; }
+    const { data } = await api.post(`/operadores/${op.id}/servicio`, {
+      origen_texto: iniciarForm.origen_texto,
+      destino_texto: iniciarForm.destino_texto,
+      costo: iniciarForm.costo ? Number(iniciarForm.costo) : null,
+    });
+    setServicioPropio(data);
+    setOp((p) => ({ ...p, estado: "ocupado" }));
+    setIniciarOpen(false);
+    setIniciarForm({ origen_texto: "", destino_texto: "", costo: "" });
+    toast.success("Servicio iniciado");
+  };
+  const terminarServicio = async () => {
+    await api.post(`/servicios/${servicioPropio.id}/terminar`);
+    setServicioPropio(null);
+    setOp((p) => ({ ...p, estado: "libre" }));
+    toast.success("Servicio terminado");
+  };
+
   if (!op) {
     return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-400">Cargando…</div>;
   }
@@ -161,15 +185,18 @@ export default function OperadorApp() {
               <div className="text-xs text-zinc-400">Unidad {op.placa}</div>
             </div>
           </div>
-          <Button
-            data-testid="logout-btn"
-            variant="ghost"
-            size="icon"
-            onClick={logout}
-            className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <ThemeSwitcher />
+            <Button
+              data-testid="logout-btn"
+              variant="ghost"
+              size="icon"
+              onClick={logout}
+              className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </header>
 
         {/* Estado actual */}
@@ -264,6 +291,26 @@ export default function OperadorApp() {
           </div>
         )}
 
+        {/* Iniciar / Terminar servicio propio */}
+        {enOperacion && (
+          servicioPropio ? (
+            <div className="mt-6 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4" data-testid="servicio-propio">
+              <div className="mb-1 text-sm font-semibold text-emerald-300">Servicio en curso</div>
+              <div className="text-sm text-zinc-200">
+                <div>{servicioPropio.origen_texto} → {servicioPropio.destino_texto}</div>
+                {servicioPropio.costo != null && <div className="text-zinc-400">Costo: ${servicioPropio.costo}</div>}
+              </div>
+              <Button data-testid="terminar-servicio-btn" onClick={terminarServicio} className="mt-3 h-11 w-full bg-red-500 font-semibold text-white hover:bg-red-600">
+                <StopCircle className="mr-2 h-5 w-5" /> Terminar servicio
+              </Button>
+            </div>
+          ) : (
+            <Button data-testid="iniciar-servicio-btn" onClick={() => setIniciarOpen(true)} className="mt-6 h-12 w-full bg-emerald-500 font-semibold text-zinc-950 hover:bg-emerald-400">
+              <PlayCircle className="mr-2 h-5 w-5" /> Iniciar servicio
+            </Button>
+          )
+        )}
+
         {/* Acciones: reporte y chat */}
         <div className="mt-6 grid grid-cols-2 gap-2">
           <Button
@@ -323,6 +370,24 @@ export default function OperadorApp() {
           </Button>
         )}
       </div>
+
+      {/* Overlay: iniciar servicio */}
+      {iniciarOpen && (
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="iniciar-overlay">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold text-zinc-100">Iniciar servicio</h3>
+              <button onClick={() => setIniciarOpen(false)} className="text-zinc-400 hover:text-zinc-100"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="grid gap-3">
+              <Input data-testid="iniciar-origen" value={iniciarForm.origen_texto} onChange={(e) => setIniciarForm((f) => ({ ...f, origen_texto: e.target.value }))} placeholder="Origen (colonia/calle)" className="border-zinc-700 bg-zinc-800 text-zinc-100" />
+              <Input data-testid="iniciar-destino" value={iniciarForm.destino_texto} onChange={(e) => setIniciarForm((f) => ({ ...f, destino_texto: e.target.value }))} placeholder="Destino (colonia/calle)" className="border-zinc-700 bg-zinc-800 text-zinc-100" />
+              <Input data-testid="iniciar-costo" type="number" value={iniciarForm.costo} onChange={(e) => setIniciarForm((f) => ({ ...f, costo: e.target.value }))} placeholder="Costo (opcional)" className="border-zinc-700 bg-zinc-800 text-zinc-100" />
+              <Button data-testid="iniciar-confirmar" onClick={iniciarServicio} className="h-11 bg-emerald-500 font-semibold text-zinc-950 hover:bg-emerald-400">Iniciar</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overlay: confirmar reporte */}
       {pendingFile && (

@@ -1,18 +1,32 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useNavigate } from "react-router-dom";
 import { api, WS_BASE, ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
 import { timeAgo } from "@/lib/time";
 import { taxiIcon, colorForOperador } from "@/lib/taxiIcon";
 import { ServicioModal } from "@/components/ServicioModal";
 import { TerminalMenu } from "@/components/TerminalMenu";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { getTerminalToken, logoutTerminal } from "@/pages/TerminalLogin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Radio, PhoneCall, Filter, Car, Search } from "lucide-react";
+import { Radio, PhoneCall, Filter, Car, Search, LogOut } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847]; // Palenque, Chiapas
 const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
+function MapClick({ onClick }) {
+  useMapEvents({ click: (e) => onClick(e.latlng) });
+  return null;
+}
+const pointIcon = (label, color) =>
+  L.divIcon({
+    className: "", iconSize: [1, 1], iconAnchor: [0, 0],
+    html: `<div style="transform:translate(-50%,-100%)"><div style="background:${color};color:#0a0a0a;font-weight:800;border:2px solid #0a0a0a;border-radius:8px;padding:2px 7px;font-size:11px">${label}</div></div>`,
+  });
 
 export default function Terminal() {
   const [operadores, setOperadores] = useState({}); // keyed by id
@@ -31,6 +45,27 @@ export default function Terminal() {
     const t = setInterval(() => setTick((n) => n + 1), 5000);
     return () => clearInterval(t);
   }, []);
+
+  const navigate = useNavigate();
+  useEffect(() => { if (!getTerminalToken()) navigate("/terminal/login"); }, [navigate]);
+
+  const [servicioForm, setServicioForm] = useState({ cliente_nombre: "", cliente_telefono: "", origen: "", destino: "", operador_id: "" });
+  const [coords, setCoords] = useState({ origen: null, destino: null });
+  const [picking, setPicking] = useState(null);
+
+  const abrirNuevaLlamada = () => {
+    setServicioForm({ cliente_nombre: "", cliente_telefono: "", origen: "", destino: "", operador_id: "" });
+    setCoords({ origen: null, destino: null });
+    setModalOpen(true);
+  };
+  const pedirPunto = (which) => { setModalOpen(false); setPicking(which); toast.info(`Haz clic en el mapa para marcar el ${which}`); };
+  const onMapClick = (latlng) => {
+    if (!picking) return;
+    setCoords((c) => ({ ...c, [picking]: { lat: +latlng.lat.toFixed(6), lng: +latlng.lng.toFixed(6) } }));
+    setPicking(null); setModalOpen(true);
+  };
+  const clearPick = (which) => setCoords((c) => ({ ...c, [which]: null }));
+  const salirTerminal = () => { logoutTerminal(); navigate("/terminal/login"); };
 
   const upsert = useCallback((op) => {
     setOperadores((prev) => ({ ...prev, [op.id]: { ...prev[op.id], ...op } }));
@@ -123,6 +158,9 @@ export default function Terminal() {
             attribution='&copy; OpenStreetMap &copy; CARTO'
             subdomains="abcd"
           />
+          <MapClick onClick={onMapClick} />
+          {coords.origen && <Marker position={[coords.origen.lat, coords.origen.lng]} icon={pointIcon("Origen", "#22c55e")} />}
+          {coords.destino && <Marker position={[coords.destino.lat, coords.destino.lng]} icon={pointIcon("Destino", "#ef4444")} />}
           {visibles.map((o) => (
             <Marker
               key={o.id}
@@ -154,14 +192,27 @@ export default function Terminal() {
             </div>
           </div>
         </div>
-        <Button
-          data-testid="nueva-llamada-btn"
-          onClick={() => setModalOpen(true)}
-          className="pointer-events-auto bg-emerald-500 font-semibold text-zinc-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400"
-        >
-          <PhoneCall className="mr-2 h-4 w-4" /> Nueva llamada
-        </Button>
+        <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/85 p-1 backdrop-blur-md">
+          <Button
+            data-testid="nueva-llamada-btn"
+            onClick={abrirNuevaLlamada}
+            className="bg-emerald-500 font-semibold text-zinc-950 hover:bg-emerald-400"
+          >
+            <PhoneCall className="mr-2 h-4 w-4" /> Nueva llamada
+          </Button>
+          <ThemeSwitcher />
+          <button data-testid="terminal-logout" onClick={salirTerminal} title="Salir" className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-300 hover:bg-zinc-800">
+            <LogOut className="h-5 w-5" />
+          </button>
+        </div>
       </header>
+
+      {picking && (
+        <div className="absolute left-1/2 top-20 z-[700] -translate-x-1/2 rounded-full border border-emerald-500 bg-zinc-900/95 px-4 py-2 text-sm text-emerald-300 backdrop-blur" data-testid="picking-banner">
+          Haz clic en el mapa para marcar el {picking}
+          <button className="ml-3 text-zinc-400 underline" onClick={() => { setPicking(null); setModalOpen(true); }}>cancelar</button>
+        </div>
+      )}
 
       {/* Panel lateral flotante: filtro + lista */}
       <aside
@@ -264,13 +315,19 @@ export default function Terminal() {
         onOpenChange={setModalOpen}
         operadoresLibres={operadoresLibres}
         onCreated={() => load()}
+        form={servicioForm}
+        setForm={setServicioForm}
+        coords={coords}
+        onPick={pedirPunto}
+        onClearPick={clearPick}
       />
 
       <TerminalMenu
         operadores={operadores}
         rutas={rutas}
         onRutasChanged={load}
-        onOpenServicio={() => setModalOpen(true)}
+        onDataChanged={load}
+        onOpenServicio={abrirNuevaLlamada}
         liveMessage={liveMessage}
         liveReporte={liveReporte}
       />

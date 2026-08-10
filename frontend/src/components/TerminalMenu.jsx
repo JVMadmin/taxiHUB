@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   PhoneCall, Users, UserSquare, Package, MessageSquare, Route as RouteIcon,
-  X, Plus, Check, Send, ChevronDown, ChevronRight,
+  X, Plus, Check, Send, ChevronDown, ChevronRight, ClipboardList,
 } from "lucide-react";
 
 const SECTIONS = [
   { id: "servicio", label: "Asignar servicio", icon: PhoneCall },
+  { id: "servicios", label: "Servicios de hoy", icon: ClipboardList },
   { id: "operadores", label: "Operadores", icon: Users },
   { id: "clientes", label: "Clientes", icon: UserSquare },
   { id: "reportes", label: "Objetos reportados", icon: Package },
@@ -18,7 +19,7 @@ const SECTIONS = [
   { id: "rutas", label: "Rutas", icon: RouteIcon },
 ];
 
-export function TerminalMenu({ operadores, rutas, onRutasChanged, onOpenServicio, liveMessage, liveReporte }) {
+export function TerminalMenu({ operadores, rutas, onRutasChanged, onDataChanged, onOpenServicio, liveMessage, liveReporte }) {
   const [active, setActive] = useState(null);
 
   const open = (id) => {
@@ -31,7 +32,7 @@ export function TerminalMenu({ operadores, rutas, onRutasChanged, onOpenServicio
       {/* Rail de iconos (derecha) */}
       <div
         data-testid="terminal-menu-rail"
-        className="absolute right-4 top-24 z-[600] flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/85 p-2 backdrop-blur-md"
+        className={`absolute top-24 z-[600] flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/85 p-2 backdrop-blur-md transition-all duration-300 ${active ? "right-[392px]" : "right-4"}`}
       >
         {SECTIONS.map((s) => (
           <button
@@ -56,7 +57,7 @@ export function TerminalMenu({ operadores, rutas, onRutasChanged, onOpenServicio
       >
         {active && (
           <div data-testid={`panel-${active}`} className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3 pr-16">
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
               <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-200">
                 {SECTIONS.find((s) => s.id === active)?.label}
               </h2>
@@ -64,8 +65,9 @@ export function TerminalMenu({ operadores, rutas, onRutasChanged, onOpenServicio
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4 pr-16">
-              {active === "operadores" && <OperadoresPanel operadores={operadores} rutas={rutas} />}
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              {active === "servicios" && <ServiciosPanel />}
+              {active === "operadores" && <OperadoresPanel operadores={operadores} rutas={rutas} onChanged={onDataChanged} />}
               {active === "clientes" && <ClientesPanel />}
               {active === "reportes" && <ReportesPanel liveReporte={liveReporte} />}
               {active === "chat" && <ChatPanel liveMessage={liveMessage} />}
@@ -79,11 +81,40 @@ export function TerminalMenu({ operadores, rutas, onRutasChanged, onOpenServicio
 }
 
 /* ---------------- Operadores ---------------- */
-function OperadoresPanel({ operadores, rutas }) {
+function OperadoresPanel({ operadores, rutas, onChanged }) {
   const nombreRuta = (id) => rutas.find((r) => r.id === id)?.nombre || "Taxi libre";
   const lista = Object.values(operadores);
+  const [nuevo, setNuevo] = useState(false);
+  const [f, setF] = useState({ nombre: "", telefono: "", placa: "", usuario: "", contrasena: "", ruta_asignada: "libre" });
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const crear = async () => {
+    if (!f.nombre || !f.usuario || !f.contrasena) { toast.error("Nombre, usuario y contraseña requeridos"); return; }
+    try {
+      await api.post("/operadores", { ...f, ruta_asignada: f.ruta_asignada === "libre" ? null : f.ruta_asignada });
+      toast.success("Operador creado");
+      setF({ nombre: "", telefono: "", placa: "", usuario: "", contrasena: "", ruta_asignada: "libre" });
+      setNuevo(false); onChanged?.();
+    } catch (e) { toast.error(e.response?.data?.detail || "No se pudo crear"); }
+  };
   return (
     <div className="space-y-2">
+      <Button data-testid="nuevo-operador-btn" onClick={() => setNuevo((v) => !v)} className="w-full bg-emerald-500 text-zinc-950 hover:bg-emerald-400">
+        <Plus className="mr-1 h-4 w-4" /> Nuevo operador
+      </Button>
+      {nuevo && (
+        <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900 p-3" data-testid="form-operador">
+          <Input value={f.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Nombre" className="h-8 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="op-nombre" />
+          <Input value={f.telefono} onChange={(e) => set("telefono", e.target.value)} placeholder="Teléfono" className="h-8 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="op-telefono" />
+          <Input value={f.placa} onChange={(e) => set("placa", e.target.value)} placeholder="Placa / Unidad" className="h-8 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="op-placa" />
+          <Input value={f.usuario} onChange={(e) => set("usuario", e.target.value)} placeholder="Usuario" className="h-8 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="op-usuario" />
+          <Input type="password" value={f.contrasena} onChange={(e) => set("contrasena", e.target.value)} placeholder="Contraseña" className="h-8 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="op-contrasena" />
+          <select value={f.ruta_asignada} onChange={(e) => set("ruta_asignada", e.target.value)} className="h-8 w-full rounded-md border border-zinc-700 bg-zinc-800 px-2 text-sm text-zinc-100" data-testid="op-ruta">
+            <option value="libre">Taxi libre (sin ruta)</option>
+            {rutas.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+          </select>
+          <Button data-testid="op-guardar" onClick={crear} className="w-full bg-emerald-500 text-zinc-950 hover:bg-emerald-400">Guardar</Button>
+        </div>
+      )}
       {lista.map((o) => (
         <div key={o.id} data-testid={`op-row-${o.id}`} className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5">
           <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: ESTADO_COLORS[o.estado] }} />
@@ -103,8 +134,11 @@ function ClientesPanel() {
   const [clientes, setClientes] = useState([]);
   const [expanded, setExpanded] = useState(null);
   const [historial, setHistorial] = useState({});
+  const [nuevo, setNuevo] = useState(false);
+  const [f, setF] = useState({ nombre: "", telefono: "" });
 
-  useEffect(() => { api.get("/clientes").then((r) => setClientes(r.data)); }, []);
+  const load = useCallback(() => api.get("/clientes").then((r) => setClientes(r.data)), []);
+  useEffect(() => { load(); }, [load]);
 
   const toggle = async (id) => {
     if (expanded === id) { setExpanded(null); return; }
@@ -114,9 +148,25 @@ function ClientesPanel() {
       setHistorial((h) => ({ ...h, [id]: data.historial_servicios || [] }));
     }
   };
+  const crear = async () => {
+    if (!f.nombre || !f.telefono) { toast.error("Nombre y teléfono requeridos"); return; }
+    await api.post("/clientes", f);
+    toast.success("Cliente creado");
+    setF({ nombre: "", telefono: "" }); setNuevo(false); load();
+  };
 
   return (
     <div className="space-y-2">
+      <Button data-testid="nuevo-cliente-btn" onClick={() => setNuevo((v) => !v)} className="w-full bg-emerald-500 text-zinc-950 hover:bg-emerald-400">
+        <Plus className="mr-1 h-4 w-4" /> Nuevo cliente
+      </Button>
+      {nuevo && (
+        <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900 p-3" data-testid="form-cliente">
+          <Input value={f.nombre} onChange={(e) => setF((p) => ({ ...p, nombre: e.target.value }))} placeholder="Nombre" className="h-8 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="cli-nombre" />
+          <Input value={f.telefono} onChange={(e) => setF((p) => ({ ...p, telefono: e.target.value }))} placeholder="Teléfono" className="h-8 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="cli-telefono" />
+          <Button data-testid="cli-guardar" onClick={crear} className="w-full bg-emerald-500 text-zinc-950 hover:bg-emerald-400">Guardar</Button>
+        </div>
+      )}
       {clientes.length === 0 && <Empty>No hay clientes registrados</Empty>}
       {clientes.map((c) => (
         <div key={c.id} data-testid={`cliente-row-${c.id}`} className="rounded-lg border border-zinc-800 bg-zinc-900">
@@ -138,6 +188,30 @@ function ClientesPanel() {
               ))}
             </div>
           )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ServiciosPanel() {
+  const [servicios, setServicios] = useState([]);
+  useEffect(() => { api.get("/servicios/hoy").then((r) => setServicios(r.data)); }, []);
+  const COLORS = { pendiente: "#eab308", asignado: "#3b82f6", en_curso: "#a855f7", completado: "#22c55e", cancelado: "#ef4444" };
+  return (
+    <div className="space-y-2">
+      {servicios.length === 0 && <Empty>No hay servicios hoy</Empty>}
+      {servicios.map((s) => (
+        <div key={s.id} data-testid={`servicio-hoy-${s.id}`} className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm text-zinc-100">{s.origen_texto || s.origen?.texto || "—"} → {s.destino_texto || s.destino?.texto || "—"}</div>
+            <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: (COLORS[s.estado] || "#6b7280") + "22", color: COLORS[s.estado] || "#9ca3af" }}>{s.estado}</span>
+          </div>
+          <div className="text-xs text-zinc-500">
+            {s.operador_nombre || "Sin asignar"}
+            {s.costo != null ? ` · $${s.costo}` : ""}
+            {s.tipo === "operador" ? " · reportado por taxista" : ""}
+          </div>
         </div>
       ))}
     </div>

@@ -37,6 +37,12 @@ Plataforma de despacho para central de taxis con dos interfaces: Terminal (panel
 - Terminal: menú lateral derecho deslizable (no tapa el mapa) con secciones Asignar servicio, Operadores (todos), Clientes (con historial), Objetos reportados (miniatura + resolver), Chat (conversaciones + responder) y Rutas.
 - Mejoras: "hace X seg" en la lista de taxis activos, buscador por nombre/unidad, cronómetro de operación en la app del operador.
 
+### Fase 6 — Picking en mapa, multi-operadora, servicios del taxista, paletas (2026-08-10)
+- Terminal: selección de origen/destino haciendo clic en el mapa dentro del formulario "Nueva llamada" (guarda lat/lng en el servicio); el rail del menú se repliega al abrir un panel; botones "Nuevo" para alta de operadores y clientes; sección "Servicios de hoy" (`GET /api/servicios/hoy`).
+- Auth multi-operadora: colección `usuarios_terminal` + `POST /api/terminal/login` y `/api/terminal/usuarios`; ruta `/terminal/login`; default `central`/`central123`.
+- App operador: "Iniciar servicio" (origen/destino/costo → estado ocupado) y "Terminar servicio" (→ libre); guardado en `servicios` con `tipo: "operador"`, `origen_texto`, `destino_texto`, `costo`.
+- Paleta de colores (Terminal + operador): Esmeralda (default), Océano, Ámbar vía `data-theme` en localStorage.
+
 ## Backlog
 - P0: Fase 2 — App del operador (login, entrar/salir, botones de estado, selector de ruta, geolocalización cada 8-10s).
 - P1: Fase 4 — Gestión de rutas (crear/editar color) desde Terminal.
