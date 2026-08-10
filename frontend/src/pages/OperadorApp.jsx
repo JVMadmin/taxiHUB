@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
+import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL, BACKEND_URL } from "@/lib/api";
 import { elapsed } from "@/lib/time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,9 @@ export default function OperadorApp() {
   const [servicioPropio, setServicioPropio] = useState(null);
   const [iniciarOpen, setIniciarOpen] = useState(false);
   const [iniciarForm, setIniciarForm] = useState({ origen_texto: "", destino_texto: "", costo: "" });
+  const [tarifas, setTarifas] = useState([]);
+  const [logo, setLogo] = useState(null);
+  const profileRef = useRef(null);
 
   const enOperacion = op && op.estado !== "fuera_de_servicio";
 
@@ -46,14 +49,26 @@ export default function OperadorApp() {
   // Carga inicial
   useEffect(() => {
     if (!getToken()) { navigate("/login"); return; }
-    Promise.all([api.get("/auth/me"), api.get("/rutas")])
-      .then(([me, rt]) => {
+    Promise.all([api.get("/auth/me"), api.get("/rutas"), api.get("/tarifas"), api.get("/config/logo")])
+      .then(([me, rt, tf, lg]) => {
         setOp(me.data);
         setRutas(rt.data);
-        if (me.data.estado !== "fuera_de_servicio") setInicio(Date.now());
+        setTarifas(tf.data);
+        setLogo(lg.data.foto_url || null);
+        setInicio(me.data.inicio_operacion || null);
       })
       .catch(() => { logoutOperador(); navigate("/login"); });
   }, [navigate]);
+
+  // Wake Lock: mantiene la pantalla activa en turno (necesario para geolocalización web)
+  useEffect(() => {
+    let lock = null;
+    const req = async () => { try { lock = await navigator.wakeLock?.request("screen"); } catch (_) {} };
+    if (enOperacion) req();
+    const onVis = () => { if (enOperacion && document.visibilityState === "visible") req(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { document.removeEventListener("visibilitychange", onVis); try { lock?.release(); } catch (_) {} };
+  }, [enOperacion]);
 
   const sendLocation = useCallback((id) => {
     if (!navigator.geolocation) return;
@@ -102,8 +117,9 @@ export default function OperadorApp() {
   };
 
   const entrar = async () => {
-    setInicio(Date.now());
     await cambiarEstado("libre");
+    const me = await api.get("/auth/me");
+    setOp(me.data); setInicio(me.data.inicio_operacion || null);
     toast.success("Estás en operación");
   };
   const salir = async () => {
@@ -120,6 +136,14 @@ export default function OperadorApp() {
   };
 
   const logout = () => { logoutOperador(); navigate("/login"); };
+
+  const subirFoto = async (file) => {
+    if (!file) return;
+    const fd = new FormData(); fd.append("foto", file);
+    const { data } = await api.post(`/perfil/operadores/${op.id}/foto`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+    setOp((p) => ({ ...p, foto_url: data.foto_url }));
+    toast.success("Foto actualizada");
+  };
 
   const abrirChat = async () => {
     setChatOpen(true);
@@ -147,18 +171,22 @@ export default function OperadorApp() {
     } finally { setUploading(false); }
   };
 
-  const iniciarServicio = async () => {
-    if (!iniciarForm.origen_texto.trim() || !iniciarForm.destino_texto.trim()) { toast.error("Origen y destino requeridos"); return; }
+  const crearServicio = async ({ tarifa_id = null, costo = null }) => {
     const { data } = await api.post(`/operadores/${op.id}/servicio`, {
-      origen_texto: iniciarForm.origen_texto,
-      destino_texto: iniciarForm.destino_texto,
-      costo: iniciarForm.costo ? Number(iniciarForm.costo) : null,
+      origen_texto: iniciarForm.origen_texto || null,
+      destino_texto: iniciarForm.destino_texto || null,
+      costo, tarifa_id,
     });
     setServicioPropio(data);
     setOp((p) => ({ ...p, estado: "ocupado" }));
     setIniciarOpen(false);
     setIniciarForm({ origen_texto: "", destino_texto: "", costo: "" });
     toast.success("Servicio iniciado");
+  };
+  const iniciarConTarifa = (t) => crearServicio({ tarifa_id: t.id, costo: t.monto });
+  const iniciarLibre = () => {
+    if (!iniciarForm.costo) { toast.error("Escribe un monto"); return; }
+    crearServicio({ costo: Number(iniciarForm.costo) });
   };
   const terminarServicio = async () => {
     await api.post(`/servicios/${servicioPropio.id}/terminar`);
@@ -177,9 +205,13 @@ export default function OperadorApp() {
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15">
-              <Car className="h-6 w-6 text-emerald-400" />
-            </div>
+            <button onClick={() => profileRef.current?.click()} data-testid="perfil-foto-btn"
+              className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-emerald-500/15">
+              {op.foto_url ? <img src={`${BACKEND_URL}${op.foto_url}`} alt="perfil" className="h-full w-full object-cover" />
+                : logo ? <img src={`${BACKEND_URL}${logo}`} alt="logo" className="h-full w-full object-contain p-1" />
+                : <Car className="h-6 w-6 text-emerald-400" />}
+            </button>
+            <input ref={profileRef} type="file" accept="image/*" className="hidden" onChange={(e) => subirFoto(e.target.files?.[0])} />
             <div>
               <div className="text-base font-bold leading-tight">{op.nombre}</div>
               <div className="text-xs text-zinc-400">Unidad {op.placa}</div>
@@ -380,10 +412,22 @@ export default function OperadorApp() {
               <button onClick={() => setIniciarOpen(false)} className="text-zinc-400 hover:text-zinc-100"><X className="h-5 w-5" /></button>
             </div>
             <div className="grid gap-3">
+              <div className="grid grid-cols-2 gap-2" data-testid="tarifa-buttons">
+                {tarifas.map((t) => (
+                  <button key={t.id} data-testid={`tarifa-${t.id}`} onClick={() => iniciarConTarifa(t)}
+                    className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-4 text-left transition-transform active:scale-95 hover:border-emerald-500">
+                    <div className="text-sm font-semibold text-zinc-100">{t.nombre}</div>
+                    <div className="text-lg font-bold text-emerald-400">${t.monto}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input data-testid="iniciar-costo" type="number" value={iniciarForm.costo} onChange={(e) => setIniciarForm((f) => ({ ...f, costo: e.target.value }))} placeholder="Precio libre $" className="border-zinc-700 bg-zinc-800 text-zinc-100" />
+                <Button data-testid="iniciar-libre" onClick={iniciarLibre} className="shrink-0 bg-emerald-500 font-semibold text-zinc-950 hover:bg-emerald-400">Iniciar</Button>
+              </div>
+              <div className="pt-1 text-xs uppercase tracking-wide text-zinc-500">Origen / destino (opcional)</div>
               <Input data-testid="iniciar-origen" value={iniciarForm.origen_texto} onChange={(e) => setIniciarForm((f) => ({ ...f, origen_texto: e.target.value }))} placeholder="Origen (colonia/calle)" className="border-zinc-700 bg-zinc-800 text-zinc-100" />
               <Input data-testid="iniciar-destino" value={iniciarForm.destino_texto} onChange={(e) => setIniciarForm((f) => ({ ...f, destino_texto: e.target.value }))} placeholder="Destino (colonia/calle)" className="border-zinc-700 bg-zinc-800 text-zinc-100" />
-              <Input data-testid="iniciar-costo" type="number" value={iniciarForm.costo} onChange={(e) => setIniciarForm((f) => ({ ...f, costo: e.target.value }))} placeholder="Costo (opcional)" className="border-zinc-700 bg-zinc-800 text-zinc-100" />
-              <Button data-testid="iniciar-confirmar" onClick={iniciarServicio} className="h-11 bg-emerald-500 font-semibold text-zinc-950 hover:bg-emerald-400">Iniciar</Button>
             </div>
           </div>
         </div>

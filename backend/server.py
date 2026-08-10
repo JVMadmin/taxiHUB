@@ -232,9 +232,10 @@ class AsignarBody(BaseModel):
 
 
 class ServicioOperadorBody(BaseModel):
-    origen_texto: str
-    destino_texto: str
+    origen_texto: Optional[str] = None
+    destino_texto: Optional[str] = None
     costo: Optional[float] = None
+    tarifa_id: Optional[str] = None
 
 
 # ---- Usuarios Terminal (operadoras) ----
@@ -300,6 +301,8 @@ async def login(body: LoginBody):
     op = await db.operadores.find_one({"usuario": body.usuario})
     if not op or not verify_password(body.contrasena, op.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    if op.get("activo") is False:
+        raise HTTPException(status_code=403, detail="Cuenta desactivada")
     token = create_token(str(op["_id"]), op["usuario"])
     return {"token": token, "operador": serialize(op)}
 
@@ -335,6 +338,8 @@ async def terminal_login(body: TerminalLoginBody):
     u = await db.usuarios_terminal.find_one({"usuario": body.usuario})
     if not u or not verify_password(body.contrasena, u.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    if u.get("activo") is False:
+        raise HTTPException(status_code=403, detail="Cuenta desactivada")
     token = create_terminal_token(str(u["_id"]), u["usuario"])
     return {"token": token, "usuario": serialize(u)}
 
@@ -411,12 +416,15 @@ async def delete_operador(operador_id: str):
 @api_router.patch("/operadores/{operador_id}/estado")
 async def update_estado(operador_id: str, body: EstadoUpdate):
     ts = now_iso()
-    res = await db.operadores.update_one(
-        {"_id": to_oid(operador_id)},
-        {"$set": {"estado": body.estado.value, "ultima_actualizacion": ts}},
-    )
-    if res.matched_count == 0:
+    prev = await db.operadores.find_one({"_id": to_oid(operador_id)})
+    if not prev:
         raise HTTPException(status_code=404, detail="Operador no encontrado")
+    updates = {"estado": body.estado.value, "ultima_actualizacion": ts}
+    if body.estado.value == "fuera_de_servicio":
+        updates["inicio_operacion"] = None
+    elif prev.get("estado") == "fuera_de_servicio":
+        updates["inicio_operacion"] = ts
+    await db.operadores.update_one({"_id": to_oid(operador_id)}, {"$set": updates})
     await manager.broadcast_terminal({
         "type": "estado",
         "operador_id": operador_id,
@@ -636,6 +644,7 @@ async def iniciar_servicio_operador(operador_id: str, body: ServicioOperadorBody
         "origen_texto": body.origen_texto,
         "destino_texto": body.destino_texto,
         "costo": body.costo,
+        "tarifa_id": body.tarifa_id,
         "tipo": "operador",
         "operador_asignado_id": operador_id,
         "estado": EstadoServicio.en_curso.value,
@@ -707,7 +716,7 @@ async def crear_reporte(
 
 @api_router.get("/files/{path:path}")
 async def download_file(path: str):
-    record = await db.reportes_objetos.find_one({"storage_path": path})
+    record = await db.reportes_objetos.find_one({"storage_path": path}) or await db.archivos.find_one({"storage_path": path})
     if not record:
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
     data, content_type = get_object(path)
@@ -786,6 +795,144 @@ async def list_conversaciones():
             "timestamp": m["timestamp"],
         }
     return list(convos.values())
+
+
+# ---------------------------------------------------------------------------
+# Tarifas predefinidas
+# ---------------------------------------------------------------------------
+class TarifaBody(BaseModel):
+    nombre: str
+    monto: float
+    tipo: str = "fijo"
+    orden: int = 0
+
+
+@api_router.post("/tarifas")
+async def crear_tarifa(body: TarifaBody):
+    doc = body.model_dump()
+    res = await db.tarifas_predefinidas.insert_one(doc)
+    doc["_id"] = res.inserted_id
+    return serialize(doc)
+
+
+@api_router.get("/tarifas")
+async def list_tarifas():
+    docs = await db.tarifas_predefinidas.find().sort("orden", 1).to_list(1000)
+    return [serialize(d) for d in docs]
+
+
+@api_router.put("/tarifas/{tarifa_id}")
+async def update_tarifa(tarifa_id: str, body: TarifaBody):
+    await db.tarifas_predefinidas.update_one({"_id": to_oid(tarifa_id)}, {"$set": body.model_dump()})
+    return serialize(await db.tarifas_predefinidas.find_one({"_id": to_oid(tarifa_id)}))
+
+
+@api_router.delete("/tarifas/{tarifa_id}")
+async def delete_tarifa(tarifa_id: str):
+    await db.tarifas_predefinidas.delete_one({"_id": to_oid(tarifa_id)})
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Fotos de perfil / logo (reutiliza object storage)
+# ---------------------------------------------------------------------------
+async def _guardar_imagen(foto: UploadFile, prefix: str) -> str:
+    ext = (foto.filename or "").split(".")[-1].lower() if "." in (foto.filename or "") else "jpg"
+    path = f"{APP_NAME}/{prefix}/{uuid.uuid4().hex}.{ext}"
+    data = await foto.read()
+    result = put_object(path, data, foto.content_type or "image/jpeg")
+    await db.archivos.insert_one({"storage_path": result["path"], "content_type": foto.content_type or "image/jpeg"})
+    return f"/api/files/{result['path']}"
+
+
+@api_router.post("/perfil/{coleccion}/{doc_id}/foto")
+async def subir_foto_perfil(coleccion: str, doc_id: str, foto: UploadFile = File(...)):
+    if coleccion not in ("operadores", "usuarios_terminal"):
+        raise HTTPException(status_code=400, detail="Colección inválida")
+    url = await _guardar_imagen(foto, "perfiles")
+    await db[coleccion].update_one({"_id": to_oid(doc_id)}, {"$set": {"foto_url": url}})
+    return {"foto_url": url}
+
+
+@api_router.post("/dev/logo")
+async def subir_logo(foto: UploadFile = File(...)):
+    url = await _guardar_imagen(foto, "logo")
+    await db.config.update_one({"key": "logo"}, {"$set": {"key": "logo", "foto_url": url}}, upsert=True)
+    return {"foto_url": url}
+
+
+@api_router.get("/config/logo")
+async def get_logo():
+    c = await db.config.find_one({"key": "logo"})
+    return {"foto_url": c["foto_url"] if c else None}
+
+
+# ---------------------------------------------------------------------------
+# Panel de desarrollador
+# ---------------------------------------------------------------------------
+class DevLoginBody(BaseModel):
+    usuario: str
+    contrasena: str
+
+
+class ActivoBody(BaseModel):
+    activo: bool
+
+
+@api_router.post("/dev/login")
+async def dev_login(body: DevLoginBody):
+    if body.usuario != os.environ.get("DEV_USER") or body.contrasena != os.environ.get("DEV_PASSWORD"):
+        raise HTTPException(status_code=401, detail="Credenciales de desarrollador inválidas")
+    token = jwt.encode({"sub": "dev", "scope": "dev", "iat": datetime.now(timezone.utc)}, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return {"token": token}
+
+
+@api_router.get("/dev/cuentas")
+async def dev_list_cuentas():
+    ops = [serialize(o) for o in await db.operadores.find().to_list(1000)]
+    terms = [serialize(u) for u in await db.usuarios_terminal.find().to_list(1000)]
+    return {"operadores": ops, "usuarios_terminal": terms}
+
+
+@api_router.patch("/dev/cuentas/{coleccion}/{doc_id}")
+async def dev_toggle_cuenta(coleccion: str, doc_id: str, body: ActivoBody):
+    if coleccion not in ("operadores", "usuarios_terminal"):
+        raise HTTPException(status_code=400, detail="Colección inválida")
+    await db[coleccion].update_one({"_id": to_oid(doc_id)}, {"$set": {"activo": body.activo}})
+    return {"ok": True, "activo": body.activo}
+
+
+@api_router.get("/dev/backup")
+async def dev_backup():
+    import json
+    out = {}
+    for col in ["operadores", "clientes", "rutas", "servicios", "reportes_objetos",
+                "mensajes_chat", "usuarios_terminal", "tarifas_predefinidas", "config"]:
+        docs = await db[col].find().to_list(100000)
+        out[col] = [serialize(d) for d in docs]
+    content = json.dumps(out, ensure_ascii=False, indent=2, default=str)
+    return Response(content=content, media_type="application/json",
+                    headers={"Content-Disposition": "attachment; filename=backup_central_taxis.json"})
+
+
+@api_router.get("/dev/auditoria")
+async def dev_auditoria():
+    eventos = []
+    for s in await db.servicios.find().to_list(2000):
+        s = serialize(s)
+        eventos.append({"ts": s.get("timestamp_creacion"), "accion": "Servicio creado",
+                        "detalle": f"{s.get('origen_texto') or '—'} → {s.get('destino_texto') or '—'} ({s.get('estado')})",
+                        "extra": s.get("tipo")})
+        if s.get("timestamp_asignacion"):
+            eventos.append({"ts": s["timestamp_asignacion"], "accion": "Servicio asignado",
+                            "detalle": s.get("operador_asignado_id") or "", "extra": None})
+    for r in await db.reportes_objetos.find().to_list(2000):
+        r = serialize(r)
+        eventos.append({"ts": r.get("timestamp"), "accion": "Objeto reportado",
+                        "detalle": r.get("descripcion") or "sin descripción", "extra": None})
+    eventos = [e for e in eventos if e.get("ts")]
+    eventos.sort(key=lambda e: e["ts"], reverse=True)
+    return eventos[:200]
 
 
 # ---------------------------------------------------------------------------

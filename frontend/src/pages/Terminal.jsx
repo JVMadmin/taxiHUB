@@ -3,13 +3,13 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaf
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useNavigate } from "react-router-dom";
-import { api, WS_BASE, ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
+import { api, WS_BASE, BACKEND_URL, ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
 import { timeAgo } from "@/lib/time";
 import { taxiIcon, colorForOperador } from "@/lib/taxiIcon";
 import { ServicioModal } from "@/components/ServicioModal";
 import { TerminalMenu } from "@/components/TerminalMenu";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
-import { getTerminalToken, logoutTerminal } from "@/pages/TerminalLogin";
+import { getTerminalToken, getTerminalUser, logoutTerminal } from "@/pages/TerminalLogin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -66,6 +66,20 @@ export default function Terminal() {
   };
   const clearPick = (which) => setCoords((c) => ({ ...c, [which]: null }));
   const salirTerminal = () => { logoutTerminal(); navigate("/terminal/login"); };
+
+  const termUser = getTerminalUser();
+  const [logo, setLogo] = useState(null);
+  const [termFoto, setTermFoto] = useState(termUser?.foto_url || null);
+  const termFotoRef = useRef(null);
+  useEffect(() => { api.get("/config/logo").then((r) => setLogo(r.data.foto_url || null)).catch(() => {}); }, []);
+  const subirTermFoto = async (file) => {
+    if (!file || !termUser) return;
+    const fd = new FormData(); fd.append("foto", file);
+    const { data } = await api.post(`/perfil/usuarios_terminal/${termUser.id}/foto`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+    setTermFoto(data.foto_url);
+    localStorage.setItem("term_data", JSON.stringify({ ...termUser, foto_url: data.foto_url }));
+    toast.success("Foto actualizada");
+  };
 
   const upsert = useCallback((op) => {
     setOperadores((prev) => ({ ...prev, [op.id]: { ...prev[op.id], ...op } }));
@@ -182,10 +196,15 @@ export default function Terminal() {
 
       {/* Barra superior flotante */}
       <header className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex items-center justify-between p-4">
-        <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/85 px-4 py-2.5 backdrop-blur-md">
-          <Car className="h-5 w-5 text-emerald-400" />
+        <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/85 px-3 py-2.5 backdrop-blur-md">
+          <button onClick={() => termFotoRef.current?.click()} data-testid="term-foto-btn" className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-emerald-500/15">
+            {termFoto ? <img src={`${BACKEND_URL}${termFoto}`} alt="perfil" className="h-full w-full object-cover" />
+              : logo ? <img src={`${BACKEND_URL}${logo}`} alt="logo" className="h-full w-full object-contain p-0.5" />
+              : <Car className="h-5 w-5 text-emerald-400" />}
+          </button>
+          <input ref={termFotoRef} type="file" accept="image/*" className="hidden" onChange={(e) => subirTermFoto(e.target.files?.[0])} />
           <div>
-            <h1 className="text-sm font-bold leading-none text-zinc-50">Central de Taxis · Terminal</h1>
+            <h1 className="text-sm font-bold leading-none text-zinc-50">{termUser?.nombre || "Terminal"}</h1>
             <div className="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
               <Radio className={`h-3 w-3 ${connected ? "text-emerald-400" : "text-zinc-600"}`} />
               {connected ? "En vivo" : "Reconectando..."}

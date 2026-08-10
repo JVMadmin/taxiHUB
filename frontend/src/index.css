@@ -21,6 +21,11 @@
 [data-theme="ambar"] .border-emerald-500 { border-color: #f59e0b !important; }
 [data-theme="ambar"] .border-emerald-500\/40 { border-color: rgba(245,158,11,.40) !important; }
 
+/* Micro-interacciones globales (pulido Fase 7) */
+button { transition: transform .06s ease, background-color .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease; }
+button:active:not(:disabled) { transform: scale(0.97); }
+.leaflet-container { background: #0a0a0a; }
+
 body {
     margin: 0;
     font-family:

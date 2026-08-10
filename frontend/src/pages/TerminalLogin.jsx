@@ -99,6 +99,7 @@ export default function TerminalLogin() {
             className="text-center text-xs text-zinc-400 hover:text-zinc-200">
             {modo === "login" ? "Crear una nueva cuenta de operadora" : "Ya tengo cuenta, iniciar sesión"}
           </button>
+          <a href="/dev" data-testid="dev-link" className="text-center text-[11px] text-zinc-600 hover:text-zinc-400">Panel de desarrollador</a>
         </div>
       </form>
     </div>

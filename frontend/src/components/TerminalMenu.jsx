@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   PhoneCall, Users, UserSquare, Package, MessageSquare, Route as RouteIcon,
-  X, Plus, Check, Send, ChevronDown, ChevronRight, ClipboardList,
+  X, Plus, Check, Send, ChevronDown, ChevronRight, ClipboardList, DollarSign, Trash2,
 } from "lucide-react";
 
 const SECTIONS = [
@@ -17,6 +17,7 @@ const SECTIONS = [
   { id: "reportes", label: "Objetos reportados", icon: Package },
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "rutas", label: "Rutas", icon: RouteIcon },
+  { id: "tarifas", label: "Tarifas", icon: DollarSign },
 ];
 
 export function TerminalMenu({ operadores, rutas, onRutasChanged, onDataChanged, onOpenServicio, liveMessage, liveReporte }) {
@@ -72,6 +73,7 @@ export function TerminalMenu({ operadores, rutas, onRutasChanged, onDataChanged,
               {active === "reportes" && <ReportesPanel liveReporte={liveReporte} />}
               {active === "chat" && <ChatPanel liveMessage={liveMessage} />}
               {active === "rutas" && <RutasPanel rutas={rutas} onRutasChanged={onRutasChanged} />}
+              {active === "tarifas" && <TarifasPanel />}
             </div>
           </div>
         )}
@@ -411,6 +413,40 @@ function RutasPanel({ rutas, onRutasChanged }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/* ---------------- Tarifas ---------------- */
+function TarifasPanel() {
+  const [tarifas, setTarifas] = useState([]);
+  const [f, setF] = useState({ nombre: "", monto: "" });
+  const load = useCallback(() => api.get("/tarifas").then((r) => setTarifas(r.data)), []);
+  useEffect(() => { load(); }, [load]);
+  const crear = async () => {
+    if (!f.nombre || !f.monto) { toast.error("Nombre y precio requeridos"); return; }
+    await api.post("/tarifas", { nombre: f.nombre, monto: Number(f.monto), orden: tarifas.length + 1 });
+    setF({ nombre: "", monto: "" }); load();
+  };
+  const actualizar = async (t, patch) => { await api.put(`/tarifas/${t.id}`, { nombre: t.nombre, monto: t.monto, tipo: t.tipo || "fijo", orden: t.orden || 0, ...patch }); load(); };
+  const eliminar = async (id) => { await api.delete(`/tarifas/${id}`); load(); };
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+        <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Nueva tarifa</div>
+        <div className="flex gap-2">
+          <Input value={f.nombre} onChange={(e) => setF((p) => ({ ...p, nombre: e.target.value }))} placeholder="Nombre" className="h-8 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="tarifa-nombre" />
+          <Input type="number" value={f.monto} onChange={(e) => setF((p) => ({ ...p, monto: e.target.value }))} placeholder="$" className="h-8 w-20 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" data-testid="tarifa-monto" />
+          <Button data-testid="tarifa-crear" onClick={crear} size="icon" className="h-8 w-9 bg-emerald-500 text-zinc-950 hover:bg-emerald-400"><Plus className="h-4 w-4" /></Button>
+        </div>
+      </div>
+      {tarifas.map((t) => (
+        <div key={t.id} data-testid={`tarifa-row-${t.id}`} className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2">
+          <Input defaultValue={t.nombre} onBlur={(e) => e.target.value !== t.nombre && actualizar(t, { nombre: e.target.value })} className="h-8 flex-1 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" />
+          <Input type="number" defaultValue={t.monto} onBlur={(e) => Number(e.target.value) !== t.monto && actualizar(t, { monto: Number(e.target.value) })} className="h-8 w-20 border-zinc-700 bg-zinc-800 text-sm text-zinc-100" />
+          <button data-testid={`tarifa-del-${t.id}`} onClick={() => eliminar(t.id)} className="text-zinc-500 hover:text-red-400"><Trash2 className="h-4 w-4" /></button>
+        </div>
+      ))}
     </div>
   );
 }

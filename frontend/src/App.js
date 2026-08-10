@@ -6,6 +6,7 @@ import Terminal from "@/pages/Terminal";
 import OperadorLogin from "@/pages/OperadorLogin";
 import OperadorApp from "@/pages/OperadorApp";
 import TerminalLogin from "@/pages/TerminalLogin";
+import DevPanel from "@/pages/DevPanel";
 import { applyTheme, getTheme } from "@/lib/theme";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/terminal/login" element={<TerminalLogin />} />
           <Route path="/login" element={<OperadorLogin />} />
           <Route path="/operador" element={<OperadorApp />} />
+          <Route path="/dev" element={<DevPanel />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

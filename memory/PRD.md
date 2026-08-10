@@ -43,6 +43,15 @@ Plataforma de despacho para central de taxis con dos interfaces: Terminal (panel
 - App operador: "Iniciar servicio" (origen/destino/costo → estado ocupado) y "Terminar servicio" (→ libre); guardado en `servicios` con `tipo: "operador"`, `origen_texto`, `destino_texto`, `costo`.
 - Paleta de colores (Terminal + operador): Esmeralda (default), Océano, Ámbar vía `data-theme` en localStorage.
 
+### Fase 6b — Tarifas, sesión/contador persistente (2026-08-10)
+- Backend: modelo `tarifas_predefinidas` (nombre, monto, tipo, orden) + CRUD; servicio con `tarifa_id`; operador con `inicio_operacion` (timestamp) seteado en el endpoint de estado; login rechaza cuentas `activo:false`.
+- Terminal: sección "Tarifas" (crear/editar/eliminar nombre+precio).
+- App operador: "Iniciar servicio" muestra botones de tarifa (un toque = crear servicio + ocupado) + "Precio libre"; origen/destino OPCIONALES. Contador de operación calculado como `ahora - inicio_operacion` (no timer local, persiste al reabrir). Sesión persistida (token localStorage). Wake Lock API para mantener pantalla activa en turno.
+
+### Fase 7 — Fotos de perfil, panel de desarrollador, pulido (2026-08-10)
+- Backend: `foto_url` en operadores y usuarios_terminal; subida reutilizando object storage (`POST /api/perfil/{coleccion}/{id}/foto`, servida por `/api/files/{path}`). Logo en `config` (`POST /api/dev/logo`, `GET /api/config/logo`). Panel dev: `POST /api/dev/login`, `GET /api/dev/cuentas`, `PATCH /api/dev/cuentas/...` (activar/desactivar), `GET /api/dev/backup` (export JSON), `GET /api/dev/auditoria`.
+- Frontend: fotos de perfil en headers de Terminal y operador; página `/dev` con login propio (dev/dev2024) y pestañas Logotipo, Cuentas, Respaldo, Auditoría. Micro-interacciones globales (active:scale) sobre el tema oscuro.
+
 ## Backlog
 - P0: Fase 2 — App del operador (login, entrar/salir, botones de estado, selector de ruta, geolocalización cada 8-10s).
 - P1: Fase 4 — Gestión de rutas (crear/editar color) desde Terminal.
