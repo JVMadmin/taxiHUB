@@ -1,0 +1,861 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   taxiHUB — Design System (Fase 9)
+   Identidad: software profesional de gestión y despacho de taxis.
+   Tema oscuro, acento de marca vía variables CSS (multi-paleta).
+   ========================================================================== */
+
+/* ---- Acento de marca por paleta (esmeralda = default) ---- */
+:root,
+[data-theme="esmeralda"] {
+  --brand: 158 64% 52%;
+  --brand-bright: 160 84% 62%;
+  --brand-strong: 160 84% 39%;
+  --brand-contrast: 240 6% 4%;
+  --surface: 240 6% 7%;
+  --surface-2: 240 5% 10%;
+  --surface-3: 240 4% 14%;
+}
+
+[data-theme="oceano"] {
+  --brand: 217 91% 60%;
+  --brand-bright: 217 91% 67%;
+  --brand-strong: 217 91% 53%;
+}
+
+[data-theme="ambar"] {
+  --brand: 38 92% 50%;
+  --brand-bright: 38 92% 56%;
+  --brand-strong: 26 90% 44%;
+}
+
+/* ---- Paletas heredadas (emerald = default sin atributo) ---- */
+[data-theme="oceano"] .bg-emerald-500 { background-color: #3b82f6 !important; }
+[data-theme="oceano"] .hover\:bg-emerald-400:hover { background-color: #60a5fa !important; }
+[data-theme="oceano"] .text-emerald-400 { color: #60a5fa !important; }
+[data-theme="oceano"] .text-emerald-300 { color: #93c5fd !important; }
+[data-theme="oceano"] .bg-emerald-500\/15 { background-color: rgba(59,130,246,.15) !important; }
+[data-theme="oceano"] .bg-emerald-500\/10 { background-color: rgba(59,130,246,.10) !important; }
+[data-theme="oceano"] .border-emerald-500 { border-color: #3b82f6 !important; }
+[data-theme="oceano"] .border-emerald-500\/40 { border-color: rgba(59,130,246,.40) !important; }
+
+[data-theme="ambar"] .bg-emerald-500 { background-color: #f59e0b !important; }
+[data-theme="ambar"] .hover\:bg-emerald-400:hover { background-color: #fbbf24 !important; }
+[data-theme="ambar"] .text-emerald-400 { color: #fbbf24 !important; }
+[data-theme="ambar"] .text-emerald-300 { color: #fcd34d !important; }
+[data-theme="ambar"] .bg-emerald-500\/15 { background-color: rgba(245,158,11,.15) !important; }
+[data-theme="ambar"] .bg-emerald-500\/10 { background-color: rgba(245,158,11,.10) !important; }
+[data-theme="ambar"] .border-emerald-500 { border-color: #f59e0b !important; }
+[data-theme="ambar"] .border-emerald-500\/40 { border-color: rgba(245,158,11,.40) !important; }
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+}
+
+code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+/* Selección y scrollbars: superficies del sistema, no defaults sin dueño */
+::selection {
+  background: hsl(var(--brand) / 30%);
+  color: hsl(var(--foreground));
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(240 5% 22%) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: hsl(240 5% 22%);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 5% 30%);
+}
+
+:focus-visible {
+  outline: 2px solid hsl(var(--brand) / 70%);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
+@layer base {
+  :root {
+    --background: 240 6% 4%;
+    --foreground: 0 0% 96%;
+    --card: 240 5% 9%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 5% 9%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 158 64% 52%;
+    --primary-foreground: 240 6% 4%;
+    --secondary: 240 5% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 5% 58%;
+    --accent: 240 5% 14%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 17%;
+    --input: 240 5% 20%;
+    --ring: 158 64% 52%;
+    --chart-1: 158 64% 52%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 271 81% 56%;
+    --radius: 0.625rem;
+    /* Opacidad de las superficies flotantes (Terminal la ajusta por slider). */
+    --ui-alpha: 0.85;
+  }
+
+  .dark {
+    --background: 240 6% 4%;
+    --foreground: 0 0% 96%;
+    --card: 240 5% 9%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 5% 9%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 158 64% 52%;
+    --primary-foreground: 240 6% 4%;
+    --secondary: 240 5% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 5% 58%;
+    --accent: 240 5% 14%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 17%;
+    --input: 240 5% 20%;
+    --ring: 158 64% 52%;
+    --chart-1: 158 64% 52%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 271 81% 56%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  [data-debug-wrapper="true"] {
+    display: contents !important;
+  }
+
+  [data-debug-wrapper="true"] > * {
+    margin-left: inherit;
+    margin-right: inherit;
+    margin-top: inherit;
+    margin-bottom: inherit;
+    padding-left: inherit;
+    padding-right: inherit;
+    padding-top: inherit;
+    padding-bottom: inherit;
+    column-gap: inherit;
+    row-gap: inherit;
+    gap: inherit;
+    border-left-width: inherit;
+    border-right-width: inherit;
+    border-top-width: inherit;
+    border-bottom-width: inherit;
+    border-left-style: inherit;
+    border-right-style: inherit;
+    border-top-style: inherit;
+    border-bottom-style: inherit;
+    border-left-color: inherit;
+    border-right-color: inherit;
+    border-top-color: inherit;
+    border-bottom-color: inherit;
+  }
+}
+
+/* ==========================================================================
+   Componentes del sistema (Fase 9)
+   ========================================================================== */
+
+@layer components {
+  /* Panel flotante sobre mapa / fondo (glassmorphism FUNCIONAL: legibilidad) */
+  .glass-panel {
+    background: hsl(240 6% 6% / var(--glass-alpha, 0.78));
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid hsl(240 5% 18% / 0.9);
+  }
+
+  /* Elevaciones: 1 borde O 1 sombra (nunca ambos "fantasma") */
+  .elev-1 {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.28);
+  }
+  .elev-2 {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 10px 24px rgba(0, 0, 0, 0.32);
+  }
+  .elev-3 {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 18px 44px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Esqueleto de carga (shimmer) */
+  .th-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: hsl(240 5% 12%);
+    border-radius: calc(var(--radius) - 2px);
+  }
+  .th-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(240 5% 17%),
+      transparent
+    );
+    animation: shimmer 1.4s infinite;
+  }
+
+  /* Botón de acción principal con elevación sutil (dispatcher/driver) */
+  .btn-primary-elev {
+    background: hsl(var(--brand));
+    color: hsl(var(--brand-contrast));
+    font-weight: 700;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 0 hsl(var(--brand-strong)), 0 8px 20px hsl(var(--brand) / 25%);
+    transition: transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease, filter 0.15s ease;
+  }
+  .btn-primary-elev:hover:not(:disabled) {
+    background: hsl(var(--brand-bright));
+    filter: brightness(1.02);
+  }
+  .btn-primary-elev:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 0 0 hsl(var(--brand-strong)), 0 4px 12px hsl(var(--brand) / 20%);
+  }
+  .btn-primary-elev:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn-danger-elev {
+    background: hsl(var(--destructive));
+    color: #fff;
+    font-weight: 700;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 0 hsl(0 72% 42%), 0 8px 20px hsl(0 72% 51% / 25%);
+    transition: transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  .btn-danger-elev:hover:not(:disabled) {
+    background: hsl(0 78% 56%);
+  }
+  .btn-danger-elev:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 0 0 hsl(0 72% 42%), 0 4px 12px hsl(0 72% 51% / 20%);
+  }
+  .btn-danger-elev:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* Chip de filtro */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 999px;
+    border: 1px solid hsl(240 5% 22%);
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
+    color: hsl(0 0% 78%);
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  }
+  .chip:hover {
+    border-color: hsl(240 5% 34%);
+    color: hsl(0 0% 96%);
+  }
+  .chip-active {
+    border-color: hsl(var(--brand) / 60%);
+    background: hsl(var(--brand) / 12%);
+    color: hsl(var(--brand-bright));
+  }
+
+  /* ==========================================================================
+     Utilities del sistema (rediseño Fase 12)
+     Double-Bezel "machined": shell exterior + núcleo interior (radios concéntricos).
+     ========================================================================== */
+
+  /* Números tabulares: evita layout shift en contadores/temporizadores/montos */
+  .mono-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Curva de motion del sistema (ease-out fuerte). Aplicar a entradas/paneles. */
+  .ease-motion {
+    transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  /* Shell exterior de un contenedor "machined" (chasis). */
+  .bezel-shell {
+    background: hsl(240 5% 9% / var(--ui-alpha, 0.85));
+    border: 1px solid hsl(240 5% 22% / var(--ui-alpha, 0.85));
+    padding: 0.375rem;
+    border-radius: calc(var(--radius) + 0.375rem);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Superficie UI estándar que responde al alpha global (slider del Terminal). */
+  .surface-ui {
+    background: hsl(240 5% 9% / var(--ui-alpha, 0.85));
+    border: 1px solid hsl(240 5% 18% / var(--ui-alpha, 0.85));
+  }
+
+  /* Panel arrastrable (Terminal): el pointer-down en zonas no interactivas mueve. */
+  .th-draggable {
+    touch-action: pan-y;
+    will-change: transform;
+    -webkit-user-drag: none;
+  }
+  .th-draggable * {
+    -webkit-user-drag: none;
+  }
+  .th-draggable.active-drag * {
+    pointer-events: none;
+  }
+
+  /* Núcleo interior de un contenedor "machined" (contenido). Radio concéntrico. */
+  .bezel-core {
+    background: hsl(240 5% 11%);
+    border: 1px solid hsl(240 5% 16%);
+    border-radius: var(--radius);
+  }
+
+  /* Celda de dato tabular (label + valor) para paneles/mission card. */
+  .data-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+  }
+  .data-cell-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: hsl(240 5% 50%);
+  }
+  .data-cell-value {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: hsl(0 0% 94%);
+  }
+
+  /* Entrada "inset": más oscura que la superficie (recibe contenido). */
+  .input-inset {
+    background: hsl(240 5% 7%) !important;
+    border-color: hsl(240 5% 16%) !important;
+  }
+
+  /* Tabla de datos compacta */
+  .th-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+  }
+  .th-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: hsl(240 5% 55%);
+    border-bottom: 1px solid hsl(240 5% 17%);
+    white-space: nowrap;
+  }
+  .th-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid hsl(240 5% 14%);
+    vertical-align: middle;
+  }
+  .th-table tr:hover td {
+    background: hsl(240 5% 9.5%);
+  }
+  .th-table tr:last-child td {
+    border-bottom: 0;
+  }
+}
+
+/* ==========================================================================
+   Mapa Leaflet (pulido Fase 9)
+   ========================================================================== */
+
+.leaflet-container {
+  background: #0a0a0c;
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  background: hsl(240 6% 8% / var(--ui-alpha, 0.96));
+  color: hsl(0 0% 94%);
+  border: 1px solid hsl(240 5% 20%);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.leaflet-popup-content {
+  margin: 0.75rem 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.leaflet-popup-tip {
+  background: hsl(240 6% 8% / var(--ui-alpha, 0.96));
+  border: 1px solid hsl(240 5% 20%);
+}
+
+/* Ruta a destino: trazo de marca con flujo animado de sentido (Leaflet pone
+   `className` directamente sobre el <path>). */
+@keyframes thDashFlow {
+  to { stroke-dashoffset: -80; }
+}
+.th-route-flow {
+  animation: thDashFlow 1.4s linear infinite;
+}
+
+/* Indicador de dirección (flecha) pulsando sobre la ruta. */
+@keyframes thRouteArrowPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(0.82); opacity: 0.75; }
+}
+.th-route-arrow {
+  animation: thRouteArrowPulse 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+.leaflet-bar {
+  border: 1px solid hsl(240 5% 20%) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+.leaflet-bar a {
+  background: hsl(240 6% 8%) !important;
+  color: hsl(0 0% 90%) !important;
+  border-bottom: 1px solid hsl(240 5% 18%) !important;
+}
+.leaflet-bar a:hover {
+  background: hsl(240 5% 14%) !important;
+}
+.leaflet-control-attribution {
+  background: hsl(240 6% 4% / 0.7) !important;
+  color: hsl(240 5% 50%) !important;
+  font-size: 9px !important;
+}
+.leaflet-control-attribution a {
+  color: hsl(240 5% 60%) !important;
+}
+
+/* Micro-interacciones globales (mantenidas de Fase 7) */
+button {
+  transition: transform 0.06s ease, background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ==========================================================================
+   Animaciones del sistema
+   ========================================================================== */
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes ping-soft {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--brand) / 50%);
+  }
+  100% {
+    box-shadow: 0 0 0 14px hsl(var(--brand) / 0%);
+  }
+}
+
+/* Anillo del marcador "placa" (dirección visual aprobada, ver
+   memory/DIRECCION_VISUAL.md): pulso de selección en el mapa. */
+@keyframes thMarkerRing {
+  0% { transform: scale(0.85); opacity: 0.85; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+.th-marker-ring {
+  animation: thMarkerRing 1.7s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   Modo claro — piel "papel cálido" (Tipo C)
+   Mismo thumbl: bezel/machined, acento de marca por paleta, pero superficie
+   de papel cáildo, tinta grafito, profundidad por sombras suaves.
+   Modo oscuro sigue siendo el default (sin [data-mode]).
+   ========================================================================== */
+
+html[data-mode="claro"] {
+  color-scheme: light;
+}
+
+:root[data-mode="claro"] {
+  --background: 45 15% 91%;
+  --foreground: 26 14% 11%;
+  --card: 45 20% 96%;
+  --card-foreground: 26 14% 11%;
+  --popover: 45 20% 97%;
+  --popover-foreground: 26 14% 11%;
+  --primary: 158 70% 42%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 44 18% 90%;
+  --secondary-foreground: 26 14% 11%;
+  --muted: 44 10% 92%;
+  --muted-foreground: 32 8% 44%;
+  --accent: 44 14% 90%;
+  --accent-foreground: 26 14% 11%;
+  --destructive: 0 72% 46%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 40 10% 80%;
+  --input: 40 10% 80%;
+  --ring: 158 70% 42%;
+  --surface: 45 14% 94%;
+  --surface-2: 45 18% 91%;
+  --surface-3: 44 10% 88%;
+  --brand: 158 72% 42%;
+  --brand-bright: 160 82% 35%;
+  --brand-strong: 160 84% 28%;
+  --brand-contrast: 0 0% 100%;
+  --th-hi: rgba(255, 255, 255, 0.85);
+  --th-lo: rgba(60, 52, 40, 0.18);
+  --th-drop: rgba(60, 52, 40, 0.22);
+}
+
+[data-theme="oceano"][data-mode="claro"] {
+  --brand: 217 84% 47%;
+  --brand-bright: 217 84% 40%;
+  --brand-strong: 217 88% 35%;
+}
+
+[data-theme="ambar"][data-mode="claro"] {
+  --brand: 38 95% 45%;
+  --brand-bright: 38 95% 35%;
+  --brand-strong: 28 90% 40%;
+}
+
+/* ---- Overrides de utilidades zinc (las pantallas usan zinc-* fijo) ---- */
+[data-mode="claro"] .bg-zinc-950 { background-color: #f3eee4 !important; }
+[data-mode="claro"] .bg-zinc-900 { background-color: #faf7f0 !important; }
+[data-mode="claro"] .bg-zinc-800 { background-color: #efe8db !important; }
+[data-mode="claro"] .bg-zinc-700 { background-color: #e4dbca !important; }
+[data-mode="claro"] .bg-zinc-950\/95 { background-color: rgba(243, 238, 228, 0.95) !important; }
+[data-mode="claro"] .bg-zinc-950\/90 { background-color: rgba(243, 238, 228, 0.9) !important; }
+[data-mode="claro"] .bg-zinc-900\/95 { background-color: rgba(250, 247, 240, 0.95) !important; }
+[data-mode="claro"] .bg-zinc-900\/80 { background-color: rgba(250, 247, 240, 0.8) !important; }
+[data-mode="claro"] .bg-zinc-900\/70 { background-color: rgba(250, 247, 240, 0.7) !important; }
+[data-mode="claro"] .bg-zinc-900\/60 { background-color: rgba(250, 247, 240, 0.6) !important; }
+[data-mode="claro"] .bg-zinc-900\/40 { background-color: rgba(250, 247, 240, 0.4) !important; }
+[data-mode="claro"] .bg-zinc-800\/80 { background-color: rgba(239, 232, 219, 0.8) !important; }
+[data-mode="claro"] .bg-zinc-800\/70 { background-color: rgba(239, 232, 219, 0.7) !important; }
+[data-mode="claro"] .bg-zinc-800\/60 { background-color: rgba(239, 232, 219, 0.6) !important; }
+[data-mode="claro"] .bg-zinc-800\/40 { background-color: rgba(239, 232, 219, 0.4) !important; }
+
+[data-mode="claro"] .text-zinc-50 { color: #1f1c15 !important; }
+[data-mode="claro"] .text-zinc-100 { color: #26221a !important; }
+[data-mode="claro"] .text-zinc-200 { color: #37332a !important; }
+[data-mode="claro"] .text-zinc-300 { color: #555045 !important; }
+[data-mode="claro"] .text-zinc-400 { color: #837c6e !important; }
+[data-mode="claro"] .text-zinc-500 { color: #6c6559 !important; }
+[data-mode="claro"] .text-zinc-600 { color: #5a5348 !important; }
+[data-mode="claro"] .placeholder\:text-zinc-500::placeholder { color: #a79f8e !important; }
+
+[data-mode="claro"] .border-zinc-700 { border-color: #ddd5c3 !important; }
+[data-mode="claro"] .border-zinc-800 { border-color: rgba(60, 52, 40, 0.15) !important; }
+[data-mode="claro"] .border-zinc-800\/80 { border-color: rgba(60, 52, 40, 0.1) !important; }
+[data-mode="claro"] .border-zinc-800\/60 { border-color: rgba(60, 52, 40, 0.07) !important; }
+[data-mode="claro"] .ring-zinc-800 { --tw-ring-color: rgba(60, 52, 40, 0.15) !important; }
+
+/* ---- Componentes del sistema en claro ---- */
+[data-mode="claro"] .glass-panel {
+  background: rgba(250, 246, 238, 0.78);
+  border: 1px solid rgba(60, 52, 40, 0.13);
+}
+[data-mode="claro"] .bezel-shell {
+  background: rgba(60, 52, 40, 0.055);
+  border: 1px solid rgba(60, 52, 40, 0.16);
+}
+[data-mode="claro"] .bezel-core {
+  background: #fbf8f1;
+  border: 1px solid rgba(60, 52, 40, 0.1);
+}
+[data-mode="claro"] .input-inset {
+  background: #ece5d7 !important;
+  border-color: #d8cfba !important;
+}
+[data-mode="claro"] .data-cell-value { color: #26221a; }
+[data-mode="claro"] .th-skeleton { background: #e9e1d1; }
+[data-mode="claro"] .th-skeleton::after {
+  background: linear-gradient(90deg, transparent, #f4efe3, transparent);
+}
+
+[data-mode="claro"] .chip {
+  border-color: #d8cfba;
+  color: #5c554b;
+}
+[data-mode="claro"] .chip:hover {
+  border-color: #b9ae96;
+  color: #26221a;
+}
+[data-mode="claro"] .elev-1 {
+  box-shadow: 0 1px 2px rgba(60, 52, 40, 0.08), 0 2px 8px rgba(60, 52, 40, 0.05);
+}
+[data-mode="claro"] .elev-2 {
+  box-shadow: 0 2px 6px rgba(60, 52, 40, 0.07), 0 12px 28px rgba(60, 52, 40, 0.1);
+}
+[data-mode="claro"] .elev-3 {
+  box-shadow: 0 4px 12px rgba(60, 52, 40, 0.09), 0 20px 48px rgba(60, 52, 40, 0.15);
+}
+
+[data-mode="claro"] ::selection {
+  color: #26221a;
+  background: hsl(var(--brand) / 30%);
+}
+[data-mode="claro"] * {
+  scrollbar-color: hsl(40 10% 74%) transparent;
+}
+[data-mode="claro"] *::-webkit-scrollbar-thumb {
+  background: hsl(40 10% 74%);
+}
+[data-mode="claro"] *::-webkit-scrollbar-thumb:hover {
+  background: hsl(40 10% 64%);
+}
+[data-mode="claro"] :focus-visible {
+  outline-color: hsl(var(--brand) / 60%);
+}
+
+/* ---- Mapa Leaflet en claro ---- */
+[data-mode="claro"] .leaflet-container { background: #efebe0; }
+[data-mode="claro"] .leaflet-popup-content-wrapper {
+  background: rgba(250, 247, 240, 0.98);
+  color: #26221a;
+  border: 1px solid rgba(60, 52, 40, 0.16);
+  box-shadow: 0 12px 32px rgba(60, 52, 40, 0.18);
+}
+[data-mode="claro"] .leaflet-popup-tip {
+  background: rgba(250, 247, 240, 0.98);
+  border: 1px solid rgba(60, 52, 40, 0.16);
+}
+[data-mode="claro"] .leaflet-bar {
+  border: 1px solid rgba(60, 52, 40, 0.16) !important;
+  box-shadow: 0 4px 14px rgba(60, 52, 40, 0.12) !important;
+}
+[data-mode="claro"] .leaflet-bar a {
+  background: #faf7f0 !important;
+  color: #33302a !important;
+  border-bottom: 1px solid rgba(60, 52, 40, 0.1) !important;
+}
+[data-mode="claro"] .leaflet-bar a:hover {
+  background: #efe8db !important;
+}
+[data-mode="claro"] .leaflet-control-attribution {
+  background: rgba(243, 238, 228, 0.75) !important;
+  color: #8c8577 !important;
+}
+[data-mode="claro"] .leaflet-control-attribution a {
+  color: #6e675c !important;
+}
+
+/* ==========================================================================
+   Tratamiento "3D" sutil (machined / chasis): botones de icono elevados e
+   iconos con brillo definido. Responde al modo para no romper contraste.
+   ========================================================================== */
+
+:root {
+  --th-hi: rgba(255, 255, 255, 0.1);
+  --th-lo: rgba(0, 0, 0, 0.34);
+  --th-drop: rgba(0, 0, 0, 0.45);
+}
+
+/* Botón de icono elevado (chasis): luz interior arriba, sombra interior abajo */
+.th-3d {
+  box-shadow:
+    inset 0 1px 0 var(--th-hi),
+    inset 0 -2px 3px var(--th-lo),
+    0 1px 2px var(--th-drop),
+    0 3px 8px rgba(0, 0, 0, 0.22);
+  transition: transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease,
+    color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+.th-3d:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.th-3d:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 3px var(--th-lo),
+    inset 0 1px 0 var(--th-lo),
+    0 1px 1px rgba(0, 0, 0, 0.3);
+}
+[data-mode="claro"] .th-3d:active:not(:disabled) {
+  box-shadow:
+    inset 0 2px 3px rgba(60, 52, 40, 0.2),
+    inset 0 1px 0 rgba(60, 52, 40, 0.18),
+    0 1px 1px rgba(60, 52, 40, 0.14);
+}
+
+/* Icono con profundidad de vidrio/metal */
+.th-icon-3d {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.28));
+}
+[data-mode="claro"] .th-icon-3d {
+  filter: drop-shadow(0 1px 1px rgba(60, 52, 40, 0.25));
+}
+
+/* CTA principal: añade destello superior al elevado "machined" */
+.btn-primary-elev {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 0 hsl(var(--brand-strong)),
+    0 8px 20px hsl(var(--brand) / 30%);
+}
+[data-mode="claro"] .btn-primary-elev {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 2px 0 hsl(var(--brand-strong)),
+    0 8px 18px hsl(var(--brand) / 38%);
+}
+[data-mode="claro"] .btn-danger-elev {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 0 hsl(0 72% 40%),
+    0 8px 18px hsl(0 72% 48% / 35%);
+}
+
+/* Badge semántico (estado/gps/conexión): tinte+borde por color-mix desde
+   una variable de color, con variante de contraste en claro. */
+.sem-badge {
+  --sc: #22c55e;
+  color: var(--sc);
+  background: color-mix(in srgb, var(--sc) 15%, transparent);
+  border-color: color-mix(in srgb, var(--sc) 40%, transparent);
+}
+[data-mode="claro"] .sem-badge {
+  color: color-mix(in srgb, var(--sc) 82%, #1c1b1a);
+}

@@ -1,0 +1,264 @@
+INFO:     Started server process [25616]
+INFO:     Waiting for application startup.
+2026-08-18 19:18:39,299 - central_taxis - INFO - Migraciones aplicadas (sitios, sitio_id, vehículos backfill, tipos de vehículo)
+2026-08-18 19:18:39,324 - central_taxis - INFO - Directorio de archivos listo: C:\Users\Valerie Horchata\Desktop\JESUS\proyectos\taxiHUB-main\backend\uploads
+2026-08-18 19:18:39,325 - central_taxis - INFO - Central de Taxis API iniciada
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     ('127.0.0.1', 65162) - "WebSocket /api/ws/pasajero/6a84ccc9dec12eb5675961f0?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTg0Y2NjOWRlYzEyZWI1Njc1OTYxZjAiLCJ1c3VhcmlvIjoidGVzdHZlcmlmeTEiLCJzY29wZSI6InBhc2FqZXJvIiwiaWF0IjoxNzg3MDg4MDczfQ.e3yeaCXFVVpRfTG8VRAISL8KJicKJ6iZy-REbDW-1x0" [accepted]
+C:\Users\Valerie Horchata\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\jwt\api_jwt.py:368: InsecureKeyLengthWarning: The HMAC key is 28 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+  decoded = self.decode_complete(
+INFO:     connection open
+INFO:     127.0.0.1:50574 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50575 - "GET /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 53477) - "WebSocket /api/ws/pasajero/6a84ccc9dec12eb5675961f0?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTg0Y2NjOWRlYzEyZWI1Njc1OTYxZjAiLCJ1c3VhcmlvIjoidGVzdHZlcmlmeTEiLCJzY29wZSI6InBhc2FqZXJvIiwiaWF0IjoxNzg3MDg4MDczfQ.e3yeaCXFVVpRfTG8VRAISL8KJicKJ6iZy-REbDW-1x0" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     ('127.0.0.1', 56577) - "WebSocket /api/ws/pasajero/6a84ccc9dec12eb5675961f0?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTg0Y2NjOWRlYzEyZWI1Njc1OTYxZjAiLCJ1c3VhcmlvIjoidGVzdHZlcmlmeTEiLCJzY29wZSI6InBhc2FqZXJvIiwiaWF0IjoxNzg3MDg4MDczfQ.e3yeaCXFVVpRfTG8VRAISL8KJicKJ6iZy-REbDW-1x0" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:50954 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50954 - "OPTIONS /api/clientes/me/servicios HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63492 - "GET /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50954 - "GET /api/clientes/me/servicios HTTP/1.1" 200 OK
+2026-08-18 19:18:51,572 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-91.984749,17.514825;-91.981316,17.519736?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:50954 - "POST /api/routing/route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52606 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52606 - "OPTIONS /api/servicios/6a85040a4afde437432d7f15/cancelar HTTP/1.1" 200 OK
+2026-08-18 19:19:01,732 - central_taxis - INFO - servicio cancelado id=6a85040a4afde437432d7f15
+INFO:     127.0.0.1:52606 - "POST /api/servicios/6a85040a4afde437432d7f15/cancelar HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52606 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60553 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+2026-08-18 19:19:18,361 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-91.984749,17.514825;-91.981316,17.519736?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:58351 - "POST /api/routing/route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58351 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+2026-08-18 19:19:25,394 - central_taxis - INFO - servicio creado id=6a85049db5fc91c4b6473d4b tipo=pasajero estado=pendiente
+INFO:     127.0.0.1:56091 - "POST /api/servicios HTTP/1.1" 200 OK
+2026-08-18 19:19:25,992 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-91.984749,17.514825;-91.981316,17.519736?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:56091 - "POST /api/routing/route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56091 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55905 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 64041) - "WebSocket /api/ws/terminal?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgxNGYzZjUzZDIxZTI5YTRjZTE0MTkiLCJ1c3VhcmlvIjoiY2VudHJhbCIsInNjb3BlIjoidGVybWluYWwiLCJpYXQiOjE3ODcwODU1MDh9.aK32m_IwOsYk0EgyKebHzApcczspWZ07pDV3uOyqndE" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55905 - "OPTIONS /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63301 - "OPTIONS /api/config/logo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64497 - "OPTIONS /api/operadores HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61155 - "OPTIONS /api/rutas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52948 - "GET /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60581 - "GET /api/rutas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64497 - "GET /api/operadores HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60222 - "GET /api/config/logo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55457 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64628 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:49306 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49306 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+2026-08-18 19:20:03,402 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-91.984749,17.514825;-91.981316,17.519736?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:49306 - "POST /api/routing/route HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 52744) - "WebSocket /api/ws/pasajero/6a8368d3bedec069527fd7bd?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgzNjhkM2JlZGVjMDY5NTI3ZmQ3YmQiLCJ1c3VhcmlvIjoiY2xpMSIsInNjb3BlIjoicGFzYWplcm8iLCJpYXQiOjE3ODY5OTY5NDd9.VqvAlZjV5oFe89rVt9_IJvpTjD6hHjHlIXdrOG60rUU" [accepted]
+INFO:     127.0.0.1:59603 - "OPTIONS /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     connection open
+INFO:     127.0.0.1:56107 - "OPTIONS /api/clientes/me/servicios HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56137 - "OPTIONS /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56107 - "GET /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59603 - "GET /api/clientes/me/servicios HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52312 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52312 - "OPTIONS /api/routing/route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59603 - "OPTIONS /api/routing/route HTTP/1.1" 200 OK
+2026-08-18 19:20:37,727 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-92.015231,17.725783;-91.980965,17.507612?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:56107 - "POST /api/routing/route HTTP/1.1" 200 OK
+2026-08-18 19:20:37,741 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-92.015207,17.725738;-91.980965,17.507612?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:52312 - "POST /api/routing/route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54769 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59210 - "OPTIONS /api/terminal/login HTTP/1.1" 200 OK
+C:\Users\Valerie Horchata\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\jwt\api_jwt.py:147: InsecureKeyLengthWarning: The HMAC key is 28 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+  return self._jws.encode(
+INFO:     127.0.0.1:59210 - "POST /api/terminal/login HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 63976) - "WebSocket /api/ws/terminal?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgxNGYzZjUzZDIxZTI5YTRjZTE0MTkiLCJ1c3VhcmlvIjoiY2VudHJhbCIsInNjb3BlIjoidGVybWluYWwiLCJpYXQiOjE3ODcxMDI0NDd9.qhfh982amcTx9GWVYcVFT4iuC40SQI6yHdrPzGvZbIw" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:59210 - "OPTIONS /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54446 - "OPTIONS /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56664 - "OPTIONS /api/config/logo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56664 - "OPTIONS /api/operadores HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54446 - "GET /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60553 - "OPTIONS /api/rutas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61635 - "GET /api/config/logo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59210 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54446 - "GET /api/rutas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56664 - "GET /api/operadores HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53860 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58514 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58514 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53289 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54342 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54619 - "OPTIONS /api/rutas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57913 - "OPTIONS /api/tarifas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61988 - "OPTIONS /api/config/logo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54342 - "OPTIONS /api/servicios/mis-activos HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62711 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57913 - "GET /api/config/logo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54619 - "GET /api/rutas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61363 - "GET /api/tarifas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61988 - "GET /api/servicios/mis-activos HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 65173) - "WebSocket /api/ws/operador/6a81557b53d21e29a4ce141e?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgxNTU3YjUzZDIxZTI5YTRjZTE0MWUiLCJ1c3VhcmlvIjoib3AxIiwic2NvcGUiOiJvcGVyYWRvciIsImlhdCI6MTc4NzA5OTM2MX0.Boe9nkzeQ3gjWW6Opril2BmZrfcjoPsiWBmhJq6lGOI" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:61988 - "OPTIONS /api/servicios/6a85010a4afde437432d7f14/iniciar HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61363 - "POST /api/servicios/6a85010a4afde437432d7f14/iniciar HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64196 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61363 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61363 - "OPTIONS /api/operadores/6a81557b53d21e29a4ce141e/ubicacion HTTP/1.1" 200 OK
+2026-08-18 19:21:17,624 - central_taxis - INFO - ubicación recibida operador=6a81557b53d21e29a4ce141e lat=17.725714182512686 lng=-92.0151513258211 sn=2026-08-19T01:21:17.497430+00:00
+INFO:     127.0.0.1:61988 - "POST /api/operadores/6a81557b53d21e29a4ce141e/ubicacion HTTP/1.1" 200 OK
+2026-08-18 19:21:18,568 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-92.015151,17.725714;-91.980965,17.507612?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:61363 - "POST /api/routing/route HTTP/1.1" 200 OK
+2026-08-18 19:21:21,780 - central_taxis - INFO - ubicación recibida operador=6a81557b53d21e29a4ce141e lat=17.725714182512686 lng=-92.0151513258211 sn=2026-08-19T01:21:21.772881+00:00
+INFO:     127.0.0.1:61363 - "POST /api/operadores/6a81557b53d21e29a4ce141e/ubicacion HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53236 - "OPTIONS /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53236 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49967 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49967 - "OPTIONS /api/routing/route HTTP/1.1" 200 OK
+2026-08-18 19:21:26,234 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-92.015151,17.725714;-91.980965,17.507612?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:53236 - "POST /api/routing/route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61363 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55276 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:50182 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     connection closed
+INFO:     connection closed
+INFO:     ('127.0.0.1', 58752) - "WebSocket /api/ws/terminal?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgxNGYzZjUzZDIxZTI5YTRjZTE0MTkiLCJ1c3VhcmlvIjoiY2VudHJhbCIsInNjb3BlIjoidGVybWluYWwiLCJpYXQiOjE3ODcxMDI0NDd9.qhfh982amcTx9GWVYcVFT4iuC40SQI6yHdrPzGvZbIw" [accepted]
+INFO:     127.0.0.1:64511 - "OPTIONS /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     connection open
+INFO:     127.0.0.1:52627 - "OPTIONS /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64370 - "OPTIONS /api/config/logo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49673 - "OPTIONS /api/operadores HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52146 - "OPTIONS /api/rutas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64511 - "GET /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52627 - "GET /api/config/logo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49673 - "GET /api/rutas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61314 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64370 - "GET /api/operadores HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61693 - "OPTIONS /api/operadores/6a81557b53d21e29a4ce1420/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61693 - "GET /api/operadores/6a81557b53d21e29a4ce1420/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63412 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63412 - "OPTIONS /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63412 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61693 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61693 - "OPTIONS /api/routing/route HTTP/1.1" 200 OK
+2026-08-18 21:19:27,569 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-92.015151,17.725714;-91.980965,17.507612?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:63412 - "POST /api/routing/route HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 51905) - "WebSocket /api/ws/pasajero/6a8368d3bedec069527fd7bd?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgzNjhkM2JlZGVjMDY5NTI3ZmQ3YmQiLCJ1c3VhcmlvIjoiY2xpMSIsInNjb3BlIjoicGFzYWplcm8iLCJpYXQiOjE3ODY5OTY5NDd9.VqvAlZjV5oFe89rVt9_IJvpTjD6hHjHlIXdrOG60rUU" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:63336 - "OPTIONS /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58630 - "OPTIONS /api/clientes/me/servicios HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64470 - "OPTIONS /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64470 - "GET /api/tipos-vehiculo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58630 - "GET /api/clientes/me/servicios HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63336 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63336 - "OPTIONS /api/routing/route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58630 - "OPTIONS /api/routing/route HTTP/1.1" 200 OK
+2026-08-18 21:19:30,306 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-92.015231,17.725783;-91.980965,17.507612?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:64470 - "POST /api/routing/route HTTP/1.1" 200 OK
+2026-08-18 21:19:30,410 - httpx - INFO - HTTP Request: GET https://router.project-osrm.org/route/v1/driving/-92.015151,17.725714;-91.980965,17.507612?overview=full&geometries=geojson "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:63336 - "POST /api/routing/route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56436 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52071 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53782 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56270 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50941 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50352 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50115 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56288 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50894 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60906 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62051 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63382 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57181 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50934 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57590 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49671 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51852 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61914 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52879 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64124 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63868 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61908 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51482 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57798 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54682 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63227 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65056 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54790 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57108 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56877 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60280 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53086 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57058 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54520 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59142 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50136 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57183 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53926 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64681 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55842 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57088 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63698 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65304 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64092 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57500 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54924 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53864 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55276 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60321 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60321 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54972 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60321 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63313 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61439 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51508 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64842 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55583 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65470 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50611 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59848 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59803 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49838 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52445 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57468 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53691 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62545 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63472 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59799 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57695 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57326 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50305 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55829 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53565 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52552 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56129 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55930 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54546 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64614 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60306 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56050 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61151 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61573 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64143 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63717 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53014 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60873 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53874 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60059 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61129 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49670 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58694 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58934 - "GET /api/clientes/me/viaje-activo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58694 - "GET /api/operadores/6a81557b53d21e29a4ce141e/track HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49670 - "GET /api/servicios/hoy HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:56814 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54908 - "GET /json/version HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62105 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60831 - "POST /api/auth/login HTTP/1.1" 422 Unprocessable Content

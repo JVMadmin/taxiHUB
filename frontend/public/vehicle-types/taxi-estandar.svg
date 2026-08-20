@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 260" width="480" height="260">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef4f0"/>
+      <stop offset="0.55" stop-color="#cdd9d0"/>
+      <stop offset="1" stop-color="#a3b3a7"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4654"/>
+      <stop offset="1" stop-color="#232b34"/>
+    </linearGradient>
+    <radialGradient id="hub" cx="0.35" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#d7dbe1"/>
+      <stop offset="1" stop-color="#7c828c"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="240" cy="222" rx="168" ry="14" fill="#000000" opacity="0.20" filter="url(#shadow)"/>
+
+  <path d="M62 196 C58 172 66 168 92 166 L108 138 C118 116 138 100 168 96 L296 96 C324 100 342 116 352 138 L368 166 C396 168 404 174 400 196 C400 204 392 210 380 210 L82 210 C68 210 62 204 62 196 Z"
+        fill="url(#body)" stroke="#7a8c7e" stroke-width="2"/>
+
+  <path d="M148 164 L172 122 C180 110 192 104 206 104 L262 104 C276 104 288 110 296 122 L318 164 Z"
+        fill="url(#glass)"/>
+  <line x1="240" y1="104" x2="240" y2="164" stroke="#4a5562" stroke-width="3"/>
+
+  <rect x="216" y="86" width="48" height="14" rx="4" fill="#10b981"/>
+  <rect x="228" y="82" width="24" height="6" rx="2" fill="#0d9668"/>
+
+  <rect x="72" y="176" width="336" height="7" fill="#161a1f"/>
+  <rect x="72" y="176" width="34" height="7" fill="#161a1f"/>
+  <rect x="106" y="176" width="34" height="7" fill="#f4f6f5"/>
+  <rect x="140" y="176" width="34" height="7" fill="#161a1f"/>
+  <rect x="174" y="176" width="34" height="7" fill="#f4f6f5"/>
+  <rect x="208" y="176" width="34" height="7" fill="#161a1f"/>
+  <rect x="242" y="176" width="34" height="7" fill="#f4f6f5"/>
+  <rect x="276" y="176" width="34" height="7" fill="#161a1f"/>
+  <rect x="310" y="176" width="34" height="7" fill="#f4f6f5"/>
+  <rect x="344" y="176" width="34" height="7" fill="#161a1f"/>
+  <rect x="378" y="176" width="30" height="7" fill="#f4f6f5"/>
+
+  <circle cx="146" cy="210" r="30" fill="#20242b"/>
+  <circle cx="146" cy="210" r="15" fill="url(#hub)"/>
+  <circle cx="334" cy="210" r="30" fill="#20242b"/>
+  <circle cx="334" cy="210" r="15" fill="url(#hub)"/>
+
+  <rect x="60" y="182" width="14" height="8" rx="3" fill="#e8b23d"/>
+  <rect x="406" y="182" width="14" height="8" rx="3" fill="#d64545"/>
+</svg>

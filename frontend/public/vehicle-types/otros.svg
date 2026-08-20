@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 260" width="480" height="260">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef0f2"/>
+      <stop offset="0.55" stop-color="#d3d7dc"/>
+      <stop offset="1" stop-color="#aeb3ba"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="240" cy="220" rx="160" ry="14" fill="#000000" opacity="0.16" filter="url(#shadow)"/>
+
+  <path d="M68 194 C64 172 72 168 96 166 L112 140 C122 118 140 104 168 100 L292 100 C318 104 336 118 346 140 L362 166 C386 168 394 174 390 194 C390 202 382 208 372 208 L86 208 C74 208 68 202 68 194 Z"
+        fill="url(#body)" stroke="#9aa0a8" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <circle cx="150" cy="208" r="28" fill="none" stroke="#9aa0a8" stroke-width="3"/>
+  <circle cx="330" cy="208" r="28" fill="none" stroke="#9aa0a8" stroke-width="3"/>
+
+  <text x="240" y="150" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#6b727c" letter-spacing="1">
+    TIPO SIN IMAGEN
+  </text>
+</svg>

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 260" width="480" height="260">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4f58"/>
+      <stop offset="0.55" stop-color="#31353c"/>
+      <stop offset="1" stop-color="#1c1f24"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4654"/>
+      <stop offset="1" stop-color="#181c21"/>
+    </linearGradient>
+    <radialGradient id="hub" cx="0.35" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#e7e9ec"/>
+      <stop offset="1" stop-color="#8b8f96"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="240" cy="222" rx="182" ry="14" fill="#000000" opacity="0.22" filter="url(#shadow)"/>
+
+  <path d="M42 196 C38 172 46 168 74 166 L92 136 C102 114 122 100 152 96 L328 96 C356 100 374 114 384 136 L400 166 C428 168 438 174 434 196 C434 204 426 210 414 210 L62 210 C48 210 42 204 42 196 Z"
+        fill="url(#body)" stroke="#0e1013" stroke-width="2"/>
+
+  <path d="M164 164 L186 122 C194 110 206 104 220 104 L268 104 C282 104 294 110 302 122 L322 164 Z"
+        fill="url(#glass)"/>
+  <line x1="243" y1="104" x2="243" y2="164" stroke="#12151a" stroke-width="3"/>
+
+  <rect x="52" y="176" width="376" height="3" fill="#cfd3d8" opacity="0.7"/>
+  <rect x="52" y="181" width="376" height="6" rx="3" fill="#10b981" opacity="0.7"/>
+
+  <circle cx="150" cy="210" r="30" fill="#0d0f12"/>
+  <circle cx="150" cy="210" r="15" fill="url(#hub)"/>
+  <circle cx="356" cy="210" r="30" fill="#0d0f12"/>
+  <circle cx="356" cy="210" r="15" fill="url(#hub)"/>
+
+  <rect x="40" y="182" width="14" height="8" rx="3" fill="#e8b23d"/>
+  <rect x="436" y="182" width="14" height="8" rx="3" fill="#d64545"/>
+</svg>
