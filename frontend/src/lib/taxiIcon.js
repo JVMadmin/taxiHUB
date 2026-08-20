@@ -24,20 +24,49 @@ export function taxiIcon(color, label, { selected = false } = {}) {
   return L.divIcon({ html, className: "", iconSize: [1, 1], iconAnchor: [0, 0] });
 }
 
-// Marcador de punto (origen/destino/yo) del mapa de navegación del conductor.
+// Marcador de punto (origen/destino/yo): pin clásico de geolocalización en 3D.
+// Cabeza esférica con gradiente + brillo especular + sombra inferior, agujero
+// central estilo GPS y etiqueta tipo "tag" sobre el pin. Colores típicos:
+// verde para origen/ubicación/cliente, rojo para destino.
+let _pinUid = 0;
+
 export function pointIcon(label, color, { size = "md" } = {}) {
   const c = color || "#22c55e";
-  const dim = size === "lg" ? "44px" : "34px";
-  const fontSize = size === "lg" ? "12px" : "10px";
+  const scale = size === "lg" ? 1.4 : size === "sm" ? 0.85 : 1.1;
+  const w = Math.round(40 * scale);
+  const h = Math.round(52 * scale);
+  const uid = ++_pinUid;
+  const chipFont = size === "lg" ? "12px" : "10.5px";
+  const chipPad = size === "lg" ? "5px 10px" : "4px 8px";
+  const inner = (20 * scale).toFixed(1);
+  const hole = (9.5 * scale).toFixed(1);
+  const center = (7 * scale).toFixed(1);
+  const dot = (3.2 * scale).toFixed(1);
   const html = `
-    <div style="transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 8px rgba(0,0,0,.55))">
-      <div style="display:flex;align-items:center;justify-content:center;min-width:${dim};height:${dim};
-        background:${c};color:#0b0b0d;border:2.5px solid #0b0b0d;border-radius:12px;font-weight:900;
-        font-size:${fontSize};line-height:1;white-space:nowrap;padding:0 8px;font-family:ui-monospace,Menlo,monospace">${label}</div>
-      <div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;
-        border-top:12px solid ${c};margin-top:-1px"></div>
+    <div style="transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 10px 12px rgba(0,0,0,.38))">
+      <div style="margin-bottom:3px;background:#0b0b0d;color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:7px;padding:${chipPad};font-size:${chipFont};font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 6px rgba(0,0,0,.35)">${label}</div>
+      <svg width="${w}" height="${h}" viewBox="0 0 40 52" style="overflow:visible">
+        <defs>
+          <radialGradient id="th-pin-g${uid}" cx="0.32" cy="0.26" r="0.75">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.65"/>
+            <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.12"/>
+            <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="th-pin-s${uid}" x1="0" y1="0.5" x2="0" y2="1">
+            <stop offset="0" stop-color="#000000" stop-opacity="0"/>
+            <stop offset="1" stop-color="#000000" stop-opacity="0.42"/>
+          </linearGradient>
+        </defs>
+        <path d="M20 2 C30 2 38 10 38 20 C38 32 27 44 20 50 C13 44 2 32 2 20 C2 10 10 2 20 2 Z" fill="${c}" stroke="#0b0b0d" stroke-width="2"/>
+        <path d="M20 2 C30 2 38 10 38 20 C38 32 27 44 20 50 C13 44 2 32 2 20 C2 10 10 2 20 2 Z" fill="url(#th-pin-g${uid})"/>
+        <path d="M20 2 C30 2 38 10 38 20 C38 32 27 44 20 50 C13 44 2 32 2 20 C2 10 10 2 20 2 Z" fill="url(#th-pin-s${uid})"/>
+        <circle cx="20" cy="20" r="${hole}" fill="#ffffff" opacity="0.96"/>
+        <circle cx="20" cy="20" r="${center}" fill="${c}"/>
+        <circle cx="20" cy="20" r="${dot}" fill="#ffffff"/>
+        <circle cx="20" cy="20" r="${inner}" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/>
+      </svg>
     </div>`;
-  return L.divIcon({ html, className: "", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "th-point-pin", iconSize: [1, 1], iconAnchor: [0, 0] });
 }
 
 // Flecha de "tú / vehículo" orientada por rumbo (heading) en la Driver App.
@@ -163,6 +192,55 @@ export function pillCarIcon(estado, { heading = 0, selected = false, label = "",
       ${labelHtml}
     </div>`;
   return L.divIcon({ html, className: "th-pill-car", iconSize: [1, 1], iconAnchor: [0, 0] });
+}
+
+// Asset de unidad demo para la App del Operador: conserva la silueta real de
+// TAXI1.png sin sustituir el marcador 3D usado por Terminal/Pasajero.
+export function taxiAssetIcon({ heading = 0, size = "sm" } = {}) {
+  const dim = size === "lg" ? 78 : size === "md" ? 64 : 52;
+  const deg = Number(heading) || 0;
+  const html = `
+    <div style="transform:translate(-50%,-50%);width:${dim}px;height:${dim}px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 7px 8px rgba(16,45,42,.28))">
+      <img src="/assets/vehicles/taxihub-taxi-azul.png" alt="" style="width:${dim + 16}px;height:${dim + 16}px;object-fit:contain;transform:rotate(${deg}deg)" />
+    </div>`;
+  return L.divIcon({ html, className: "th-taxi-asset", iconSize: [1, 1], iconAnchor: [0, 0] });
+}
+
+export function taxiRoleAssetIcon({ heading = 0, size = "sm" } = {}) {
+  const dim = size === "lg" ? 70 : size === "md" ? 58 : 46;
+  const deg = Number(heading) || 0;
+  const html = `
+    <div style="transform:translate(-50%,-50%);width:${dim}px;height:${dim}px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 6px 8px rgba(16,45,42,.28))">
+      <img src="/assets/vehicles/taxi-operador.png" alt="" style="width:${dim + 12}px;height:${dim + 12}px;object-fit:contain;transform:rotate(${deg}deg)" />
+    </div>`;
+  return L.divIcon({ html, className: "th-taxi-role-asset", iconSize: [1, 1], iconAnchor: [0, 0] });
+}
+
+const TAXI_STATE_ASSETS = {
+  libre: "/assets/vehicles/taxi-verde.png",
+  ocupado: "/assets/vehicles/taxi-rojo.png",
+  no_disponible: "/assets/vehicles/taxi-amarillo.png",
+  fuera_de_servicio: "/assets/vehicles/taxi-operador.png",
+  averiado: "/assets/vehicles/taxi-rojo.png",
+};
+
+export function taxiStateAssetIcon(estado, { heading = 0, selected = false, label = "", size = "md" } = {}) {
+  const dim = size === "lg" ? 62 : size === "sm" ? 44 : 52;
+  const deg = Number(heading) || 0;
+  const asset = TAXI_STATE_ASSETS[estado] || TAXI_STATE_ASSETS.fuera_de_servicio;
+  const pulse = selected
+    ? `<span class="th-terminal-taxi-pulse" style="position:absolute;inset:-8px;border-color:${ESTADO_COLORS[estado] || "#22c55e"}"></span>`
+    : "";
+  const labelHtml = label
+    ? `<span style="margin-top:2px;background:#071218;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;line-height:1;white-space:nowrap;font-family:Poppins,Inter,sans-serif">${label}</span>`
+    : "";
+  const html = `
+    <div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;position:relative">
+      <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 7px 9px rgba(8,24,27,.35))">
+        ${pulse}<img src="${asset}" alt="" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1" />
+      </div>${labelHtml}
+    </div>`;
+  return L.divIcon({ html, className: "th-terminal-state-asset", iconSize: [1, 1], iconAnchor: [0, 0] });
 }
 
 // (helper) marcador pequeño de dirección en la ruta (flecha que pulsa).

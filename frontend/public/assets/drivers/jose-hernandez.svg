@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Avatar demo de José Hernández">
+  <circle cx="80" cy="80" r="80" fill="#f1e4fa"/>
+  <path d="M26 153c5-34 25-53 54-53s49 19 54 53" fill="#7751a8"/>
+  <circle cx="80" cy="66" r="31" fill="#b97650"/>
+  <path d="M48 61c0-29 13-43 32-43 22 0 34 15 32 43-9-12-19-18-32-18-13 0-23 6-32 18Z" fill="#343238"/>
+  <path d="M52 55c9-13 17-18 29-19" fill="none" stroke="#343238" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="68" cy="68" r="3" fill="#343238"/><circle cx="92" cy="68" r="3" fill="#343238"/>
+  <path d="M69 83c7 4 15 4 22 0" fill="none" stroke="#7e4935" stroke-width="3" stroke-linecap="round"/>
+</svg>

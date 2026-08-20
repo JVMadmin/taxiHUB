@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, useMap } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState, useCallback, useDeferredValue, startTransition } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, ZoomControl, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import "./Terminal.css";
 import { useNavigate } from "react-router-dom";
 import { termApi, WS_BASE, BACKEND_URL, ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
 import { timeAgo } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { distM, fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
-import { pointIcon, colorForOperador, pillCarIcon, routeArrowIcon } from "@/lib/taxiIcon";
+import { pointIcon, taxiStateAssetIcon, routeArrowIcon } from "@/lib/taxiIcon";
 import { useRouting } from "@/hooks/useRouting";
 import { ServicioModal } from "@/components/ServicioModal";
 import { TerminalMenu } from "@/components/TerminalMenu";
@@ -28,6 +29,7 @@ import { toast } from "sonner";
 import {
   PhoneCall, Filter, Car, Search, LogOut, Clock,
   LocateFixed, Navigation as NavIcon, ClipboardList, X, LayoutPanelLeft, Truck, User, Route as RouteIcon,
+  Menu as MenuIcon, Plus, Minus,
 } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847]; // Palenque, Chiapas
@@ -36,6 +38,13 @@ const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.
 
 function MapClick({ onClick }) {
   useMapEvents({ click: (e) => onClick(e.latlng) });
+  return null;
+}
+
+// Expone la instancia del mapa (zoom desde el dock móvil).
+function MapRefBridge({ mapRef }) {
+  const map = useMap();
+  useEffect(() => { mapRef.current = map; }, [map, mapRef]);
   return null;
 }
 
@@ -78,6 +87,7 @@ export default function Terminal() {
   const [connected, setConnected] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const busquedaDeferred = useDeferredValue(busqueda);
   const [, setTick] = useState(0);
   const [liveMessage, setLiveMessage] = useState(null);
   const [liveReporte, setLiveReporte] = useState(null);
@@ -89,6 +99,8 @@ export default function Terminal() {
   const [servicioFilterOp, setServicioFilterOp] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [servicioSignal, setServicioSignal] = useState(0);
+  const [adminSection, setAdminSection] = useState(null);
+  const mapRef = useRef(null);
   const wsRef = useRef(null);
   const now = useClock();
   const mode = useMode();
@@ -122,6 +134,7 @@ export default function Terminal() {
   const abrirNuevaLlamada = () => {
     setServicioForm({ cliente_nombre: "", cliente_telefono: "", origen: "", destino: "", operador_id: "" });
     setCoords({ origen: null, destino: null });
+    setAdminSection(null);
     setModalOpen(true);
   };
   const pedirPunto = (which) => { setModalOpen(false); setPicking(which); toast.info(`Haz clic en el mapa para marcar el ${which}`); };
@@ -180,13 +193,13 @@ export default function Terminal() {
       ws.onmessage = (ev) => {
         const msg = JSON.parse(ev.data);
         if (msg.type === "ubicacion") {
-          setOperadores((prev) => prev[msg.operador_id]
+          startTransition(() => setOperadores((prev) => prev[msg.operador_id]
             ? { ...prev, [msg.operador_id]: { ...prev[msg.operador_id], lat: msg.lat, lng: msg.lng, ultima_actualizacion: msg.ts } }
-            : prev);
+            : prev));
         } else if (msg.type === "estado") {
-          setOperadores((prev) => prev[msg.operador_id]
+          startTransition(() => setOperadores((prev) => prev[msg.operador_id]
             ? { ...prev, [msg.operador_id]: { ...prev[msg.operador_id], estado: msg.estado } }
-            : prev);
+            : prev));
         } else if (msg.type === "servicio") {
           setServicioSignal((n) => n + 1);
         } else if (msg.type === "mensaje") {
@@ -202,11 +215,6 @@ export default function Terminal() {
   }, []);
 
   const lista = useMemo(() => Object.values(operadores), [operadores]);
-
-  const rutaSel = useMemo(
-    () => (filtroRuta === "todas" ? null : rutas.find((r) => r.id === filtroRuta)),
-    [filtroRuta, rutas]
-  );
 
   const visibles = useMemo(() => {
     return lista.filter((o) => {
@@ -231,12 +239,12 @@ export default function Terminal() {
   }, [lista]);
 
   const visiblesBuscados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase();
+    const q = busquedaDeferred.trim().toLowerCase();
     if (!q) return visibles;
     return visibles.filter((o) =>
       o.nombre.toLowerCase().includes(q) || (o.placa || "").toLowerCase().includes(q)
     );
-  }, [visibles, busqueda]);
+  }, [visibles, busquedaDeferred]);
 
   const selectedOp = selectedId ? operadores[selectedId] : null;
 
@@ -311,7 +319,7 @@ export default function Terminal() {
   const hora = now.toLocaleTimeString("es-MX", { hour12: false });
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-background" style={{ "--ui-alpha": uiAlpha }}>
+    <div className="taxi-terminal-shell relative h-screen w-screen overflow-hidden bg-background" style={{ "--ui-alpha": uiAlpha }}>
       {/* MAPA (elemento principal, a pantalla completa) */}
       <div className="absolute inset-0 z-0" data-testid="terminal-map">
         <MapContainer center={CENTER} zoom={13} zoomControl={false} className="h-full w-full">
@@ -320,7 +328,9 @@ export default function Terminal() {
             attribution="&copy; OpenStreetMap &copy; CARTO"
             subdomains="abcd"
           />
+          <ZoomControl position="bottomleft" />
           <MapClick onClick={onMapClick} />
+          <MapRefBridge mapRef={mapRef} />
           <FollowController target={selectedOp} follow={follow} />
           {coords.origen && <Marker position={[coords.origen.lat, coords.origen.lng]} icon={pointIcon("Origen", "#22c55e")} />}
           {coords.destino && <Marker position={[coords.destino.lat, coords.destino.lng]} icon={pointIcon("Destino", "#ef4444")} />}
@@ -367,8 +377,7 @@ export default function Terminal() {
             <Marker
               key={o.id}
               position={[o.lat, o.lng]}
-              icon={pillCarIcon(o.estado, {
-                color: colorForOperador(o, rutaSel?.color_hex),
+              icon={taxiStateAssetIcon(o.estado, {
                 label: o.placa,
                 selected: selectedId === o.id,
                 heading: o.id === selectedId ? destinoHeading : (o.gps_heading || 0),
@@ -440,31 +449,24 @@ export default function Terminal() {
                 data-testid="servicios-tray-toggle"
                 title="Servicios"
                 aria-label="Servicios"
-                className={cn("th-3d flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
+                className={cn("th-3d hidden h-10 w-10 items-center justify-center rounded-xl transition-colors lg:flex",
                   serviciosOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
               >
                 <ClipboardList className="th-icon-3d h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setSidebarOpen((v) => !v)}
-                data-testid="sidebar-toggle"
-                title="Panel de flota"
-                aria-label="Panel de flota"
-                className={cn("th-3d flex h-10 w-10 items-center justify-center rounded-xl transition-colors lg:hidden",
-                  sidebarOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
-              >
-                <LayoutPanelLeft className="th-icon-3d h-5 w-5" />
               </button>
               <Button
                 data-testid="nueva-llamada-btn"
                 onClick={abrirNuevaLlamada}
                 size="sm"
+                className="hidden lg:inline-flex"
               >
                 <PhoneCall className="th-icon-3d h-4 w-4" /> Nueva llamada
               </Button>
-              <ThemeSwitcher />
-              <ModeToggle />
-              <TerminalDisplayControls alpha={uiAlpha} onChange={setUiAlpha} />
+              <div className="hidden lg:contents">
+                <ThemeSwitcher />
+                <ModeToggle />
+                <TerminalDisplayControls alpha={uiAlpha} onChange={setUiAlpha} />
+              </div>
               <div className="flex items-center gap-2 border-l border-border pl-2.5">
                 <button
                   onClick={() => termFotoRef.current?.click()}
@@ -477,7 +479,7 @@ export default function Terminal() {
                     : <Car className="h-5 w-5 text-brand-bright" />}
                 </button>
                 <input ref={termFotoRef} type="file" accept="image/*" className="hidden" onChange={(e) => subirTermFoto(e.target.files?.[0])} />
-                <div>
+                <div className="hidden sm:block">
                   <div className="text-sm font-bold leading-none text-foreground">{termUser?.nombre || "Operadora"}</div>
                   <div className="mt-1.5">
                     <ConnectionBadge state={connected ? "online" : "reconnecting"} />
@@ -502,6 +504,61 @@ export default function Terminal() {
           ))}
         </div>
       </header>
+
+      {/* Dock inferior (móvil/tablet): acciones principales + zoom */}
+      <div
+        data-testid="terminal-mobile-dock"
+        className={cn(
+          "pointer-events-auto absolute inset-x-3 bottom-3 z-[560] lg:hidden",
+          (serviciosOpen || sidebarOpen || adminSection || selectedOp) && "hidden"
+        )}
+      >
+        <div className="bezel-shell flex items-center gap-2 px-2 py-2">
+          <Button
+            data-testid="dock-nueva-llamada"
+            onClick={abrirNuevaLlamada}
+            size="sm"
+            className="flex-1"
+          >
+            <PhoneCall className="th-icon-3d h-4 w-4" /> Llamada
+          </Button>
+          <div className="flex flex-col items-center gap-0.5">
+            <button onClick={() => mapRef.current?.zoomIn()} data-testid="dock-zoom-in" aria-label="Acercar" className="th-3d flex h-8 w-8 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary/60">
+              <Plus className="th-icon-3d h-4 w-4" />
+            </button>
+            <button onClick={() => mapRef.current?.zoomOut()} data-testid="dock-zoom-out" aria-label="Alejar" className="th-3d flex h-8 w-8 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary/60">
+              <Minus className="th-icon-3d h-4 w-4" />
+            </button>
+          </div>
+          <button
+            onClick={() => setServiciosOpen((v) => !v)}
+            data-testid="dock-servicios"
+            aria-label="Servicios"
+            className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
+              serviciosOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+          >
+            <ClipboardList className="th-icon-3d h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setSidebarOpen((v) => !v)}
+            data-testid="dock-flota"
+            aria-label="Panel de flota"
+            className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
+              sidebarOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+          >
+            <LayoutPanelLeft className="th-icon-3d h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setAdminSection((s) => (s ? null : "operadores"))}
+            data-testid="dock-menu"
+            aria-label="Menú de administración"
+            className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
+              adminSection ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+          >
+            <MenuIcon className="th-icon-3d h-5 w-5" />
+          </button>
+        </div>
+      </div>
 
       {picking && (
         <div className="absolute left-1/2 top-32 z-[700] -translate-x-1/2 animate-slide-down rounded-full border border-brand bg-card/95 px-4 py-2 text-sm text-brand-bright backdrop-blur lg:top-24" data-testid="picking-banner">
@@ -662,8 +719,8 @@ export default function Terminal() {
         <DraggablePanel
           dragKey="mission"
           className={cn(
-            "absolute right-16 z-[540] w-[300px] max-w-[calc(100vw-2rem)]",
-            serviciosOpen ? "top-[104px]" : "bottom-4"
+            "absolute inset-x-3 z-[540] w-[300px] max-w-[calc(100vw-2rem)] lg:inset-x-auto lg:right-16",
+            serviciosOpen ? "top-[124px] lg:top-[104px]" : "bottom-4"
           )}
         >
           <div data-testid="taxi-detail-panel" className="bezel-shell animate-slide-up">
@@ -817,6 +874,8 @@ export default function Terminal() {
       />
 
       <TerminalMenu
+        active={adminSection}
+        onActiveChange={setAdminSection}
         operadores={operadores}
         rutas={rutas}
         onRutasChanged={load}

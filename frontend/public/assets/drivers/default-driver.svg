@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Avatar demo de conductor">
+  <circle cx="80" cy="80" r="80" fill="#e2eee9"/>
+  <path d="M26 153c5-34 25-53 54-53s49 19 54 53" fill="#087c58"/>
+  <circle cx="80" cy="66" r="31" fill="#bc7c58"/>
+  <path d="M48 63c2-30 16-43 33-43 19 0 31 14 31 42-10-12-19-17-31-17-13 0-23 6-33 18Z" fill="#2d3b3b"/>
+  <circle cx="68" cy="68" r="3" fill="#2d3b3b"/><circle cx="92" cy="68" r="3" fill="#2d3b3b"/>
+  <path d="M69 83c7 4 15 4 22 0" fill="none" stroke="#814b38" stroke-width="3" stroke-linecap="round"/>
+</svg>

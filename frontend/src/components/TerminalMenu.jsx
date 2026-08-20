@@ -31,8 +31,10 @@ const SECTIONS = [
   { id: "tarifas", label: "Tarifas", icon: DollarSign },
 ];
 
-export function TerminalMenu({ operadores, rutas, onRutasChanged, onDataChanged, onOpenServicio, liveMessage, liveReporte, servicioSignal }) {
-  const [active, setActive] = useState(null);
+export function TerminalMenu({ active: activeProp, onActiveChange, operadores, rutas, onRutasChanged, onDataChanged, onOpenServicio, liveMessage, liveReporte, servicioSignal }) {
+  const [internalActive, setInternalActive] = useState(null);
+  const active = activeProp !== undefined ? activeProp : internalActive;
+  const setActive = onActiveChange !== undefined ? onActiveChange : setInternalActive;
 
   const open = (id) => {
     if (id === "servicio") { onOpenServicio(); return; }
@@ -41,10 +43,10 @@ export function TerminalMenu({ operadores, rutas, onRutasChanged, onDataChanged,
 
   return (
     <>
-      {/* Rail de iconos (derecha) */}
+      {/* Rail de iconos (derecha, escritorio) */}
       <div
         data-testid="terminal-menu-rail"
-        className={`bezel-shell absolute top-[124px] z-[600] transition-all duration-300 ease-motion lg:top-24 ${active ? "right-[408px]" : "right-3 sm:right-4"}`}
+        className={`bezel-shell absolute top-[124px] z-[600] hidden transition-all duration-300 ease-motion lg:block lg:top-24 ${active ? "right-[408px]" : "right-3 sm:right-4"}`}
       >
         <div className="flex flex-col gap-1.5 rounded-[var(--radius)] p-1.5">
           {SECTIONS.map((s) => (

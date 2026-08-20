@@ -88,6 +88,11 @@ Plataforma de despacho para central de taxis con dos interfaces: Terminal (panel
 - **Microinteracciones** donde aportan (aparición de servicios, cambio de estado, selección de taxi, paneles), sin animar todo. Estados de carga (skeleton/spinner), empty y error (mensajes entendibles, detalles en consola).
 - Tests: 3 nuevas pruebas de routing (auth obligatoria, fallback Haversine, acepta operador) — 13/13 verdes sobre mongomock-motor. Build frontend OK (`craco build`).
 
+### Fase 12 — Terminal responsive (escritorio + celular) y catálogo visual de vehículos (2026-08-20)
+- **Terminal en celular**: nuevo dock inferior (Llamada, Servicios, Flota, Menú + zoom +/−) que se oculta al abrir cualquier panel; header compacto en móvil (se ocultan ThemeSwitcher/ModeToggle/Ajustes/toggle de servicios); rail del menú admin oculto en móvil (el dock lo abre con sección por defecto); mission card a ancho completo en móvil; Leaflet ZoomControl en desktop y oculto en móvil (zoom del dock); DraggablePanel sin arrastre ni offset persistido en pantallas táctiles. Verificado con Playwright (390x844 y 1400x900) sin errores.
+- **Imágenes de tipo/modelo de vehículo**: catálogo local extensible en `lib/utils.js` (`VEHICLE_TYPE_ASSETS`, hoy `march` → `/assets/vehicles/march.png`) con prioridad foto propia → catálogo por modelo/marca/tipo → imagen del VehicleType → genérica. `/auth/me` embebe el vehículo del operador. La misma imagen se muestra en la ficha del pasajero (nueva miniatura), el header del operador y la mission card de la terminal. Verificado en las tres apps con el Nissan March de Carlos (TX-101).
+- **Documento comercial**: `docs/FUNCIONES-APPS.md` con las funciones de las tres aplicaciones, seguridad y resumen técnico para presentar a clientes.
+
 ## Backlog
 - P3: ETA/zonas/prioridad en el despacho; turnos y rotación; polilíneas de ruta; app móvil Android (GPS en segundo plano) e iOS; pago card/online; job en segundo plano para expiraciones; índices geoespaciales 2dsphere para flotas grandes.
 - P0: Fase 2 — App del operador (login, entrar/salir, botones de estado, selector de ruta, geolocalización cada 8-10s).

@@ -19,6 +19,8 @@ export function DraggablePanel({
   disabled = false,
 }) {
   const [off, setOff] = useState(() => {
+    if (typeof window === "undefined") return { x: 0, y: 0 };
+    if (window.matchMedia?.("(pointer: coarse)")?.matches || window.innerWidth < 768) return { x: 0, y: 0 };
     try {
       const raw = localStorage.getItem(`th_drag_${dragKey}`);
       return raw ? JSON.parse(raw) : { x: 0, y: 0 };
@@ -40,6 +42,7 @@ export function DraggablePanel({
   const onStart = useCallback((e) => {
     if (disabled) return;
     if (e.button === 2 || e.type === "touchstart") return;
+    if (window.matchMedia?.("(pointer: coarse)")?.matches) return;
     const t = e.target;
     if (t.closest?.("a,button,input,select,textarea,label,[contenteditable],.leaflet-interactive,[role='button'],[data-no-drag]")) return;
     drag.current = {

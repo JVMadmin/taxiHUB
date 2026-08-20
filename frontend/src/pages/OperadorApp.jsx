@@ -2,12 +2,13 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import "./OperadorApp.css";
 import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL, SERVICIO_LABEL, BACKEND_URL } from "@/lib/api";
 import { elapsed, timeAgo } from "@/lib/time";
 import { cn, iniciales } from "@/lib/utils";
 import { distM, fmtDist, fmtDuration, bearing } from "@/lib/geo";
 import { useRouting } from "@/hooks/useRouting";
-import { pointIcon, pillCarIcon } from "@/lib/taxiIcon";
+import { pointIcon, pillCarIcon, taxiRoleAssetIcon } from "@/lib/taxiIcon";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/input";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -18,7 +19,7 @@ import { GpsBadge } from "@/components/GpsBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmAction } from "@/components/ConfirmAction";
 import { BottomSheet } from "@/components/BottomSheet";
-import { useMode } from "@/hooks/useMode";
+import { VehicleImage } from "@/components/VehicleImage";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -32,6 +33,14 @@ import {
 const LOC_INTERVAL = 9000; // 8-10s
 const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const TAXI_ASSET = "/assets/vehicles/taxihub-taxi-azul.png";
+const DEMO_DRIVER_AVATARS = {
+  op1: "/assets/drivers/carlos-ramirez.svg",
+  op2: "/assets/drivers/ana-torres.svg",
+  op3: "/assets/drivers/luis-mendez.svg",
+  op4: "/assets/drivers/jose-hernandez.svg",
+  op5: "/assets/drivers/default-driver.svg",
+};
 
 function ClienteAvatar({ nombre, className }) {
   return (
@@ -107,6 +116,8 @@ export default function OperadorApp() {
   const [inicio, setInicio] = useState(null);
   const [, setSec] = useState(0);
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatServicioId, setChatServicioId] = useState(null);
+  const chatServicioRef = useRef(null);
   const [chatMsgs, setChatMsgs] = useState([]);
   const [chatText, setChatText] = useState("");
   const [pendingFile, setPendingFile] = useState(null);
@@ -123,9 +134,25 @@ export default function OperadorApp() {
   const [gpsStale, setGpsStale] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [recenterN, setRecenterN] = useState(0);
-  const mode = useMode();
-  const tiles = mode === "claro" ? LIGHT_TILES : DARK_TILES;
-  const rutaColor = mode === "claro" ? "#059669" : "#10b981";
+  const [driverLight, setDriverLight] = useState(() => localStorage.getItem("driver_mode") !== "oscuro");
+  const ignoreInitialModeEvent = useRef(true);
+  const tiles = driverLight ? LIGHT_TILES : DARK_TILES;
+  const rutaColor = driverLight ? "#059669" : "#10b981";
+  const driverAvatar = op?.foto_url ? `${BACKEND_URL}${op.foto_url}` : DEMO_DRIVER_AVATARS[op?.usuario] || "/assets/drivers/default-driver.svg";
+
+  useEffect(() => {
+    const onMode = (event) => {
+      if (ignoreInitialModeEvent.current) {
+        ignoreInitialModeEvent.current = false;
+        return;
+      }
+      const light = event.detail === "claro";
+      setDriverLight(light);
+      localStorage.setItem("driver_mode", light ? "claro" : "oscuro");
+    };
+    window.addEventListener("app:mode", onMode);
+    return () => window.removeEventListener("app:mode", onMode);
+  }, []);
 
   const enOperacion = op && op.estado !== "fuera_de_servicio";
 
@@ -242,7 +269,9 @@ export default function OperadorApp() {
           setServicioPropio(null);
           toast.info("🚕 Nuevo servicio asignado");
         } else if (msg.type === "mensaje") {
-          setChatMsgs((m) => (m.some((x) => x.id === msg.mensaje.id) ? m : [...m, msg.mensaje]));
+          if (!msg.servicio_id || msg.servicio_id === chatServicioRef.current) {
+            setChatMsgs((m) => (m.some((x) => x.id === msg.mensaje.id) ? m : [...m, msg.mensaje]));
+          }
           if (msg.mensaje.remitente === "terminal") toast.info("💬 Mensaje de la central");
         }
       };
@@ -295,15 +324,18 @@ export default function OperadorApp() {
     toast.success("Foto actualizada");
   };
 
-  const abrirChat = async () => {
+  const abrirChat = async (servicioId = null) => {
     setChatOpen(true);
-    const { data } = await api.get(`/mensajes?operador_id=${op.id}`);
+    setChatServicioId(servicioId);
+    chatServicioRef.current = servicioId;
+    const { data } = await api.get(servicioId ? `/servicios/${servicioId}/mensajes` : `/mensajes?operador_id=${op.id}`);
     setChatMsgs(data);
   };
   const enviarChat = async () => {
     if (!chatText.trim()) return;
     const t = chatText; setChatText("");
-    await api.post("/mensajes", { operador_id: op.id, remitente: "operador", texto: t });
+    if (chatServicioId) await api.post(`/servicios/${chatServicioId}/mensajes`, { texto: t });
+    else await api.post("/mensajes", { operador_id: op.id, remitente: "operador", texto: t });
   };
   const enviarReporte = async () => {
     if (!pendingFile) return;
@@ -456,7 +488,7 @@ export default function OperadorApp() {
   }
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-background text-foreground">
+    <div className={cn("taxi-driver-shell", driverLight ? "taxi-driver-light" : "taxi-driver-dark")}>
       <OfflineBanner />
       <input
         ref={fileRef}
@@ -474,7 +506,7 @@ export default function OperadorApp() {
           <RouteBounds points={boundsPoints} />
           <RecenterController n={recenterN} target={driverPos || mapCenter} />
           {driverPos && (
-            <Marker position={driverPos} icon={pillCarIcon(op.estado, { heading: coords.heading, size: "lg" })} />
+              <Marker position={driverPos} icon={taxiRoleAssetIcon({ heading: coords.heading, size: "sm" })} />
           )}
           {navegacion && navTarget && (
             <Marker position={navTarget} icon={pointIcon(navegacion.tipo === "cliente" ? "Cliente" : "Destino", navegacion.tipo === "cliente" ? "#22c55e" : "#ef4444", { size: "lg" })} />
@@ -494,25 +526,30 @@ export default function OperadorApp() {
       {/* HEADER */}
       <header className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="bezel-shell pointer-events-auto">
-            <div className="flex items-center gap-3 rounded-[var(--radius)] py-1 pl-1 pr-3">
+          <div className="taxi-driver-header-card pointer-events-auto">
+            <div className="taxi-driver-header-inner">
               <button onClick={() => profileRef.current?.click()} data-testid="perfil-foto-btn"
-                className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[10px] bg-brand/15">
-                {op.foto_url ? <img src={`${BACKEND_URL}${op.foto_url}`} alt="perfil" className="h-full w-full object-cover" />
-                  : logo ? <img src={`${BACKEND_URL}${logo}`} alt="logo" className="h-full w-full object-contain p-1" />
-                  : <Car className="h-6 w-6 text-brand-bright" />}
+                className="taxi-driver-avatar-button">
+                <img src={driverAvatar} alt={`Avatar de ${op.nombre}`} />
               </button>
               <input ref={profileRef} type="file" accept="image/*" className="hidden" onChange={(e) => subirFoto(e.target.files?.[0])} />
               <div>
-                <div className="text-lg font-extrabold leading-tight text-foreground">{op.nombre}</div>
-                <div className="text-sm text-muted-foreground">Unidad {op.placa}</div>
+                <div className="taxi-driver-name">{op.nombre}</div>
+                <div className="taxi-driver-unit">Unidad {op.placa}</div>
+              </div>
+              <div className="taxi-driver-vehicle-mini">
+                {op.vehiculo ? (
+                  <VehicleImage vehiculo={op.vehiculo} alt="Mi vehículo" className="h-full w-full" imgClassName="p-0.5" />
+                ) : (
+                  <img src={TAXI_ASSET} alt="Taxi TaxiHUB" />
+                )}
               </div>
             </div>
           </div>
 
           <div className="pointer-events-auto flex flex-col items-end gap-2">
-            <div className="bezel-shell">
-              <div className="flex items-center gap-1 rounded-[var(--radius)] p-1">
+            <div className="taxi-driver-controls-card">
+              <div className="taxi-driver-controls-inner">
                 <ModeToggle />
                 <ThemeSwitcher />
                 <Button
@@ -835,8 +872,8 @@ export default function OperadorApp() {
             <Button variant="secondary" onClick={() => fileRef.current?.click()}>
               <Package className="h-4 w-4" /> Reportar
             </Button>
-            <Button variant="secondary" onClick={abrirChat}>
-              <MessageSquare className="h-4 w-4" /> Chat central
+            <Button variant="secondary" onClick={() => abrirChat(servicio.id)}>
+              <MessageSquare className="h-4 w-4" /> Chat cliente
             </Button>
           </div>
         )}
@@ -930,7 +967,7 @@ export default function OperadorApp() {
         <div className="fixed inset-0 z-[900] flex flex-col bg-background" data-testid="chat-overlay">
           <div className="mx-auto flex h-full w-full max-w-md flex-col p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-bold text-foreground">Chat con la central</h3>
+              <h3 className="text-base font-bold text-foreground">{chatServicioId ? "Chat con el pasajero" : "Chat con la central"}</h3>
               <button data-testid="chat-cerrar" onClick={() => setChatOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
             </div>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1" data-testid="chat-op-mensajes">

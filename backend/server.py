@@ -495,6 +495,15 @@ class ServicioOperadorBody(BaseModel):
     tarifa_id: Optional[str] = None
 
 
+class CalificacionCreate(BaseModel):
+    puntuacion: float = Field(..., ge=1, le=5)
+    comentario: Optional[str] = None
+
+
+class MensajeViajeCreate(BaseModel):
+    texto: str
+
+
 # ---- Usuarios Terminal (operadoras) ----
 class TerminalUserCreate(BaseModel):
     nombre: str
@@ -618,6 +627,14 @@ async def login(body: LoginBody):
 
 @api_router.get("/auth/me")
 async def me(current: dict = Depends(get_current_operador)):
+    vid = current.get("vehiculo_id")
+    if vid:
+        try:
+            v = await db.vehiculos.find_one({"_id": to_oid(vid)})
+            if v:
+                current["vehiculo"] = _vehiculo_resumen(v, await _mapa_tipos_vehiculo())
+        except HTTPException:
+            pass
     return current
 
 
@@ -830,8 +847,16 @@ async def _servicio_para_pasajero(s: dict) -> dict:
                     "lat": op.get("lat"), "lng": op.get("lng"),
                     "numero_economico": op.get("placa"), "nombre_conductor": op.get("nombre"),
                     "telefono": op.get("telefono"),
+                    "foto_url": op.get("foto_url"),
                     "ultima_actualizacion": op.get("ultima_actualizacion"),
                 }
+                ratings = await db.servicios.find(
+                    {"operador_asignado_id": str(op["_id"]), "estado": "completado", "calificacion_conductor.puntuacion": {"$exists": True}},
+                    {"calificacion_conductor.puntuacion": 1},
+                ).to_list(500)
+                values = [float(item["calificacion_conductor"]["puntuacion"]) for item in ratings]
+                out["taxi"]["calificacion_promedio"] = round(sum(values) / len(values), 1) if values else None
+                out["taxi"]["total_calificaciones"] = len(values)
                 vid = op.get("vehiculo_id")
                 v = await db.vehiculos.find_one({"_id": to_oid(vid)}) if vid else None
                 if v:
@@ -1776,6 +1801,45 @@ async def get_servicio(servicio_id: str, request: Request):
     return serialize(s)
 
 
+@api_router.post("/servicios/{servicio_id}/calificacion")
+async def calificar_conductor(
+    servicio_id: str,
+    body: CalificacionCreate,
+    current: dict = Depends(require_pasajero),
+):
+    """Registra una única calificación del pasajero dueño de un viaje completado."""
+    s = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+    if not s:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    if s.get("pasajero_id") != current["id"]:
+        raise HTTPException(status_code=403, detail="No tienes acceso a este servicio")
+    if s.get("estado") != EstadoServicio.completado.value:
+        raise HTTPException(status_code=409, detail="Solo puedes calificar un servicio completado")
+    if s.get("calificacion_conductor"):
+        raise HTTPException(status_code=409, detail="Este servicio ya tiene una calificación")
+
+    calificacion = {
+        "puntuacion": body.puntuacion,
+        "comentario": body.comentario,
+        "timestamp": now_iso(),
+        "pasajero_id": current["id"],
+    }
+    # La condición evita calificaciones duplicadas incluso ante solicitudes concurrentes.
+    result = await db.servicios.update_one(
+        {
+            "_id": to_oid(servicio_id),
+            "pasajero_id": current["id"],
+            "estado": EstadoServicio.completado.value,
+            "calificacion_conductor": {"$exists": False},
+        },
+        {"$set": {"calificacion_conductor": calificacion}},
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=409, detail="Este servicio ya tiene una calificación")
+    s = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+    return {"calificacion_conductor": calificacion, "servicio": serialize(s)}
+
+
 @api_router.post("/servicios/{servicio_id}/asignar")
 async def asignar_servicio(servicio_id: str, body: AsignarBody, _=Depends(require_terminal)):
     """Asignación manual por el dispatcher (pasa por la lógica atómica)."""
@@ -2081,6 +2145,83 @@ class MensajeCreate(BaseModel):
     texto: str
 
 
+async def _autor_chat_viaje(request: Request, s: dict):
+    """Autoriza y devuelve (actor, remitente) para el chat privado del viaje."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="No autenticado")
+    try:
+        payload = jwt.decode(auth[7:], JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    scope = payload.get("scope")
+    if scope == "terminal":
+        return await require_terminal(request), "terminal"
+    if scope in (None, "operador"):
+        operador = await _read_operador(payload)
+        if operador["id"] != s.get("operador_asignado_id"):
+            raise HTTPException(status_code=403, detail="No tienes acceso a este chat")
+        return operador, "operador"
+    if scope == "pasajero":
+        pasajero = await require_pasajero(request)
+        if pasajero["id"] != s.get("pasajero_id"):
+            raise HTTPException(status_code=403, detail="No tienes acceso a este chat")
+        return pasajero, "pasajero"
+    raise HTTPException(status_code=403, detail="No autorizado para este chat")
+
+
+async def _obtener_servicio_para_chat(servicio_id: str) -> dict:
+    s = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+    if not s:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    return s
+
+
+@api_router.get("/servicios/{servicio_id}/mensajes")
+async def list_mensajes_viaje(servicio_id: str, request: Request):
+    s = await _obtener_servicio_para_chat(servicio_id)
+    await _autor_chat_viaje(request, s)
+    docs = await db.mensajes_chat.find(
+        {"servicio_id": servicio_id}
+    ).sort("timestamp", 1).to_list(2000)
+    return [serialize(d) for d in docs]
+
+
+@api_router.post("/servicios/{servicio_id}/mensajes")
+async def crear_mensaje_viaje(
+    servicio_id: str,
+    body: MensajeViajeCreate,
+    request: Request,
+):
+    s = await _obtener_servicio_para_chat(servicio_id)
+    actor, remitente = await _autor_chat_viaje(request, s)
+    if s.get("estado") not in (EstadoServicio.asignado.value, EstadoServicio.en_curso.value):
+        raise HTTPException(
+            status_code=409,
+            detail="El chat solo está disponible con el servicio asignado o en curso",
+        )
+
+    doc = {
+        "servicio_id": servicio_id,
+        "pasajero_id": s.get("pasajero_id"),
+        "operador_id": s.get("operador_asignado_id"),
+        "remitente": remitente,
+        "remitente_id": actor["id"],
+        "texto": body.texto,
+        "timestamp": now_iso(),
+    }
+    result = await db.mensajes_chat.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    out = serialize(doc)
+    evento = {"type": "mensaje", "servicio_id": servicio_id, "mensaje": out}
+    if s.get("pasajero_id"):
+        await manager.send_pasajero(s["pasajero_id"], evento)
+    if s.get("operador_asignado_id"):
+        await manager.send_operador(s["operador_asignado_id"], evento)
+    return out
+
+
 @api_router.post("/mensajes")
 async def crear_mensaje(body: MensajeCreate, request: Request):
     # Terminal o el operador dueño del hilo.
@@ -2102,7 +2243,9 @@ async def crear_mensaje(body: MensajeCreate, request: Request):
 @api_router.get("/mensajes")
 async def list_mensajes(operador_id: str, request: Request):
     await _autor_chat_o_terminal(request, operador_id)
-    docs = await db.mensajes_chat.find({"operador_id": operador_id}).sort("timestamp", 1).to_list(2000)
+    docs = await db.mensajes_chat.find(
+        {"operador_id": operador_id, "servicio_id": {"$exists": False}}
+    ).sort("timestamp", 1).to_list(2000)
     return [serialize(d) for d in docs]
 
 
@@ -2127,7 +2270,9 @@ async def _autor_chat_o_terminal(request: Request, operador_id: str):
 
 @api_router.get("/conversaciones")
 async def list_conversaciones(_=Depends(require_terminal)):
-    msgs = await db.mensajes_chat.find().sort("timestamp", 1).to_list(5000)
+    msgs = await db.mensajes_chat.find(
+        {"servicio_id": {"$exists": False}}
+    ).sort("timestamp", 1).to_list(5000)
     ops = {str(o["_id"]): o for o in await db.operadores.find().to_list(1000)}
     convos: Dict[str, dict] = {}
     for m in msgs:
@@ -2780,6 +2925,8 @@ async def startup():
     await db.usuarios_terminal.create_index("usuario", unique=True)
     await db.usuarios_dueno.create_index("usuario", unique=True)
     await db.servicios.create_index("distancia_m", sparse=True)
+    await db.mensajes_chat.create_index([("servicio_id", 1), ("timestamp", 1)])
+    await db.mensajes_chat.create_index("timestamp")
     (UPLOAD_DIR / "reportes").mkdir(parents=True, exist_ok=True)
     (UPLOAD_DIR / "perfiles").mkdir(parents=True, exist_ok=True)
     (UPLOAD_DIR / "logo").mkdir(parents=True, exist_ok=True)

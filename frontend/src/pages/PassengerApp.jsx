@@ -1,24 +1,23 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { api, pasApi, WS_BASE, logoutPassenger, savePassengerAuth } from "@/lib/api";
+import "./PassengerApp.css";
+import { api, pasApi, WS_BASE, BACKEND_URL, logoutPassenger, savePassengerAuth } from "@/lib/api";
 import { timeAgo } from "@/lib/time";
 import { cn, iniciales, metodoPago } from "@/lib/utils";
+import { PASSENGER } from "@/constants/testIds";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { BrandMark, BrandWordmark } from "@/components/Brand";
 import { EmptyState } from "@/components/EmptyState";
 import { ServicioBadge } from "@/components/StatusBadge";
 import { ModeToggle } from "@/components/ModeToggle";
-import { pointIcon, pillCarIcon } from "@/lib/taxiIcon";
+import { pointIcon, taxiRoleAssetIcon } from "@/lib/taxiIcon";
 import { useRouting } from "@/hooks/useRouting";
 import { fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
 import { RoutePolyline } from "@/components/RoutePolyline";
 import { VehicleImage } from "@/components/VehicleImage";
 import { toast } from "sonner";
-import { Car, MapPin, Navigation, LogOut, Clock, User, Phone, KeyRound, History, Home, Mail, Wallet, Locate, Check, Flag } from "lucide-react";
-import { useMode } from "@/hooks/useMode";
+import { Car, MapPin, Navigation, LogOut, Clock, User, Phone, History, Home, Mail, Wallet, Locate, Check, Flag, Menu, MessageCircle, ChevronRight, Star, X, ArrowLeft, Send } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847];
 const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
@@ -31,49 +30,52 @@ function MapClick({ onPick }) {
 
 function AuthScreen({ modo, setModo, lUser, setLUser, lPass, setLPass, rForm, setRForm, login, registrar }) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-brand/10 blur-[100px]" />
-      <div className="relative w-full max-w-sm">
+    <div className="taxi-passenger-auth">
+      <div className="taxi-passenger-auth-orb" />
+      <div className="taxi-passenger-auth-card">
         <form
           onSubmit={modo === "login" ? login : registrar}
           data-testid="pas-login-form"
-          className="bezel-shell w-full"
+          className="taxi-passenger-auth-form"
         >
-          <div className="rounded-[var(--radius)] bg-card/85 p-7">
-            <div className="mb-6 flex flex-col items-center gap-2 text-center">
-              <BrandMark size="lg" />
-              <BrandWordmark sub="taxiHUB Passenger" className="mt-1" />
-              <p className="text-sm text-muted-foreground">{modo === "login" ? "Inicia sesión para pedir tu taxi" : "Crea tu cuenta"}</p>
+          <div className="taxi-passenger-auth-inner">
+            <div className="taxi-passenger-logo taxi-passenger-logo-centered">
+              <Car aria-hidden="true" />
+              <span>Taxi<span>HUB</span></span>
             </div>
-            <div className="grid gap-4">
+            <div className="taxi-passenger-auth-heading">
+              <h1>{modo === "login" ? "Bienvenido" : "Crea tu cuenta"}</h1>
+              <p>{modo === "login" ? "Pide un taxi en pocos segundos." : "Viaja con TaxiHUB."}</p>
+            </div>
+            <div className="taxi-passenger-auth-fields">
               {modo === "registro" && (
                 <>
-                  <div className="grid gap-1.5"><Label className="text-foreground/90"><User className="mr-1 inline h-3 w-3" />Nombre</Label>
-                    <Input data-testid="pas-reg-nombre" value={rForm.nombre} onChange={(e) => setRForm((f) => ({ ...f, nombre: e.target.value }))} placeholder="Nombre completo" className="input-inset border-border text-foreground" /></div>
-                  <div className="grid gap-1.5"><Label className="text-foreground/90"><Phone className="mr-1 inline h-3 w-3" />Teléfono</Label>
-                    <Input data-testid="pas-reg-telefono" value={rForm.telefono} onChange={(e) => setRForm((f) => ({ ...f, telefono: e.target.value }))} placeholder="Teléfono" className="input-inset border-border text-foreground" /></div>
+                  <label className="taxi-passenger-field"><span>Nombre</span>
+                    <Input data-testid="pas-reg-nombre" value={rForm.nombre} onChange={(e) => setRForm((f) => ({ ...f, nombre: e.target.value }))} placeholder="Nombre completo" /></label>
+                  <label className="taxi-passenger-field"><span>Teléfono</span>
+                    <Input data-testid="pas-reg-telefono" value={rForm.telefono} onChange={(e) => setRForm((f) => ({ ...f, telefono: e.target.value }))} placeholder="Teléfono" /></label>
                 </>
               )}
-              <div className="grid gap-1.5"><Label className="text-foreground/90"><User className="mr-1 inline h-3 w-3" />Usuario</Label>
+              <label className="taxi-passenger-field"><span>Usuario</span>
                 <Input data-testid="pas-usuario" value={modo === "login" ? lUser : rForm.usuario}
                   onChange={(e) => modo === "login" ? setLUser(e.target.value) : setRForm((f) => ({ ...f, usuario: e.target.value }))}
-                  placeholder="usuario" autoCapitalize="none" className="input-inset border-border text-foreground" /></div>
-              <div className="grid gap-1.5"><Label className="text-foreground/90"><KeyRound className="mr-1 inline h-3 w-3" />Contraseña</Label>
+                  placeholder="usuario" autoCapitalize="none" /></label>
+              <label className="taxi-passenger-field"><span>Contraseña</span>
                 <Input data-testid="pas-contrasena" type="password" value={modo === "login" ? lPass : rForm.contrasena}
                   onChange={(e) => modo === "login" ? setLPass(e.target.value) : setRForm((f) => ({ ...f, contrasena: e.target.value }))}
-                  placeholder="••••••" className="input-inset border-border text-foreground" /></div>
-              <Button data-testid="pas-submit" type="submit" className="mt-2 w-full">
+                  placeholder="••••••" /></label>
+              <Button data-testid="pas-submit" type="submit" className="taxi-passenger-primary-button">
                 {modo === "login" ? "Entrar" : "Crear cuenta"}
               </Button>
               <button type="button" data-testid="pas-toggle-modo" onClick={() => setModo(modo === "login" ? "registro" : "login")}
-                className="text-center text-xs text-muted-foreground hover:text-foreground">
+                className="taxi-passenger-auth-switch">
                 {modo === "login" ? "¿No tienes cuenta? Regístrate" : "Ya tengo cuenta, iniciar sesión"}
               </button>
             </div>
-            <div className="mt-4 flex justify-center gap-3 text-xs text-muted-foreground">
-              <a href="/login" className="hover:text-foreground">App del operador</a>
+            <div className="taxi-passenger-auth-links">
+              <a href="/login">App del operador</a>
               <span>·</span>
-              <a href="/terminal/login" className="hover:text-foreground">Terminal</a>
+              <a href="/terminal/login">Terminal</a>
             </div>
           </div>
         </form>
@@ -85,6 +87,7 @@ function AuthScreen({ modo, setModo, lUser, setLUser, lPass, setLPass, rForm, se
 export default function PassengerApp() {
   const [auth, setAuth] = useState(() => getFromStore());
   const [view, setView] = useState("viaje"); // viaje | solicitar | historial | perfil
+  const [menuOpen, setMenuOpen] = useState(false);
   const [modo, setModo] = useState("login"); // login | registro
   const [lUser, setLUser] = useState("");
   const [lPass, setLPass] = useState("");
@@ -98,9 +101,30 @@ export default function PassengerApp() {
   const [guardando, setGuardando] = useState(false);
   const [tiposVehiculo, setTiposVehiculo] = useState([]);
   const [tipoSeleccionado, setTipoSeleccionado] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState([]);
+  const [chatText, setChatText] = useState("");
+  const [ratingService, setRatingService] = useState(null);
+  const [ratingValue, setRatingValue] = useState(5);
+  const [ratingComment, setRatingComment] = useState("");
   const wsRef = useRef(null);
-  const mode = useMode();
-  const tiles = mode === "claro" ? LIGHT_TILES : DARK_TILES;
+  const [passengerLight, setPassengerLight] = useState(() => localStorage.getItem("passenger_mode") !== "oscuro");
+  const ignoreInitialModeEvent = useRef(true);
+  const tiles = passengerLight ? LIGHT_TILES : DARK_TILES;
+
+  useEffect(() => {
+    const onMode = (event) => {
+      if (ignoreInitialModeEvent.current) {
+        ignoreInitialModeEvent.current = false;
+        return;
+      }
+      const light = event.detail === "claro";
+      setPassengerLight(light);
+      localStorage.setItem("passenger_mode", light ? "claro" : "oscuro");
+    };
+    window.addEventListener("app:mode", onMode);
+    return () => window.removeEventListener("app:mode", onMode);
+  }, []);
 
   function getFromStore() {
     const d = localStorage.getItem("pas_data");
@@ -132,10 +156,15 @@ export default function PassengerApp() {
       ws.onmessage = (ev) => {
         const m = JSON.parse(ev.data);
         if (m.type === "servicio") {
-          if (m.servicio?.estado === "cancelado" || m.servicio?.estado === "completado") setServicio(null);
+          if (m.servicio?.estado === "completado") {
+            if (!m.servicio.calificacion_conductor) setRatingService(m.servicio);
+            setServicio(null);
+          } else if (m.servicio?.estado === "cancelado") setServicio(null);
           else { setServicio(m.servicio); setTaxiPos(null); }
         } else if (m.type === "ubicacion") {
           setTaxiPos({ lat: m.lat, lng: m.lng, ts: m.ts });
+        } else if (m.type === "mensaje") {
+          setChatMsgs((messages) => messages.some((item) => item.id === m.mensaje?.id) ? messages : [...messages, m.mensaje]);
         }
       };
       ws.onclose = () => { if (!closed) setTimeout(connect, 3000); };
@@ -207,6 +236,41 @@ export default function PassengerApp() {
     } catch (err) { toast.error(err.response?.data?.detail || "No se pudo cancelar"); }
   };
 
+  const abrirChat = async () => {
+    if (!servicio?.id) return;
+    try {
+      const { data } = await pasApi.get(`/servicios/${servicio.id}/mensajes`);
+      setChatMsgs(data);
+      setChatOpen(true);
+    } catch (err) { toast.error(err.response?.data?.detail || "No se pudo abrir el chat"); }
+  };
+
+  const enviarChat = async () => {
+    if (!chatText.trim() || !servicio?.id) return;
+    const texto = chatText.trim();
+    setChatText("");
+    try {
+      const { data } = await pasApi.post(`/servicios/${servicio.id}/mensajes`, { texto });
+      setChatMsgs((messages) => messages.some((item) => item.id === data.id) ? messages : [...messages, data]);
+    } catch (err) {
+      setChatText(texto);
+      toast.error(err.response?.data?.detail || "No se pudo enviar el mensaje");
+    }
+  };
+
+  const enviarCalificacion = async () => {
+    if (!ratingService?.id) return;
+    try {
+      await pasApi.post(`/servicios/${ratingService.id}/calificacion`, {
+        puntuacion: ratingValue,
+        comentario: ratingComment.trim() || null,
+      });
+      setRatingService(null);
+      setRatingComment("");
+      toast.success("Gracias por calificar a tu conductor");
+    } catch (err) { toast.error(err.response?.data?.detail || "No se pudo guardar la calificación"); }
+  };
+
   // Posición en vivo del taxi (WS) o instantánea del servicio.
   const taxiActual = useMemo(
     () => (taxiPos && { lat: taxiPos.lat, lng: taxiPos.lng })
@@ -260,42 +324,38 @@ export default function PassengerApp() {
   const mapaFullscreen = view === "viaje" || view === "solicitar";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className={cn("taxi-passenger-shell", passengerLight ? "taxi-passenger-light" : "taxi-passenger-dark")}>
       {!mapaFullscreen ? (
-        <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 py-4">
-          <div className="flex items-center gap-3">
-            <BrandMark size="sm" />
-            <div>
-              <div className="text-base font-bold leading-tight">{auth.nombre}</div>
-              <div className="text-xs text-muted-foreground">Pasajero</div>
-            </div>
+        <header className="taxi-passenger-page-header">
+          <button type="button" data-testid={PASSENGER.menuOpen} className="taxi-passenger-menu-button" onClick={() => setMenuOpen(true)} aria-label="Abrir menú"><Menu /></button>
+          <div className="taxi-passenger-logo">
+            <Car aria-hidden="true" />
+            <span>Taxi<span>HUB</span></span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="taxi-passenger-header-actions">
             <ModeToggle />
-            <button data-testid="pas-logout" onClick={salir} className="th-3d flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary/60" title="Salir" aria-label="Salir"><LogOut className="th-icon-3d h-4 w-4" /></button>
+            <button data-testid="pas-logout" onClick={salir} className="taxi-passenger-icon-button" title="Salir" aria-label="Salir"><LogOut /></button>
           </div>
         </header>
       ) : (
-        <div className="fixed inset-x-0 top-0 z-[500] mx-auto flex w-full max-w-md items-center justify-between px-4 pt-3">
-          <div className="flex items-center gap-2.5 rounded-full border border-border bg-card/90 py-1.5 pl-1.5 pr-3.5 shadow-lg backdrop-blur">
-            <BrandMark size="sm" />
-            <div className="leading-tight">
-              <div className="text-xs font-bold text-foreground">{auth.nombre}</div>
-              <div className="text-[10px] text-muted-foreground">Pasajero</div>
-            </div>
+        <div className="taxi-passenger-floating-header">
+          <button type="button" data-testid={PASSENGER.menuOpen} className="taxi-passenger-menu-button" onClick={() => setMenuOpen(true)} aria-label="Abrir menú"><Menu /></button>
+          <div className="taxi-passenger-logo taxi-passenger-logo-floating">
+            <Car aria-hidden="true" />
+            <span>Taxi<span>HUB</span></span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="taxi-passenger-header-actions">
             <ModeToggle />
-            <button data-testid="pas-logout" onClick={salir} className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground shadow-lg backdrop-blur hover:text-foreground" title="Salir" aria-label="Salir"><LogOut className="h-4 w-4" /></button>
+            <button data-testid="pas-logout" onClick={salir} className="taxi-passenger-icon-button" title="Salir" aria-label="Salir"><LogOut /></button>
           </div>
         </div>
       )}
 
-      <div className={cn("mx-auto w-full max-w-md", mapaFullscreen ? "relative h-screen overflow-hidden" : "p-5 pb-24")}>
+      <div className={cn("taxi-passenger-content", mapaFullscreen ? "taxi-passenger-map-view" : "taxi-passenger-document-view", (view === "solicitar" || !!servicio) && "taxi-passenger-immersive-view")}>
         {view === "viaje" && (
           !servicio ? (
-            <div className="relative h-full w-full" data-testid="pas-sin-viaje">
-              <div className="absolute inset-0 z-0">
+            <div className="taxi-passenger-empty-trip" data-testid="pas-sin-viaje">
+              <div className="taxi-passenger-map-layer">
                 <MapContainer center={pickup || CENTER} zoom={14} zoomControl={false} className="h-full w-full">
                   <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
                   {pickup && <Marker position={[pickup.lat, pickup.lng]} icon={pointIcon("Mi ubicación", "#22c55e")} />}
@@ -303,36 +363,37 @@ export default function PassengerApp() {
               </div>
 
               <button onClick={usarMiUbicacion} aria-label="Usar mi ubicación" data-testid="pas-centrar-mapa"
-                className="th-3d absolute bottom-[196px] right-4 z-[10] flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card/90 text-foreground shadow-lg backdrop-blur">
-                <Locate className="h-5 w-5" />
+                className="taxi-passenger-locate-button">
+                <Locate />
               </button>
 
-              <div className="absolute inset-x-0 bottom-0 z-[10] rounded-t-3xl border-t border-border bg-background/95 pb-24 shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-                <div className="mx-auto mt-2.5 flex w-12 justify-center"><span className="h-1 w-12 rounded-full bg-secondary" aria-hidden="true" /></div>
-                <div className="px-5 pb-1 pt-2">
-                  <div className="text-lg font-extrabold text-foreground">¿A dónde vamos?</div>
-                  <p className="mt-1 text-xs text-muted-foreground">Elige tu destino y buscamos un taxi disponible cerca de ti.</p>
+              <div className="taxi-passenger-home-sheet">
+                <div className="taxi-passenger-sheet-handle"><span aria-hidden="true" /></div>
+                <div className="taxi-passenger-sheet-inner">
+                  <div className="taxi-passenger-section-heading">¿A dónde vamos?</div>
+                  <p className="taxi-passenger-section-copy">Elige tu destino y buscamos un taxi disponible cerca de ti.</p>
                   <button
                     data-testid="pas-abrir-solicitar"
                     onClick={() => setView("solicitar")}
-                    className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:border-brand/40"
+                    className="taxi-passenger-destination-field"
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/15"><MapPin className="h-4 w-4 text-brand-bright" /></span>
-                    <span className="text-sm text-muted-foreground">¿A dónde vas?</span>
+                    <span><MapPin /></span>
+                    <span>¿A dónde vas?</span>
+                    <ChevronRight />
                   </button>
-                  <Button variant="secondary" onClick={() => { usarMiUbicacion(); setView("solicitar"); }} className="mt-2.5 w-full" data-testid="pas-inicio-mi-ubicacion">
-                    <Navigation className="mr-2 h-4 w-4" /> Usar mi ubicación actual
+                  <Button variant="secondary" onClick={() => { usarMiUbicacion(); setView("solicitar"); }} className="taxi-passenger-location-button" data-testid="pas-inicio-mi-ubicacion">
+                    <Navigation /> Usar mi ubicación actual
                   </Button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="relative h-full w-full overflow-hidden" data-testid="pas-viaje-inmersivo">
+            <div className="taxi-passenger-active-trip" data-testid="pas-viaje-inmersivo">
               {/* Leaflet crea sus propios panes con z-index hasta 1000 (marcadores, popups,
                   controles); sin esta envoltura position+z-0 no forman su propio stacking
                   context y esos panes pintan por encima del chip/sheet de abajo aunque
                   tengan un z-[10] mayor en apariencia. Mismo patrón que Terminal.jsx. */}
-              <div className="absolute inset-0 z-0">
+              <div className="taxi-passenger-map-layer">
                 <MapContainer center={mapCenter} zoom={14} zoomControl={false} className="h-full w-full">
                   <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
                   {/* Ruta plan del viaje (origen → destino) */}
@@ -353,7 +414,7 @@ export default function PassengerApp() {
                   {servicio.origen?.lat != null && <Marker position={[servicio.origen.lat, servicio.origen.lng]} icon={pointIcon("Origen", "#22c55e")} />}
                   {servicio.destino?.lat != null && <Marker position={[servicio.destino.lat, servicio.destino.lng]} icon={pointIcon("Destino", "#ef4444")} />}
                   {(taxiPos || servicio.taxi) && taxiActual && (
-                    <Marker position={[taxiActual.lat, taxiActual.lng]} icon={pillCarIcon(null, { heading: taxiHeading, selected: true, size: "lg", color: "#10b981", testId: "pas-taxi-3d" })}>
+                    <Marker position={[taxiActual.lat, taxiActual.lng]} icon={taxiRoleAssetIcon({ heading: taxiHeading, size: "md" })}>
                       <Popup>
                         <div className="text-sm">Tu taxi{servicio.taxi?.numero_economico ? ` · ${servicio.taxi.numero_economico}` : ""}<br />{timeAgo(taxiPos?.ts || servicio.taxi?.ultima_actualizacion)}</div>
                       </Popup>
@@ -362,90 +423,96 @@ export default function PassengerApp() {
                 </MapContainer>
               </div>
 
+              <section className="taxi-passenger-trip-summary" aria-label="Resumen del viaje">
+                <h1>{servicio.taxi ? "Tu viaje está en camino" : "Buscando tu taxi"}</h1>
+                <div className="taxi-passenger-route-summary">
+                  <div className="taxi-passenger-route-rail" aria-hidden="true"><span className="taxi-passenger-route-dot taxi-passenger-route-dot-origin" /><span /><span className="taxi-passenger-route-dot taxi-passenger-route-dot-destination" /></div>
+                  <div className="taxi-passenger-route-copy">
+                    <div><small>Origen</small><strong>{servicio.origen?.texto || "Mi ubicación"}</strong></div>
+                    <div><small>Destino</small><strong>{servicio.destino?.texto || "Destino seleccionado"}</strong></div>
+                  </div>
+                </div>
+                <div className="taxi-passenger-eta">
+                  <strong>{rutaDelTaxi.duration_s != null ? fmtDuration(rutaDelTaxi.duration_s) : servicio.taxi ? "—" : "..."}</strong>
+                  <span>{rutaDelTaxi.distance_m != null ? `Llegada estimada · ${fmtDist(rutaDelTaxi.distance_m)}` : "Estamos buscando disponibilidad cerca de ti"}</span>
+                </div>
+              </section>
+
               {/* Chip de estado flotante sobre el mapa (debajo del header flotante) */}
-              <div className="pointer-events-none absolute inset-x-0 top-16 z-[10] flex justify-end px-4">
+              <div className="taxi-passenger-status-chip">
                 <ServicioBadge
                   estado={servicio.estado}
-                  className="pointer-events-auto border-border bg-card/85 px-3.5 py-2 text-xs shadow-lg backdrop-blur"
+                  className="pointer-events-auto"
                 />
               </div>
 
               {/* Sheet inferior anclado al contenedor del mapa (no al viewport, para no tapar la nav) */}
               <div
                 data-testid="pas-viaje-sheet"
-                className="absolute inset-x-0 bottom-0 z-[10] rounded-t-3xl border-t border-border bg-background/95 shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+                className="taxi-passenger-driver-sheet"
               >
-                <div className="mx-auto mt-2.5 flex w-12 justify-center">
-                  <span className="h-1 w-12 rounded-full bg-secondary" aria-hidden="true" />
+                <div className="taxi-passenger-sheet-handle">
+                  <span aria-hidden="true" />
                 </div>
-                <div className="px-5 pb-20 pt-2">
+                <div className="taxi-passenger-sheet-inner">
                   {servicio.taxi ? (
-                    <div data-testid="pas-taxi-card">
-                      {servicio.taxi.vehiculo && (
-                        <VehicleImage
-                          vehiculo={servicio.taxi.vehiculo}
-                          alt={[servicio.taxi.vehiculo.marca, servicio.taxi.vehiculo.modelo].filter(Boolean).join(" ")}
-                          className="mb-3 h-24 w-full rounded-xl border border-border bg-gradient-to-b from-surface-2 to-surface-3"
-                          imgClassName="p-2.5"
-                          data-testid="pas-taxi-imagen"
-                        />
-                      )}
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-bright to-brand-strong text-base font-extrabold text-brand-contrast">
-                          {iniciales(servicio.taxi.nombre_conductor)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-base font-extrabold text-foreground">{servicio.taxi.nombre_conductor}</div>
-                          <div className="mono-num mt-1 inline-block rounded-md border border-border bg-card px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
-                            {servicio.taxi.numero_economico}
+<div data-testid="pas-taxi-card">
+                        <div className="taxi-passenger-driver-row">
+                          <div className="taxi-passenger-driver-avatar">
+                            {servicio.taxi.foto_url ? <img src={`${BACKEND_URL}${servicio.taxi.foto_url}`} alt="" /> : iniciales(servicio.taxi.nombre_conductor)}
                           </div>
+                          <div className="taxi-passenger-driver-copy">
+                            <strong>{servicio.taxi.nombre_conductor}</strong>
+                            <span>{[servicio.taxi.vehiculo?.marca, servicio.taxi.vehiculo?.modelo].filter(Boolean).join(" ") || "Taxi registrado"} · {servicio.taxi.numero_economico || "—"}</span>
+                            <span className="taxi-passenger-plate">{servicio.taxi.placa || "Disponible"}</span>
+                          </div>
+                          <div className="taxi-passenger-rating"><Star fill="currentColor" /> <b>{servicio.taxi.calificacion_promedio ?? "Nuevo"}</b></div>
                         </div>
-                        {rutaDelTaxi.duration_s != null && (
-                          <div className="shrink-0 text-right">
-                            <div className="mono-num text-xl font-extrabold text-brand-bright">{fmtDuration(rutaDelTaxi.duration_s)}</div>
-                            <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Llegada</div>
+                        {servicio.taxi.vehiculo && (
+                          <div className="taxi-passenger-vehicle-thumb" data-testid="pas-vehiculo-img">
+                            <VehicleImage
+                              vehiculo={servicio.taxi.vehiculo}
+                              alt="Vehículo del servicio"
+                              className="taxi-passenger-vehicle-thumb-img"
+                              imgClassName="p-0.5"
+                            />
+                            <span>{servicio.taxi.vehiculo.tipo_vehiculo?.nombre || "Vehículo"}</span>
                           </div>
                         )}
                       </div>
-                    </div>
                   ) : (
-                    <div className="flex items-center gap-3 py-1">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                        <Car className="h-5 w-5 animate-pulse text-muted-foreground" />
-                      </div>
+                    <div className="taxi-passenger-searching">
+                      <div className="taxi-passenger-searching-icon"><Car /></div>
                       <div>
-                        <div className="text-sm font-bold text-foreground">Buscando un taxi disponible…</div>
-                        <div className="text-xs text-muted-foreground">Te avisamos en cuanto se asigne uno.</div>
+                        <strong>Buscando un taxi disponible…</strong>
+                        <span>Te avisamos en cuanto se asigne uno.</span>
                       </div>
                     </div>
                   )}
 
-                  <div className="mt-3 flex items-center gap-4 border-t border-border/80 pt-3 text-xs text-muted-foreground">
+                  <div className="taxi-passenger-trip-meta">
                     {rutaDelTaxi.distance_m != null && (
-                      <span className="inline-flex items-center gap-1.5"><Navigation className="h-3.5 w-3.5" /> {fmtDist(rutaDelTaxi.distance_m)}</span>
+                      <span><Navigation /> {fmtDist(rutaDelTaxi.distance_m)}</span>
                     )}
-                    <span className="inline-flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> {metodoPago(servicio.metodo_pago)}</span>
+                    <span><Wallet /> {metodoPago(servicio.metodo_pago)}</span>
                     {servicio.taxi && (taxiPos || servicio.taxi.lat != null) && (
-                      <span className="ml-auto inline-flex items-center gap-1.5"><Clock className="h-3 w-3" /> {timeAgo(taxiPos?.ts || servicio.taxi?.ultima_actualizacion)}</span>
+                      <span><Clock /> {timeAgo(taxiPos?.ts || servicio.taxi?.ultima_actualizacion)}</span>
                     )}
                   </div>
-                  {servicio.costo != null && <div className="mt-2 text-sm text-muted-foreground">Costo: ${servicio.costo}</div>}
+                  {servicio.costo != null && <div className="taxi-passenger-cost">Costo estimado <strong>${servicio.costo}</strong></div>}
 
-                  <div className="mt-3 flex items-center gap-2.5">
+                  <div className="taxi-passenger-trip-actions">
                     {servicio.taxi?.telefono && (
                       <a
                         href={`tel:${servicio.taxi.telefono}`}
                         data-testid="pas-llamar"
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary text-foreground hover:bg-secondary/70"
+                        className="taxi-passenger-action taxi-passenger-action-call"
                         aria-label="Llamar al conductor"
-                      >
-                        <Phone className="h-4 w-4" />
-                      </a>
+                      ><Phone /><span>Llamar</span></a>
                     )}
+                    {servicio.taxi && <button type="button" data-testid={PASSENGER.chatOpen} onClick={abrirChat} className="taxi-passenger-action taxi-passenger-action-chat" aria-label="Abrir chat"><MessageCircle /><span>Chat</span></button>}
                     {["pendiente", "ofrecido", "asignado", "en_curso"].includes(servicio.estado) && (
-                      <Button data-testid="pas-cancelar" onClick={cancelar} variant="destructive" className="flex-1">
-                        Cancelar viaje
-                      </Button>
+                      <button data-testid="pas-cancelar" onClick={cancelar} className="taxi-passenger-action taxi-passenger-action-cancel"><X /><span>Cancelar</span></button>
                     )}
                   </div>
                 </div>
@@ -455,8 +522,8 @@ export default function PassengerApp() {
         )}
 
         {view === "solicitar" && (
-          <div className="relative h-full w-full" data-testid="pas-solicitar-inmersivo">
-            <div className="absolute inset-0 z-0">
+          <div className="taxi-passenger-request-view" data-testid="pas-solicitar-inmersivo">
+            <div className="taxi-passenger-map-layer">
               <MapContainer center={pickup || CENTER} zoom={14} zoomControl={false} className="h-full w-full">
                 <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
                 <MapClick onPick={(c) => !pickup ? setPickup(c) : setDropoff(c)} />
@@ -469,79 +536,78 @@ export default function PassengerApp() {
             </div>
 
             <button onClick={usarMiUbicacion} aria-label="Usar mi ubicación" data-testid="pas-centrar-mapa"
-              className={cn("th-3d absolute right-4 z-[10] flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card/90 text-foreground shadow-lg backdrop-blur",
-                pickup && dropoff ? "bottom-[336px]" : "bottom-[196px]")}>
-              <Locate className="h-5 w-5" />
+              className="taxi-passenger-locate-button taxi-passenger-request-locate">
+              <Locate />
             </button>
 
             {!pickup && (
               <div className="pointer-events-none absolute inset-x-0 top-16 z-[10] flex justify-center px-4">
-                <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-3.5 py-2 text-xs text-muted-foreground shadow-lg backdrop-blur">
-                  <MapPin className="h-3.5 w-3.5" /> Toca el mapa para marcar tu origen
+                <div className="taxi-passenger-map-hint">
+                  <MapPin /> Toca el mapa para marcar tu origen
                 </div>
               </div>
             )}
             {pickup && !dropoff && (
               <div className="pointer-events-none absolute inset-x-0 top-16 z-[10] flex justify-center px-4">
-                <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-3.5 py-2 text-xs text-muted-foreground shadow-lg backdrop-blur">
-                  <Flag className="h-3.5 w-3.5" /> Ahora toca el mapa para marcar tu destino
+                <div className="taxi-passenger-map-hint">
+                  <Flag /> Ahora toca el mapa para marcar tu destino
                 </div>
               </div>
             )}
 
             <div
               data-testid="pas-solicitar-sheet"
-              className="absolute inset-x-0 bottom-0 z-[10] max-h-[75%] overflow-y-auto rounded-t-3xl border-t border-border bg-background/95 pb-24 shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+              className="taxi-passenger-request-sheet"
             >
-              <div className="mx-auto mt-2.5 flex w-12 justify-center"><span className="h-1 w-12 rounded-full bg-secondary" aria-hidden="true" /></div>
-              <div className="px-5 pb-1 pt-2">
+              <div className="taxi-passenger-sheet-handle"><span aria-hidden="true" /></div>
+              <div className="taxi-passenger-sheet-inner">
                 {!pickup && (
                   <>
-                    <div className="text-lg font-extrabold text-foreground">¿A dónde vamos?</div>
-                    <p className="mt-1 text-xs text-muted-foreground">Marca tu origen en el mapa o usa tu ubicación actual.</p>
-                    <Button variant="secondary" onClick={usarMiUbicacion} className="mt-3 w-full" data-testid="pas-mi-ubicacion">
-                      <Navigation className="mr-2 h-4 w-4" /> Usar mi ubicación actual
+                    <div className="taxi-passenger-section-heading">¿A dónde vamos?</div>
+                    <p className="taxi-passenger-section-copy">Marca tu origen en el mapa o usa tu ubicación actual.</p>
+                    <Button variant="secondary" onClick={usarMiUbicacion} className="taxi-passenger-location-button" data-testid="pas-mi-ubicacion">
+                      <Navigation /> Usar mi ubicación actual
                     </Button>
                   </>
                 )}
 
                 {pickup && !dropoff && (
                   <>
-                    <div className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand/10 px-3 py-2.5 text-sm text-brand-bright" data-testid="pas-pickup-info">
-                      <MapPin className="h-4 w-4 shrink-0" /> Origen marcado
+                    <div className="taxi-passenger-marked-point" data-testid="pas-pickup-info">
+                      <MapPin /> Origen marcado
                     </div>
-                    <p className="mt-2.5 text-xs text-muted-foreground">Toca el mapa para marcar tu destino.</p>
+                    <p className="taxi-passenger-section-copy">Toca el mapa para marcar tu destino.</p>
                     <Button variant="ghost" size="sm" onClick={() => setPickup(null)} className="mt-1">Cambiar origen</Button>
                   </>
                 )}
 
                 {pickup && dropoff && (
                   <>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-sm text-foreground/90">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-400"><MapPin className="h-3 w-3" /></span>
+                      <div className="taxi-passenger-request-points">
+                      <div>
+                        <span><MapPin /></span>
                         Mi ubicación
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-foreground/90">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-red-500/15 text-red-400"><Flag className="h-3 w-3" /></span>
+                      <div>
+                        <span><Flag /></span>
                         {destinoTexto || "Destino marcado"}
                       </div>
                     </div>
 
                     {(rutaPreview.distance_m != null || rutaPreview.duration_s != null) && (
-                      <div className="mt-2.5 flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="taxi-passenger-preview-meta">
                         {rutaPreview.distance_m != null && (
-                          <span className="inline-flex items-center gap-1"><Navigation className="h-3 w-3" /> {fmtDist(rutaPreview.distance_m)}</span>
+                          <span><Navigation /> {fmtDist(rutaPreview.distance_m)}</span>
                         )}
                         {rutaPreview.duration_s != null && (
-                          <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> ≈{fmtDuration(rutaPreview.duration_s)}</span>
+                          <span><Clock /> ≈{fmtDuration(rutaPreview.duration_s)}</span>
                         )}
                       </div>
                     )}
 
                     {tiposVehiculo.length > 0 && (
                       <div className="mt-4">
-                        <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Elige tu vehículo</div>
+                        <div className="taxi-passenger-subheading">Elige tu vehículo</div>
                         <div className="mt-2 flex gap-2.5 overflow-x-auto pb-1">
                           {tiposVehiculo.map((t) => (
                             <button
@@ -549,19 +615,19 @@ export default function PassengerApp() {
                               data-testid={`pas-tipo-${t.id}`}
                               onClick={() => setTipoSeleccionado((cur) => (cur === t.id ? null : t.id))}
                               className={cn(
-                                "relative flex w-28 shrink-0 flex-col overflow-hidden rounded-xl border text-left transition-colors",
-                                tipoSeleccionado === t.id ? "border-brand bg-brand/10" : "border-border bg-card hover:border-brand/30"
+                                 "taxi-passenger-vehicle-option",
+                                 tipoSeleccionado === t.id ? "taxi-passenger-vehicle-option-selected" : ""
                               )}
                             >
                               <VehicleImage
                                 vehiculo={{ tipo_vehiculo: t, imagen_resuelta: t.imagen_url }}
-                                className="h-14 w-full bg-gradient-to-b from-surface-2 to-surface-3"
+                                 className="taxi-passenger-vehicle-image"
                                 imgClassName="p-1.5"
                               />
-                              <span className="truncate px-2 py-1.5 text-[11px] font-semibold text-foreground">{t.nombre}</span>
+                               <span>{t.nombre}</span>
                               {tipoSeleccionado === t.id && (
                                 <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-brand-contrast">
-                                  <Check className="h-2.5 w-2.5" />
+                                   <Check />
                                 </span>
                               )}
                             </button>
@@ -571,14 +637,14 @@ export default function PassengerApp() {
                     )}
 
                     <Input value={destinoTexto} onChange={(e) => setDestinoTexto(e.target.value)} placeholder="Nombre del destino (opcional)"
-                      className="input-inset mt-3 border-border text-foreground" />
+                      className="taxi-passenger-destination-input" />
 
-                    <div className="mt-3 flex items-center gap-2">
+                    <div className="taxi-passenger-request-actions">
                       <Button data-testid="pas-limpiar" variant="ghost" onClick={() => { setPickup(null); setDropoff(null); setDestinoTexto(""); setTipoSeleccionado(null); }}>
                         Limpiar
                       </Button>
-                      <Button data-testid="pas-solicitar" onClick={solicitar} loading={guardando} size="lg" className="flex-1">
-                        <MapPin className="h-5 w-5" /> {guardando ? "Solicitando..." : "Solicitar taxi"}
+                      <Button data-testid="pas-solicitar" onClick={solicitar} loading={guardando} size="lg" className="taxi-passenger-primary-button">
+                        <MapPin /> {guardando ? "Solicitando..." : "Solicitar taxi"}
                       </Button>
                     </div>
                   </>
@@ -589,18 +655,18 @@ export default function PassengerApp() {
         )}
 
         {view === "historial" && (
-          <div className="space-y-2" data-testid="pas-historial">
+          <div className="taxi-passenger-history" data-testid="pas-historial">
             {misServicios.length === 0 && (
               <EmptyState icon={History} title="Sin viajes aún" description="Tu historial de viajes aparecerá aquí." />
             )}
             {misServicios.map((s) => (
-              <div key={s.id} className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm text-foreground">
+              <div key={s.id} className="taxi-passenger-history-item">
+                <div>
+                  <div className="taxi-passenger-history-route">
                     {s.origen?.texto || "—"} → {s.destino?.texto || "—"}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    <Clock className="mr-1 inline h-3 w-3" />{timeAgo(s.timestamp_creacion)}{s.costo != null ? ` · $${s.costo}` : ""}
+                  <div className="taxi-passenger-history-meta">
+                    <Clock />{timeAgo(s.timestamp_creacion)}{s.costo != null ? ` · $${s.costo}` : ""}
                   </div>
                 </div>
                 <ServicioBadge estado={s.estado} />
@@ -610,49 +676,49 @@ export default function PassengerApp() {
         )}
 
         {view === "perfil" && (
-          <div className="space-y-4" data-testid="pas-perfil">
-            <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card/60 p-6 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-bright to-brand-strong text-xl font-extrabold text-brand-contrast">
+          <div className="taxi-passenger-profile" data-testid="pas-perfil">
+            <div className="taxi-passenger-profile-card">
+              <div className="taxi-passenger-profile-avatar">
                 {iniciales(auth.nombre)}
               </div>
-              <div className="mt-1 text-lg font-bold text-foreground">{auth.nombre}</div>
-              <div className="text-xs text-muted-foreground">Pasajero desde {auth.creado ? new Date(auth.creado).toLocaleDateString("es-MX", { year: "numeric", month: "long" }) : "—"}</div>
+              <div className="taxi-passenger-profile-name">{auth.nombre}</div>
+              <div className="taxi-passenger-profile-date">Pasajero desde {auth.creado ? new Date(auth.creado).toLocaleDateString("es-MX", { year: "numeric", month: "long" }) : "—"}</div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-border bg-card/60 p-3 text-center">
-                <div className="mono-num text-xl font-extrabold text-foreground">{misServicios.length}</div>
-                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Viajes totales</div>
+            <div className="taxi-passenger-profile-stats">
+              <div>
+                <strong>{misServicios.length}</strong>
+                <span>Viajes totales</span>
               </div>
-              <div className="rounded-xl border border-border bg-card/60 p-3 text-center">
-                <div className="mono-num text-xl font-extrabold text-foreground">{misServicios.filter((s) => s.estado === "cancelado").length}</div>
-                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Cancelados</div>
+              <div>
+                <strong>{misServicios.filter((s) => s.estado === "cancelado").length}</strong>
+                <span>Cancelados</span>
               </div>
             </div>
-            <div className="space-y-2 rounded-xl border border-border bg-card/60 p-4">
-              <div className="flex items-center gap-2.5 text-sm">
-                <User className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="text-foreground/90">{auth.nombre}</span>
+            <div className="taxi-passenger-profile-details">
+              <div>
+                <User />
+                <span>{auth.nombre}</span>
               </div>
-              <div className="flex items-center gap-2.5 text-sm">
-                <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="text-foreground/90">{auth.telefono || "Sin teléfono registrado"}</span>
+              <div>
+                <Phone />
+                <span>{auth.telefono || "Sin teléfono registrado"}</span>
               </div>
               {auth.correo && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="text-foreground/90">{auth.correo}</span>
+                <div>
+                  <Mail />
+                  <span>{auth.correo}</span>
                 </div>
               )}
             </div>
-            <Button data-testid="pas-logout-perfil" onClick={salir} variant="secondary" className="w-full">
-              <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
+            <Button data-testid="pas-logout-perfil" onClick={salir} variant="secondary" className="taxi-passenger-secondary-button">
+              <LogOut /> Cerrar sesión
             </Button>
           </div>
         )}
       </div>
 
       {/* Navegación inferior */}
-      <nav className="fixed inset-x-0 bottom-0 z-[500] mx-auto flex w-full max-w-md border-t border-border bg-background/95 backdrop-blur" data-testid="pas-nav-mobile">
+      <nav className="taxi-passenger-bottom-nav" data-testid="pas-nav-mobile">
         {[
           ["viaje", "Inicio", Home],
           ["solicitar", "Solicitar", Navigation],
@@ -660,12 +726,60 @@ export default function PassengerApp() {
           ["perfil", "Perfil", User],
         ].map(([id, lbl, Icon]) => (
           <button key={id} data-testid={`pas-tab-${id}`} onClick={() => setView(id)}
-            className={cn("flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition-colors",
-              view === id ? "text-brand-bright" : "text-muted-foreground")}>
-            <Icon className="h-5 w-5" /> {lbl}
+             className={cn("taxi-passenger-nav-item", view === id ? "taxi-passenger-nav-item-active" : "")}>
+             <Icon /> {lbl}
           </button>
         ))}
       </nav>
+
+      {menuOpen && (
+        <div className="taxi-passenger-menu-layer" data-testid="pas-menu-layer">
+          <button type="button" className="taxi-passenger-menu-backdrop" onClick={() => setMenuOpen(false)} aria-label="Cerrar menú" />
+          <aside className="taxi-passenger-menu-drawer">
+            <div className="taxi-passenger-menu-heading">
+              <div className="taxi-passenger-logo"><Car aria-hidden="true" /><span>Taxi<span>HUB</span></span></div>
+              <button type="button" data-testid={PASSENGER.menuClose} onClick={() => setMenuOpen(false)} aria-label="Cerrar menú"><X /></button>
+            </div>
+            <div className="taxi-passenger-menu-user"><span>{iniciales(auth.nombre)}</span><div><strong>{auth.nombre}</strong><small>Pasajero</small></div></div>
+            <div className="taxi-passenger-menu-links">
+              {[["viaje", "Inicio", Home], ["solicitar", "Solicitar taxi", Navigation], ["historial", "Historial de viajes", History], ["perfil", "Mi perfil", User]].map(([id, label, Icon]) => (
+                <button type="button" key={id} onClick={() => { setView(id); setMenuOpen(false); }} className={view === id ? "taxi-passenger-menu-link-active" : ""}><Icon /><span>{label}</span><ChevronRight /></button>
+              ))}
+            </div>
+            <button type="button" className="taxi-passenger-menu-logout" onClick={() => { setMenuOpen(false); salir(); }}><LogOut /> Cerrar sesión</button>
+          </aside>
+        </div>
+      )}
+
+      {chatOpen && servicio && (
+        <div className="taxi-passenger-chat-layer" data-testid="pas-chat-layer">
+          <section className="taxi-passenger-chat-panel">
+            <header><button type="button" onClick={() => setChatOpen(false)} aria-label="Cerrar chat"><ArrowLeft /></button><div><strong>Chat del viaje</strong><span>{servicio.taxi?.nombre_conductor || "Tu conductor"}</span></div><MessageCircle /></header>
+            <div className="taxi-passenger-chat-messages">
+              {chatMsgs.length === 0 && <p className="taxi-passenger-chat-empty">Escribe al conductor para coordinar tu recogida.</p>}
+              {chatMsgs.map((message) => <div key={message.id} className={cn("taxi-passenger-chat-bubble", message.remitente === "pasajero" && "taxi-passenger-chat-bubble-self")}><span>{message.texto}</span><small>{timeAgo(message.timestamp)}</small></div>)}
+            </div>
+            <div className="taxi-passenger-chat-compose"><Input data-testid={PASSENGER.chatInput} value={chatText} onChange={(e) => setChatText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && enviarChat()} placeholder="Escribe un mensaje..." /><button type="button" data-testid={PASSENGER.chatSend} onClick={enviarChat} aria-label="Enviar mensaje"><Send /></button></div>
+          </section>
+        </div>
+      )}
+
+      {ratingService && (
+        <div className="taxi-passenger-rating-layer" data-testid={PASSENGER.ratingSheet}>
+          <section className="taxi-passenger-rating-sheet">
+            <div className="taxi-passenger-sheet-handle"><span /></div>
+            <div className="taxi-passenger-rating-avatar">{iniciales(ratingService.taxi?.nombre_conductor || "Conductor")}</div>
+            <h2>¿Cómo fue tu viaje?</h2>
+            <p>Califica a {ratingService.taxi?.nombre_conductor || "tu conductor"}.</p>
+            <div className="taxi-passenger-rating-stars" role="radiogroup" aria-label="Calificación del conductor">
+              {[1, 2, 3, 4, 5].map((value) => <button type="button" key={value} onClick={() => setRatingValue(value)} aria-label={`${value} estrellas`} aria-pressed={ratingValue === value}><Star fill={ratingValue >= value ? "currentColor" : "none"} /></button>)}
+            </div>
+            <Input value={ratingComment} onChange={(e) => setRatingComment(e.target.value)} placeholder="Cuéntanos algo sobre el viaje (opcional)" />
+            <Button data-testid={PASSENGER.ratingSubmit} onClick={enviarCalificacion} className="taxi-passenger-primary-button">Enviar calificación</Button>
+            <button type="button" className="taxi-passenger-rating-skip" onClick={() => setRatingService(null)}>Ahora no</button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

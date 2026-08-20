@@ -1,0 +1,74 @@
+.taxi-terminal-shell {
+  --terminal-ink: #edf7f3;
+  --terminal-muted: #8da09e;
+  --terminal-line: rgba(157, 188, 180, 0.18);
+  --terminal-panel: rgba(7, 19, 25, 0.94);
+  --terminal-green: #08b977;
+  --terminal-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+  font-family: "Poppins", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.taxi-terminal-shell .leaflet-container {
+  background: #071319;
+}
+
+.taxi-terminal-shell .bezel-shell,
+.taxi-terminal-shell .surface-ui,
+.taxi-terminal-shell [data-testid="terminal-map"] ~ * .bg-card {
+  border-color: var(--terminal-line);
+  box-shadow: var(--terminal-shadow);
+}
+
+.taxi-terminal-shell .leaflet-control-attribution {
+  border-radius: 7px 0 0;
+  opacity: 0.68;
+}
+
+.taxi-terminal-shell .th-terminal-state-asset {
+  overflow: visible;
+}
+
+.th-terminal-taxi-pulse {
+  display: block;
+  border: 2px solid;
+  border-radius: 50%;
+  animation: terminal-taxi-pulse 1.65s cubic-bezier(0.2, 0.75, 0.3, 1) infinite;
+}
+
+.taxi-terminal-shell .th-terminal-state-asset:hover img {
+  transform: scale(1.08);
+  transition: transform 160ms ease-out;
+}
+
+.taxi-terminal-shell .th-route-flow {
+  animation-duration: 1.1s;
+}
+
+.taxi-terminal-shell [data-testid="terminal-map"] {
+  contain: layout paint;
+}
+
+@keyframes terminal-taxi-pulse {
+  0% { transform: scale(0.72); opacity: 0.95; }
+  75%, 100% { transform: scale(1.45); opacity: 0; }
+}
+
+@media (max-width: 900px) {
+  .taxi-terminal-shell .bezel-shell {
+    border-radius: 15px;
+  }
+}
+
+/* En móvil el zoom vive en el dock inferior (Leaflet queda oculto). */
+@media (max-width: 1023px) {
+  .taxi-terminal-shell .leaflet-bottom.leaflet-left {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taxi-terminal-shell .th-terminal-taxi-pulse,
+  .taxi-terminal-shell .th-route-flow {
+    animation: none;
+  }
+}

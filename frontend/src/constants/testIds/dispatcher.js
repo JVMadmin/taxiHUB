@@ -30,4 +30,13 @@ export const DISPATCH = {
   uiControls: "terminal-ui-controls",    // botón Ajustes de pantalla
   uiOpacity: "terminal-ui-opacity",      // slider de transparencia
   rutaToggle: "terminal-ruta-toggle",    // mostrar/ocultar ruta al destino
+
+  // Fase 12 — Terminal responsive en celular (dock inferior)
+  mobileDock: "terminal-mobile-dock",
+  dockNuevaLlamada: "dock-nueva-llamada",
+  dockServicios: "dock-servicios",
+  dockFlota: "dock-flota",
+  dockMenu: "dock-menu",
+  dockZoomIn: "dock-zoom-in",
+  dockZoomOut: "dock-zoom-out",
 };

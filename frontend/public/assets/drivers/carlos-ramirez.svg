@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Avatar demo de Carlos Ramírez">
+  <circle cx="80" cy="80" r="80" fill="#d8eee4"/>
+  <path d="M28 151c5-33 25-51 52-51s47 18 52 51" fill="#0b8f61"/>
+  <circle cx="80" cy="66" r="31" fill="#b87855"/>
+  <path d="M49 63c1-29 16-43 34-43 21 0 33 15 30 43-10-9-18-16-32-16-11 0-21 5-32 16Z" fill="#26343a"/>
+  <circle cx="68" cy="67" r="3" fill="#26343a"/><circle cx="92" cy="67" r="3" fill="#26343a"/>
+  <path d="M69 82c7 5 15 5 22 0" fill="none" stroke="#814b38" stroke-width="3" stroke-linecap="round"/>
+</svg>

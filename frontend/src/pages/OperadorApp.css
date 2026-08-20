@@ -1,0 +1,346 @@
+/* taxiHUB Driver / operación en ruta */
+
+.taxi-driver-shell {
+  --driver-ink: #10212a;
+  --driver-muted: #69767a;
+  --driver-line: #dce5e2;
+  --driver-surface: #ffffff;
+  --driver-canvas: #f2f6f5;
+  --driver-green: #08a86a;
+  --driver-green-dark: #078858;
+  --driver-red: #e84d4d;
+  position: relative;
+  width: min(100vw, 430px);
+  margin: 0 auto;
+  height: 100svh;
+  overflow: hidden;
+  color: var(--driver-ink);
+  background: var(--driver-canvas);
+  font-family: "Poppins", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 700px) {
+  body:has(.taxi-driver-shell) {
+    background: #dfe9e6;
+  }
+
+  .taxi-driver-shell {
+    border-right: 1px solid #d4e0dc;
+    border-left: 1px solid #d4e0dc;
+    box-shadow: 0 0 44px rgba(17, 33, 42, 0.16);
+  }
+}
+
+.taxi-driver-dark {
+  --driver-ink: #eff7f4;
+  --driver-muted: #9ba9aa;
+  --driver-line: #2a3b3e;
+  --driver-surface: #132226;
+  --driver-canvas: #091316;
+}
+
+.taxi-driver-shell .leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #eaf0ef;
+}
+
+.taxi-driver-shell .leaflet-control-attribution {
+  opacity: 0.65;
+}
+
+.taxi-driver-shell .text-foreground { color: var(--driver-ink) !important; }
+.taxi-driver-shell .text-foreground\/85 { color: color-mix(in srgb, var(--driver-ink) 85%, transparent) !important; }
+.taxi-driver-shell .text-muted-foreground { color: var(--driver-muted) !important; }
+.taxi-driver-shell .border-border { border-color: var(--driver-line) !important; }
+.taxi-driver-shell .bg-background\/95 { background: color-mix(in srgb, var(--driver-surface) 97%, transparent) !important; }
+.taxi-driver-shell .bg-card { background: var(--driver-surface) !important; }
+.taxi-driver-shell .bg-surface-2 { background: #f7faf9 !important; }
+.taxi-driver-shell .bg-secondary { background: #eef3f1 !important; color: var(--driver-ink) !important; }
+.taxi-driver-shell .text-brand-bright { color: var(--driver-green-dark) !important; }
+
+.taxi-driver-header-card,
+.taxi-driver-controls-card,
+.taxi-driver-shell [data-testid="ruta-info"],
+.taxi-driver-shell [data-testid="recentrar-mapa-btn"] {
+  border: 1px solid rgba(211, 223, 220, 0.96);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 10px 26px rgba(17, 33, 42, 0.13);
+}
+
+.taxi-driver-header-card {
+  max-width: min(100%, 410px);
+}
+
+.taxi-driver-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px 7px 7px;
+}
+
+.taxi-driver-avatar-button {
+  display: flex;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 2px solid #cbe9dc;
+  border-radius: 15px;
+  background: #e6f5ed;
+}
+
+.taxi-driver-avatar-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.taxi-driver-name {
+  max-width: 170px;
+  overflow: hidden;
+  color: var(--driver-ink);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taxi-driver-unit {
+  margin-top: 3px;
+  color: var(--driver-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.taxi-driver-vehicle-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 48px;
+  margin-left: auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #edf5f2;
+}
+
+.taxi-driver-vehicle-mini img {
+  width: 88px;
+  height: 54px;
+  object-fit: contain;
+}
+
+.taxi-driver-controls-card {
+  padding: 4px;
+}
+
+.taxi-driver-controls-inner {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.taxi-driver-controls-inner [data-testid="mode-toggle"],
+.taxi-driver-controls-inner button {
+  width: 38px;
+  height: 38px;
+  color: var(--driver-muted);
+  box-shadow: none;
+}
+
+.taxi-driver-controls-inner button:hover {
+  color: var(--driver-green-dark);
+  background: #eaf7f0;
+}
+
+.taxi-driver-shell [data-testid="connection-badge"],
+.taxi-driver-shell [data-testid="gps-badge"] {
+  border-color: var(--driver-line);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--driver-muted);
+  box-shadow: 0 5px 14px rgba(17, 33, 42, 0.1);
+}
+
+.taxi-driver-shell > [data-testid^="driver-sheet"] > div[role],
+.taxi-driver-shell > [data-testid^="driver-sheet"] > div:not([aria-hidden]) {
+  width: min(100%, 430px);
+  max-height: min(66svh, 600px);
+  overflow-y: auto;
+  border: 1px solid rgba(211, 223, 220, 0.96);
+  border-bottom: 0;
+  border-radius: 25px 25px 0 0;
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 -12px 34px rgba(17, 33, 42, 0.15);
+}
+
+.taxi-driver-shell > [data-testid^="driver-sheet"] > div[role] > div:last-child,
+.taxi-driver-shell > [data-testid^="driver-sheet"] > div:not([aria-hidden]) > div:last-child {
+  padding: 13px 20px 22px;
+}
+
+.taxi-driver-shell > [data-testid^="driver-sheet"] > div[role] > div:first-child span,
+.taxi-driver-shell > [data-testid^="driver-sheet"] > div:not([aria-hidden]) > div:first-child span {
+  background: #cbd6d3;
+}
+
+.taxi-driver-shell [data-testid="estado-actual"] {
+  border-color: #ccebdd !important;
+  border-radius: 15px;
+  background: #effaf4 !important;
+}
+
+.taxi-driver-shell [data-testid="estado-buttons"] button {
+  min-height: 61px;
+  border-radius: 14px;
+  border-color: var(--driver-line) !important;
+  background: #fbfcfc !important;
+  color: var(--driver-muted) !important;
+}
+
+.taxi-driver-shell [data-testid="estado-buttons"] button[aria-pressed="true"] {
+  border-color: var(--driver-green) !important;
+  color: var(--driver-green-dark) !important;
+  background: #eaf8f1 !important;
+  box-shadow: 0 0 0 2px rgba(8, 168, 106, 0.1);
+}
+
+.taxi-driver-shell [data-testid="ruta-select"] {
+  min-height: 45px;
+  border-radius: 13px;
+  border-color: var(--driver-line) !important;
+  background: #fbfcfc !important;
+}
+
+.taxi-driver-shell [data-testid="iniciar-servicio-btn"],
+.taxi-driver-shell [data-testid="aceptar-servicio-btn"],
+.taxi-driver-shell [data-testid="iniciar-viaje-btn"] {
+  min-height: 48px;
+  border-radius: 14px;
+  color: #ffffff !important;
+  background: var(--driver-green) !important;
+  box-shadow: 0 7px 16px rgba(8, 168, 106, 0.2);
+}
+
+.taxi-driver-shell [data-testid="salir-operacion-btn"] {
+  min-height: 44px;
+  border-radius: 14px;
+}
+
+.taxi-driver-shell [data-testid="reportar-objeto-btn"],
+.taxi-driver-shell [data-testid="abrir-chat-btn"],
+.taxi-driver-shell [data-testid="reporte-enviar"],
+.taxi-driver-shell [data-testid="chat-op-enviar"] {
+  border: 1px solid var(--driver-line);
+  border-radius: 13px;
+  background: #f0f5f3 !important;
+  color: var(--driver-ink) !important;
+  box-shadow: none;
+}
+
+.taxi-driver-shell [data-testid="offer-card"],
+.taxi-driver-shell [data-testid="ruta-card-cliente"],
+.taxi-driver-shell [data-testid="ruta-card-destino"],
+.taxi-driver-shell [data-testid="servicio-propio"] {
+  color: var(--driver-ink);
+}
+
+.taxi-driver-shell [data-testid="offer-card"] > div:nth-child(3),
+.taxi-driver-shell [data-testid="ruta-card-cliente"] > div:nth-child(2),
+.taxi-driver-shell [data-testid="ruta-card-destino"] > div:nth-child(2) {
+  border-color: var(--driver-line) !important;
+  border-radius: 16px;
+  background: #f8fbfa !important;
+}
+
+.taxi-driver-shell [data-testid="offer-card"] [class*="bg-amber"],
+.taxi-driver-shell [data-testid="offer-card"] [class*="border-amber"] {
+  border-color: #f0d7a3 !important;
+  background: #fff8e8 !important;
+  color: #a06b11 !important;
+}
+
+.taxi-driver-shell [data-testid="aceptar-servicio-btn"] {
+  font-weight: 800;
+}
+
+.taxi-driver-shell [data-testid="rechazar-servicio-btn"] {
+  min-height: 48px;
+  border-radius: 14px;
+  border-color: #f1d1ce !important;
+  color: #bf4141 !important;
+  background: #fff3f2 !important;
+}
+
+.taxi-driver-shell [data-testid="driver-sheet-servicio"] .border-t {
+  border-color: var(--driver-line) !important;
+}
+
+.taxi-driver-shell [data-testid="driver-sheet-servicio"] [data-testid="cliente-avatar"] {
+  border-radius: 50%;
+}
+
+.taxi-driver-shell input,
+.taxi-driver-shell [role="combobox"] {
+  border-radius: 12px;
+  border-color: var(--driver-line) !important;
+  color: var(--driver-ink) !important;
+  background: #fbfcfc !important;
+  box-shadow: none !important;
+}
+
+.taxi-driver-shell .leaflet-popup-content-wrapper {
+  border: 1px solid var(--driver-line);
+  border-radius: 13px;
+  color: var(--driver-ink);
+  background: var(--driver-surface);
+}
+
+@media (max-width: 520px) {
+  .taxi-driver-shell > header {
+    padding: 10px;
+  }
+
+  .taxi-driver-header-card {
+    max-width: 225px;
+  }
+
+  .taxi-driver-vehicle-mini {
+    display: flex;
+    width: 56px;
+    height: 36px;
+  }
+
+  .taxi-driver-vehicle-mini img {
+    width: 64px;
+    height: 42px;
+  }
+
+  .taxi-driver-name {
+    max-width: 104px;
+  }
+
+  .taxi-driver-controls-card {
+    max-width: 108px;
+  }
+
+  .taxi-driver-controls-inner [data-testid="mode-toggle"],
+  .taxi-driver-controls-inner button {
+    width: 31px;
+    height: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taxi-driver-shell *,
+  .taxi-driver-shell *::before,
+  .taxi-driver-shell *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

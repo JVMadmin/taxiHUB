@@ -203,6 +203,17 @@ backend:
       - working: true
         agent: "main"
         comment: "Nueva dependencia `_any_autenticado_o_pasajero` usada SOLO en POST /routing/route; el pasajero ya ve su origen y el taxi asignado, la polilínea no expone flota ajena. Test `test_routing_acepta_pasajero` verde (16/16 totales)."
+  - task: "Calificación del conductor y chat pasajero-operador por servicio"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementados POST /api/servicios/{id}/calificacion y GET/POST /api/servicios/{id}/mensajes, autorización por scope, persistencia embebida/compartida, notificaciones WS e índices startup. py_compile pasa; pytest no pudo iniciar porque faltan pytest-xdist y pytest-asyncio en el entorno."
 frontend:
   - task: "Terminal: termApi para todas las llamadas, popup de taxi ampliado, panel de servicios con pestañas + despacho + flota"
     implemented: true
@@ -317,17 +328,39 @@ frontend:
       - working: true
         agent: "main"
         comment: "driverIcon reemplazado por car3dIcon (coche isométrico 3D) orientado con el heading GPS; header con nombre en letras grandes y 'Unidad X' más legibles."
+  - task: "Fase 12 — Terminal responsive: web escritorio + app celular (dock inferior con acciones y zoom)"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Terminal.jsx, Terminal.css, components/TerminalMenu.jsx, components/DraggablePanel.jsx, constants/testIds/dispatcher.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Nuevo dock inferior móvil (Llamada/Servicios/Flota/Menú + zoom +/−) que se oculta al abrir cualquier panel; header compacto en móvil (se ocultan ThemeSwitcher/ModeToggle/Ajustes/toggle de servicios); rail del menú admin oculto en móvil (el dock abre el panel con sección por defecto 'operadores'); mission card a ancho completo en móvil; Leaflet ZoomControl en desktop y oculto en móvil (zoom del dock); DraggablePanel sin arrastre/offset persistido en pantallas táctiles. Verificado con Playwright en viewport 390x844: dock visible → tray/menú/flota abren y ocultan el dock → cierran y el dock vuelve → zoom funciona → modal 'Nueva llamada' abre → selección de taxi muestra la mission card. Sin errores de consola. Desktop 1400x900: rail visible, panel de operadores abre, mission card funciona, dock oculto. `craco build` compila."
+  - task: "Fase 12 — Imágenes de tipo/modelo de vehículo (referencia visual en pasajero, operador y terminal)"
+    implemented: true
+    working: true
+    file: "backend/server.py (auth/me enriquecido), frontend/src/lib/utils.js, components/VehicleImage.jsx, pages/PassengerApp.jsx, pages/OperadorApp.jsx, public/assets/vehicles/march.png"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Catálogo local extensible en utils.js (`VEHICLE_TYPE_ASSETS`, hoy `march` → /assets/vehicles/march.png) con prioridad foto propia → catálogo por modelo/marca/tipo → imagen del VehicleType → genérica. `/auth/me` ahora embebe el vehículo del operador (`_vehiculo_resumen`). Las tres fichas muestran la misma imagen: ficha del pasajero (nueva miniatura pas-vehiculo-img), header del operador (sustituye el asset azul genérico) y mission card de la terminal. Verificado con Playwright: las tres apps muestran `/assets/vehicles/march.png` para el Nissan March de Carlos (TX-101), sin errores de consola. `craco build` compila."
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 5
+  test_sequence: 7
   run_ui: true
 
 test_plan:
   current_focus:
-    - "E2E Terminal: slider de transparencia (este/alt), cargo de panels (draggable) y ruta OSRM→destino al seleccionar taxi con servicio activo (card distancia/ETA + flecha de rumbo)."
-    - "E2E Pasajero: ruta real origen→destino + tramo vivo taxi→destino y coche 3D orientado por rumbo (testId pas-taxi-3d / pas-ruta-info)."
-    - "E2E Conductor: marcador 3D del vehículo y letras grandes del header."
+    - "E2E Terminal móvil: dock inferior completo (Llamada/Servicios/Flota/Menú), paneles a pantalla, zoom, mission card a ancho completo y que el dock reaparezca al cerrar paneles."
+    - "E2E Imágenes de vehículo: verificar que el asset local del modelo (march.png) se muestre en ficha del pasajero, header del operador y mission card de la terminal; añadir más modelos al catálogo VEHICLE_TYPE_ASSETS."
+    - "Backend: probar calificación única del pasajero en servicio completado y chat de viaje con scopes/estados/WS."
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -343,3 +376,9 @@ agent_communication:
     message: "Fase 11 en verde (16/16 tests backend; `craco build` compila sin warnings; E2E Playwright de saneado con 0 errores de consola). Funcionalidades nuevas a retestar: transparencia manual (slider 40–95%, `--ui-alpha` en vivo), paneles flotantes arrastrables y persistidos (sidebar, tray, mission card), ruta OSRM al destino del servicio activo con card de distancia/ETA y flecha de rumbo, rutas reales + coche 3D en el mapa del pasajero, marcador 3D del conductor, y letras grandes chofer/unidad en pasajero y conductor. Nota de entorno: pytest corre con `-o required_plugins=` (Python 3.14 pierde distinfo de plugins); los servicios están levantados en localhost (Mongo :27017, API :8000, UI :3000) y el frontend se sirve desde un lanzador .bat con ruta larga (el watcher de Node crashea con rutas 8.3 cortas). Datos demo: terminal central/central123 (también hay op2), operadores op1/op2 taxi123; op2 tiene un servicio 'Pakal' asignado para probar la ruta."
   - agent: "main"
     message: "Fase 11 · REGRESIÓN reportada por el usuario y CORREGIDA (test_sequence 5): 'Maximum update depth exceeded' en el Dispatcher al alternar la ruta del servicio activo. Fix en `useRouting.js` (guard de transición `inactiveRef` para la rama de reset, que se disparaba en cada render por el literal `{lat,lng}` nuevo) + `rutaOrigen` con `useMemo` en `Terminal.jsx`. Verificado con Playwright: stress de 6 clicks de taxi × 4 toggles ruta on/off con 0 errores de consola; assert funcional (polilínea flujo 1 → toggle off 0 → toggle on 1, flecha de rumbo 1); `craco build` 'Compiled successfully'. Retestar E2E del toggle de ruta (testId terminal-ruta-toggle) y la card 'Ruta a destino' (distancia/ETA). Nota de datos demo: el servicio 'Pakal' viejo (fecha UTC 08-16, fuera de /servicios/hoy) se terminó; se creó 'E2E Check' asignado a Ana Torres (TX-102) con destino Pakal para reproducir la ruta activa; Ana quedó en estado libre con ese servicio asignado."
+  - agent: "main"
+    message: "Implementada calificación y chat de viaje en backend/server.py. Verificación estática: python -m py_compile backend/server.py pasa; black --check detecta formato preexistente del archivo y pytest no inicia por plugins requeridos ausentes."
+  - agent: "main"
+    message: "Fase 12: Terminal responsive (web escritorio + celular) y catálogo de imágenes de vehículo por modelo. `craco build` compila; Playwright verde en móvil (390x844) y escritorio (1400x900) sin errores de consola. Las tres apps (pasajero, operador, terminal) muestran /assets/vehicles/march.png para el Nissan March de Carlos (TX-101)."
+  - agent: "main"
+    message: "Documento de presentación para clientes creado en docs/FUNCIONES-APPS.md con las funciones de las tres apps (Terminal, Operador, Pasajero), seguridad y resumen técnico (FastAPI + MongoDB + React + Leaflet/OSRM + WebSockets + JWT)."
