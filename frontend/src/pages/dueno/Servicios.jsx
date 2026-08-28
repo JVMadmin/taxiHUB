@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { pointIcon } from "@/lib/taxiIcon";
 import { ArrowLeft, ClipboardList, User, Car, Wallet, MapPin, Flag } from "lucide-react";
 
-const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
+const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 const ESTADOS = ["pendiente", "ofrecido", "asignado", "en_curso", "completado", "cancelado", "vencido"];
 
@@ -61,7 +63,7 @@ function ServiceDetail({ servicioId, onBack }) {
       {ruta && (
         <div className="h-56 overflow-hidden rounded-xl border border-border">
           <MapContainer center={[origen.lat, origen.lng]} zoom={13} className="h-full w-full">
-            <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
+            <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
             <Polyline positions={ruta} pathOptions={{ color: "#10b981", weight: 4, opacity: 0.85, dashArray: "1 10" }} />
             <Marker position={[origen.lat, origen.lng]} icon={pointIcon("Origen", "#22c55e")} />
             <Marker position={[destino.lat, destino.lng]} icon={pointIcon("Destino", "#ef4444")} />

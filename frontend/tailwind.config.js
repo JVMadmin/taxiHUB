@@ -7,12 +7,40 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        // Escala tipográfica TaxiHUB 2.0
+        display: ['1.875rem', { lineHeight: '1.2', fontWeight: '700', letterSpacing: '-0.02em' }],
+        h1: ['1.5rem', { lineHeight: '1.33', fontWeight: '700', letterSpacing: '-0.015em' }],
+        h2: ['1.25rem', { lineHeight: '1.4', fontWeight: '600', letterSpacing: '-0.01em' }],
+        h3: ['1.0625rem', { lineHeight: '1.41', fontWeight: '600' }],
+        body: ['0.875rem', { lineHeight: '1.43' }],
+        'body-sm': ['0.8125rem', { lineHeight: '1.38' }],
+        label: ['0.75rem', { lineHeight: '1.33', fontWeight: '600', letterSpacing: '0.06em' }],
+        caption: ['0.6875rem', { lineHeight: '1.27' }],
+        metric: ['1.625rem', { lineHeight: '1.15', fontWeight: '800', letterSpacing: '-0.02em' }],
+        num: ['0.8125rem', { lineHeight: '1.38', fontWeight: '500' }],
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)'
       },
       colors: {
+        // Paleta TaxiHUB 2.0 (tokens en src/design/tokens.css)
+        th: {
+          primary: { DEFAULT: 'var(--th-primary)', dark: 'var(--th-primary-dark)', light: 'var(--th-primary-light)' },
+          success: 'var(--th-success)',
+          danger: 'var(--th-danger)',
+          warning: 'var(--th-warning)',
+          info: 'var(--th-info)',
+          purple: 'var(--th-purple)',
+          offline: 'var(--th-offline)',
+          bg: 'var(--th-bg)',
+          surface: { DEFAULT: 'var(--th-surface)', 2: 'var(--th-surface-2)', 3: 'var(--th-surface-3)' },
+          text: 'var(--th-text)',
+          muted: 'var(--th-muted)',
+          border: 'var(--th-border)',
+        },
         brand: {
           DEFAULT: 'hsl(var(--brand) / <alpha-value>)',
           bright: 'hsl(var(--brand-bright) / <alpha-value>)',

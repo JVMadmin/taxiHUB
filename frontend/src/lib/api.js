@@ -88,40 +88,22 @@ export const logoutDueno = () => {
   localStorage.removeItem("dueno_data");
 };
 
-export const ESTADO_COLORS = {
-  libre: "#22c55e",
-  ocupado: "#ef4444",
-  no_disponible: "#eab308",
-  fuera_de_servicio: "#6b7280",
-  averiado: "#a855f7",
-};
+// Estados: fuente única de verdad en src/design/status.js (TaxiHUB 2.0).
+// Se re-exportan con los nombres históricos para no romper consumidores.
+import { ESTADOS_OPERADOR, ESTADOS_SERVICIO } from "@/design/status";
 
-export const ESTADO_LABEL = {
-  libre: "Libre",
-  ocupado: "Ocupado",
-  no_disponible: "No disponible",
-  fuera_de_servicio: "Fuera de servicio",
-  averiado: "Averiado",
-};
+export const ESTADO_COLORS = Object.fromEntries(
+  Object.entries(ESTADOS_OPERADOR).map(([k, v]) => [k, v.color])
+);
 
-export const SERVICIO_COLORS = {
-  pendiente: "#eab308",
-  ofrecido: "#3b82f6",
-  asignado: "#8b5cf6",
-  en_curso: "#22c55e",
-  completado: "#10b981",
-  cancelado: "#ef4444",
-  vencido: "#f97316",
-  rechazado: "#6b7280",
-};
+export const ESTADO_LABEL = Object.fromEntries(
+  Object.entries(ESTADOS_OPERADOR).map(([k, v]) => [k, v.label])
+);
 
-export const SERVICIO_LABEL = {
-  pendiente: "Pendiente",
-  ofrecido: "Oferta enviada",
-  asignado: "Asignado",
-  en_curso: "En curso",
-  completado: "Completado",
-  cancelado: "Cancelado",
-  vencido: "Vencido",
-  rechazado: "Rechazado",
-};
+export const SERVICIO_COLORS = Object.fromEntries(
+  Object.entries(ESTADOS_SERVICIO).map(([k, v]) => [k, v.color])
+);
+
+export const SERVICIO_LABEL = Object.fromEntries(
+  Object.entries(ESTADOS_SERVICIO).map(([k, v]) => [k, v.label])
+);

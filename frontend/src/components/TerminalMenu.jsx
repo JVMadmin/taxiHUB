@@ -8,9 +8,11 @@ import { toast } from "sonner";
 import {
   PhoneCall, Users, UserSquare, Package, MessageSquare, Route as RouteIcon,
   X, Plus, Check, Send, ChevronDown, ChevronRight, ClipboardList, DollarSign,
-  Trash2, Truck, Search, Pencil, Layers, Camera, EyeOff, Eye,
+  Trash2, Truck, Search, Pencil, Layers, Camera, EyeOff, Eye, Wrench,
 } from "lucide-react";
+import { ChoferesPanel, SociosPanel, MantenimientoPanel, CombustiblePanel, DashboardPanel } from "@/components/terminal/ConsultaPanels";
 import { ServiciosPanel } from "@/components/ServiciosPanel";
+import { WhatsAppPanel } from "@/components/WhatsAppPanel";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
@@ -21,20 +23,39 @@ import { VehicleImage } from "@/components/VehicleImage";
 const SECTIONS = [
   { id: "servicio", label: "Asignar servicio", icon: PhoneCall },
   { id: "servicios", label: "Servicios de hoy", icon: ClipboardList },
+  { id: "whatsapp", label: "WhatsApp", icon: MessageSquare },
+  { id: "choferes", label: "Choferes", icon: Users },
+  { id: "socios", label: "Socios", icon: UserSquare },
   { id: "vehiculos", label: "Vehículos / Flota", icon: Truck },
   { id: "tipos-vehiculo", label: "Tipos de vehículo", icon: Layers },
   { id: "operadores", label: "Operadores", icon: Users },
   { id: "clientes", label: "Clientes", icon: UserSquare },
+  { id: "mantenimiento", label: "Mantenimiento", icon: Wrench },
+  { id: "combustible", label: "Combustible", icon: DollarSign },
   { id: "reportes", label: "Objetos reportados", icon: Package },
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "rutas", label: "Rutas", icon: RouteIcon },
   { id: "tarifas", label: "Tarifas", icon: DollarSign },
+  { id: "dashboard", label: "Dashboard", icon: ClipboardList },
 ];
 
-export function TerminalMenu({ active: activeProp, onActiveChange, operadores, rutas, onRutasChanged, onDataChanged, onOpenServicio, liveMessage, liveReporte, servicioSignal }) {
+// Grupos por responsabilidad (prompt premium §9): la rail deja de ser plana.
+const SECTION_GROUPS = [
+  { label: "Operar", ids: ["servicio", "servicios", "whatsapp", "chat"] },
+  { label: "Flota", ids: ["vehiculos", "choferes", "operadores", "tipos-vehiculo"] },
+  { label: "Control", ids: ["socios", "mantenimiento", "combustible", "reportes", "rutas", "tarifas", "dashboard"] },
+];
+
+export function TerminalMenu({ active: activeProp, onActiveChange, operadores, operadoresLibres = [], rutas, onRutasChanged, onDataChanged, onOpenServicio, onMarkWaLocation, onVerWaMapa, onAssigned, choferExpedienteId, liveMessage, liveReporte, servicioSignal }) {
   const [internalActive, setInternalActive] = useState(null);
   const active = activeProp !== undefined ? activeProp : internalActive;
   const setActive = onActiveChange !== undefined ? onActiveChange : setInternalActive;
+  const [choferExp, setChoferExp] = useState(null);
+  useEffect(() => {
+    if (choferExpedienteId) setChoferExp(choferExpedienteId);
+  }, [choferExpedienteId]);
+  // WhatsApp pide más ancho (dos columnas estilo WhatsApp Web).
+  const panelWidth = active === "whatsapp" ? 720 : 400;
 
   const open = (id) => {
     if (id === "servicio") { onOpenServicio(); return; }
@@ -43,34 +64,43 @@ export function TerminalMenu({ active: activeProp, onActiveChange, operadores, r
 
   return (
     <>
-      {/* Rail de iconos (derecha, escritorio) */}
+      {/* Rail de iconos agrupado por responsabilidad (derecha, escritorio) */}
       <div
         data-testid="terminal-menu-rail"
-        className={`bezel-shell absolute top-[124px] z-[600] hidden transition-all duration-300 ease-motion lg:block lg:top-24 ${active ? "right-[408px]" : "right-3 sm:right-4"}`}
+        className={`absolute top-[124px] z-[600] hidden max-h-[calc(100vh-140px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-lg transition-all duration-300 ease-motion lg:block lg:top-24 ${active ? "right-3" : "right-3"} sm:right-4`}
+        style={{ right: active ? `calc(${panelWidth}px + 0.75rem)` : undefined }}
       >
-        <div className="flex flex-col gap-1.5 rounded-[var(--radius)] p-1.5">
-          {SECTIONS.map((s) => (
-            <button
-              key={s.id}
-              data-testid={`menu-${s.id}`}
-              onClick={() => open(s.id)}
-              title={s.label}
-              aria-label={s.label}
-              className={cn("th-3d flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
-                active === s.id ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
-            >
-              <s.icon className="th-icon-3d h-5 w-5" />
-            </button>
+        <div className="flex flex-col gap-1 p-2">
+          {SECTION_GROUPS.map((g) => (
+            <div key={g.label} className="flex flex-col items-center gap-1 border-t border-border/60 py-1.5 first:border-0 first:pt-0">
+              <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground/70">{g.label}</span>
+              {g.ids.map((id) => {
+                const s = SECTIONS.find((x) => x.id === id);
+                return (
+                  <button
+                    key={id}
+                    data-testid={`menu-${id}`}
+                    onClick={() => open(id)}
+                    title={s.label}
+                    aria-label={s.label}
+                    className={cn("th-3d flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
+                      active === id ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+                  >
+                    <s.icon className="th-icon-3d h-5 w-5" />
+                  </button>
+                );
+              })}
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Panel deslizable */}
+      {/* Panel deslizable — superficie del Design System (sin cajas negras) */}
       <div
-        className={`absolute right-0 top-0 z-[590] h-full w-[400px] max-w-[92vw] transform border-l border-border transition-transform duration-300 ease-motion ${
+        className={`absolute right-0 top-0 z-[590] h-full max-w-[92vw] transform border-l border-border bg-[var(--th-surface)] transition-all duration-300 ease-motion ${
           active ? "translate-x-0" : "translate-x-full"
         }`}
-        style={{ background: "hsl(240 5% 9% / var(--ui-alpha,0.95))", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
+        style={{ width: panelWidth }}
       >
         {active && (
           <div data-testid={`panel-${active}`} className="flex h-full animate-fade-in flex-col">
@@ -85,17 +115,35 @@ export function TerminalMenu({ active: activeProp, onActiveChange, operadores, r
                 <X className="h-5 w-5" />
               </button>
             </div>
+            {active !== "whatsapp" && (
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
               {active === "servicios" && <ServiciosPanel reloadSignal={servicioSignal} />}
               {active === "vehiculos" && <VehiculosPanel operadores={operadores} />}
               {active === "tipos-vehiculo" && <TiposVehiculoPanel />}
               {active === "operadores" && <OperadoresPanel operadores={operadores} rutas={rutas} onChanged={onDataChanged} />}
               {active === "clientes" && <ClientesPanel />}
+              {active === "choferes" && <ChoferesPanel expedienteId={choferExp} setExpedienteId={setChoferExp} />}
+              {active === "socios" && <SociosPanel />}
+              {active === "mantenimiento" && <MantenimientoPanel />}
+              {active === "combustible" && <CombustiblePanel />}
+              {active === "dashboard" && <DashboardPanel />}
               {active === "reportes" && <ReportesPanel liveReporte={liveReporte} />}
               {active === "chat" && <ChatPanel liveMessage={liveMessage} />}
               {active === "rutas" && <RutasPanel rutas={rutas} onRutasChanged={onRutasChanged} />}
               {active === "tarifas" && <TarifasPanel />}
             </div>
+            )}
+            {/* WhatsApp: chat de altura completa (sin scroll del contenedor) */}
+            {active === "whatsapp" && (
+              <div className="min-h-0 flex-1 overflow-hidden p-4">
+                <WhatsAppPanel
+                  taxisLibres={operadoresLibres}
+                  onVerMapa={onVerWaMapa}
+                  onCrearServicio={onMarkWaLocation}
+                  onAssigned={onAssigned}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -552,6 +600,14 @@ function TiposVehiculoPanel() {
 }
 
 /* ---------------- Reportes ---------------- */
+// Estados del ciclo de objetos (F11 §23) con su color SSOT.
+const OBJETO_ESTADOS = [
+  { k: "encontrado", l: "Encontrado", c: "#3B82F6" },
+  { k: "resguardo", l: "En resguardo", c: "#F59E0B" },
+  { k: "devuelto", l: "Devuelto", c: "#10B981" },
+  { k: "cerrado", l: "Cerrado", c: "#6B7280" },
+];
+
 function ReportesPanel({ liveReporte }) {
   const [reportes, setReportes] = useState(null);
   const [error, setError] = useState(null);
@@ -562,10 +618,22 @@ function ReportesPanel({ liveReporte }) {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (liveReporte) load(); }, [liveReporte, load]);
 
-  const resolver = async (id) => {
-    await termApi.patch(`/reportes/${id}/resolver`);
-    toast.success("Reporte marcado como resuelto");
-    load();
+  const cambiarEstado = async (id, estado) => {
+    try {
+      await termApi.patch(`/reportes/${id}/estado`, { estado });
+      toast.success(`Objeto: ${OBJETO_ESTADOS.find((e) => e.k === estado)?.l || estado}`);
+      load();
+    } catch {
+      toast.error("No se pudo actualizar el estado");
+    }
+  };
+
+  const siguienteAccion = (estado) => {
+    switch (estado) {
+      case "encontrado": return { k: "resguardo", l: "A resguardo" };
+      case "resguardo": return { k: "devuelto", l: "Marcar devuelto" };
+      default: return null;
+    }
   };
 
   return (
@@ -575,27 +643,51 @@ function ReportesPanel({ liveReporte }) {
       {!error && reportes !== null && reportes.length === 0 && (
         <EmptyState icon={Package} title="No hay objetos reportados" description="Los reportes de objetos olvidados aparecerán aquí." />
       )}
-      {!error && reportes !== null && reportes.map((r) => (
-        <div key={r.id} data-testid={`reporte-row-${r.id}`} className="flex gap-3 rounded-xl border border-border bg-surface-2 p-2.5">
-          <img
-            src={`${BACKEND_URL}${r.foto_url}`}
-            alt="objeto"
-            className="h-16 w-16 shrink-0 rounded-lg object-cover"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="text-sm text-foreground">{r.descripcion || "Sin descripción"}</div>
-            <div className="text-xs text-muted-foreground">{r.operador_nombre} · {r.operador_placa}</div>
-            <div className="text-xs text-muted-foreground">{timeAgo(r.timestamp)}</div>
-            {r.estado === "pendiente" ? (
-              <Button data-testid={`resolver-${r.id}`} size="sm" onClick={() => resolver(r.id)} className="mt-1.5">
-                <Check className="h-3 w-3" /> Marcar resuelto
-              </Button>
-            ) : (
-              <span className="mt-1.5 inline-block rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-400">Resuelto</span>
-            )}
+      {!error && reportes !== null && reportes.map((r) => {
+        const estadoInfo = OBJETO_ESTADOS.find((e) => e.k === r.estado) || { l: r.estado, c: "#6B7280" };
+        const accion = siguienteAccion(r.estado);
+        return (
+          <div key={r.id} data-testid={`reporte-row-${r.id}`} className="flex gap-3 rounded-xl border border-border bg-surface-2 p-2.5">
+            <img
+              src={`${BACKEND_URL}${r.foto_url}`}
+              alt="objeto"
+              className="h-16 w-16 shrink-0 rounded-lg object-cover"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm text-foreground">{r.descripcion || "Sin descripción"}</div>
+                <span
+                  data-testid={`reporte-estado-${r.id}`}
+                  className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                  style={{ color: estadoInfo.c, background: `${estadoInfo.c}1f`, border: `1px solid ${estadoInfo.c}55` }}
+                >
+                  {estadoInfo.l}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {r.operador_nombre} · {r.operador_placa}
+                {r.unidad?.numero_economico ? ` · Unidad ${r.unidad.numero_economico}` : ""}
+              </div>
+              {r.servicio_id && (
+                <div className="text-[10px] text-muted-foreground/70">Servicio #{r.servicio_id.slice(-6)}</div>
+              )}
+              <div className="text-xs text-muted-foreground">{timeAgo(r.timestamp)}</div>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                {accion && (
+                  <Button data-testid={`avanzar-${r.id}`} size="sm" onClick={() => cambiarEstado(r.id, accion.k)}>
+                    {accion.l}
+                  </Button>
+                )}
+                {r.estado !== "cerrado" && r.estado !== "devuelto" && (
+                  <Button data-testid={`cerrar-${r.id}`} size="sm" variant="secondary" onClick={() => cambiarEstado(r.id, "cerrado")}>
+                    Cerrar
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

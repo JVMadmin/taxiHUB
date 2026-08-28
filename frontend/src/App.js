@@ -10,6 +10,7 @@ import DevPanel from "@/pages/DevPanel";
 import PassengerApp from "@/pages/PassengerApp";
 import DuenoLogin from "@/pages/DuenoLogin";
 import DuenoApp from "@/pages/DuenoApp";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { applyTheme, getTheme, applyMode, getMode } from "@/lib/theme";
 
 function App() {
@@ -25,20 +26,22 @@ function App() {
 
   return (
     <div className={mode === "claro" ? "App" : "App dark"}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Terminal />} />
-          <Route path="/terminal" element={<Terminal />} />
-          <Route path="/terminal/login" element={<TerminalLogin />} />
-          <Route path="/login" element={<OperadorLogin />} />
-          <Route path="/operador" element={<OperadorApp />} />
-          <Route path="/pasajero" element={<PassengerApp />} />
-          <Route path="/dueno/login" element={<DuenoLogin />} />
-          <Route path="/dueno" element={<DuenoApp />} />
-          <Route path="/dev" element={<DevPanel />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Terminal />} />
+            <Route path="/terminal" element={<Terminal />} />
+            <Route path="/terminal/login" element={<TerminalLogin />} />
+            <Route path="/login" element={<OperadorLogin />} />
+            <Route path="/operador" element={<OperadorApp />} />
+            <Route path="/pasajero" element={<PassengerApp />} />
+            <Route path="/dueno/login" element={<DuenoLogin />} />
+            <Route path="/dueno" element={<DuenoApp />} />
+            <Route path="/dev" element={<DevPanel />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
       <Toaster theme={mode === "claro" ? "light" : "dark"} position="top-right" richColors />
     </div>
   );

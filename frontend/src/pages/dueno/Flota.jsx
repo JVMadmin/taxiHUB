@@ -14,11 +14,38 @@ import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import { Input } from "@/components/ui/input";
-import { Car, Search, ArrowLeft, User, Route as RouteIcon } from "lucide-react";
+import { Car, Search, ArrowLeft, User, Route as RouteIcon, WifiOff } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847];
-const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
+const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+// GPS desactualizado no debe verse igual que uno fresco — el dueño necesita
+// saber si el punto que ve en el mapa es confiable o no. Umbral: 5 min ok,
+// 5-30 min advertencia, >30 min o sin dato = sin señal.
+function GpsFreshness({ ultimaActualizacion }) {
+  if (!ultimaActualizacion) {
+    return (
+      <span className="flex items-center gap-1 font-semibold text-red-400">
+        <WifiOff className="h-3 w-3" /> Sin señal GPS
+      </span>
+    );
+  }
+  const minutos = (Date.now() - new Date(ultimaActualizacion).getTime()) / 60000;
+  if (minutos < 5) {
+    return <span className="flex items-center gap-1 text-emerald-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> GPS en línea</span>;
+  }
+  if (minutos < 30) {
+    return <span className="flex items-center gap-1 font-semibold text-amber-400"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Señal hace {timeAgo(ultimaActualizacion)}</span>;
+  }
+  return (
+    <span className="flex items-center gap-1 font-semibold text-red-400">
+      <WifiOff className="h-3 w-3" /> Sin señal reciente ({timeAgo(ultimaActualizacion)})
+    </span>
+  );
+}
 
 function VehicleDetail({ vehiculoId, onBack }) {
   const [v, setV] = useState(null);
@@ -70,7 +97,11 @@ function VehicleDetail({ vehiculoId, onBack }) {
       {v.conductor ? (
         <div className="rounded-xl border border-border bg-card p-3 text-sm">
           <div className="flex items-center gap-2 font-semibold text-foreground"><User className="h-4 w-4 text-muted-foreground" /> {v.conductor.nombre}</div>
-          <div className="mt-1 text-xs text-muted-foreground">{v.conductor.telefono || "Sin teléfono registrado"} · GPS {timeAgo(v.conductor.ultima_actualizacion)}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
+          <span>{v.conductor.telefono || "Sin teléfono registrado"}</span>
+          <span>·</span>
+          <GpsFreshness ultimaActualizacion={v.conductor.ultima_actualizacion} />
+        </div>
         </div>
       ) : (
         <EmptyState icon={User} title="Sin conductor asignado" description="Este vehículo no tiene un conductor activo." />
@@ -79,7 +110,7 @@ function VehicleDetail({ vehiculoId, onBack }) {
       {v.lat != null && (
         <div className="h-64 overflow-hidden rounded-xl border border-border">
           <MapContainer center={[v.lat, v.lng]} zoom={14} className="h-full w-full">
-            <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
+            <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
             {v.track?.length > 1 && (
               <Polyline positions={v.track.map((p) => [p.lat, p.lng])} pathOptions={{ color: "#94a3b8", weight: 3, opacity: 0.6, dashArray: "4 6" }} />
             )}
@@ -104,7 +135,7 @@ function VehicleDetail({ vehiculoId, onBack }) {
             </div>
             <div className="rounded-xl border border-border bg-card p-3 text-center">
               <div className="mono-num text-lg font-bold text-foreground">{fmtDuration(trackStats.dur)}</div>
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Ventana</div>
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Duración del trayecto</div>
             </div>
           </>
         )}

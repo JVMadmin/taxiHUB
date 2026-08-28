@@ -228,11 +228,15 @@ export function taxiStateAssetIcon(estado, { heading = 0, selected = false, labe
   const dim = size === "lg" ? 62 : size === "sm" ? 44 : 52;
   const deg = Number(heading) || 0;
   const asset = TAXI_STATE_ASSETS[estado] || TAXI_STATE_ASSETS.fuera_de_servicio;
+  const color = ESTADO_COLORS[estado] || ESTADO_COLORS.fuera_de_servicio;
   const pulse = selected
-    ? `<span class="th-terminal-taxi-pulse" style="position:absolute;inset:-8px;border-color:${ESTADO_COLORS[estado] || "#22c55e"}"></span>`
+    ? `<span class="th-terminal-taxi-pulse" style="position:absolute;inset:-8px;border-color:${color}"></span>`
     : "";
+  // Placa premium (§14): identificador + punto del estado en la misma píldora.
   const labelHtml = label
-    ? `<span style="margin-top:2px;background:#071218;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;line-height:1;white-space:nowrap;font-family:Poppins,Inter,sans-serif">${label}</span>`
+    ? `<span style="margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:#071218;color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:7px;padding:2.5px 7px;font-size:10px;font-weight:800;line-height:1;white-space:nowrap;font-family:Poppins,Inter,sans-serif">
+         <span style="width:6px;height:6px;border-radius:999px;background:${color};box-shadow:0 0 4px ${color}"></span>${label}
+       </span>`
     : "";
   const html = `
     <div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;position:relative">

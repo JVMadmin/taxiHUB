@@ -27,13 +27,18 @@ import { toast } from "sonner";
 import {
   Car, Power, LogOut, MapPin, Bell, Package, MessageSquare, Send, X,
   PlayCircle, StopCircle, Check, LocateFixed, Navigation as NavIcon, Wallet,
-  Clock, Flag, User, AlertTriangle,
+  Clock, Flag, User, AlertTriangle, Gauge, Fuel,
 } from "lucide-react";
 
+const fmtMoney2 = (n) => `$${Number(n || 0).toLocaleString("es-MX")}`;
+
 const LOC_INTERVAL = 9000; // 8-10s
-const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
+const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const TAXI_ASSET = "/assets/vehicles/taxihub-taxi-azul.png";
+const MARCH_LOGO = "/assets/vehicles/march.png";
 const DEMO_DRIVER_AVATARS = {
   op1: "/assets/drivers/carlos-ramirez.svg",
   op2: "/assets/drivers/ana-torres.svg",
@@ -98,7 +103,7 @@ function OfflineBanner() {
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[900] flex justify-center p-3">
       <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-destructive/50 bg-destructive/95 px-4 py-1.5 text-xs font-bold text-destructive-foreground shadow-lg animate-slide-down">
         <AlertTriangle className="h-3.5 w-3.5" />
-        Sin conexión a Internet. Reconectando…
+        Sin conexión a Internet. Reconectandoâ€¦
       </div>
     </div>
   );
@@ -258,8 +263,14 @@ export default function OperadorApp() {
       const ws = new WebSocket(`${WS_BASE}/ws/operador/${op.id}?token=${encodeURIComponent(getToken() || "")}`);
       wsRef.current = ws;
       ws.onopen = () => setWsState(navigator.onLine ? "online" : "reconnecting");
-      ws.onclose = () => {
+      ws.onclose = (ev) => {
         setWsState((s) => (navigator.onLine ? "reconnecting" : "offline"));
+        // Token inválido: reintentar es inútil â€” forzar re-login.
+        if (ev.code === 1008) {
+          logoutOperador();
+          navigate("/login");
+          return;
+        }
         if (!closed) retry = setTimeout(connect, 3000);
       };
       ws.onmessage = (ev) => {
@@ -267,12 +278,15 @@ export default function OperadorApp() {
         if (msg.type === "nuevo_servicio") {
           setServicio(msg.servicio);
           setServicioPropio(null);
-          toast.info("🚕 Nuevo servicio asignado");
+          toast.info("ðŸš• Nuevo servicio asignado");
+        } else if (msg.type === "destino_alcanzado") {
+          // Auto-finalización por geofence (F5): sin acción del taxista.
+          toast.success("Servicio completado", { description: "Destino alcanzado. Quedas disponible." });
         } else if (msg.type === "mensaje") {
           if (!msg.servicio_id || msg.servicio_id === chatServicioRef.current) {
             setChatMsgs((m) => (m.some((x) => x.id === msg.mensaje.id) ? m : [...m, msg.mensaje]));
           }
-          if (msg.mensaje.remitente === "terminal") toast.info("💬 Mensaje de la central");
+          if (msg.mensaje.remitente === "terminal") toast.info("ðŸ’¬ Mensaje de la central");
         }
       };
     };
@@ -295,17 +309,129 @@ export default function OperadorApp() {
     }
   };
 
-  const entrar = async () => {
-    await cambiarEstado("libre");
-    const me = await api.get("/auth/me");
-    setOp(me.data); setInicio(me.data.inicio_operacion || null);
-    toast.success("Estás en operación");
+  // ---- Turno (F6): iniciar/finalizar con kilometraje ----
+  const [turno, setTurno] = useState(null);
+  const [kmModalOpen, setKmModalOpen] = useState(false);
+  const [kmInput, setKmInput] = useState("");
+  const [kmMode, setKmMode] = useState("iniciar"); // iniciar | finalizar
+  const [turnoHist, setTurnoHist] = useState([]);
+
+  const cargarTurno = useCallback(async () => {
+    try {
+      const { data } = await api.get("/turnos/activo");
+      setTurno(data.turno);
+    } catch { /* sin turno */ }
+  }, []);
+
+  useEffect(() => { if (op) cargarTurno(); }, [op, cargarTurno]);
+
+  const confirmarKm = async () => {
+    const km = parseFloat(kmInput);
+    if (!Number.isFinite(km) || km < 0) { toast.error("Escribe un kilometraje válido"); return; }
+    try {
+      if (kmMode === "iniciar") {
+        const { data } = await api.post("/turnos/iniciar", { odometro_km: km });
+        setTurno(data.turno);
+        await cambiarEstado("libre");
+        const me = await api.get("/auth/me");
+        setOp(me.data); setInicio(me.data.inicio_operacion || null);
+        toast.success("Turno iniciado", { description: `Km iniciales: ${km}` });
+      } else {
+        const { data } = await api.post("/turnos/finalizar", { odometro_km: km });
+        setTurno(null);
+        setTurnoHist((h) => [data.turno, ...h]);
+        setOp((p) => ({ ...p, estado: "fuera_de_servicio" }));
+        setInicio(null);
+        toast.success("Turno finalizado", {
+          description: `Recorriste ${data.turno.km_recorridos} km`,
+          duration: 6000,
+        });
+      }
+      setKmModalOpen(false);
+      setKmInput("");
+    } catch (e) {
+      // Carrera: el turno dejó de existir â†’ salida directa sin km.
+      const detalle = e.response?.data?.detail || "";
+      if (e.response?.status === 409 && kmMode === "finalizar" && /turno activo/i.test(detalle)) {
+        setTurno(null);
+        const ok = await cambiarEstado("fuera_de_servicio");
+        if (ok) { setInicio(null); toast("Saliste de operación"); }
+        setKmModalOpen(false);
+        setKmInput("");
+        return;
+      }
+      toast.error(detalle || "No se pudo registrar el turno");
+    }
   };
+
+  const pedirKm = (mode) => {
+    setKmMode(mode);
+    setKmInput("");
+    setKmModalOpen(true);
+  };
+
+  // ---- Combustible (F12 premium §27/§29): carga + ticket + historial ----
+  const [combOpen, setCombOpen] = useState(false);
+  const [combForm, setCombForm] = useState({
+    fecha: new Date().toISOString().slice(0, 10), litros: "", costo: "",
+    odometro_km: "", estacion: "",
+  });
+  const [combTicket, setCombTicket] = useState(null);
+  const [combSaving, setCombSaving] = useState(false);
+  const [combHist, setCombHist] = useState([]);
+  const combFileRef = useRef(null);
+
+  const abrirCombustible = async () => {
+    setCombOpen(true);
+    try {
+      const { data } = await api.get("/combustible/mis-cargas");
+      setCombHist(data.cargas || []);
+    } catch { setCombHist([]); }
+  };
+
+  const guardarCarga = async () => {
+    const litros = parseFloat(combForm.litros);
+    const costo = parseFloat(combForm.costo);
+    const km = parseFloat(combForm.odometro_km);
+    if (!combForm.fecha || !Number.isFinite(litros) || litros <= 0 || !Number.isFinite(costo) || !Number.isFinite(km)) {
+      toast.error("Completa litros, costo y kilometraje");
+      return;
+    }
+    setCombSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append("fecha", combForm.fecha);
+      fd.append("litros", String(litros));
+      fd.append("costo", String(costo));
+      fd.append("odometro_km", String(km));
+      if (combForm.estacion) fd.append("estacion", combForm.estacion);
+      if (combTicket) fd.append("ticket", combTicket);
+      await api.post("/combustible", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      toast.success("Carga registrada", { description: `${litros} L · ${fmtMoney2(costo)}` });
+      setCombForm((f) => ({ ...f, litros: "", costo: "", estacion: "" }));
+      setCombTicket(null);
+      const { data } = await api.get("/combustible/mis-cargas");
+      setCombHist(data.cargas || []);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "No se pudo registrar la carga");
+    } finally {
+      setCombSaving(false);
+    }
+  };
+
+  const entrar = async () => { pedirKm("iniciar"); };
   const salir = async () => {
-    clearInterval(timerRef.current);
-    setInicio(null);
-    const ok = await cambiarEstado("fuera_de_servicio");
-    if (ok) toast("Saliste de operación");
+    // Sin turno (estado legacy de una sesión anterior, o cambio manual desde
+    // la terminal): salida directa sin captura de km â€” no hay nada que cerrar.
+    if (!turno) {
+      const ok = await cambiarEstado("fuera_de_servicio");
+      if (ok) {
+        setInicio(null);
+        toast("Saliste de operación");
+      }
+      return;
+    }
+    pedirKm("finalizar");
   };
 
   const seleccionarRuta = async (rutaId) => {
@@ -482,7 +608,7 @@ export default function OperadorApp() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background text-muted-foreground">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-brand" />
-        <span className="text-sm">Cargando tu turno…</span>
+        <span className="text-sm">Cargando tu turnoâ€¦</span>
       </div>
     );
   }
@@ -502,7 +628,7 @@ export default function OperadorApp() {
       {/* MAPA de navegación (elemento principal) */}
       <div className="absolute inset-0 z-0" data-testid="driver-map">
         <MapContainer center={mapCenter} zoom={15} zoomControl={false} className="h-full w-full">
-          <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
+          <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
           <RouteBounds points={boundsPoints} />
           <RecenterController n={recenterN} target={driverPos || mapCenter} />
           {driverPos && (
@@ -528,6 +654,7 @@ export default function OperadorApp() {
         <div className="flex items-start justify-between gap-2">
           <div className="taxi-driver-header-card pointer-events-auto">
             <div className="taxi-driver-header-inner">
+              <img src={MARCH_LOGO} alt="Marca" className="taxi-driver-header-logo" />
               <button onClick={() => profileRef.current?.click()} data-testid="perfil-foto-btn"
                 className="taxi-driver-avatar-button">
                 <img src={driverAvatar} alt={`Avatar de ${op.nombre}`} />
@@ -635,6 +762,30 @@ export default function OperadorApp() {
           )}
         </div>
 
+        {/* Turno (F6): km iniciales + GPS */}
+        {turno && (
+          <div data-testid="turno-card" className="mt-2 grid grid-cols-3 gap-2 rounded-xl border border-border bg-card/60 p-2.5 text-center">
+            <div className="data-cell">
+              <span className="data-cell-label">Km inicio</span>
+              <span data-testid="turno-km-inicio" className="data-cell-value mono-num">{turno.odometro_inicio}</span>
+            </div>
+            <div className="data-cell">
+              <span className="data-cell-label">Tiempo</span>
+              <span className="data-cell-value mono-num">{inicio ? elapsed(inicio) : "â€”"}</span>
+            </div>
+            <div className="data-cell">
+              <span className="data-cell-label">GPS</span>
+              <span data-testid="driver-gps-estado" className="data-cell-value">
+                {gpsStale || wsState === "offline" ? (
+                  <span className="text-amber-400">{wsState === "offline" ? "Sin conexión" : "Limitado"}</span>
+                ) : (
+                  <span className="text-emerald-400">Activo</span>
+                )}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Botones de estado */}
         <div className="mt-3" data-testid="estado-buttons">
           <div className="grid grid-cols-4 gap-2">
@@ -688,16 +839,19 @@ export default function OperadorApp() {
         </Button>
 
         {/* Acciones */}
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-2 grid grid-cols-3 gap-2">
           <Button data-testid="reportar-objeto-btn" variant="secondary" onClick={() => fileRef.current?.click()}>
-            <Package className="h-4 w-4" /> Reportar objeto
+            <Package className="h-4 w-4" /> Objeto
           </Button>
           <Button data-testid="abrir-chat-btn" variant="secondary" onClick={abrirChat}>
-            <MessageSquare className="h-4 w-4" /> Chat central
+            <MessageSquare className="h-4 w-4" /> Chat
+          </Button>
+          <Button data-testid="combustible-btn" variant="secondary" onClick={() => setCombOpen(true)}>
+            <Fuel className="h-4 w-4" /> Combustible
           </Button>
         </div>
 
-        {/* Salir de operación */}
+        {/* Salir de operación = finalizar turno (pide km finales) */}
         <button
           data-testid="salir-operacion-btn"
           onClick={salir}
@@ -818,6 +972,18 @@ export default function OperadorApp() {
                 {servicio.costo != null && <span>Costo: ${servicio.costo}</span>}
               </div>
             </div>
+            {/* Navegación externa opcional (F6): Google Maps con las coords */}
+            {navegacion && (
+              <a
+                data-testid="abrir-google-maps"
+                href={`https://www.google.com/maps/dir/?api=1&destination=${navegacion.dest.lat},${navegacion.dest.lng}&travelmode=driving`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 text-sm font-bold text-foreground transition-colors hover:bg-secondary/60"
+              >
+                <NavIcon className="h-4 w-4 text-brand-bright" /> Abrir en Google Maps
+              </a>
+            )}
             <Button data-testid="iniciar-viaje-btn" onClick={iniciarViaje} size="lg" className="mt-3 w-full">
               <NavIcon className="h-5 w-5" /> Llegué al cliente
             </Button>
@@ -841,6 +1007,20 @@ export default function OperadorApp() {
               )}
               {servicio.costo != null && <div className="mt-1 text-xs text-muted-foreground">Costo: ${servicio.costo}</div>}
             </div>
+            {/* Navegación externa opcional (F6): Google Maps con las coords.
+                Nota: con la auto-finalización por geofence (F5), el viaje se
+                cierra solo al llegar; este botón es ayuda visual, no requisito. */}
+            {navegacion && (
+              <a
+                data-testid="abrir-google-maps-destino"
+                href={`https://www.google.com/maps/dir/?api=1&destination=${navegacion.dest.lat},${navegacion.dest.lng}&travelmode=driving`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 text-sm font-bold text-foreground transition-colors hover:bg-secondary/60"
+              >
+                <NavIcon className="h-4 w-4 text-brand-bright" /> Abrir en Google Maps
+              </a>
+            )}
             <ConfirmAction
               title="¿Finalizar el viaje?"
               description="Marca el servicio como terminado y vuelve a estar disponible."
@@ -861,8 +1041,8 @@ export default function OperadorApp() {
               <Bell className="h-4 w-4" /> {SERVICIO_LABEL[servicio.estado] || "Servicio"}
             </div>
             <div className="text-sm text-foreground/90">
-              <div><span className="text-muted-foreground">Origen:</span> {servicio.origen?.texto || "—"}</div>
-              <div><span className="text-muted-foreground">Destino:</span> {servicio.destino?.texto || "—"}</div>
+              <div><span className="text-muted-foreground">Origen:</span> {servicio.origen?.texto || "â€”"}</div>
+              <div><span className="text-muted-foreground">Destino:</span> {servicio.destino?.texto || "â€”"}</div>
             </div>
           </div>
         )}
@@ -887,7 +1067,7 @@ export default function OperadorApp() {
           </div>
           {servicioPropio && (
             <div className="text-sm text-foreground/90">
-              <div>{servicioPropio.origen_texto || "Sin origen"} → {servicioPropio.destino_texto || "Sin destino"}</div>
+              <div>{servicioPropio.origen_texto || "Sin origen"} â†’ {servicioPropio.destino_texto || "Sin destino"}</div>
               {servicioPropio.costo != null && <div className="mt-1 text-muted-foreground">Costo: ${servicioPropio.costo}</div>}
               <div className="mt-1 text-xs text-muted-foreground">Comenzó {timeAgo(servicioPropio.timestamp_creacion)}</div>
             </div>
@@ -905,6 +1085,67 @@ export default function OperadorApp() {
           />
         </div>
       </BottomSheet>
+
+      {/* Overlay: combustible del taxista (F12 premium) */}
+      {combOpen && (
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="comb-overlay">
+          <div className="max-h-[92vh] w-full max-w-md animate-slide-up overflow-y-auto rounded-2xl border border-border bg-card p-4 elev-3">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
+                <Fuel className="h-5 w-5 text-brand-bright" /> Combustible
+              </h3>
+              <button onClick={() => setCombOpen(false)} aria-label="Cerrar" className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="grid gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <Input data-testid="comb-fecha" type="date" value={combForm.fecha} onChange={(e) => setCombForm((f) => ({ ...f, fecha: e.target.value }))} className={`${input-inset} border-border`} />
+                <Input data-testid="comb-litros" type="number" step="0.1" value={combForm.litros} onChange={(e) => setCombForm((f) => ({ ...f, litros: e.target.value }))} placeholder="Litros" className={`${input-inset} mono-num border-border`} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input data-testid="comb-costo" type="number" value={combForm.costo} onChange={(e) => setCombForm((f) => ({ ...f, costo: e.target.value }))} placeholder="Importe $" className={`${input-inset} mono-num border-border`} />
+                <Input data-testid="comb-odometro" type="number" value={combForm.odometro_km} onChange={(e) => setCombForm((f) => ({ ...f, odometro_km: e.target.value }))} placeholder="Kilometraje" className={`${input-inset} mono-num border-border`} />
+              </div>
+              <Input data-testid="comb-estacion" value={combForm.estacion} onChange={(e) => setCombForm((f) => ({ ...f, estacion: e.target.value }))} placeholder="Estación (opcional)" className={`${input-inset} border-border`} />
+              <input ref={combFileRef} type="file" accept="image/*" capture="environment" className="hidden"
+                     onChange={(e) => setCombTicket(e.target.files?.[0] || null)} />
+              <button
+                type="button"
+                data-testid="comb-ticket-btn"
+                onClick={() => combFileRef.current?.click()}
+                className={cn("flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed text-sm font-semibold transition-colors",
+                  combTicket ? "border-brand/50 bg-brand/10 text-brand-bright" : "border-border text-muted-foreground hover:text-foreground")}
+              >
+                <Fuel className="h-4 w-4" /> {combTicket ? `Ticket: ${combTicket.name.slice(0, 24)}` : "Subir fotografía del ticket"}
+              </button>
+              <Button data-testid="comb-guardar" onClick={guardarCarga} disabled={combSaving} size="lg" className="w-full">
+                {combSaving ? "Guardandoâ€¦" : "Guardar carga"}
+              </Button>
+            </div>
+
+            {combHist.length > 0 && (
+              <div className="mt-4 border-t border-border pt-3">
+                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Mis cargas</div>
+                <div className="space-y-1.5" data-testid="comb-historial">
+                  {combHist.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between rounded-lg border border-border bg-surface-2 px-3 py-2 text-xs">
+                      <div>
+                        <div className="font-semibold text-foreground">{c.litros} L · {fmtMoney2(c.costo)}</div>
+                        <div className="text-[10px] text-muted-foreground">{c.fecha} · {c.odometro_km?.toLocaleString("es-MX")} km{c.estacion ? ` · ${c.estacion}` : ""}</div>
+                      </div>
+                      {c.ticket_url && (
+                        <a href={`${BACKEND_URL}${c.ticket_url}`} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-brand-bright underline">
+                          Ticket
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Overlay: iniciar servicio */}
       {iniciarOpen && (
@@ -939,6 +1180,47 @@ export default function OperadorApp() {
         </div>
       )}
 
+      {/* Overlay: kilometraje de turno (F6) */}
+      {kmModalOpen && (
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="km-overlay">
+          <div className="w-full max-w-sm animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3">
+            <div className="mb-1 flex items-center gap-2">
+              <Gauge className="h-5 w-5 text-brand-bright" />
+              <h3 className="text-base font-bold text-foreground">
+                {kmMode === "iniciar" ? "Iniciar turno" : "Finalizar turno"}
+              </h3>
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              {kmMode === "iniciar"
+                ? "Captura los kilómetros del tablero al iniciar."
+                : "Captura los kilómetros del tablero al terminar. Se calcularán los km recorridos."}
+            </p>
+            <Input
+              data-testid="km-input"
+              type="number"
+              inputMode="decimal"
+              autoFocus
+              value={kmInput}
+              onChange={(e) => setKmInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") confirmarKm(); }}
+              placeholder={kmMode === "iniciar" ? "Km actuales del tablero" : "Km finales del tablero"}
+              className="input-inset mono-num border-border text-lg text-foreground"
+            />
+            {kmMode === "finalizar" && turno && (
+              <div className="mt-2 text-[11px] text-muted-foreground">
+                Km iniciales del turno: <b className="mono-num text-foreground">{turno.odometro_inicio}</b>
+              </div>
+            )}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Button data-testid="km-cancelar" variant="secondary" onClick={() => setKmModalOpen(false)}>Cancelar</Button>
+              <Button data-testid="km-confirmar" onClick={confirmarKm}>
+                {kmMode === "iniciar" ? "Iniciar turno" : "Finalizar turno"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Overlay: confirmar reporte */}
       {pendingFile && (
         <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="reporte-overlay">
@@ -956,7 +1238,7 @@ export default function OperadorApp() {
               className="input-inset mb-3 border-border text-foreground"
             />
             <Button data-testid="reporte-enviar" onClick={enviarReporte} loading={uploading} className="w-full">
-              {uploading ? "Enviando…" : "Enviar reporte"}
+              {uploading ? "Enviandoâ€¦" : "Enviar reporte"}
             </Button>
           </div>
         </div>
@@ -986,7 +1268,7 @@ export default function OperadorApp() {
                 value={chatText}
                 onChange={(e) => setChatText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && enviarChat()}
-                placeholder="Escribe un mensaje…"
+                placeholder="Escribe un mensajeâ€¦"
                 className="input-inset border-border text-foreground"
               />
               <Button data-testid="chat-op-enviar" onClick={enviarChat} size="icon" aria-label="Enviar mensaje">

@@ -81,6 +81,14 @@
   padding: 7px 10px 7px 7px;
 }
 
+.taxi-driver-header-logo {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  border-radius: 9px;
+}
+
 .taxi-driver-avatar-button {
   display: flex;
   flex: 0 0 48px;

@@ -1,3 +1,5 @@
+@import "./design/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -57,6 +59,11 @@
 
 html {
   color-scheme: dark;
+  /* Escala compacta del sistema: baja la base rem de 16px a 14px.
+     Encoge UI (cards, paneles, botones, paddings de Tailwind) sin tocar
+     el mapa ni elementos definidos en px. NO usar body{zoom}: rompe
+     el layout interno de Leaflet (tiles negras/desalineadas). */
+  font-size: 87.5%;
 }
 
 body {
@@ -429,7 +436,8 @@ button:not(:disabled),
    ========================================================================== */
 
 .leaflet-container {
-  background: #0a0a0c;
+  /* Tono intermedio: las tiles al cargar no contrastan como cuadros negros */
+  background: #14161a;
   font-family: inherit;
 }
 

@@ -20,12 +20,19 @@ import { toast } from "sonner";
 import { Car, MapPin, Navigation, LogOut, Clock, User, Phone, History, Home, Mail, Wallet, Locate, Check, Flag, Menu, MessageCircle, ChevronRight, Star, X, ArrowLeft, Send } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847];
-const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
+const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const MARCH_LOGO = "/assets/vehicles/march.png";
 
 function MapClick({ onPick }) {
   useMapEvents({ click: (e) => onPick({ lat: +e.latlng.lat.toFixed(6), lng: +e.latlng.lng.toFixed(6) }) });
   return null;
+}
+
+function BrandLogo({ className }) {
+  return <img src={MARCH_LOGO} alt="Marca" className={cn("taxi-passenger-logo-img", className)} />;
 }
 
 function AuthScreen({ modo, setModo, lUser, setLUser, lPass, setLPass, rForm, setRForm, login, registrar }) {
@@ -39,10 +46,7 @@ function AuthScreen({ modo, setModo, lUser, setLUser, lPass, setLPass, rForm, se
           className="taxi-passenger-auth-form"
         >
           <div className="taxi-passenger-auth-inner">
-            <div className="taxi-passenger-logo taxi-passenger-logo-centered">
-              <Car aria-hidden="true" />
-              <span>Taxi<span>HUB</span></span>
-            </div>
+            <BrandLogo className="taxi-passenger-logo-centered" />
             <div className="taxi-passenger-auth-heading">
               <h1>{modo === "login" ? "Bienvenido" : "Crea tu cuenta"}</h1>
               <p>{modo === "login" ? "Pide un taxi en pocos segundos." : "Viaja con TaxiHUB."}</p>
@@ -167,7 +171,11 @@ export default function PassengerApp() {
           setChatMsgs((messages) => messages.some((item) => item.id === m.mensaje?.id) ? messages : [...messages, m.mensaje]);
         }
       };
-      ws.onclose = () => { if (!closed) setTimeout(connect, 3000); };
+      ws.onclose = (ev) => {
+        // Token inválido: reintentar es inútil — forzar re-login.
+        if (ev.code === 1008) { logoutPassenger(); setAuth(null); return; }
+        if (!closed) setTimeout(connect, 3000);
+      };
     };
     connect();
     cargarViaje();
@@ -328,10 +336,7 @@ export default function PassengerApp() {
       {!mapaFullscreen ? (
         <header className="taxi-passenger-page-header">
           <button type="button" data-testid={PASSENGER.menuOpen} className="taxi-passenger-menu-button" onClick={() => setMenuOpen(true)} aria-label="Abrir menú"><Menu /></button>
-          <div className="taxi-passenger-logo">
-            <Car aria-hidden="true" />
-            <span>Taxi<span>HUB</span></span>
-          </div>
+          <BrandLogo />
           <div className="taxi-passenger-header-actions">
             <ModeToggle />
             <button data-testid="pas-logout" onClick={salir} className="taxi-passenger-icon-button" title="Salir" aria-label="Salir"><LogOut /></button>
@@ -340,10 +345,7 @@ export default function PassengerApp() {
       ) : (
         <div className="taxi-passenger-floating-header">
           <button type="button" data-testid={PASSENGER.menuOpen} className="taxi-passenger-menu-button" onClick={() => setMenuOpen(true)} aria-label="Abrir menú"><Menu /></button>
-          <div className="taxi-passenger-logo taxi-passenger-logo-floating">
-            <Car aria-hidden="true" />
-            <span>Taxi<span>HUB</span></span>
-          </div>
+          <BrandLogo className="taxi-passenger-logo-floating" />
           <div className="taxi-passenger-header-actions">
             <ModeToggle />
             <button data-testid="pas-logout" onClick={salir} className="taxi-passenger-icon-button" title="Salir" aria-label="Salir"><LogOut /></button>
@@ -357,7 +359,7 @@ export default function PassengerApp() {
             <div className="taxi-passenger-empty-trip" data-testid="pas-sin-viaje">
               <div className="taxi-passenger-map-layer">
                 <MapContainer center={pickup || CENTER} zoom={14} zoomControl={false} className="h-full w-full">
-                  <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
+                  <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
                   {pickup && <Marker position={[pickup.lat, pickup.lng]} icon={pointIcon("Mi ubicación", "#22c55e")} />}
                 </MapContainer>
               </div>
@@ -395,7 +397,7 @@ export default function PassengerApp() {
                   tengan un z-[10] mayor en apariencia. Mismo patrón que Terminal.jsx. */}
               <div className="taxi-passenger-map-layer">
                 <MapContainer center={mapCenter} zoom={14} zoomControl={false} className="h-full w-full">
-                  <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
+                  <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
                   {/* Ruta plan del viaje (origen → destino) */}
                   {rutaViaje.latlngs?.length > 1 && (
                     <Polyline positions={rutaViaje.latlngs} pathOptions={{ color: "#94a3b8", weight: 3, opacity: 0.6, dashArray: "6 10" }} />
@@ -525,7 +527,7 @@ export default function PassengerApp() {
           <div className="taxi-passenger-request-view" data-testid="pas-solicitar-inmersivo">
             <div className="taxi-passenger-map-layer">
               <MapContainer center={pickup || CENTER} zoom={14} zoomControl={false} className="h-full w-full">
-                <TileLayer url={tiles} attribution="&copy; OSM &copy; CARTO" subdomains="abcd" />
+                <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
                 <MapClick onPick={(c) => !pickup ? setPickup(c) : setDropoff(c)} />
                 {pickup && <Marker position={[pickup.lat, pickup.lng]} icon={pointIcon("Origen", "#22c55e")} />}
                 {dropoff && <Marker position={[dropoff.lat, dropoff.lng]} icon={pointIcon("Destino", "#ef4444")} />}
@@ -737,7 +739,7 @@ export default function PassengerApp() {
           <button type="button" className="taxi-passenger-menu-backdrop" onClick={() => setMenuOpen(false)} aria-label="Cerrar menú" />
           <aside className="taxi-passenger-menu-drawer">
             <div className="taxi-passenger-menu-heading">
-              <div className="taxi-passenger-logo"><Car aria-hidden="true" /><span>Taxi<span>HUB</span></span></div>
+              <BrandLogo />
               <button type="button" data-testid={PASSENGER.menuClose} onClick={() => setMenuOpen(false)} aria-label="Cerrar menú"><X /></button>
             </div>
             <div className="taxi-passenger-menu-user"><span>{iniciales(auth.nombre)}</span><div><strong>{auth.nombre}</strong><small>Pasajero</small></div></div>

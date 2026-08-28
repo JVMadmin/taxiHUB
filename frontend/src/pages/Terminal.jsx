@@ -8,33 +8,32 @@ import { timeAgo } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { distM, fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
 import { pointIcon, taxiStateAssetIcon, routeArrowIcon } from "@/lib/taxiIcon";
+import { PALETA } from "@/design/status";
 import { useRouting } from "@/hooks/useRouting";
 import { ServicioModal } from "@/components/ServicioModal";
+import { DespachoModal } from "@/components/ops/DespachoModal";
 import { TerminalMenu } from "@/components/TerminalMenu";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
-import { ModeToggle } from "@/components/ModeToggle";
 import { DraggablePanel } from "@/components/DraggablePanel";
-import { TerminalDisplayControls } from "@/components/TerminalDisplayControls";
 import { RoutePolyline } from "@/components/RoutePolyline";
-import { BrandMark, BrandWordmark } from "@/components/Brand";
-import { ConnectionBadge } from "@/components/ConnectionBadge";
-import { EstadoBadge } from "@/components/StatusBadge";
-import { ServiciosPanel } from "@/components/ServiciosPanel";
-import { VehicleImage } from "@/components/VehicleImage";
 import { getTerminalToken, getTerminalUser, logoutTerminal } from "@/pages/TerminalLogin";
 import { useMode } from "@/hooks/useMode";
-import { Button } from "@/components/Button";
-import { Input } from "@/components/ui/input";
+import { OpsTopbar } from "@/components/ops/OpsTopbar";
+import { FleetPanel } from "@/components/ops/FleetPanel";
+import { MissionCard } from "@/components/ops/MissionCard";
+import { OpsMobileDock } from "@/components/ops/OpsMobileDock";
+import { INDICADORES } from "@/components/ops/indicadores";
+import { MapSearch } from "@/components/maps/MapSearch";
 import { toast } from "sonner";
-import {
-  PhoneCall, Filter, Car, Search, LogOut, Clock,
-  LocateFixed, Navigation as NavIcon, ClipboardList, X, LayoutPanelLeft, Truck, User, Route as RouteIcon,
-  Menu as MenuIcon, Plus, Minus,
-} from "lucide-react";
 
 const CENTER = [17.5099, -91.9847]; // Palenque, Chiapas
-const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+// Capa de referencia (rótulos/calles): la base Gray Canvas sola es muy
+// pobre al alejar el zoom; con el overlay se ven etiquetas a todo nivel.
+const DARK_TILES_REF = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
+const LIGHT_TILES_REF = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
+// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
+const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 function MapClick({ onClick }) {
   useMapEvents({ click: (e) => onClick(e.latlng) });
@@ -62,6 +61,30 @@ function FollowController({ target, follow }) {
   return null;
 }
 
+// Vuela a una ubicación (resultado del MapSearch).
+function GotoController({ target }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!target) return;
+    map.flyTo([target.lat, target.lng], Math.max(map.getZoom(), 16), { duration: 1.0 });
+  }, [target, map]);
+  return null;
+}
+
+// Invalida el tamaño del mapa cuando su contenedor cambia (split view,
+// paneles que abren/cierran) — evita tiles desalineadas o huecos.
+function SizeInvalidator() {
+  const map = useMap();
+  useEffect(() => {
+    const container = map.getContainer();
+    if (!window.ResizeObserver) return;
+    const ro = new ResizeObserver(() => map.invalidateSize({ animate: false }));
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [map]);
+  return null;
+}
+
 // Reloj en vivo del centro de operaciones.
 function useClock() {
   const [now, setNow] = useState(() => new Date());
@@ -71,14 +94,6 @@ function useClock() {
   }, []);
   return now;
 }
-
-const INDICADORES = [
-  { estado: "libre", label: "Disponibles", color: "#22c55e" },
-  { estado: "ocupado", label: "Ocupados", color: "#ef4444" },
-  { estado: "no_disponible", label: "Pausados", color: "#eab308" },
-  { estado: "fuera_de_servicio", label: "Offline", color: "#6b7280" },
-  { estado: "averiado", label: "Averiados", color: "#a855f7" },
-];
 
 export default function Terminal() {
   const [operadores, setOperadores] = useState({});
@@ -95,11 +110,13 @@ export default function Terminal() {
   const [follow, setFollow] = useState(false);
   const [track, setTrack] = useState(null);       // historial de recorrido del taxi seleccionado
   const [showTrack, setShowTrack] = useState(false);
-  const [serviciosOpen, setServiciosOpen] = useState(() => window.innerWidth >= 1024);
   const [servicioFilterOp, setServicioFilterOp] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [servicioSignal, setServicioSignal] = useState(0);
   const [adminSection, setAdminSection] = useState(null);
+  const [choferExpedienteId, setChoferExpedienteId] = useState(null);
+  const [gotoTarget, setGotoTarget] = useState(null);
+  const [puntoBuscado, setPuntoBuscado] = useState(null);
   const mapRef = useRef(null);
   const wsRef = useRef(null);
   const now = useClock();
@@ -127,13 +144,13 @@ export default function Terminal() {
   const navigate = useNavigate();
   useEffect(() => { if (!getTerminalToken()) navigate("/terminal/login"); }, [navigate]);
 
-  const [servicioForm, setServicioForm] = useState({ cliente_nombre: "", cliente_telefono: "", origen: "", destino: "", operador_id: "" });
-  const [coords, setCoords] = useState({ origen: null, destino: null });
+  const [servicioForm, setServicioForm] = useState({ cliente_nombre: "", cliente_telefono: "" });
+  const [coords, setCoords] = useState({ origen: null, destino: null, origenTexto: null, destinoTexto: null });
   const [picking, setPicking] = useState(null);
 
   const abrirNuevaLlamada = () => {
-    setServicioForm({ cliente_nombre: "", cliente_telefono: "", origen: "", destino: "", operador_id: "" });
-    setCoords({ origen: null, destino: null });
+    setServicioForm({ cliente_nombre: "", cliente_telefono: "" });
+    setCoords({ origen: null, destino: null, origenTexto: null, destinoTexto: null });
     setAdminSection(null);
     setModalOpen(true);
   };
@@ -172,8 +189,11 @@ export default function Terminal() {
       ops.data.forEach((o) => { map[o.id] = o; });
       setOperadores(map);
       setRutas(rts.data);
-    } catch { /* sin sesión: se redirige al login */ }
-  }, []);
+    } catch (e) {
+      // Token inválido/revocado: no quedarse en pantalla vacía — mandar al login.
+      if (e?.response?.status === 401) { logoutTerminal(); navigate("/terminal/login"); }
+    }
+  }, [navigate]);
 
   useEffect(() => { if (getTerminalToken()) load(); }, [load]);
 
@@ -186,8 +206,15 @@ export default function Terminal() {
       const ws = new WebSocket(`${WS_BASE}/ws/terminal?token=${encodeURIComponent(getTerminalToken() || "")}`);
       wsRef.current = ws;
       ws.onopen = () => setConnected(true);
-      ws.onclose = () => {
+      ws.onclose = (ev) => {
         setConnected(false);
+        // Token inválido/revocado (p.ej. backend reiniciado con otro JWT_SECRET):
+        // reintentar es inútil — forzar re-login.
+        if (ev.code === 1008) {
+          logoutTerminal();
+          navigate("/terminal/login");
+          return;
+        }
         if (!closed) timer = setTimeout(connect, 3000);
       };
       ws.onmessage = (ev) => {
@@ -207,6 +234,13 @@ export default function Terminal() {
         } else if (msg.type === "reporte") {
           setLiveReporte(msg.reporte);
           toast.info("🎒 Nuevo objeto reportado");
+        } else if (msg.type === "destino_alcanzado") {
+          // Auto-finalización por geofence (F5): aviso discreto, sin acción requerida.
+          setServicioSignal((n) => n + 1);
+          toast.success("Destino alcanzado — servicio completado automáticamente", {
+            description: "El taxi volvió a disponible.",
+            duration: 5000,
+          });
         }
       };
     };
@@ -319,21 +353,67 @@ export default function Terminal() {
   const hora = now.toLocaleTimeString("es-MX", { hour12: false });
 
   return (
-    <div className="taxi-terminal-shell relative h-screen w-screen overflow-hidden bg-background" style={{ "--ui-alpha": uiAlpha }}>
-      {/* MAPA (elemento principal, a pantalla completa) */}
-      <div className="absolute inset-0 z-0" data-testid="terminal-map">
+    <div className="taxi-terminal-shell flex h-screen w-screen overflow-hidden bg-background" style={{ "--ui-alpha": uiAlpha }}>
+      {/* SIDEBAR IZQUIERDA — flota fija (split view premium, ya no flota sobre el mapa) */}
+      {sidebarOpen && (
+        <aside
+          data-testid="terminal-sidebar"
+          className="relative z-[400] hidden w-72 shrink-0 animate-fade-in flex-col border-r border-border bg-card md:flex"
+        >
+          <FleetPanel
+            rutas={rutas}
+            filtroRuta={filtroRuta}
+            onFiltroRuta={setFiltroRuta}
+            busqueda={busqueda}
+            onBusqueda={setBusqueda}
+            visibles={visiblesBuscados}
+            selectedId={selectedId}
+            onSelect={(o) => { setSelectedId(o.id); setFollow(false); }}
+            onClose={() => setSidebarOpen(false)}
+          />
+        </aside>
+      )}
+
+      {/* Overlay móvil de la sidebar */}
+      {sidebarOpen && (
+        <div className="absolute inset-y-0 left-0 z-[560] w-72 max-w-[85vw] border-r border-border bg-card shadow-2xl md:hidden">
+          <FleetPanel
+            rutas={rutas}
+            filtroRuta={filtroRuta}
+            onFiltroRuta={setFiltroRuta}
+            busqueda={busqueda}
+            onBusqueda={setBusqueda}
+            visibles={visiblesBuscados}
+            selectedId={selectedId}
+            onSelect={(o) => { setSelectedId(o.id); setFollow(false); }}
+            onClose={() => setSidebarOpen(false)}
+          />
+        </div>
+      )}
+
+      {/* ÁREA DE MAPA (protagonista) */}
+      <div className="relative min-w-0 flex-1">
+        <div className="absolute inset-0 z-0" data-testid="terminal-map">
         <MapContainer center={CENTER} zoom={13} zoomControl={false} className="h-full w-full">
           <TileLayer
             url={tiles}
-            attribution="&copy; OpenStreetMap &copy; CARTO"
-            subdomains="abcd"
+            attribution="Tiles &copy; Esri"
+            errorTileUrl={FALLBACK_TILE}
+            maxNativeZoom={16}
+          />
+          <TileLayer
+            url={mode === "claro" ? LIGHT_TILES_REF : DARK_TILES_REF}
+            maxNativeZoom={16}
           />
           <ZoomControl position="bottomleft" />
           <MapClick onClick={onMapClick} />
           <MapRefBridge mapRef={mapRef} />
           <FollowController target={selectedOp} follow={follow} />
-          {coords.origen && <Marker position={[coords.origen.lat, coords.origen.lng]} icon={pointIcon("Origen", "#22c55e")} />}
-          {coords.destino && <Marker position={[coords.destino.lat, coords.destino.lng]} icon={pointIcon("Destino", "#ef4444")} />}
+          <GotoController target={gotoTarget} />
+          <SizeInvalidator />
+          {puntoBuscado && <Marker position={[puntoBuscado.lat, puntoBuscado.lng]} icon={pointIcon(puntoBuscado.label, PALETA.info, { size: "lg" })} />}
+          {coords.origen && <Marker position={[coords.origen.lat, coords.origen.lng]} icon={pointIcon("Origen", PALETA.primary)} />}
+          {coords.destino && <Marker position={[coords.destino.lat, coords.destino.lng]} icon={pointIcon("Destino", PALETA.danger)} />}
           {showTrack && track && track.length > 1 && (
             <Polyline
               positions={track.map((p) => [p.lat, p.lng])}
@@ -347,10 +427,10 @@ export default function Terminal() {
               <RoutePolyline
                 positions={rutaServicio.latlngs}
                 className="th-route-flow"
-                pathOptions={{ color: "#22c55e", weight: 5, opacity: 0.95, dashArray: "1 14", lineCap: "round" }}
+                pathOptions={{ color: PALETA.primary, weight: 5, opacity: 0.95, dashArray: "1 14", lineCap: "round" }}
               />
               {servicioDestino && (
-                <Marker position={[servicioDestino.lat, servicioDestino.lng]} icon={pointIcon("Destino", "#ef4444", { size: "lg" })}>
+                <Marker position={[servicioDestino.lat, servicioDestino.lng]} icon={pointIcon("Destino", PALETA.danger, { size: "lg" })}>
                   <Popup>
                     <div className="min-w-[140px] text-sm">
                       <div className="font-semibold text-foreground">Destino del servicio</div>
@@ -377,6 +457,7 @@ export default function Terminal() {
             <Marker
               key={o.id}
               position={[o.lat, o.lng]}
+              zIndexOffset={selectedId === o.id ? 1000 : 0}
               icon={taxiStateAssetIcon(o.estado, {
                 label: o.placa,
                 selected: selectedId === o.id,
@@ -388,7 +469,10 @@ export default function Terminal() {
                 <div className="min-w-[200px] text-sm">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold">{o.nombre}</span>
-                    <EstadoBadge estado={o.estado} />
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] font-bold" style={{ color: ESTADO_COLORS[o.estado] }}>
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: ESTADO_COLORS[o.estado] }} />
+                      {ESTADO_LABEL[o.estado]}
+                    </span>
                   </div>
                   <div className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
                     <div>Unidad: {o.vehiculo?.numero_economico || o.placa || "—"}</div>
@@ -402,162 +486,42 @@ export default function Terminal() {
         </MapContainer>
       </div>
 
-      {/* HEADER — Instrument Cluster (consola unificada) */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3 sm:p-4">
-        <div className="bezel-shell pointer-events-auto">
-          <div className="flex items-center gap-3 rounded-[var(--radius)] px-2.5 py-1.5">
-            {/* Identidad + estado del sistema */}
-            <BrandMark size="sm" />
-            <div className="hidden min-w-0 md:block">
-              <BrandWordmark sub="Centro de operaciones" />
-              <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1 font-semibold text-foreground/85">
-                  <LocateFixed className="h-3 w-3 text-brand-bright" />
-                  Sitio: {termUser?.sitio_id ? termUser.sitio_id : "Principal"}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-emerald-500" />
-                  Sistema operativo
-                </span>
-                <span className="inline-flex items-center gap-1 font-mono mono-num text-foreground/85">
-                  <Clock className="h-3 w-3" /> {hora}
-                </span>
-              </div>
-            </div>
+      {/* TOPBAR — consola del Command Center (DS 2.0) */}
+      <OpsTopbar
+        termUser={termUser}
+        logo={logo ? `${BACKEND_URL}${logo}` : null}
+        termFoto={termFoto ? `${BACKEND_URL}${termFoto}` : null}
+        onFotoClick={() => termFotoRef.current?.click()}
+        fotoInput={
+          <input ref={termFotoRef} type="file" accept="image/*" className="hidden" onChange={(e) => subirTermFoto(e.target.files?.[0])} />
+        }
+        connected={connected}
+        counts={counts}
+        hora={hora}
+        serviciosOpen={adminSection === "servicios"}
+        onToggleServicios={() => setAdminSection((s) => (s === "servicios" ? null : "servicios"))}
+        onNuevaLlamada={abrirNuevaLlamada}
+        uiAlpha={uiAlpha}
+        onAlphaChange={setUiAlpha}
+        onLogout={salirTerminal}
+      />
 
-            {/* Indicadores de flota integrados en la consola */}
-            <div className="mx-2 hidden h-9 w-px bg-border lg:block" />
-            <div className="hidden items-center gap-4 lg:flex">
-              {INDICADORES.map((i) => (
-                <div key={i.estado} className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping-soft rounded-full" style={{ background: i.color }} />
-                    <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: i.color }} />
-                  </span>
-                  <div className="leading-tight">
-                    <div className="mono-num text-base font-bold" style={{ color: i.color }}>{counts[i.estado] || 0}</div>
-                    <div className="text-[10px] text-muted-foreground">{i.label}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Acciones + perfil */}
-            <div className="ml-auto flex items-center gap-1.5">
-              <button
-                onClick={() => setServiciosOpen((v) => !v)}
-                data-testid="servicios-tray-toggle"
-                title="Servicios"
-                aria-label="Servicios"
-                className={cn("th-3d hidden h-10 w-10 items-center justify-center rounded-xl transition-colors lg:flex",
-                  serviciosOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
-              >
-                <ClipboardList className="th-icon-3d h-5 w-5" />
-              </button>
-              <Button
-                data-testid="nueva-llamada-btn"
-                onClick={abrirNuevaLlamada}
-                size="sm"
-                className="hidden lg:inline-flex"
-              >
-                <PhoneCall className="th-icon-3d h-4 w-4" /> Nueva llamada
-              </Button>
-              <div className="hidden lg:contents">
-                <ThemeSwitcher />
-                <ModeToggle />
-                <TerminalDisplayControls alpha={uiAlpha} onChange={setUiAlpha} />
-              </div>
-              <div className="flex items-center gap-2 border-l border-border pl-2.5">
-                <button
-                  onClick={() => termFotoRef.current?.click()}
-                  data-testid="term-foto-btn"
-                  className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-brand/15"
-                  title="Cambiar foto"
-                >
-                  {termFoto ? <img src={`${BACKEND_URL}${termFoto}`} alt="perfil" className="h-full w-full object-cover" />
-                    : logo ? <img src={`${BACKEND_URL}${logo}`} alt="logo" className="h-full w-full object-contain p-0.5" />
-                    : <Car className="h-5 w-5 text-brand-bright" />}
-                </button>
-                <input ref={termFotoRef} type="file" accept="image/*" className="hidden" onChange={(e) => subirTermFoto(e.target.files?.[0])} />
-                <div className="hidden sm:block">
-                  <div className="text-sm font-bold leading-none text-foreground">{termUser?.nombre || "Operadora"}</div>
-                  <div className="mt-1.5">
-                    <ConnectionBadge state={connected ? "online" : "reconnecting"} />
-                  </div>
-                </div>
-              </div>
-              <button data-testid="terminal-logout" onClick={salirTerminal} title="Salir" aria-label="Salir" className="th-3d flex h-10 w-10 items-center justify-center rounded-xl text-foreground/80 hover:bg-secondary/60">
-                <LogOut className="th-icon-3d h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Indicadores compactos (móvil) */}
-        <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto lg:hidden">
-          {INDICADORES.map((i) => (
-            <span key={i.estado} className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-card/85 px-2.5 py-1 text-[11px] text-foreground/85 ring-1 ring-border">
-              <span className="h-2 w-2 rounded-full" style={{ background: i.color }} />
-              <span className="mono-num font-bold" style={{ color: i.color }}>{counts[i.estado] || 0}</span>
-              {i.label}
-            </span>
-          ))}
-        </div>
-      </header>
-
-      {/* Dock inferior (móvil/tablet): acciones principales + zoom */}
-      <div
-        data-testid="terminal-mobile-dock"
-        className={cn(
-          "pointer-events-auto absolute inset-x-3 bottom-3 z-[560] lg:hidden",
-          (serviciosOpen || sidebarOpen || adminSection || selectedOp) && "hidden"
-        )}
-      >
-        <div className="bezel-shell flex items-center gap-2 px-2 py-2">
-          <Button
-            data-testid="dock-nueva-llamada"
-            onClick={abrirNuevaLlamada}
-            size="sm"
-            className="flex-1"
-          >
-            <PhoneCall className="th-icon-3d h-4 w-4" /> Llamada
-          </Button>
-          <div className="flex flex-col items-center gap-0.5">
-            <button onClick={() => mapRef.current?.zoomIn()} data-testid="dock-zoom-in" aria-label="Acercar" className="th-3d flex h-8 w-8 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary/60">
-              <Plus className="th-icon-3d h-4 w-4" />
-            </button>
-            <button onClick={() => mapRef.current?.zoomOut()} data-testid="dock-zoom-out" aria-label="Alejar" className="th-3d flex h-8 w-8 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary/60">
-              <Minus className="th-icon-3d h-4 w-4" />
-            </button>
-          </div>
-          <button
-            onClick={() => setServiciosOpen((v) => !v)}
-            data-testid="dock-servicios"
-            aria-label="Servicios"
-            className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-              serviciosOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
-          >
-            <ClipboardList className="th-icon-3d h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setSidebarOpen((v) => !v)}
-            data-testid="dock-flota"
-            aria-label="Panel de flota"
-            className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-              sidebarOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
-          >
-            <LayoutPanelLeft className="th-icon-3d h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setAdminSection((s) => (s ? null : "operadores"))}
-            data-testid="dock-menu"
-            aria-label="Menú de administración"
-            className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-              adminSection ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
-          >
-            <MenuIcon className="th-icon-3d h-5 w-5" />
-          </button>
-        </div>
+      {/* Buscador geográfico global (F4) — centrado bajo la consola */}
+      <div className="pointer-events-none absolute inset-x-0 top-[124px] z-[490] flex justify-center px-3 lg:top-[104px]">
+        <MapSearch
+          className="w-full max-w-md"
+          onGoto={(r) => { setGotoTarget(r); setPuntoBuscado(r); }}
+          onPickOrigen={(r) => {
+            setCoords((c) => ({ ...c, origen: { lat: r.lat, lng: r.lng }, origenTexto: `${r.label}${r.sublabel ? `, ${r.sublabel}` : ""}` }));
+            setPuntoBuscado(null);
+            setModalOpen(true);
+          }}
+          onPickDestino={(r) => {
+            setCoords((c) => ({ ...c, destino: { lat: r.lat, lng: r.lng }, destinoTexto: `${r.label}${r.sublabel ? `, ${r.sublabel}` : ""}` }));
+            setPuntoBuscado(null);
+            setModalOpen(true);
+          }}
+        />
       </div>
 
       {picking && (
@@ -567,320 +531,91 @@ export default function Terminal() {
         </div>
       )}
 
-      {/* Panel lateral flotante: filtro + lista */}
-      {sidebarOpen && (
-        <DraggablePanel
-          dragKey="sidebar"
-          className="absolute bottom-4 left-4 top-[124px] z-[500] w-72 max-w-[calc(100vw-2rem)] lg:top-[104px]"
-        >
-          <aside
-            data-testid="terminal-sidebar"
-            className="bezel-shell flex h-full flex-col animate-slide-down"
-          >
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                <Truck className="h-3.5 w-3.5" /> Flota en operación
-              </div>
-              <button onClick={() => setSidebarOpen(false)} className="text-muted-foreground hover:text-foreground lg:hidden" aria-label="Cerrar panel de flota"><X className="h-4 w-4" /></button>
-            </div>
+      {/* Dock inferior (móvil/tablet) */}
+      <OpsMobileDock
+        onNuevaLlamada={abrirNuevaLlamada}
+        onZoomIn={() => mapRef.current?.zoomIn()}
+        onZoomOut={() => mapRef.current?.zoomOut()}
+        serviciosOpen={adminSection === "servicios"}
+        onToggleServicios={() => setAdminSection((s) => (s === "servicios" ? null : "servicios"))}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        adminSection={adminSection}
+        onToggleAdmin={() => setAdminSection((s) => (s ? null : "operadores"))}
+        hidden={adminSection || sidebarOpen || selectedOp}
+      />
 
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <Filter className="h-3 w-3" /> Filtrar por ruta
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  data-testid="filtro-todas"
-                  onClick={() => setFiltroRuta("todas")}
-                  className={cn("chip", filtroRuta === "todas" && "chip-active")}
-                >
-                  Todas
-                </button>
-                {rutas.map((r) => (
-                  <button
-                    key={r.id}
-                    data-testid={`filtro-ruta-${r.id}`}
-                    onClick={() => setFiltroRuta(r.id)}
-                    className={cn("chip", filtroRuta === r.id && "chip-active")}
-                  >
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: r.color_hex }} />
-                    {r.nombre}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <span>Taxis activos</span>
-                <span className="mono-num text-muted-foreground">{visiblesBuscados.length}</span>
-              </div>
-              <div className="relative mb-2">
-                <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  data-testid="buscar-taxi"
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar por nombre o unidad"
-                  className="input-inset h-8 border-border pl-8 text-xs text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <div className="space-y-1.5">
-                {visiblesBuscados.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
-                    No hay taxis en operación
-                  </div>
-                )}
-                {visiblesBuscados.map((o) => (
-                  <button
-                    key={o.id}
-                    data-testid={`operador-item-${o.id}`}
-                    onClick={() => { setSelectedId(o.id); setFollow(false); }}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors",
-                      selectedId === o.id
-                        ? "border-brand/50 bg-brand/10"
-                        : "border-border bg-card/40 hover:border-border"
-                    )}
-                  >
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ background: ESTADO_COLORS[o.estado] }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="truncate text-sm text-foreground">{o.nombre}</div>
-                        <div className="shrink-0 text-[10px] text-muted-foreground">{timeAgo(o.ultima_actualizacion)}</div>
-                      </div>
-                      <div className="truncate text-xs text-muted-foreground">
-                        {o.vehiculo?.numero_economico || o.placa} · {ESTADO_LABEL[o.estado]}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Leyenda */}
-            <div className="grid grid-cols-2 gap-1 border-t border-border pt-2 text-xs text-muted-foreground">
-              {Object.entries(ESTADO_LABEL).map(([k, label]) => (
-                <div key={k} className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full" style={{ background: ESTADO_COLORS[k] }} />
-                  {label}
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
-        </DraggablePanel>
-      )}
-
-      {/* Tray de servicios (dispatcher) */}
-      <div className={cn(
-        "absolute bottom-4 z-[520] transition-all duration-300 ease-motion",
-        "left-4 right-4 mx-auto w-[400px] max-w-[calc(100vw-2rem)]",
-        serviciosOpen ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
-      )}>
-        <DraggablePanel dragKey="tray">
-          <div className="bezel-shell flex h-[340px] flex-col overflow-hidden">
-          <div className="flex items-center justify-between rounded-[var(--radius)] border-b border-border px-4 py-2.5">
-            <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping-soft rounded-full bg-brand" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
-              </span>
-              Servicios
-            </div>
-            <div className="flex items-center gap-2">
-              {servicioFilterOp && (
-                <button
-                  onClick={() => setServicioFilterOp(null)}
-                  className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-bold text-brand-bright hover:bg-brand/25"
-                  data-testid="servicio-filtro-limpiar"
-                >
-                  Taxi {servicioFilterOp.placa || servicioFilterOp.id?.slice(-4)} <X className="h-3 w-3" />
-                </button>
-              )}
-              <button onClick={() => setServiciosOpen(false)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar servicios"><X className="h-4 w-4" /></button>
-            </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto p-3" data-testid="servicios-tray">
-            <ServiciosPanel reloadSignal={servicioSignal} filterOperadorId={servicioFilterOp?.id} />
-          </div>
-          </div>
-        </DraggablePanel>
-      </div>
-
-      {/* Panel del taxi seleccionado — Mission Card */}
+      {/* Panel del taxi seleccionado — panel contextual (único flotante, solo cuando hay selección) */}
       {selectedOp && (
         <DraggablePanel
           dragKey="mission"
           className={cn(
             "absolute inset-x-3 z-[540] w-[300px] max-w-[calc(100vw-2rem)] lg:inset-x-auto lg:right-16",
-            serviciosOpen ? "top-[124px] lg:top-[104px]" : "bottom-4"
+            adminSection ? "top-[124px] lg:top-[104px]" : "bottom-4"
           )}
         >
-          <div data-testid="taxi-detail-panel" className="bezel-shell animate-slide-up">
-          <div className="max-h-[calc(100vh-118px)] overflow-y-auto rounded-[var(--radius)] p-4">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2.5">
-                {selectedOp.vehiculo && (
-                  <VehicleImage vehiculo={selectedOp.vehiculo} className="h-12 w-16 shrink-0 rounded-lg border border-border bg-surface-3" imgClassName="p-1" />
-                )}
-                <div className="min-w-0">
-                  <div className="truncate font-mono text-lg font-extrabold tracking-tight text-foreground">
-                    {selectedOp.vehiculo?.numero_economico
-                      ? `UNIDAD ${selectedOp.vehiculo.numero_economico}`
-                      : selectedOp.placa}
-                  </div>
-                  <div className="mt-1.5">
-                    <EstadoBadge estado={selectedOp.estado} pulse />
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => { setSelectedId(null); setFollow(false); }} className="shrink-0 text-muted-foreground hover:text-foreground" data-testid="taxi-detail-close" aria-label="Cerrar detalle del taxi">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mt-3 space-y-1.5 text-sm">
-              <div className="flex items-center gap-2 text-foreground/90">
-                <User className="h-4 w-4 shrink-0 text-muted-foreground" /> <span className="font-medium">{selectedOp.nombre}</span>
-              </div>
-              {selectedOp.vehiculo && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Car className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  {[selectedOp.vehiculo.marca, selectedOp.vehiculo.modelo].filter(Boolean).join(" ")}
-                  {selectedOp.vehiculo.placa ? ` · ${selectedOp.vehiculo.placa}` : ""}
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <RouteIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                {nombreRuta(selectedOp.ruta_asignada)}
-              </div>
-            </div>
-
-            <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-border bg-card/60 p-2.5 text-center">
-              <div className="data-cell">
-                <span className="data-cell-label">Precisión</span>
-                <span className="data-cell-value">{selectedOp.gps_accuracy != null ? `${Math.round(selectedOp.gps_accuracy)} m` : "—"}</span>
-              </div>
-              <div className="data-cell">
-                <span className="data-cell-label">Velocidad</span>
-                <span className="data-cell-value">{selectedOp.gps_speed != null ? `${Math.round(selectedOp.gps_speed * 3.6)} km/h` : "—"}</span>
-              </div>
-              <div className="data-cell">
-                <span className="data-cell-label">GPS</span>
-                <span className="data-cell-value text-emerald-400">{timeAgo(selectedOp.ultima_actualizacion)}</span>
-              </div>
-            </div>
-
-            {trackStats && (
-              <div className="mt-3 rounded-xl border border-border bg-card/60 p-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Recorrido en vivo</span>
-                  <button
-                    data-testid="ver-recorrido-btn"
-                    onClick={() => setShowTrack((s) => !s)}
-                    className={cn("rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors",
-                      showTrack ? "border-brand/50 bg-brand/10 text-brand-bright" : "border-border text-foreground/85 hover:border-border")}
-                  >
-                    {showTrack ? "Ocultar" : "Ver recorrido"}
-                  </button>
-                </div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span><b className="mono-num text-foreground">{fmtDist(trackStats.dist)}</b> recorridos</span>
-                  <span><b className="mono-num text-foreground">{fmtDuration(trackStats.dur)}</b> ventana</span>
-                  <span><b className="mono-num text-foreground">{trackStats.points}</b> puntos</span>
-                </div>
-              </div>
-            )}
-
-            {/* Ruta al destino del servicio activo */}
-            {servicioActivo && (
-              <div className="mt-3 rounded-xl border border-border surface-ui p-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    <RouteIcon className="h-3 w-3" /> Ruta a destino
-                  </span>
-                  {servicioDestino ? (
-                    <button
-                      data-testid="terminal-ruta-toggle"
-                      onClick={() => setVerRutaServicio((v) => !v)}
-                      className={cn("rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors",
-                        verRutaServicio ? "border-brand/50 bg-brand/10 text-brand-bright" : "border-border text-foreground/85 hover:border-border")}
-                    >
-                      {verRutaServicio ? "Ocultar" : "Ver ruta"}
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-muted-foreground">sin coordenadas</span>
-                  )}
-                </div>
-                {servicioDestino && (
-                  <>
-                    <div className="mt-2 flex items-center gap-2 text-xs text-foreground/85">
-                      <NavIcon className="h-3.5 w-3.5 shrink-0 text-brand-bright" />
-                      <span className="truncate">{servicioActivo.destino?.texto || "Destino marcado en el mapa"}</span>
-                    </div>
-                    {rutaServicio.distance_m != null && (
-                      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span><b className="mono-num text-emerald-400">{fmtDist(rutaServicio.distance_m)}</b> faltante</span>
-                        <span><b className="mono-num text-foreground">{fmtDuration(rutaServicio.duration_s)}</b> ETA</span>
-                        <span className="mono-num text-muted-foreground">{rutaServicio.provider === "osrm" ? "rutas reales" : "línea recta"}</span>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button
-                data-testid="seguir-taxi-btn"
-                onClick={() => setFollow((f) => !f)}
-                variant={follow ? "primary" : "secondary"}
-                size="sm"
-              >
-                <NavIcon className="h-4 w-4" />
-                {follow ? "Siguiendo" : "Seguir taxi"}
-              </Button>
-              <Button
-                data-testid="ver-servicio-btn"
-                onClick={() => { setServiciosOpen(true); setServicioFilterOp(selectedOp); }}
-                variant="secondary"
-                size="sm"
-              >
-                <ClipboardList className="h-4 w-4" /> Ver servicio
-              </Button>
-            </div>
-          </div>
-          </div>
+          <MissionCard
+            op={{ ...selectedOp, rutaNombre: nombreRuta(selectedOp.ruta_asignada) }}
+            trackStats={trackStats}
+            showTrack={showTrack}
+            onToggleTrack={() => setShowTrack((s) => !s)}
+            servicioActivo={servicioActivo}
+            servicioDestino={servicioDestino}
+            rutaServicio={rutaServicio}
+            verRutaServicio={verRutaServicio}
+            onToggleRuta={() => setVerRutaServicio((v) => !v)}
+            follow={follow}
+            onToggleFollow={() => setFollow((f) => !f)}
+            onVerServicio={() => { setAdminSection("servicios"); setServicioFilterOp(selectedOp); }}
+            onVerExpediente={() => { setChoferExpedienteId(selectedOp.id); setAdminSection("choferes"); }}
+            onClose={() => { setSelectedId(null); setFollow(false); }}
+          />
         </DraggablePanel>
       )}
+      </div>
 
-      <ServicioModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        operadoresLibres={operadoresLibres}
-        onCreated={() => load()}
-        form={servicioForm}
-        setForm={setServicioForm}
-        coords={coords}
-        onPick={pedirPunto}
-        onClearPick={clearPick}
-      />
+        <DespachoModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          coords={coords}
+          setCoords={setCoords}
+          pedirPunto={pedirPunto}
+          operadoresLibres={operadoresLibres}
+          onCreated={() => load()}
+        />
 
       <TerminalMenu
         active={adminSection}
         onActiveChange={setAdminSection}
         operadores={operadores}
+        operadoresLibres={operadoresLibres}
         rutas={rutas}
         onRutasChanged={load}
         onDataChanged={load}
         onOpenServicio={abrirNuevaLlamada}
+        onVerWaMapa={({ mensaje }) => {
+          // §16/§47: ver la ubicación sin abrir formularios — solo mapa + pin.
+          setGotoTarget({ lat: mensaje.lat, lng: mensaje.lng });
+          setPuntoBuscado({ lat: mensaje.lat, lng: mensaje.lng, label: "Ubicación de WhatsApp" });
+        }}
+        onMarkWaLocation={({ conversacion, mensaje }) => {
+          // Flujo WhatsApp→servicio (F4): la ubicación recibida se convierte
+          // en origen del servicio; la operadora decide y asigna manualmente.
+          setGotoTarget({ lat: mensaje.lat, lng: mensaje.lng });
+          setPuntoBuscado({ lat: mensaje.lat, lng: mensaje.lng, label: conversacion.cliente_nombre });
+          setServicioForm({
+            cliente_nombre: conversacion.cliente_nombre || "",
+            cliente_telefono: conversacion.cliente_telefono || "",
+          });
+          setCoords((c) => ({
+            ...c,
+            origen: { lat: mensaje.lat, lng: mensaje.lng },
+            origenTexto: "Ubicación de WhatsApp",
+          }));
+          setModalOpen(true);
+        }}
+        onAssigned={() => { setAdminSection("servicios"); load(); }}
+        choferExpedienteId={choferExpedienteId}
         liveMessage={liveMessage}
         liveReporte={liveReporte}
         servicioSignal={servicioSignal}

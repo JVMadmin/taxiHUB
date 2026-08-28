@@ -8,7 +8,7 @@ import os
 import logging
 import math
 from enum import Enum
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -920,6 +920,7 @@ async def create_operador(body: OperadorCreate, current=Depends(require_terminal
         "ultima_actualizacion": None,
         "usuario": body.usuario,
         "password_hash": hash_password(body.contrasena),
+        "creado": now_iso(),
         "activo": True,
     }
     res = await db.operadores.insert_one(doc)
@@ -1010,6 +1011,15 @@ async def update_estado(operador_id: str, body: EstadoUpdate, request: Request):
     if not prev:
         raise HTTPException(status_code=404, detail="Operador no encontrado")
     nuevo = body.estado.value
+    # F6: con turno abierto no se puede salir de operación manualmente —
+    # el cierre correcto es finalizar el turno (cierra km y duración).
+    if nuevo == EstadoOperador.fuera_de_servicio.value:
+        turno_abierto = await db.turnos.find_one(
+            {"operador_id": operador_id, "fin": None})
+        if turno_abierto:
+            raise HTTPException(
+                status_code=409,
+                detail="Tienes un turno activo: finaliza tu turno antes de salir de servicio")
     await _validar_transicion_estado(operador_id, prev.get("estado") or "fuera_de_servicio", nuevo)
     updates = {"estado": nuevo, "ultima_actualizacion": ts}
     if nuevo == "fuera_de_servicio":
@@ -1022,6 +1032,182 @@ async def update_estado(operador_id: str, body: EstadoUpdate, request: Request):
     await manager.broadcast_terminal(msg)
     await _notificar_dueno_de_operador(operador_id, msg)
     return {"ok": True, "estado": nuevo}
+
+
+# ---------------------------------------------------------------------------
+# Turnos del taxista (F6): iniciar/finalizar con kilometraje
+# ---------------------------------------------------------------------------
+class TurnoIniciar(BaseModel):
+    odometro_km: float = Field(ge=0, description="Kilómetros del tablero al iniciar")
+
+
+class TurnoFinalizar(BaseModel):
+    odometro_km: float = Field(ge=0, description="Kilómetros del tablero al finalizar")
+
+
+def _turno_out(doc: Dict) -> Dict:
+    d = serialize(doc)
+    if d.get("odometro_fin") is not None and d.get("odometro_inicio") is not None:
+        d["km_recorridos"] = round(d["odometro_fin"] - d["odometro_inicio"], 1)
+    if d.get("fin") and d.get("inicio"):
+        ini, fin = _parse_iso(d["inicio"]), _parse_iso(d["fin"])
+        if ini and fin:
+            d["duracion_s"] = max(0, int((fin - ini).total_seconds()))
+    return d
+
+
+async def _turno_activo(operador_id: str):
+    return await db.turnos.find_one({"operador_id": operador_id, "fin": None})
+
+
+@api_router.post("/turnos/iniciar")
+async def turno_iniciar(body: TurnoIniciar, current: dict = Depends(require_operador_estricto)):
+    operador_id = current["id"]
+    if await _turno_activo(operador_id):
+        raise HTTPException(status_code=409, detail="Ya tienes un turno activo")
+    ts = now_iso()
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)})
+    if not op:
+        raise HTTPException(status_code=404, detail="Operador no encontrado")
+    doc = {
+        "operador_id": operador_id,
+        "vehiculo_id": op.get("vehiculo_id"),
+        "sitio_id": op.get("sitio_id"),
+        "inicio": ts,
+        "fin": None,
+        "odometro_inicio": body.odometro_km,
+        "odometro_fin": None,
+    }
+    res = await db.turnos.insert_one(doc)
+    # Iniciar turno == entrar en operación (libre).
+    nuevo_estado = EstadoOperador.libre.value
+    if (op.get("estado") or "fuera_de_servicio") == EstadoOperador.fuera_de_servicio.value:
+        await db.operadores.update_one(
+            {"_id": to_oid(operador_id)},
+            {"$set": {"estado": nuevo_estado, "inicio_operacion": ts, "ultima_actualizacion": ts}})
+        msg = {"type": "estado", "operador_id": operador_id, "estado": nuevo_estado, "ts": ts}
+        await manager.broadcast_terminal(msg)
+        await _notificar_dueno_de_operador(operador_id, msg)
+    out = _turno_out({**doc, "_id": res.inserted_id})
+    return {"ok": True, "turno": out, "operador": {"estado": nuevo_estado}}
+
+
+@api_router.post("/turnos/finalizar")
+async def turno_finalizar(body: TurnoFinalizar, current: dict = Depends(require_operador_estricto)):
+    operador_id = current["id"]
+    turno = await _turno_activo(operador_id)
+    if not turno:
+        raise HTTPException(status_code=409, detail="No tienes un turno activo")
+    if body.odometro_km < turno.get("odometro_inicio", 0):
+        raise HTTPException(status_code=400,
+                            detail="El kilometraje final no puede ser menor al inicial")
+    ts = now_iso()
+    await db.turnos.update_one(
+        {"_id": turno["_id"]},
+        {"$set": {"fin": ts, "odometro_fin": body.odometro_km}},
+    )
+    doc = await db.turnos.find_one({"_id": turno["_id"]})
+    # Cerrar turno == salir de operación (fuera_de_servicio). Bypass de la
+    # validación de turno abierto: acabamos de cerrarlo.
+    servicios_activos = await db.servicios.count_documents({
+        "operador_asignado_id": operador_id,
+        "estado": {"$in": ESTADOS_ACTIVOS_SERVICIO},
+    })
+    if servicios_activos == 0:
+        await db.operadores.update_one(
+            {"_id": to_oid(operador_id)},
+            {"$set": {"estado": EstadoOperador.fuera_de_servicio.value,
+                      "inicio_operacion": None, "ultima_actualizacion": ts}})
+        msg = {"type": "estado", "operador_id": operador_id,
+               "estado": EstadoOperador.fuera_de_servicio.value, "ts": ts}
+        await manager.broadcast_terminal(msg)
+        await _notificar_dueno_de_operador(operador_id, msg)
+    return {"ok": True, "turno": _turno_out(doc)}
+
+
+@api_router.get("/turnos/activo")
+async def turno_activo(current: dict = Depends(require_operador_estricto)):
+    turno = await _turno_activo(current["id"])
+    if not turno:
+        return {"turno": None}
+    op = await db.operadores.find_one({"_id": to_oid(current["id"])},
+                                      {"lat": 1, "lng": 1, "ultima_actualizacion": 1,
+                                       "gps_accuracy": 1, "gps_battery": 1})
+    out = _turno_out(turno)
+    out["gps"] = {
+        "lat": op.get("lat") if op else None,
+        "lng": op.get("lng") if op else None,
+        "ultima_actualizacion": op.get("ultima_actualizacion") if op else None,
+        "accuracy": op.get("gps_accuracy") if op else None,
+        "battery": op.get("gps_battery") if op else None,
+    }
+    return {"turno": out}
+
+
+@api_router.get("/turnos/mis-turnos")
+async def turno_historial(current: dict = Depends(require_operador_estricto),
+                          limite: int = Query(30, ge=1, le=100)):
+    docs = await db.turnos.find({"operador_id": current["id"]}).sort(
+        "inicio", -1).to_list(limite)
+    return {"turnos": [_turno_out(d) for d in docs]}
+
+
+# ---------------------------------------------------------------------------
+# Combustible del TAXISTA (F12 §27/§28/§29): carga + ticket + historial propio
+# ---------------------------------------------------------------------------
+class CargaTaxista(BaseModel):
+    fecha: str
+    litros: float = Field(gt=0)
+    costo: float = Field(ge=0)
+    odometro_km: float = Field(ge=0)
+    estacion: Optional[str] = None
+
+
+@api_router.post("/combustible")
+async def registrar_carga_taxista(
+    fecha: str = Form(...),
+    litros: float = Form(...),
+    costo: float = Form(...),
+    odometro_km: float = Form(...),
+    estacion: Optional[str] = Form(None),
+    ticket: Optional[UploadFile] = File(None),
+    current: dict = Depends(require_operador_estricto),
+):
+    operador_id = current["id"]
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)}, {"vehiculo_id": 1})
+    ticket_url = None
+    if ticket and ticket.filename:
+        ext = (ticket.filename or "").split(".")[-1].lower() if "." in (ticket.filename or "") else "jpg"
+        path = f"{APP_NAME}/combustible/{operador_id}/{uuid.uuid4().hex}.{ext}"
+        data = await ticket.read()
+        result = put_object(path, data, ticket.content_type or "image/jpeg")
+        ticket_url = f"/api/files/{result['path']}"
+    doc = {
+        "operador_id": operador_id,
+        "vehiculo_id": op.get("vehiculo_id") if op else None,
+        "fecha": fecha, "litros": litros, "costo": costo,
+        "odometro_km": odometro_km, "estacion": estacion,
+        "ticket_url": ticket_url, "creado": now_iso(),
+    }
+    res = await db.combustible_cargas.insert_one(doc)
+    # Odómetro del vehículo se actualiza con la carga (traza de uso).
+    if doc["vehiculo_id"] and odometro_km:
+        try:
+            await db.vehiculos.update_one(
+                {"_id": to_oid(doc["vehiculo_id"])},
+                {"$set": {"odometro_km": odometro_km}},
+            )
+        except HTTPException:
+            pass
+    return {"ok": True, "id": str(res.inserted_id), "ticket_url": ticket_url}
+
+
+@api_router.get("/combustible/mis-cargas")
+async def mis_cargas_combustible(current: dict = Depends(require_operador_estricto),
+                                 limite: int = Query(30, ge=1, le=100)):
+    docs = await db.combustible_cargas.find({"operador_id": current["id"]}).sort(
+        "creado", -1).to_list(limite)
+    return {"cargas": [serialize(d) for d in docs]}
 
 
 async def _track_puntual(operador_id: str, lat: float, lng: float, ts: str, set_fields: dict) -> None:
@@ -1042,6 +1228,7 @@ async def _actualizar_ubicacion(operador_id: str, lat: float, lng: float,
                                 accuracy=None, speed=None, heading=None, battery=None,
                                 client_ts: Optional[str] = None) -> dict:
     ts = now_iso()
+    result = {"ok": True}
     set_fields = {"lat": lat, "lng": lng, "ultima_actualizacion": ts}
     if accuracy is not None:
         set_fields["gps_accuracy"] = accuracy
@@ -1081,7 +1268,126 @@ async def _actualizar_ubicacion(operador_id: str, lat: float, lng: float,
             "lng": lng,
             "ts": ts,
         })
-    return {"ok": True}
+    # Geofence (F5): evalúa llegada al destino del servicio en_curso.
+    try:
+        geo = await _evaluar_llegada_geofence(operador_id, lat, lng, accuracy,
+                                              speed, _parse_iso(ts) or datetime.now(timezone.utc))
+        if geo.get("llegada_detectada") or geo.get("servicio_auto_completado"):
+            result.update(geo)
+    except Exception as exc:
+        # El geofence nunca debe romper la ingesta de GPS.
+        logger.warning("geofence eval fallo: %s", exc)
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Auto-finalización por geofence (llegada al destino) — F5
+# ---------------------------------------------------------------------------
+# La detección es AUTORITATIVA EN BACKEND: cada reporte GPS de un conductor
+# con servicio en_curso y destino con coordenadas se evalúa contra el destino.
+# Requiere precisión aceptable + dentro del radio + velocidad baja + dwell.
+async def _evaluar_llegada_geofence(operador_id: str, lat: float, lng: float,
+                                    accuracy: Optional[float], speed: Optional[float],
+                                    ahora: datetime) -> Dict:
+    """Devuelve {llegada_detectada, servicio_auto_completado} y aplica el
+    auto-completado cuando corresponde. Idempotente por estado del servicio."""
+    out = {"llegada_detectada": False, "servicio_auto_completado": False}
+    try:
+        habilitado = bool(await get_config("auto_complete_enabled", True))
+    except Exception:
+        habilitado = True
+    if not habilitado:
+        return out
+    try:
+        radio_m = float(await get_config("arrival_radius_m", 75))
+        dwell_s = float(await get_config("arrival_dwell_s", 30))
+        max_acc = float(await get_config("max_gps_accuracy_m", 30))
+    except (TypeError, ValueError):
+        radio_m, dwell_s, max_acc = 75.0, 30.0, 30.0
+
+    # Servicio en_curso del conductor con destino georreferenciado.
+    s = await db.servicios.find_one({
+        "operador_asignado_id": operador_id,
+        "estado": EstadoServicio.en_curso.value,
+        "destino.lat": {"$ne": None},
+        "destino.lng": {"$ne": None},
+    })
+    if not s:
+        return out
+
+    # Validación 1: precisión GPS aceptable (sin accuracy conocida, no se arriesga).
+    if accuracy is None or accuracy > max_acc:
+        return out
+    # Validación 2: dentro del radio de llegada.
+    destino = s["destino"]
+    dist_m = haversine_km(lat, lng, destino["lat"], destino["lng"]) * 1000.0
+    if dist_m > radio_m:
+        # Salió (o nunca entró): limpia el conteo de permanencia.
+        if s.get("llegada"):
+            await db.servicios.update_one({"_id": s["_id"]}, {"$unset": {"llegada": ""}})
+        return out
+    out["llegada_detectada"] = True
+    # Validación 3: velocidad baja o detenido (evita cerrar servicios "de pasada").
+    if speed is not None and speed > 2.78:  # > 10 km/h
+        return out
+
+    # Permanencia (dwell): primer punto dentro de zona inicia el conteo.
+    # Con dwell_s <= 0 no hay espera: llegada directa → completar.
+    llegada = s.get("llegada") or {}
+    if dwell_s > 0 and not llegada.get("dentro_desde"):
+        await db.servicios.update_one(
+            {"_id": s["_id"]},
+            {"$set": {"llegada": {"dentro_desde": ahora.isoformat(), "lat": lat, "lng": lng,
+                                   "dist_m": round(dist_m)}}},
+        )
+        return out
+    try:
+        dentro_desde = datetime.fromisoformat(llegada["dentro_desde"]) if llegada.get("dentro_desde") else ahora
+    except (TypeError, ValueError):
+        return out
+    if (ahora - dentro_desde).total_seconds() < dwell_s:
+        return out
+
+    # === DESTINO ALCANZADO: auto-completado autoritativo ===
+    # Carrera: solo si sigue en_curso (UPDATE condicionado por estado).
+    ts = ahora.isoformat()
+    res = await db.servicios.update_one(
+        {"_id": s["_id"], "estado": EstadoServicio.en_curso.value},
+        {"$set": {"estado": EstadoServicio.completado.value,
+                  "timestamp_fin": ts,
+                  "auto_completado": True,
+                  "llegada.confirmada_en": ts,
+                  "llegada.dist_m": round(dist_m),
+                  "motivo_cierre": "geofence"}},
+    )
+    if res.modified_count == 0:
+        return out  # otro proceso ya lo cerró (o cambió de estado)
+    s = await db.servicios.find_one({"_id": s["_id"]})
+    # Libera al operador (mismo efecto que "terminar" manual).
+    await db.operadores.update_one(
+        {"_id": to_oid(operador_id)},
+        {"$set": {"estado": EstadoOperador.libre.value, "ultima_actualizacion": ts}},
+    )
+    estado_msg = {"type": "estado", "operador_id": operador_id,
+                  "estado": EstadoOperador.libre.value, "ts": ts}
+    await manager.broadcast_terminal(estado_msg)
+    await _notificar_dueno_de_operador(operador_id, estado_msg)
+    await _notificar_servicio(s)
+    # Evento explícito para UX (terminal + conductor).
+    await manager.broadcast_terminal({
+        "type": "destino_alcanzado",
+        "servicio_id": str(s["_id"]),
+        "operador_id": operador_id,
+        "placa": (s.get("taxi") or {}).get("placa") if isinstance(s.get("taxi"), dict) else None,
+        "ts": ts,
+    })
+    await manager.send_operador(operador_id, {
+        "type": "destino_alcanzado",
+        "servicio_id": str(s["_id"]),
+        "ts": ts,
+    })
+    out["servicio_auto_completado"] = True
+    return out
 
 
 @api_router.post("/operadores/{operador_id}/ubicacion")
@@ -1543,6 +1849,187 @@ async def routing_route(body: RoutingBody, _=Depends(_any_autenticado_o_pasajero
     except Exception as exc:  # red, timeout, proveedor caído -> fallback
         logger.warning("routing fallback haversine: %s", exc)
         return _ruta_haversine(origen, destino)
+
+
+# ---------------------------------------------------------------------------
+# Geocoding (búsqueda de direcciones para el Centro de Operaciones)
+# ---------------------------------------------------------------------------
+# Proveedor configurable; Photon (komoot) es abierto y sin API key. El backend
+# actúa como proxy: mantiene la política de tiles/geocoding con User-Agent
+# propio y evita exponer el proveedor al frontend.
+GEOCODING_PROVIDER_URL = os.environ.get("GEOCODING_PROVIDER_URL", "https://photon.komoot.io").rstrip("/")
+GEOCODING_TIMEOUT_SECONDS = float(os.environ.get("GEOCODING_TIMEOUT_SECONDS", "6"))
+
+
+@api_router.get("/geo/search")
+async def geo_search(
+    q: str,
+    limit: int = 8,
+    _=Depends(_any_autenticado),
+):
+    """Búsqueda global de ubicaciones (calle, colonia, POI, referencia).
+
+    Sesgada a la zona de operación del sitio (viewbox del centro del mapa si
+    está configurado en config: map_center_lat/lng). Devuelve resultados
+    normalizados: {id, label, sublabel, lat, lng, tipo}.
+    """
+    query = (q or "").strip()
+    if len(query) < 3:
+        return {"resultados": []}
+    # Centro de operación (configurable por despliegue) para sesgar resultados.
+    try:
+        center_lat = float(await get_config("map_center_lat") or 17.5099)
+        center_lng = float(await get_config("map_center_lng") or -91.9847)
+    except (TypeError, ValueError):
+        center_lat, center_lng = 17.5099, -91.9847
+    # Viewbox generoso (~40 km) alrededor del centro; lon,lat / lon,lat
+    min_lon, max_lon = center_lng - 0.45, center_lng + 0.45
+    min_lat, max_lat = center_lat - 0.30, center_lat + 0.30
+    limit = max(1, min(limit or 8, 20))
+    headers = {"User-Agent": "TaxiHUB/2.0 (central de taxis de Palenque)"}
+    try:
+        async with httpx.AsyncClient(timeout=GEOCODING_TIMEOUT_SECONDS) as hc:
+            r = await hc.get(
+                f"{GEOCODING_PROVIDER_URL}/api/",
+                params={
+                    "q": query,
+                    "limit": limit,
+                    # Nota: la instancia pública de Photon rechaza `lang` (400).
+                    # Photon: bbox=minLon,minLat,maxLon,maxLat — sesgo suave
+                    # (los resultados fuera del bbox se permiten pero penalizan).
+                    "bbox": f"{min_lon:.4f},{min_lat:.4f},{max_lon:.4f},{max_lat:.4f}",
+                },
+                headers=headers,
+            )
+            r.raise_for_status()
+            data = r.json()
+    except Exception as exc:
+        logger.warning("geocoding fallo proveedor: %s", exc)
+        return {"resultados": [], "error": "proveedor_no_disponible"}
+    resultados = []
+    for f in (data.get("features") or [])[:limit]:
+        props = f.get("properties") or {}
+        geom = (f.get("geometry") or {}).get("coordinates") or [None, None]
+        lng, lat = geom[0], geom[1]
+        if lat is None or lng is None:
+            continue
+        # Etiqueta principal y secundaria según disponibilidad del proveedor.
+        nombre = props.get("name") or props.get("street") or props.get("district") or ""
+        partes_sub = [
+            props.get("district") if props.get("district") != nombre else None,
+            props.get("city") or props.get("county") or props.get("state"),
+        ]
+        sublabel = ", ".join([p for p in partes_sub if p]) or props.get("country", "")
+        if not nombre:
+            nombre = props.get("street") or sublabel or query
+        tipo = props.get("osm_key") or props.get("osm_value") or "lugar"
+        resultados.append({
+            "id": f"{props.get('osm_type', 'n')}{props.get('osm_id', '')}",
+            "label": nombre,
+            "sublabel": sublabel,
+            "lat": round(float(lat), 6),
+            "lng": round(float(lng), 6),
+            "tipo": tipo,
+        })
+    return {"resultados": resultados, "provider": "photon"}
+
+
+# ---------------------------------------------------------------------------
+# WhatsApp Business (arquitectura preparada para proveedor oficial)
+# ---------------------------------------------------------------------------
+# NO se automatiza WhatsApp Web ni se hace scraping. El diseño contempla un
+# proveedor oficial (Meta WhatsApp Business API): sus webhooks entrarán por
+# POST /wa/webhook autenticado con WA_WEBHOOK_TOKEN. La UI del despacho solo
+# LEE conversaciones y permite a la operadora transformar una ubicación
+# recibida en origen de servicio.
+class WaReply(BaseModel):
+    texto: str = Field(min_length=1, max_length=1000)
+
+
+def _wa_conv_serialize(doc: Dict) -> Dict:
+    d = serialize(doc)
+    msgs = d.get("mensajes") or []
+    d["ultimo_mensaje"] = msgs[-1] if msgs else None
+    d["mensajes_count"] = len(msgs)
+    return d
+
+
+@api_router.get("/wa/conversaciones")
+async def wa_list_conversaciones(_=Depends(require_terminal)):
+    docs = await db.wa_conversaciones.find().sort("actualizada_en", -1).to_list(100)
+    return [_wa_conv_serialize(d) for d in docs]
+
+
+@api_router.get("/wa/conversaciones/{conv_id}")
+async def wa_get_conversacion(conv_id: str, _=Depends(require_terminal)):
+    doc = await db.wa_conversaciones.find_one({"_id": to_oid(conv_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    return serialize(doc)
+
+
+@api_router.post("/wa/conversaciones/{conv_id}/reply")
+async def wa_reply(conv_id: str, body: WaReply, _=Depends(require_terminal)):
+    """Respuesta de la operadora. En producción el proveedor oficial la entrega
+    al cliente; hoy se registra en el hilo para trazabilidad."""
+    now = datetime.now(timezone.utc).isoformat()
+    res = await db.wa_conversaciones.update_one(
+        {"_id": to_oid(conv_id)},
+        {"$push": {"mensajes": {"de": "operadora", "texto": body.texto, "ts": now}},
+         "$set": {"actualizada_en": now}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    return {"ok": True}
+
+
+@api_router.post("/wa/webhook")
+async def wa_webhook(request: Request):
+    """Ingreso de eventos del proveedor WhatsApp Business (FUTURO).
+    Requiere WA_WEBHOOK_TOKEN configurado; sin él responde 503 para no
+    simular integraciones inexistentes. Formato esperado (normalizado por el
+    adaptador del proveedor, a implementar al contratar el servicio):
+      {remitente: {nombre, telefono}, mensaje: {texto | lat+lng}}
+    """
+    token = os.environ.get("WA_WEBHOOK_TOKEN")
+    if not token:
+        raise HTTPException(status_code=503, detail="Webhook WhatsApp no configurado")
+    auth = request.headers.get("Authorization", "")
+    if auth != f"Bearer {token}":
+        raise HTTPException(status_code=401, detail="No autorizado")
+    payload = await request.json()
+    rem = payload.get("remitente") or {}
+    msg = payload.get("mensaje") or {}
+    now = datetime.now(timezone.utc).isoformat()
+    entry = {"de": "cliente", "texto": msg.get("texto"), "ts": now}
+    if msg.get("lat") is not None:
+        entry["lat"] = msg["lat"]
+        entry["lng"] = msg["lng"]
+    await db.wa_conversaciones.update_one(
+        {"cliente_telefono": rem.get("telefono")},
+        {"$setOnInsert": {"cliente_nombre": rem.get("nombre") or rem.get("telefono"),
+                          "cliente_telefono": rem.get("telefono"), "creada_en": now},
+         "$push": {"mensajes": entry}, "$set": {"actualizada_en": now}},
+        upsert=True,
+    )
+    return {"ok": True}
+
+
+async def _seed_wa_conversacion():
+    """Conversación demo para validar el flujo ubicación→servicio."""
+    now = datetime.now(timezone.utc).isoformat()
+    if await db.wa_conversaciones.count_documents({}) > 0:
+        return
+    await db.wa_conversaciones.insert_one({
+        "cliente_nombre": "María López",
+        "cliente_telefono": "+52 916 123 4567",
+        "creada_en": now,
+        "actualizada_en": now,
+        "mensajes": [
+            {"de": "cliente", "texto": "Hola, necesito un taxi", "ts": now},
+            {"de": "cliente", "texto": "Estoy aquí", "lat": 17.5115, "lng": -91.9823, "ts": now},
+        ],
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -2087,14 +2574,34 @@ async def crear_reporte(
     path = f"{APP_NAME}/reportes/{operador_id}/{uuid.uuid4().hex}.{ext}"
     data = await foto.read()
     result = put_object(path, data, foto.content_type or "image/jpeg")
+    ts = now_iso()
+    # Vínculo opcional (F11): si el conductor tiene servicio activo, el objeto
+    # se asocia a ese servicio y a la unidad para el flujo de resguardo.
+    servicio_activo = await db.servicios.find_one(
+        {"operador_asignado_id": operador_id,
+         "estado": {"$in": ["asignado", "en_curso"]}},
+        sort=[("timestamp_creacion", -1)],
+    )
+    unidad = None
+    if servicio_activo:
+        veh = None
+        op = await db.operadores.find_one({"_id": to_oid(operador_id)}, {"vehiculo_id": 1})
+        if op and op.get("vehiculo_id"):
+            veh = await db.vehiculos.find_one({"_id": to_oid(op["vehiculo_id"])})
+        if veh:
+            unidad = {"id": str(veh["_id"]), "numero_economico": veh.get("numero_economico"),
+                      "placa": veh.get("placa")}
     doc = {
         "operador_id": operador_id,
         "storage_path": result["path"],
         "foto_url": f"/api/files/{result['path']}",
         "content_type": foto.content_type or "image/jpeg",
         "descripcion": descripcion,
-        "timestamp": now_iso(),
-        "estado": "pendiente",
+        "timestamp": ts,
+        "estado": "encontrado",
+        "historial": [{"estado": "encontrado", "ts": ts, "actor": "operador"}],
+        "servicio_id": str(servicio_activo["_id"]) if servicio_activo else None,
+        "unidad": unidad,
     }
     res = await db.reportes_objetos.insert_one(doc)
     doc["_id"] = res.inserted_id
@@ -2126,14 +2633,45 @@ async def list_reportes(_=Depends(require_terminal)):
     return out
 
 
+class ReporteEstadoUpdate(BaseModel):
+    estado: Literal["encontrado", "resguardo", "devuelto", "cerrado"]
+    nota: Optional[str] = None
+
+
+@api_router.patch("/reportes/{reporte_id}/estado")
+async def cambiar_estado_reporte(reporte_id: str, body: ReporteEstadoUpdate,
+                                 _=Depends(require_terminal)):
+    """Ciclo de resguardo del objeto (F11 §23): encontrado → resguardo →
+    devuelto | cerrado. Registra historial con actor y nota opcional."""
+    ts = now_iso()
+    doc = await db.reportes_objetos.find_one({"_id": to_oid(reporte_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Reporte no encontrado")
+    entrada = {"estado": body.estado, "ts": ts, "actor": "terminal"}
+    if body.nota:
+        entrada["nota"] = body.nota
+    await db.reportes_objetos.update_one(
+        {"_id": to_oid(reporte_id)},
+        {"$set": {"estado": body.estado},
+         "$push": {"historial": entrada}},
+    )
+    return {"ok": True, "estado": body.estado, "nota": body.nota}
+
+
 @api_router.patch("/reportes/{reporte_id}/resolver")
 async def resolver_reporte(reporte_id: str, _=Depends(require_terminal)):
-    res = await db.reportes_objetos.update_one(
-        {"_id": to_oid(reporte_id)}, {"$set": {"estado": "resuelto"}}
-    )
-    if res.matched_count == 0:
+    """Compat 1.x: marcado binario. Equivale a pasar a 'cerrado' del ciclo F11."""
+    ts = now_iso()
+    doc = await db.reportes_objetos.find_one({"_id": to_oid(reporte_id)})
+    if not doc:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
-    return {"ok": True, "estado": "resuelto"}
+    if doc.get("estado") != "cerrado":
+        await db.reportes_objetos.update_one(
+            {"_id": to_oid(reporte_id)},
+            {"$set": {"estado": "cerrado"},
+             "$push": {"historial": [{"estado": "cerrado", "ts": ts, "actor": "terminal"}]}},
+        )
+    return {"ok": True, "estado": "cerrado"}
 
 
 # ---------------------------------------------------------------------------
@@ -2672,6 +3210,14 @@ async def subir_logo(foto: UploadFile = File(...), _=Depends(require_dev)):
     return {"foto_url": url}
 
 
+@api_router.post("/dueno/evidencia")
+async def subir_evidencia_dueno(foto: UploadFile = File(...), _=Depends(require_dueno)):
+    """Sube la foto de evidencia de una carga de combustible (mismo mecanismo que
+    las fotos de perfil/vehículo: _guardar_imagen + db.archivos + GET /api/files)."""
+    url = await _guardar_imagen(foto, "evidencias")
+    return {"evidencia_url": url}
+
+
 @api_router.get("/config/logo")
 async def get_logo():
     c = await db.config.find_one({"key": "logo"})
@@ -2891,7 +3437,37 @@ async def ws_dueno(ws: WebSocket, dueno_id: str, token: Optional[str] = Query(No
 # ---------------------------------------------------------------------------
 # Wire up
 # ---------------------------------------------------------------------------
+from mantenimiento_module import build_router as build_mantenimiento_router
+from socios_extra_module import build_router as build_extra_router
+from terminal_consulta_module import build_router as build_terminal_consulta_router
+
+
+class _DbProxy:
+    """Delega en `db` en cada acceso (no captura la referencia). Necesario
+    para que los routers de módulos respeten el monkeypatch de `server.db`
+    en la suite de tests y futuras reconexiones en caliente."""
+    def __init__(self, getter):
+        self._getter = getter
+    def __getattr__(self, name):
+        return getattr(globals()["db"], name)
+
+
+_db_proxy = _DbProxy(lambda: None)
 app.include_router(api_router)
+app.include_router(build_mantenimiento_router(
+    db=_db_proxy, serialize=serialize, to_oid=to_oid, now_iso=now_iso,
+    require_dueno=require_dueno, _vehiculos_de_dueno=_vehiculos_de_dueno,
+    _vehiculo_de_dueno_o_404=_vehiculo_de_dueno_o_404, _hoy_str=_hoy_str,
+))
+app.include_router(build_extra_router(
+    db=_db_proxy, serialize=serialize, to_oid=to_oid, now_iso=now_iso,
+    require_dueno=require_dueno, _vehiculos_de_dueno=_vehiculos_de_dueno,
+    _vehiculo_de_dueno_o_404=_vehiculo_de_dueno_o_404,
+))
+app.include_router(build_terminal_consulta_router(
+    db=_db_proxy, serialize=serialize, to_oid=to_oid, now_iso=now_iso,
+    require_terminal=require_terminal, TRACK_MAX_POINTS=TRACK_MAX_POINTS,
+))
 
 app.add_middleware(
     CORSMiddleware,
@@ -2992,6 +3568,13 @@ async def _migraciones():
     await db.config.update_one({"key": "gps_stale_seconds"}, {"$setOnInsert": {"key": "gps_stale_seconds", "valor": 120}}, upsert=True)
     await db.config.update_one({"key": "oferta_duracion_seg"}, {"$setOnInsert": {"key": "oferta_duracion_seg", "valor": 60}}, upsert=True)
 
+    # Geofence / auto-finalización (F5): valores iniciales del producto; cada
+    # sitio podrá ajustarlos (config key-value global hoy, per-sitio en F7+).
+    await db.config.update_one({"key": "auto_complete_enabled"}, {"$setOnInsert": {"key": "auto_complete_enabled", "valor": True}}, upsert=True)
+    await db.config.update_one({"key": "arrival_radius_m"}, {"$setOnInsert": {"key": "arrival_radius_m", "valor": 75}}, upsert=True)
+    await db.config.update_one({"key": "arrival_dwell_s"}, {"$setOnInsert": {"key": "arrival_dwell_s", "valor": 30}}, upsert=True)
+    await db.config.update_one({"key": "max_gps_accuracy_m"}, {"$setOnInsert": {"key": "max_gps_accuracy_m", "valor": 30}}, upsert=True)
+
     # 4) Catálogo de tipos de vehículo: se siembra una sola vez (colección vacía).
     # No es una lista hardcodeada en el código de negocio — vive en Mongo, editable
     # desde /api/tipos-vehiculo; esto solo aporta un punto de partida útil.
@@ -3013,6 +3596,9 @@ async def _migraciones():
             {"$set": {"tipo_vehiculo_id": str(taxi_estandar["_id"])}},
         )
     await db.vehiculos.update_many({"foto_url": {"$exists": False}}, {"$set": {"foto_url": None}})
+
+    # 6) Conversación demo de WhatsApp (flujo ubicación→servicio del despacho).
+    await _seed_wa_conversacion()
 
     logger.info("Migraciones aplicadas (sitios, sitio_id, vehículos backfill, tipos de vehículo)")
 

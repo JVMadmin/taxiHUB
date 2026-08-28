@@ -12,8 +12,10 @@ import { EmptyState } from "@/components/EmptyState";
 import { Map as MapIcon, User, X } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847];
-const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
+const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 export function Mapa({ liveSignal }) {
   const [vehiculos, setVehiculos] = useState(null);
@@ -42,7 +44,7 @@ export function Mapa({ liveSignal }) {
   return (
     <div className="relative h-[calc(100vh-9rem)] overflow-hidden rounded-2xl border border-border lg:h-[calc(100vh-6rem)]" data-testid="dueno-mapa">
       <MapContainer center={center} zoom={13} zoomControl={false} className="h-full w-full">
-        <TileLayer url={tiles} attribution="&copy; OpenStreetMap &copy; CARTO" subdomains="abcd" />
+        <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
         {visibles.map((v) => (
           <Marker
             key={v.id}
