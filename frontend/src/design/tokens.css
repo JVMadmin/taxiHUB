@@ -1,47 +1,57 @@
 /* ==========================================================================
-   TaxiHUB 2.0 — Design Tokens ("Taxi Operations OS")
+   TaxiHUB 2.1 — Design Tokens ("Taxi Operations OS" / dark cálido)
+   Identidad: negro casi puro (#0B0D10), superficies #17191E, acento
+   azul-índigo eléctrico (#4F5DFF), verde neón (#8CFF4F) reservado para
+   estados "en vivo"/"disponible". Tipografía Inter 400/500/600.
    Capa aditiva: convive con el sistema 1.x hasta completar la migración.
    Dark es el modo por defecto del producto; `data-mode="claro"` activa la
    paleta clara normativa.
    ========================================================================== */
 
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+
 :root {
   /* Marca */
-  --th-primary: #10B981;
-  --th-primary-dark: #047857;
-  --th-primary-light: #D1FAE5;
-  --th-primary-soft: rgba(16, 185, 129, 0.12);
+  --th-primary: #4F5DFF;
+  --th-primary-dark: #3D49D6;
+  --th-primary-light: #DDE1FF;
+  --th-primary-soft: rgba(79, 93, 255, 0.14);
+
+  /* En vivo / disponible (verde neón — solo estados activos, nunca decorativo) */
+  --th-live: #8CFF4F;
+  --th-live-soft: rgba(140, 255, 79, 0.12);
 
   /* Semánticos */
-  --th-success: #10B981;
-  --th-danger: #EF4444;
-  --th-danger-soft: rgba(239, 68, 68, 0.12);
-  --th-warning: #F59E0B;
-  --th-warning-soft: rgba(245, 158, 11, 0.14);
-  --th-info: #3B82F6;
-  --th-info-soft: rgba(59, 130, 246, 0.12);
-  --th-purple: #8B5CF6;
-  --th-purple-soft: rgba(139, 92, 246, 0.14);
-  --th-offline: #6B7280;
+  --th-success: #8CFF4F;
+  --th-danger: #F4544C;
+  --th-danger-soft: rgba(244, 84, 76, 0.12);
+  --th-warning: #FFB224;
+  --th-warning-soft: rgba(255, 178, 36, 0.14);
+  --th-info: #4F5DFF;
+  --th-info-soft: rgba(79, 93, 255, 0.12);
+  --th-purple: #9A6BFF;
+  --th-purple-soft: rgba(154, 107, 255, 0.14);
+  --th-offline: #9CA0AA;
 
   /* Superficies (modo oscuro por defecto) */
-  --th-bg: #07131D;
-  --th-surface: #0D1B26;
-  --th-surface-2: #122431;
-  --th-surface-3: #1A3040;
-  --th-text: #E8EEF2;
-  --th-muted: #8A97A0;
-  --th-border: #1C2F3D;
+  --th-bg: #0B0D10;
+  --th-surface: #17191E;
+  --th-surface-2: #1B1E24;
+  --th-surface-3: #22252C;
+  --th-text: #F5F5F7;
+  --th-muted: #9CA0AA;
+  --th-border: rgba(255, 255, 255, 0.06);
+  --th-border-strong: rgba(255, 255, 255, 0.1);
 
   /* Métricas */
-  --th-font: "Poppins", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --th-radius-sm: 8px;
+  --th-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --th-radius-sm: 10px;
   --th-radius-md: 12px;
-  --th-radius-lg: 16px;
-  --th-radius-xl: 22px;
-  --th-shadow-1: 0 1px 2px rgba(2, 10, 16, 0.5), 0 2px 8px rgba(2, 10, 16, 0.35);
-  --th-shadow-2: 0 2px 6px rgba(2, 10, 16, 0.45), 0 10px 28px rgba(2, 10, 16, 0.4);
-  --th-shadow-brand: 0 6px 20px rgba(16, 185, 129, 0.28);
+  --th-radius-lg: 18px;
+  --th-radius-xl: 20px;
+  --th-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.22);
+  --th-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.28), 0 12px 36px rgba(0, 0, 0, 0.32);
+  --th-shadow-brand: 0 6px 24px rgba(79, 93, 255, 0.22);
 }
 
 html[data-mode="claro"] {
@@ -55,26 +65,74 @@ html[data-mode="claro"] {
   --th-border: #E5E7EB;
   --th-shadow-1: 0 1px 2px rgba(23, 32, 38, 0.08), 0 2px 8px rgba(23, 32, 38, 0.06);
   --th-shadow-2: 0 2px 6px rgba(23, 32, 38, 0.08), 0 10px 28px rgba(23, 32, 38, 0.1);
-  --th-shadow-brand: 0 6px 20px rgba(16, 185, 129, 0.22);
+  --th-shadow-brand: 0 6px 20px rgba(79, 93, 255, 0.22);
 }
 
 /* --------------------------------------------------------------------------
-   Tipografía — escala Display…Numeric
+   Puente de tokens semánticos (shadcn) — html:root gana la cascada sobre los
+   :root de index.css sin modificarlos. Mismo mundo de color: un solo tono
+   frío-cálido (#0B0D10→#17191E), acento índigo, verde neón solo semántico.
    -------------------------------------------------------------------------- */
-.th-display { font: 700 1.875rem/1.2 var(--th-font); letter-spacing: -0.02em; }
-.th-h1 { font: 700 1.5rem/1.33 var(--th-font); letter-spacing: -0.015em; }
+html:root {
+  --background: 220 19% 5%;
+  --foreground: 240 11% 96%;
+  --card: 223 13% 10%;
+  --card-foreground: 240 11% 96%;
+  --popover: 222 17% 12%;
+  --popover-foreground: 240 11% 96%;
+  --primary: 235 100% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 222 12% 13%;
+  --secondary-foreground: 240 11% 96%;
+  --muted: 222 11% 12%;
+  --muted-foreground: 223 8% 64%;
+  --accent: 222 12% 14%;
+  --accent-foreground: 240 11% 96%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 220 8% 16%;
+  --input: 220 9% 19%;
+  --ring: 235 100% 65%;
+  --chart-1: 235 100% 65%;
+  --chart-2: 99 100% 66%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 0 72% 51%;
+  --chart-5: 271 81% 56%;
+  /* Acento de marca por paleta — base = identidad índigo */
+  --brand: 235 100% 65%;
+  --brand-bright: 235 100% 72%;
+  --brand-strong: 235 66% 56%;
+  --brand-contrast: 0 0% 100%;
+  --surface: 220 16% 7%;
+  --surface-2: 223 13% 10%;
+  --surface-3: 224 11% 13%;
+}
+
+/* Tipografía base: Inter (gana sobre el body de index.css) */
+html body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-feature-settings: "cv05", "cv11";
+}
+
+/* --------------------------------------------------------------------------
+   Tipografía — escala Display…Numeric (pesos 400/500/600)
+   -------------------------------------------------------------------------- */
+.th-display { font: 600 1.875rem/1.2 var(--th-font); letter-spacing: -0.02em; }
+.th-h1 { font: 600 1.5rem/1.33 var(--th-font); letter-spacing: -0.015em; }
 .th-h2 { font: 600 1.25rem/1.4 var(--th-font); letter-spacing: -0.01em; }
 .th-h3 { font: 600 1.0625rem/1.41 var(--th-font); }
 .th-body { font: 400 0.875rem/1.43 var(--th-font); }
 .th-body-sm { font: 400 0.8125rem/1.38 var(--th-font); }
 .th-label {
-  font: 600 0.75rem/1.33 var(--th-font);
+  font: 500 0.75rem/1.33 var(--th-font);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--th-muted);
 }
 .th-caption { font: 400 0.6875rem/1.27 var(--th-font); }
 .th-metric {
-  font: 800 1.625rem/1.15 var(--th-font);
+  font: 600 1.625rem/1.15 var(--th-font);
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
@@ -82,6 +140,7 @@ html[data-mode="claro"] {
 
 /* --------------------------------------------------------------------------
    Superficies operativas (cards/paneles del sistema 2.0)
+   #17191E · radius 16-20px · borde blanco 6% · glow suave, sin sombra dura
    -------------------------------------------------------------------------- */
 .th-card {
   background: var(--th-surface);
@@ -101,25 +160,25 @@ html[data-mode="claro"] {
 }
 .th-divider { border: 0; border-top: 1px solid var(--th-border); }
 
-/* Botón primario 2.0 (identidad verde) */
+/* Botón primario 2.0 (identidad índigo, elevación suave) */
 .th-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font: 700 0.875rem/1 var(--th-font);
+  font: 600 0.875rem/1 var(--th-font);
   border-radius: var(--th-radius-md);
   padding: 0.625rem 1rem;
   transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
 }
 .th-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.th-btn-primary { background: var(--th-primary); color: #04110C; box-shadow: var(--th-shadow-brand); }
-.th-btn-primary:hover:not(:disabled) { background: #0EA271; }
+.th-btn-primary { background: var(--th-primary); color: #fff; box-shadow: var(--th-shadow-brand); }
+.th-btn-primary:hover:not(:disabled) { background: #6E7BFF; }
 .th-btn-primary:active:not(:disabled) { transform: translateY(1px); }
 .th-btn-ghost { background: transparent; color: var(--th-text); border: 1px solid var(--th-border); }
-.th-btn-ghost:hover:not(:disabled) { background: var(--th-surface-2); }
+.th-btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
 .th-btn-danger { background: var(--th-danger); color: #fff; }
-.th-btn-danger:hover:not(:disabled) { background: #DC2626; }
+.th-btn-danger:hover:not(:disabled) { background: #E03E36; }
 
 /* Botón de control de mapa (zoom/ubicar) */
 .th-map-ctl {
@@ -145,7 +204,7 @@ html[data-mode="claro"] {
   gap: 0.375rem;
   border-radius: 999px;
   padding: 0.25rem 0.625rem;
-  font: 700 0.6875rem/1.2 var(--th-font);
+  font: 600 0.6875rem/1.2 var(--th-font);
   letter-spacing: 0.02em;
   color: var(--sc, var(--th-muted));
   background: color-mix(in srgb, var(--sc, var(--th-muted)) 12%, transparent);
@@ -157,3 +216,394 @@ html[data-mode="claro"] {
 .th-doc-vigente { --sc: var(--th-success); }
 .th-doc-por_vencer { --sc: var(--th-warning); }
 .th-doc-vencido { --sc: var(--th-danger); }
+
+/* --------------------------------------------------------------------------
+   Puente de componentes de index.css — mismas clases, nueva piel.
+   `html` delante gana la cascada sin editar index.css.
+   -------------------------------------------------------------------------- */
+
+/* CTA principal: sin bisel duro, glow índigo suave, peso 600 */
+html .btn-primary-elev {
+  font-weight: 600;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 4px 24px hsl(var(--brand) / 22%);
+}
+html .btn-primary-elev:active:not(:disabled) {
+  box-shadow: 0 2px 12px hsl(var(--brand) / 18%);
+}
+html .btn-danger-elev {
+  font-weight: 600;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 4px 24px hsl(0 72% 51% / 20%);
+}
+
+/* Chasis "machined" del Terminal → mundo #17191E, borde blanco 6% */
+html .bezel-shell {
+  background: hsl(223 13% 10% / var(--ui-alpha, 0.85));
+  border-color: rgba(255, 255, 255, 0.06);
+}
+html .surface-ui {
+  background: hsl(223 13% 10% / var(--ui-alpha, 0.85));
+  border-color: rgba(255, 255, 255, 0.06);
+}
+html .bezel-core {
+  background: hsl(223 12% 12%);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+html .input-inset {
+  background: hsl(220 16% 7%) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html .data-cell-value { font-weight: 600; }
+
+/* Botón de icono del chasis: elevación susurrada, hover blanco 8% */
+html .th-3d {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+html .th-3d:active:not(:disabled) {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Iconografía outline delgada (lucide): 1.5 en vez de 2 */
+html svg.th-icon-3d,
+html .th-3d svg {
+  stroke-width: 1.5;
+}
+html .th-icon-3d {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
+}
+
+/* Puente emerald → verde neón semántico (solo dark; claro conserva el suyo) */
+html .text-emerald-400, html .text-emerald-500 { color: var(--th-live); }
+html .bg-emerald-400, html .bg-emerald-500 { background-color: var(--th-live); }
+
+/* --------------------------------------------------------------------------
+   App del Operador — piel oscura ("taxi-driver-dark") alineada al sistema.
+   El CSS de página fija valores claros con !important; esta capa los cambia
+   en dark con mayor especificidad, sin editar ese archivo.
+   -------------------------------------------------------------------------- */
+html .taxi-driver-shell {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+html .taxi-driver-shell.taxi-driver-dark {
+  --driver-ink: #F5F5F7;
+  --driver-muted: #9CA0AA;
+  --driver-line: rgba(255, 255, 255, 0.08);
+  --driver-surface: #17191E;
+  --driver-canvas: #0B0D10;
+  --driver-green: #8CFF4F;
+  --driver-green-dark: #6BD83A;
+  --driver-red: #F4544C;
+}
+
+html body:has(.taxi-driver-shell.taxi-driver-dark) { background: #070809; }
+@media (min-width: 700px) {
+  html .taxi-driver-shell.taxi-driver-dark {
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 44px rgba(0, 0, 0, 0.5);
+  }
+}
+html .taxi-driver-shell.taxi-driver-dark .leaflet-container { background: #0B0D10; }
+
+html .taxi-driver-shell.taxi-driver-dark .text-brand-bright { color: var(--driver-green) !important; }
+html .taxi-driver-shell.taxi-driver-dark .bg-surface-2 { background: #1B1E24 !important; }
+html .taxi-driver-shell.taxi-driver-dark .bg-secondary { background: #1B1E24 !important; color: var(--driver-ink) !important; }
+
+/* Avatar circular — identidad del conductor */
+html .taxi-driver-shell.taxi-driver-dark .taxi-driver-avatar-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: #1B1E24;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
+}
+html .taxi-driver-shell.taxi-driver-dark .taxi-driver-name { font-weight: 600; }
+
+/* Cards flotantes del chasis */
+html .taxi-driver-shell.taxi-driver-dark .taxi-driver-header-card,
+html .taxi-driver-shell.taxi-driver-dark .taxi-driver-controls-card,
+html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-info"],
+html .taxi-driver-shell.taxi-driver-dark [data-testid="recentrar-mapa-btn"] {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(23, 25, 30, 0.97);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+html .taxi-driver-shell.taxi-driver-dark .taxi-driver-controls-inner button:hover {
+  color: var(--driver-green-dark);
+  background: rgba(255, 255, 255, 0.08);
+}
+html .taxi-driver-shell.taxi-driver-dark .taxi-driver-vehicle-mini { background: #1B1E24; }
+
+/* Badges conexión/GPS */
+html .taxi-driver-shell.taxi-driver-dark [data-testid="connection-badge"],
+html .taxi-driver-shell.taxi-driver-dark [data-testid="gps-badge"] {
+  background: rgba(23, 25, 30, 0.95);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* Bottom sheets → superficie #17191E, borde blanco 6% */
+html .taxi-driver-shell.taxi-driver-dark > [data-testid^="driver-sheet"] > div[role],
+html .taxi-driver-shell.taxi-driver-dark > [data-testid^="driver-sheet"] > div:not([aria-hidden]) {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(23, 25, 30, 0.98) !important;
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.45);
+}
+html .taxi-driver-shell.taxi-driver-dark > [data-testid^="driver-sheet"] > div[role] > div:first-child span,
+html .taxi-driver-shell.taxi-driver-dark > [data-testid^="driver-sheet"] > div:not([aria-hidden]) > div:first-child span {
+  background: #2A2D34;
+}
+
+/* Panel de estado + controles */
+html .taxi-driver-shell.taxi-driver-dark [data-testid="estado-actual"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1B1E24 !important;
+}
+html .taxi-driver-shell.taxi-driver-dark [data-testid="estado-buttons"] button {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1B1E24 !important;
+  color: var(--driver-muted) !important;
+}
+/* Ítem de estado activo: verde neón sólido (identidad "en vivo") */
+html .taxi-driver-shell.taxi-driver-dark [data-testid="estado-buttons"] button[aria-pressed="true"] {
+  border-color: var(--driver-green) !important;
+  color: #0B0D10 !important;
+  background: var(--driver-green) !important;
+  box-shadow: 0 4px 16px rgba(140, 255, 79, 0.22);
+}
+html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-select"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1B1E24 !important;
+}
+
+/* CTA de servicio: neón sólido, tinta oscura, glow suave */
+html .taxi-driver-shell.taxi-driver-dark [data-testid="iniciar-servicio-btn"],
+html .taxi-driver-shell.taxi-driver-dark [data-testid="aceptar-servicio-btn"],
+html .taxi-driver-shell.taxi-driver-dark [data-testid="iniciar-viaje-btn"] {
+  color: #0B0D10 !important;
+  font-weight: 600 !important;
+  background: var(--driver-green) !important;
+  box-shadow: 0 4px 18px rgba(140, 255, 79, 0.22);
+}
+html .taxi-driver-shell.taxi-driver-dark [data-testid="aceptar-servicio-btn"] { font-weight: 600 !important; }
+
+/* Botones secundarios (reporte/chat) e inputs */
+html .taxi-driver-shell.taxi-driver-dark [data-testid="reportar-objeto-btn"],
+html .taxi-driver-shell.taxi-driver-dark [data-testid="abrir-chat-btn"],
+html .taxi-driver-shell.taxi-driver-dark [data-testid="reporte-enviar"],
+html .taxi-driver-shell.taxi-driver-dark [data-testid="chat-op-enviar"] {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: #1B1E24 !important;
+}
+html .taxi-driver-shell.taxi-driver-dark [data-testid="offer-card"] > div:nth-child(3),
+html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-card-cliente"] > div:nth-child(2),
+html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-card-destino"] > div:nth-child(2) {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #1B1E24 !important;
+}
+html .taxi-driver-shell.taxi-driver-dark [data-testid="offer-card"] [class*="bg-amber"],
+html .taxi-driver-shell.taxi-driver-dark [data-testid="offer-card"] [class*="border-amber"] {
+  border-color: rgba(255, 178, 36, 0.32) !important;
+  background: rgba(255, 178, 36, 0.12) !important;
+  color: #FFB224 !important;
+}
+html .taxi-driver-shell.taxi-driver-dark [data-testid="rechazar-servicio-btn"] {
+  border-color: rgba(244, 84, 76, 0.32) !important;
+  color: #F4544C !important;
+  background: rgba(244, 84, 76, 0.12) !important;
+}
+html .taxi-driver-shell.taxi-driver-dark input,
+html .taxi-driver-shell.taxi-driver-dark [role="combobox"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #121417 !important;
+  color: var(--driver-ink) !important;
+}
+
+/* --------------------------------------------------------------------------
+   App del Pasajero — piel oscura ("taxi-passenger-dark") alineada al sistema.
+   Mismo patrón de puente que el operador: variables + overrides puntuales.
+   La pantalla de auth (login) queda en dark fijo: es la identidad del producto.
+   -------------------------------------------------------------------------- */
+html .taxi-passenger-shell,
+html .taxi-passenger-auth {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+html .taxi-passenger-shell.taxi-passenger-dark,
+html .taxi-passenger-auth {
+  --passenger-ink: #F5F5F7;
+  --passenger-muted: #9CA0AA;
+  --passenger-line: rgba(255, 255, 255, 0.08);
+  --passenger-surface: #17191E;
+  --passenger-canvas: #0B0D10;
+  --passenger-green: #8CFF4F;
+  --passenger-green-dark: #6BD83A;
+  --passenger-red: #F4544C;
+  --passenger-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Pesos tipográficos 400/500/600 */
+html .taxi-passenger-dark .taxi-passenger-logo,
+html .taxi-passenger-dark .taxi-passenger-trip-summary h1,
+html .taxi-passenger-dark .taxi-passenger-eta strong,
+html .taxi-passenger-dark .taxi-passenger-section-heading,
+html .taxi-passenger-dark .taxi-passenger-driver-copy strong,
+html .taxi-passenger-dark .taxi-passenger-auth-heading h1,
+html .taxi-passenger-dark .taxi-passenger-profile-name,
+html .taxi-passenger-dark .taxi-passenger-rating-sheet h2 {
+  font-weight: 600;
+}
+
+html .taxi-passenger-dark .taxi-passenger-map-layer .leaflet-container,
+html .taxi-passenger-auth .leaflet-container { background: #0B0D10; }
+
+/* Resumen de viaje + sheets + capas flotantes */
+html .taxi-passenger-dark .taxi-passenger-trip-summary {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(23, 25, 30, 0.97);
+}
+html .taxi-passenger-dark .taxi-passenger-route-rail > span:not(.taxi-passenger-route-dot) {
+  border-left-color: #2A2D34;
+}
+html .taxi-passenger-dark .taxi-passenger-eta,
+html .taxi-passenger-dark .taxi-passenger-trip-meta,
+html .taxi-passenger-dark .taxi-passenger-preview-meta {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+html .taxi-passenger-dark .taxi-passenger-status-chip .sem-badge,
+html .taxi-passenger-dark .taxi-passenger-status-chip [class*="rounded"] {
+  background: rgba(23, 25, 30, 0.96);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35);
+}
+html .taxi-passenger-dark .taxi-passenger-driver-sheet,
+html .taxi-passenger-dark .taxi-passenger-home-sheet,
+html .taxi-passenger-dark .taxi-passenger-request-sheet {
+  border-top-color: rgba(255, 255, 255, 0.06);
+  background: rgba(23, 25, 30, 0.98);
+  box-shadow: 0 -11px 28px rgba(0, 0, 0, 0.45);
+}
+html .taxi-passenger-dark .taxi-passenger-sheet-handle span { background: #2A2D34; }
+
+/* Conductor asignado */
+html .taxi-passenger-dark .taxi-passenger-driver-avatar {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: #1B1E24;
+}
+html .taxi-passenger-dark .taxi-passenger-vehicle-thumb { border-top-color: rgba(255, 255, 255, 0.08); }
+html .taxi-passenger-dark .taxi-passenger-vehicle-thumb-img {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: #1B1E24;
+}
+html .taxi-passenger-dark .taxi-passenger-searching-icon { background: rgba(140, 255, 79, 0.12); }
+
+/* Acciones */
+html .taxi-passenger-dark .taxi-passenger-action-call {
+  color: var(--passenger-green-dark);
+  background: rgba(140, 255, 79, 0.12);
+  border-color: rgba(140, 255, 79, 0.3);
+}
+html .taxi-passenger-dark .taxi-passenger-action-chat {
+  color: #8B96FF;
+  background: rgba(79, 93, 255, 0.12);
+  border-color: rgba(79, 93, 255, 0.3);
+}
+html .taxi-passenger-dark .taxi-passenger-action-cancel {
+  color: var(--passenger-red);
+  background: rgba(244, 84, 76, 0.12);
+  border-color: rgba(244, 84, 76, 0.3);
+}
+html .taxi-passenger-dark .taxi-passenger-locate-button {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(23, 25, 30, 0.96);
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.4);
+}
+html .taxi-passenger-dark .taxi-passenger-destination-field { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-destination-field > span:first-child { background: rgba(140, 255, 79, 0.12); }
+html .taxi-passenger-dark .taxi-passenger-location-button { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-secondary-button { background: #1B1E24; }
+
+/* CTA primario: neón sólido con tinta oscura */
+html .taxi-passenger-dark .taxi-passenger-primary-button,
+html .taxi-passenger-auth .taxi-passenger-primary-button {
+  color: #0B0D10;
+  font-weight: 600;
+  background: var(--passenger-green);
+  box-shadow: 0 4px 18px rgba(140, 255, 79, 0.2);
+}
+html .taxi-passenger-dark .taxi-passenger-primary-button:hover { background: #7DEF3E; }
+
+/* Solicitud de servicio */
+html .taxi-passenger-dark .taxi-passenger-map-hint {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(23, 25, 30, 0.96);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35);
+}
+html .taxi-passenger-dark .taxi-passenger-marked-point {
+  border-color: rgba(140, 255, 79, 0.3);
+  background: rgba(140, 255, 79, 0.1);
+}
+html .taxi-passenger-dark .taxi-passenger-request-points > div > span { background: rgba(140, 255, 79, 0.12); }
+html .taxi-passenger-dark .taxi-passenger-request-points > div:last-child > span { background: rgba(244, 84, 76, 0.12); }
+html .taxi-passenger-dark .taxi-passenger-destination-input,
+html .taxi-passenger-dark .taxi-passenger-chat-compose input,
+html .taxi-passenger-dark .taxi-passenger-rating-sheet input,
+html .taxi-passenger-auth .taxi-passenger-field input {
+  background: #121417 !important;
+}
+html .taxi-passenger-dark .taxi-passenger-vehicle-option-selected {
+  box-shadow: 0 0 0 2px rgba(140, 255, 79, 0.16);
+}
+html .taxi-passenger-dark .taxi-passenger-vehicle-image { background: #1B1E24; }
+
+/* Bottom nav + menú + chat */
+html .taxi-passenger-dark .taxi-passenger-bottom-nav { background: rgba(23, 25, 30, 0.97); }
+html .taxi-passenger-dark .taxi-passenger-nav-item { color: #9CA0AA; }
+html .taxi-passenger-dark .taxi-passenger-menu-backdrop,
+html .taxi-passenger-dark .taxi-passenger-chat-layer,
+html .taxi-passenger-dark .taxi-passenger-rating-layer { background: rgba(0, 0, 0, 0.5); }
+html .taxi-passenger-dark .taxi-passenger-menu-heading > button { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-menu-user > span,
+html .taxi-passenger-dark .taxi-passenger-rating-avatar { background: rgba(140, 255, 79, 0.12); }
+html .taxi-passenger-dark .taxi-passenger-menu-links button:hover,
+html .taxi-passenger-dark .taxi-passenger-menu-links .taxi-passenger-menu-link-active { background: rgba(140, 255, 79, 0.1); }
+html .taxi-passenger-dark .taxi-passenger-menu-logout {
+  border-color: rgba(244, 84, 76, 0.32);
+  color: #F4544C;
+  background: rgba(244, 84, 76, 0.12);
+}
+html .taxi-passenger-dark .taxi-passenger-chat-panel > header > button { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-chat-bubble { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-chat-bubble-self,
+html .taxi-passenger-dark .taxi-passenger-chat-compose > button { color: #0B0D10; }
+html .taxi-passenger-dark .taxi-passenger-rating-stars button { color: #2A2D34; }
+
+/* Perfil: card de identidad sobre superficie, no neón decorativo */
+html .taxi-passenger-dark .taxi-passenger-profile-card {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--passenger-ink);
+  background: #17191E;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+html .taxi-passenger-dark .taxi-passenger-profile-avatar {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--passenger-ink);
+}
+
+/* Login (auth): dark fijo, glow índigo */
+html .taxi-passenger-auth { color: var(--passenger-ink); }
+html .taxi-passenger-auth .taxi-passenger-auth-orb { background: rgba(79, 93, 255, 0.16); }
+html .taxi-passenger-auth .taxi-passenger-auth-form {
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45);
+}
+html .taxi-passenger-auth .taxi-passenger-logo { color: var(--passenger-ink); }
+html .taxi-passenger-auth .taxi-passenger-field { color: var(--passenger-ink); }
+
+/* Scrollbar del nuevo mundo de color */
+html * { scrollbar-color: hsl(222 9% 22%) transparent; }
+html *::-webkit-scrollbar-thumb { background: hsl(222 9% 22%); }
+html *::-webkit-scrollbar-thumb:hover { background: hsl(222 9% 30%); }

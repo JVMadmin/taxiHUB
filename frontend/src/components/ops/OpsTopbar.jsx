@@ -35,7 +35,7 @@ export function OpsTopbar({
                 Sitio: {termUser?.sitio_id ? termUser.sitio_id : "Principal"}
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-emerald-500" />
+                <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-th-live" />
                 Sistema operativo
               </span>
               <span className="inline-flex items-center gap-1 font-mono mono-num text-foreground/85">
@@ -54,7 +54,7 @@ export function OpsTopbar({
                   <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: i.color }} />
                 </span>
                 <div className="leading-tight">
-                  <div className="mono-num text-base font-bold" style={{ color: i.color }}>{counts[i.estado] || 0}</div>
+                  <div className="mono-num text-base font-semibold" style={{ color: i.color }}>{counts[i.estado] || 0}</div>
                   <div className="text-[10px] text-muted-foreground">{i.label}</div>
                 </div>
               </div>
@@ -69,7 +69,7 @@ export function OpsTopbar({
               title="Servicios"
               aria-label="Servicios"
               className={cn("th-3d hidden h-10 w-10 items-center justify-center rounded-xl transition-colors lg:flex",
-                serviciosOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+                serviciosOpen ? "bg-th-live text-[#0B0D10]" : "text-foreground/80 hover:bg-white/[0.08]")}
             >
               <ClipboardList className="th-icon-3d h-5 w-5" />
             </button>
@@ -85,22 +85,22 @@ export function OpsTopbar({
               <button
                 onClick={onFotoClick}
                 data-testid="term-foto-btn"
-                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-brand/15"
+                className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/15 ring-1 ring-white/10 transition-shadow hover:ring-brand/60"
                 title="Cambiar foto"
               >
                 {termFoto ? <img src={termFoto} alt="perfil" className="h-full w-full object-cover" />
-                  : logo ? <img src={logo} alt="logo" className="h-full w-full object-contain p-0.5" />
+                  : logo ? <img src={logo} alt="logo" className="h-full w-full object-contain p-1" />
                   : <Car className="h-5 w-5 text-brand-bright" />}
               </button>
               {fotoInput}
               <div className="hidden sm:block">
-                <div className="text-sm font-bold leading-none text-foreground">{termUser?.nombre || "Operadora"}</div>
+                <div className="text-sm font-semibold leading-none text-foreground">{termUser?.nombre || "Operadora"}</div>
                 <div className="mt-1.5">
                   <ConnectionBadge state={connected ? "online" : "reconnecting"} />
                 </div>
               </div>
             </div>
-            <button data-testid="terminal-logout" onClick={onLogout} title="Salir" aria-label="Salir" className="th-3d flex h-10 w-10 items-center justify-center rounded-xl text-foreground/80 hover:bg-secondary/60">
+            <button data-testid="terminal-logout" onClick={onLogout} title="Salir" aria-label="Salir" className="th-3d flex h-10 w-10 items-center justify-center rounded-xl text-foreground/80 hover:bg-white/[0.08]">
               <LogOut className="th-icon-3d h-5 w-5" />
             </button>
           </div>

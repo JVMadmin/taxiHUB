@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+      },
       fontSize: {
         // Escala tipográfica TaxiHUB 2.0
         display: ['1.875rem', { lineHeight: '1.2', fontWeight: '700', letterSpacing: '-0.02em' }],
@@ -29,6 +32,7 @@ module.exports = {
         // Paleta TaxiHUB 2.0 (tokens en src/design/tokens.css)
         th: {
           primary: { DEFAULT: 'var(--th-primary)', dark: 'var(--th-primary-dark)', light: 'var(--th-primary-light)' },
+          live: 'var(--th-live)',
           success: 'var(--th-success)',
           danger: 'var(--th-danger)',
           warning: 'var(--th-warning)',

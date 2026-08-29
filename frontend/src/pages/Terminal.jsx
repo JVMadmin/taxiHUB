@@ -437,9 +437,9 @@ export default function Terminal() {
                       {servicioActivo.destino?.texto && <div className="mt-0.5 text-xs text-muted-foreground">{servicioActivo.destino.texto}</div>}
                       {rutaServicio.distance_m != null && (
                         <div className="mt-1.5 rounded-lg bg-secondary/70 px-2 py-1 text-center">
-                          <span className="mono-num font-bold text-emerald-400">{fmtDist(rutaServicio.distance_m)}</span>
+                          <span className="mono-num font-semibold text-emerald-400">{fmtDist(rutaServicio.distance_m)}</span>
                           <span className="mx-1 text-muted-foreground">·</span>
-                          <span className="mono-num font-bold text-foreground">{fmtDuration(rutaServicio.duration_s)}</span>
+                          <span className="mono-num font-semibold text-foreground">{fmtDuration(rutaServicio.duration_s)}</span>
                         </div>
                       )}
                     </div>
@@ -469,7 +469,7 @@ export default function Terminal() {
                 <div className="min-w-[200px] text-sm">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold">{o.nombre}</span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] font-bold" style={{ color: ESTADO_COLORS[o.estado] }}>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold" style={{ color: ESTADO_COLORS[o.estado] }}>
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: ESTADO_COLORS[o.estado] }} />
                       {ESTADO_LABEL[o.estado]}
                     </span>

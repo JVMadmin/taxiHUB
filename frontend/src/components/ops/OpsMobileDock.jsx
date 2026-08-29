@@ -24,10 +24,10 @@ export function OpsMobileDock({
           <PhoneCall className="th-icon-3d h-4 w-4" /> Llamada
         </Button>
         <div className="flex flex-col items-center gap-0.5">
-          <button onClick={onZoomIn} data-testid="dock-zoom-in" aria-label="Acercar" className="th-3d flex h-8 w-8 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary/60">
+          <button onClick={onZoomIn} data-testid="dock-zoom-in" aria-label="Acercar" className="th-3d flex h-8 w-8 items-center justify-center rounded-lg text-foreground/80 hover:bg-white/[0.08]">
             <Plus className="th-icon-3d h-4 w-4" />
           </button>
-          <button onClick={onZoomOut} data-testid="dock-zoom-out" aria-label="Alejar" className="th-3d flex h-8 w-8 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary/60">
+          <button onClick={onZoomOut} data-testid="dock-zoom-out" aria-label="Alejar" className="th-3d flex h-8 w-8 items-center justify-center rounded-lg text-foreground/80 hover:bg-white/[0.08]">
             <Minus className="th-icon-3d h-4 w-4" />
           </button>
         </div>
@@ -36,7 +36,7 @@ export function OpsMobileDock({
           data-testid="dock-servicios"
           aria-label="Servicios"
           className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-            serviciosOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+            serviciosOpen ? "bg-th-live text-[#0B0D10]" : "text-foreground/80 hover:bg-white/[0.08]")}
         >
           <ClipboardList className="th-icon-3d h-5 w-5" />
         </button>
@@ -45,7 +45,7 @@ export function OpsMobileDock({
           data-testid="dock-flota"
           aria-label="Panel de flota"
           className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-            sidebarOpen ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+            sidebarOpen ? "bg-th-live text-[#0B0D10]" : "text-foreground/80 hover:bg-white/[0.08]")}
         >
           <LayoutPanelLeft className="th-icon-3d h-5 w-5" />
         </button>
@@ -54,7 +54,7 @@ export function OpsMobileDock({
           data-testid="dock-menu"
           aria-label="Menú de administración"
           className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-            adminSection ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+            adminSection ? "bg-th-live text-[#0B0D10]" : "text-foreground/80 hover:bg-white/[0.08]")}
         >
           <MenuIcon className="th-icon-3d h-5 w-5" />
         </button>

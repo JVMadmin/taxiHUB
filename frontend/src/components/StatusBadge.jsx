@@ -8,7 +8,7 @@ export function EstadoBadge({ estado, label, className, pulse }) {
   const text = label || ESTADO_LABEL[estado] || estado;
   return (
     <span
-      className={cn("sem-badge inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold", className)}
+      className={cn("sem-badge inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold", className)}
       style={{ "--sc": color }}
     >
       {pulse ? (
@@ -33,7 +33,7 @@ export function ServicioBadge({ estado, label, className }) {
   const text = label || SERVICIO_LABEL[estado] || estado;
   return (
     <span
-      className={cn("sem-badge inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-bold", className)}
+      className={cn("sem-badge inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", className)}
       style={{ "--sc": color }}
     >
       <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--sc)" }} />
@@ -59,7 +59,7 @@ export function DriverStatusPill({ estado, className }) {
         />
         <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: "var(--sc)" }} />
       </span>
-      <span className="text-sm font-extrabold uppercase tracking-wide" style={{ color: "var(--sc)" }}>
+      <span className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--sc)" }}>
         {text}
       </span>
     </div>

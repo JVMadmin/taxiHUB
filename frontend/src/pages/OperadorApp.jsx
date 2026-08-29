@@ -718,7 +718,7 @@ export default function OperadorApp() {
         </button>
         {navegacion && (
           <div data-testid="ruta-info" className="bezel-shell px-3 py-2 text-center">
-            <div className="mono-num text-sm font-bold text-brand-bright">{fmtDist(ruta.distance_m)}</div>
+            <div className="mono-num text-sm font-semibold text-brand-bright">{fmtDist(ruta.distance_m)}</div>
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{fmtDuration(ruta.duration_s)} ETA</div>
           </div>
         )}
@@ -734,7 +734,7 @@ export default function OperadorApp() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/15">
             <Car className="h-7 w-7 text-brand-bright" />
           </div>
-          <h2 className="mt-3 text-lg font-bold text-foreground">Tu turno aún no empieza</h2>
+          <h2 className="mt-3 text-lg font-semibold text-foreground">Tu turno aún no empieza</h2>
           <p className="mt-1 text-sm text-muted-foreground">Conéctate para recibir solicitudes de la central.</p>
         </div>
         <Button data-testid="entrar-operacion-btn" onClick={entrar} size="lg" className="mt-4 w-full">
@@ -752,12 +752,12 @@ export default function OperadorApp() {
           </span>
           <div className="flex-1">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Disponibilidad</div>
-            <div className="text-base font-bold" style={{ color: ESTADO_COLORS[op.estado] }}>{ESTADO_LABEL[op.estado]}</div>
+            <div className="text-base font-semibold" style={{ color: ESTADO_COLORS[op.estado] }}>{ESTADO_LABEL[op.estado]}</div>
           </div>
           {inicio && (
             <div className="text-right">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">En operación</div>
-              <div data-testid="tiempo-operacion" className="mono-num font-mono text-base font-bold text-brand-bright">{elapsed(inicio)}</div>
+              <div data-testid="tiempo-operacion" className="mono-num font-mono text-base font-semibold text-brand-bright">{elapsed(inicio)}</div>
             </div>
           )}
         </div>
