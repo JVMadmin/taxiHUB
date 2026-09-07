@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./OperadorApp.css";
-import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL, SERVICIO_LABEL, BACKEND_URL } from "@/lib/api";
+import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL, SERVICIO_LABEL, BACKEND_URL, WS_BASE } from "@/lib/api";
 import { elapsed, timeAgo } from "@/lib/time";
 import { cn, iniciales } from "@/lib/utils";
 import { distM, fmtDist, fmtDuration, bearing } from "@/lib/geo";
@@ -259,7 +259,6 @@ export default function OperadorApp() {
     let retry;
     const connect = () => {
       setWsState(navigator.onLine ? "reconnecting" : "offline");
-      const WS_BASE = process.env.REACT_APP_BACKEND_URL.replace(/^http/, "ws") + "/api";
       const ws = new WebSocket(`${WS_BASE}/ws/operador/${op.id}?token=${encodeURIComponent(getToken() || "")}`);
       wsRef.current = ws;
       ws.onopen = () => setWsState(navigator.onLine ? "online" : "reconnecting");
@@ -627,7 +626,7 @@ export default function OperadorApp() {
 
       {/* MAPA de navegación (elemento principal) */}
       <div className="absolute inset-0 z-0" data-testid="driver-map">
-        <MapContainer center={mapCenter} zoom={15} zoomControl={false} className="h-full w-full">
+        <MapContainer center={mapCenter} zoom={15} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
           <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
           <RouteBounds points={boundsPoints} />
           <RecenterController n={recenterN} target={driverPos || mapCenter} />

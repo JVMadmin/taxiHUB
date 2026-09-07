@@ -18,11 +18,11 @@
   --th-primary-soft: rgba(79, 93, 255, 0.14);
 
   /* En vivo / disponible (verde neón — solo estados activos, nunca decorativo) */
-  --th-live: #8CFF4F;
-  --th-live-soft: rgba(140, 255, 79, 0.12);
+  --th-live: #7CFC3C;
+  --th-live-soft: rgba(124, 252, 60, 0.14);
 
   /* Semánticos */
-  --th-success: #8CFF4F;
+  --th-success: #7CFC3C;
   --th-danger: #F4544C;
   --th-danger-soft: rgba(244, 84, 76, 0.12);
   --th-warning: #FFB224;

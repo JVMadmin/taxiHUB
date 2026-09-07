@@ -9,18 +9,20 @@ import { EstadoBadge } from "@/components/StatusBadge";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
-import { Map as MapIcon, User, X } from "lucide-react";
+import { Map as MapIcon, User, X, Layers, Satellite } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847];
 const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
-// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
+const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const SATELLITE_REF = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
 const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 export function Mapa({ liveSignal }) {
   const [vehiculos, setVehiculos] = useState(null);
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [mapLayer, setMapLayer] = useState("calles");
   const mode = useMode();
   const tiles = mode === "claro" ? LIGHT_TILES : DARK_TILES;
 
@@ -43,8 +45,33 @@ export function Mapa({ liveSignal }) {
 
   return (
     <div className="relative h-[calc(100vh-9rem)] overflow-hidden rounded-2xl border border-border lg:h-[calc(100vh-6rem)]" data-testid="dueno-mapa">
-      <MapContainer center={center} zoom={13} zoomControl={false} className="h-full w-full">
-        <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
+      {/* Toggle Satelital / Calles */}
+      <div className="absolute right-3 top-3 z-[450] flex items-center gap-1 rounded-xl border border-border/80 bg-surface/90 p-1 shadow-xl backdrop-blur">
+        <button
+          type="button"
+          onClick={() => setMapLayer("calles")}
+          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${mapLayer === "calles" ? "bg-brand/20 text-brand-bright font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          <Layers className="h-3.5 w-3.5" /> Calles
+        </button>
+        <button
+          type="button"
+          onClick={() => setMapLayer("satelite")}
+          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${mapLayer === "satelite" ? "bg-brand/20 text-brand-bright font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          <Satellite className="h-3.5 w-3.5" /> Satélite
+        </button>
+      </div>
+
+      <MapContainer center={center} zoom={13} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
+        {mapLayer === "satelite" ? (
+          <>
+            <TileLayer url={SATELLITE_TILES} attribution="Tiles &copy; Esri World Imagery" maxNativeZoom={18} />
+            <TileLayer url={SATELLITE_REF} maxNativeZoom={18} />
+          </>
+        ) : (
+          <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
+        )}
         {visibles.map((v) => (
           <Marker
             key={v.id}

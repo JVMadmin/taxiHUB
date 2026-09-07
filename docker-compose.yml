@@ -1,62 +1,63 @@
+name: taxihub-test
+
 services:
   mongo:
     image: mongo:7
-    container_name: taxihub-mongo
+    container_name: taxihub-test-mongo
     ports:
-      - "27017:27017"
+      - "27018:27017" # Aislado: no colisiona con MongoDB estándar (27017)
     volumes:
-      - mongo_data:/data/db
+      - mongo_data_test:/data/db
     environment:
       MONGO_INITDB_DATABASE: taxihub_dev
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 15s
-      timeout: 15s
+      interval: 10s
+      timeout: 10s
       retries: 5
 
   backend:
     build: ./backend
-    container_name: taxihub-backend
+    container_name: taxihub-test-backend
     env_file:
       - ./backend/.env
     environment:
       MONGO_URL: mongodb://mongo:27017
       DB_NAME: taxihub_test
+      CORS_ORIGINS: http://localhost:3080,http://localhost:8080,http://localhost:3000,http://localhost
     depends_on:
       mongo:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "8080:8000" # Aislado: no colisiona con backend estándar (8000)
     volumes:
       - ./backend:/app
       - ./tests:/tests
-      - uploads_data:/app/uploads
+      - uploads_data_test:/app/uploads
 
   frontend:
     build:
       context: ./frontend
-      args:
-        REACT_APP_BACKEND_URL: http://localhost:8000
-    container_name: taxihub-frontend
+    container_name: taxihub-test-frontend
     ports:
-      - "3000:80"
+      - "3080:80" # Aislado: no colisiona con frontend estándar (3000)
     depends_on:
       - backend
 
   seed:
     image: curlimages/curl:8.6.0
-    container_name: taxihub-seed
+    container_name: taxihub-test-seed
     depends_on:
       - backend
     command: >
       sh -c "
         until curl -sf http://backend:8000/api/ > /dev/null 2>&1; do sleep 2; done;
-        echo 'Seeding...';
+        echo 'Poblando base de datos de prueba...';
         curl -sf -X POST http://backend:8000/api/seed;
         echo;
         echo 'SEED_OK'
       "
 
 volumes:
-  mongo_data:
-  uploads_data:
+  mongo_data_test:
+  uploads_data_test:

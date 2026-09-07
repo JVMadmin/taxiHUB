@@ -1180,7 +1180,18 @@ async def registrar_carga_taxista(
         ext = (ticket.filename or "").split(".")[-1].lower() if "." in (ticket.filename or "") else "jpg"
         path = f"{APP_NAME}/combustible/{operador_id}/{uuid.uuid4().hex}.{ext}"
         data = await ticket.read()
-        result = put_object(path, data, ticket.content_type or "image/jpeg")
+        import mimetypes
+        ct = ticket.content_type
+        if not ct or ct == "application/octet-stream":
+            guessed, _ = mimetypes.guess_type(ticket.filename or "")
+            ct = guessed or {
+                "jpg": "image/jpeg",
+                "jpeg": "image/jpeg",
+                "png": "image/png",
+                "webp": "image/webp",
+            }.get(ext, "image/jpeg")
+        result = put_object(path, data, ct)
+        await db.archivos.insert_one({"storage_path": result["path"], "content_type": ct})
         ticket_url = f"/api/files/{result['path']}"
     doc = {
         "operador_id": operador_id,
@@ -1411,6 +1422,61 @@ async def get_track(operador_id: str, limite: int = Query(TRACK_MAX_POINTS, ge=2
     return {
         "operador_id": operador_id,
         "track": [{"lat": p[0], "lng": p[1], "ts": p[2]} for p in track],
+    }
+
+
+@api_router.get("/operadores/{operador_id}/recorrido-ajustado")
+async def get_recorrido_ajustado(operador_id: str, limite: int = Query(TRACK_MAX_POINTS, ge=2, le=2000),
+                                 _=Depends(require_terminal)):
+    """Historial de recorrido proyectado sobre calles reales (OSRM Map-Matching).
+
+    Toma el track crudo de db.operadores, consulta /match en el proveedor de ruteo
+    y devuelve los puntos ajustados a los ejes viales con sus timestamps originales
+    para renderizar el recorrido con degradado temporal. Mismo patrón de auth que /track.
+    """
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)})
+    if not op:
+        raise HTTPException(status_code=404, detail="Operador no encontrado")
+    raw_track = (op.get("track") or [])[-limite:]
+    if len(raw_track) < 2:
+        return {
+            "operador_id": operador_id,
+            "ajustado": False,
+            "track": [{"lat": p[0], "lng": p[1], "ts": p[2], "matched": False} for p in raw_track],
+        }
+
+    # Intentar proyectar vía OSRM /match
+    try:
+        # Formatear coordenadas lon,lat separadas por ';'
+        coords_str = ";".join([f"{p[1]:.6f},{p[0]:.6f}" for p in raw_track])
+        url = f"{ROUTING_PROVIDER_URL}/match/v1/driving/{coords_str}"
+        async with httpx.AsyncClient(timeout=min(ROUTING_TIMEOUT_SECONDS * 1.5, 12.0)) as hc:
+            resp = await hc.get(url, params={"overview": "full", "geometries": "geojson"})
+            if resp.status_code == 200:
+                mdata = resp.json()
+                tracepoints = mdata.get("tracepoints") or []
+                if tracepoints and len(tracepoints) == len(raw_track):
+                    adjusted = []
+                    for i, tp in enumerate(tracepoints):
+                        orig = raw_track[i]
+                        if tp and tp.get("location"):
+                            loc = tp["location"]
+                            adjusted.append({"lat": loc[1], "lng": loc[0], "ts": orig[2], "matched": True})
+                        else:
+                            adjusted.append({"lat": orig[0], "lng": orig[1], "ts": orig[2], "matched": False})
+                    return {
+                        "operador_id": operador_id,
+                        "ajustado": True,
+                        "track": adjusted,
+                    }
+    except Exception as exc:
+        logger.warning("OSRM match fallo, usando track crudo: %s", exc)
+
+    # Fallback suave al track crudo
+    return {
+        "operador_id": operador_id,
+        "ajustado": False,
+        "track": [{"lat": p[0], "lng": p[1], "ts": p[2], "matched": False} for p in raw_track],
     }
 
 
@@ -1869,69 +1935,133 @@ async def geo_search(
 ):
     """Búsqueda global de ubicaciones (calle, colonia, POI, referencia).
 
-    Sesgada a la zona de operación del sitio (viewbox del centro del mapa si
-    está configurado en config: map_center_lat/lng). Devuelve resultados
-    normalizados: {id, label, sublabel, lat, lng, tipo}.
+    Soporta Nominatim auto-alojado (con bounded=1 y viewbox duro) y Photon.
+    Incluye filtro de respaldo estricto en Python que garantiza que ningún
+    resultado fuera de la zona de operación de Palenque y alrededores sea devuelto.
     """
     query = (q or "").strip()
     if len(query) < 3:
         return {"resultados": []}
-    # Centro de operación (configurable por despliegue) para sesgar resultados.
+    # Centro de operación para sesgar y acotar resultados.
     try:
         center_lat = float(await get_config("map_center_lat") or 17.5099)
         center_lng = float(await get_config("map_center_lng") or -91.9847)
     except (TypeError, ValueError):
         center_lat, center_lng = 17.5099, -91.9847
-    # Viewbox generoso (~40 km) alrededor del centro; lon,lat / lon,lat
+
+    # Bounding box estricto alrededor del centro de operaciones (~35-40 km)
     min_lon, max_lon = center_lng - 0.45, center_lng + 0.45
     min_lat, max_lat = center_lat - 0.30, center_lat + 0.30
     limit = max(1, min(limit or 8, 20))
-    headers = {"User-Agent": "TaxiHUB/2.0 (central de taxis de Palenque)"}
+    headers = {"User-Agent": "TaxiHUB/2.0 (central de taxis de Palenque, contacto@taxihub.mx)"}
+
+    is_photon = "photon" in GEOCODING_PROVIDER_URL.lower()
+    resultados = []
+    provider_name = "nominatim" if not is_photon else "photon"
+
     try:
         async with httpx.AsyncClient(timeout=GEOCODING_TIMEOUT_SECONDS) as hc:
-            r = await hc.get(
-                f"{GEOCODING_PROVIDER_URL}/api/",
-                params={
-                    "q": query,
-                    "limit": limit,
-                    # Nota: la instancia pública de Photon rechaza `lang` (400).
-                    # Photon: bbox=minLon,minLat,maxLon,maxLat — sesgo suave
-                    # (los resultados fuera del bbox se permiten pero penalizan).
-                    "bbox": f"{min_lon:.4f},{min_lat:.4f},{max_lon:.4f},{max_lat:.4f}",
-                },
-                headers=headers,
-            )
+            if is_photon:
+                r = await hc.get(
+                    f"{GEOCODING_PROVIDER_URL}/api/",
+                    params={
+                        "q": query,
+                        "limit": limit * 2, # solicitar margen para el filtro duro
+                        "bbox": f"{min_lon:.4f},{min_lat:.4f},{max_lon:.4f},{max_lat:.4f}",
+                    },
+                    headers=headers,
+                )
+            else:
+                # Nominatim propio / estándar: bounded=1 con viewbox=minLon,maxLat,maxLon,minLat
+                endpoint = f"{GEOCODING_PROVIDER_URL}/search" if not GEOCODING_PROVIDER_URL.endswith("/search") else GEOCODING_PROVIDER_URL
+                r = await hc.get(
+                    endpoint,
+                    params={
+                        "q": query,
+                        "format": "jsonv2",
+                        "bounded": "1",
+                        "viewbox": f"{min_lon:.4f},{max_lat:.4f},{max_lon:.4f},{min_lat:.4f}",
+                        "countrycodes": "mx",
+                        "addressdetails": "1",
+                        "limit": limit * 2,
+                    },
+                    headers=headers,
+                )
             r.raise_for_status()
             data = r.json()
     except Exception as exc:
-        logger.warning("geocoding fallo proveedor: %s", exc)
+        logger.warning("geocoding fallo proveedor %s: %s", GEOCODING_PROVIDER_URL, exc)
         return {"resultados": [], "error": "proveedor_no_disponible"}
-    resultados = []
-    for f in (data.get("features") or [])[:limit]:
-        props = f.get("properties") or {}
-        geom = (f.get("geometry") or {}).get("coordinates") or [None, None]
-        lng, lat = geom[0], geom[1]
-        if lat is None or lng is None:
-            continue
-        # Etiqueta principal y secundaria según disponibilidad del proveedor.
-        nombre = props.get("name") or props.get("street") or props.get("district") or ""
-        partes_sub = [
-            props.get("district") if props.get("district") != nombre else None,
-            props.get("city") or props.get("county") or props.get("state"),
-        ]
-        sublabel = ", ".join([p for p in partes_sub if p]) or props.get("country", "")
-        if not nombre:
-            nombre = props.get("street") or sublabel or query
-        tipo = props.get("osm_key") or props.get("osm_value") or "lugar"
-        resultados.append({
-            "id": f"{props.get('osm_type', 'n')}{props.get('osm_id', '')}",
-            "label": nombre,
-            "sublabel": sublabel,
-            "lat": round(float(lat), 6),
-            "lng": round(float(lng), 6),
-            "tipo": tipo,
-        })
-    return {"resultados": resultados, "provider": "photon"}
+
+    # Parseo según formato (Nominatim = lista de dicts; Photon = GeoJSON)
+    if isinstance(data, list):
+        # Formato Nominatim
+        for item in data:
+            try:
+                lat = float(item.get("lat"))
+                lng = float(item.get("lon"))
+            except (TypeError, ValueError):
+                continue
+            # FILTRO DURO EN PYTHON: descarta inmediatamente puntos fuera de la región
+            if not (min_lat <= lat <= max_lat and min_lon <= lng <= max_lon):
+                continue
+            addr = item.get("address") or {}
+            nombre = item.get("name") or addr.get("road") or addr.get("suburb") or item.get("display_name", "").split(",")[0]
+            partes_sub = [
+                addr.get("suburb") if addr.get("suburb") != nombre else None,
+                addr.get("neighbourhood"),
+                addr.get("city") or addr.get("town") or addr.get("municipality") or addr.get("state"),
+            ]
+            sublabel = ", ".join([p for p in partes_sub if p]) or item.get("display_name", "")
+            tipo = item.get("type") or item.get("category") or "lugar"
+            resultados.append({
+                "id": f"{item.get('osm_type', 'n')}{item.get('osm_id', '')}",
+                "label": nombre.strip(),
+                "sublabel": sublabel.strip(),
+                "lat": round(lat, 6),
+                "lng": round(lng, 6),
+                "tipo": tipo,
+            })
+            if len(resultados) >= limit:
+                break
+    elif isinstance(data, dict) and "features" in data:
+        # Formato Photon GeoJSON
+        for f in data.get("features") or []:
+            props = f.get("properties") or {}
+            geom = (f.get("geometry") or {}).get("coordinates") or [None, None]
+            lng, lat = geom[0], geom[1]
+            if lat is None or lng is None:
+                continue
+            lat, lng = float(lat), float(lng)
+            # FILTRO DURO EN PYTHON
+            if not (min_lat <= lat <= max_lat and min_lon <= lng <= max_lon):
+                continue
+            nombre = props.get("name") or props.get("street") or props.get("district") or ""
+            partes_sub = [
+                props.get("district") if props.get("district") != nombre else None,
+                props.get("city") or props.get("county") or props.get("state"),
+            ]
+            sublabel = ", ".join([p for p in partes_sub if p]) or props.get("country", "")
+            if not nombre:
+                nombre = props.get("street") or sublabel or query
+            tipo = props.get("osm_key") or props.get("osm_value") or "lugar"
+            resultados.append({
+                "id": f"{props.get('osm_type', 'n')}{props.get('osm_id', '')}",
+                "label": nombre.strip(),
+                "sublabel": sublabel.strip(),
+                "lat": round(lat, 6),
+                "lng": round(lng, 6),
+                "tipo": tipo,
+            })
+            if len(resultados) >= limit:
+                break
+
+    # Filtro de seguridad redundante
+    resultados = [
+        r for r in resultados
+        if (min_lat <= r["lat"] <= max_lat) and (min_lon <= r["lng"] <= max_lon)
+    ]
+    return {"resultados": resultados, "provider": provider_name}
 
 
 # ---------------------------------------------------------------------------
@@ -2610,13 +2740,39 @@ async def crear_reporte(
     return out
 
 
+def _resolve_file_mime(path: str, record_ct: Optional[str] = None) -> str:
+    if record_ct and record_ct != "application/octet-stream":
+        return record_ct
+    import mimetypes
+    guessed, _ = mimetypes.guess_type(path)
+    if guessed and guessed != "application/octet-stream":
+        return guessed
+    ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+    return {
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
+        "webp": "image/webp",
+        "gif": "image/gif",
+        "svg": "image/svg+xml",
+        "avif": "image/avif",
+        "pdf": "application/pdf",
+    }.get(ext, "image/jpeg")
+
+
 @api_router.get("/files/{path:path}")
 async def download_file(path: str):
+    data, _ = get_object(path)
     record = await db.reportes_objetos.find_one({"storage_path": path}) or await db.archivos.find_one({"storage_path": path})
-    if not record:
-        raise HTTPException(status_code=404, detail="Archivo no encontrado")
-    data, content_type = get_object(path)
-    return Response(content=data, media_type=record.get("content_type", content_type))
+    media_type = _resolve_file_mime(path, record.get("content_type") if record else None)
+    return Response(
+        content=data,
+        media_type=media_type,
+        headers={
+            "Content-Type": media_type,
+            "Cache-Control": "public, max-age=86400",
+        },
+    )
 
 
 @api_router.get("/reportes")
@@ -3142,8 +3298,20 @@ async def _guardar_imagen(foto: UploadFile, prefix: str) -> str:
     ext = (foto.filename or "").split(".")[-1].lower() if "." in (foto.filename or "") else "jpg"
     path = f"{APP_NAME}/{prefix}/{uuid.uuid4().hex}.{ext}"
     data = await foto.read()
-    result = put_object(path, data, foto.content_type or "image/jpeg")
-    await db.archivos.insert_one({"storage_path": result["path"], "content_type": foto.content_type or "image/jpeg"})
+    import mimetypes
+    ct = foto.content_type
+    if not ct or ct == "application/octet-stream":
+        guessed, _ = mimetypes.guess_type(foto.filename or "")
+        ct = guessed or {
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "png": "image/png",
+            "webp": "image/webp",
+            "gif": "image/gif",
+            "svg": "image/svg+xml",
+        }.get(ext, "image/jpeg")
+    result = put_object(path, data, ct)
+    await db.archivos.insert_one({"storage_path": result["path"], "content_type": ct})
     return f"/api/files/{result['path']}"
 
 

@@ -8,7 +8,7 @@ export function taxiIcon(color, label, { selected = false } = {}) {
   const texto = label ? String(label) : "";
   const ring = selected ? "box-shadow:0 0 0 3px #fff,0 0 0 7px rgba(255,255,255,.28)" : "";
   const html = `
-    <div style="position:relative;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 6px 10px rgba(0,0,0,.65))">
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:100%;height:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.65))">
       <div style="display:flex;align-items:center;gap:5px;background:${c};color:#0b0b0d;
         border:2px solid #0b0b0d;border-radius:10px;padding:3px 9px 3px 6px;font-weight:800;
         font-size:12px;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;${ring}">
@@ -21,7 +21,7 @@ export function taxiIcon(color, label, { selected = false } = {}) {
       <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
         border-top:8px solid ${c};margin-top:-1px"></div>
     </div>`;
-  return L.divIcon({ html, className: "", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "th-taxi-pin", iconSize: [80, 42], iconAnchor: [40, 42] });
 }
 
 // Marcador de punto (origen/destino/yo): pin clásico de geolocalización en 3D.
@@ -35,6 +35,8 @@ export function pointIcon(label, color, { size = "md" } = {}) {
   const scale = size === "lg" ? 1.4 : size === "sm" ? 0.85 : 1.1;
   const w = Math.round(40 * scale);
   const h = Math.round(52 * scale);
+  const fullW = Math.max(w + 40, 90);
+  const fullH = h + 26;
   const uid = ++_pinUid;
   const chipFont = size === "lg" ? "12px" : "10.5px";
   const chipPad = size === "lg" ? "5px 10px" : "4px 8px";
@@ -43,7 +45,7 @@ export function pointIcon(label, color, { size = "md" } = {}) {
   const center = (7 * scale).toFixed(1);
   const dot = (3.2 * scale).toFixed(1);
   const html = `
-    <div style="transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 10px 12px rgba(0,0,0,.38))">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:100%;height:100%;filter:drop-shadow(0 10px 12px rgba(0,0,0,.38))">
       <div style="margin-bottom:3px;background:#0b0b0d;color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:7px;padding:${chipPad};font-size:${chipFont};font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 6px rgba(0,0,0,.35)">${label}</div>
       <svg width="${w}" height="${h}" viewBox="0 0 40 52" style="overflow:visible">
         <defs>
@@ -66,7 +68,7 @@ export function pointIcon(label, color, { size = "md" } = {}) {
         <circle cx="20" cy="20" r="${inner}" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/>
       </svg>
     </div>`;
-  return L.divIcon({ html, className: "th-point-pin", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "th-point-pin", iconSize: [fullW, fullH], iconAnchor: [fullW / 2, fullH] });
 }
 
 // Flecha de "tú / vehículo" orientada por rumbo (heading) en la Driver App.
@@ -74,7 +76,7 @@ export function driverIcon(color, heading = 0) {
   const c = color || "#10b981";
   const deg = Number(heading) || 0;
   const html = `
-    <div style="transform:translate(-50%,-50%) rotate(${deg}deg);filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))">
+    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg);filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))">
       <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;
         background:${c};border:3px solid #0b0b0d;border-radius:50%">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -84,7 +86,7 @@ export function driverIcon(color, heading = 0) {
         </svg>
       </div>
     </div>`;
-  return L.divIcon({ html, className: "", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "", iconSize: [50, 50], iconAnchor: [25, 25] });
 }
 
 // Carrocería isométrica/3D (vista 3/4 desde arriba, "cochesito 3D"). Master
@@ -139,14 +141,16 @@ export function car3dIcon(color, { heading = 0, label = "", selected = false, fo
   const labelHtml = label
     ? `<div style="margin-top:2px;background:#0b0b0d;color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace">${label}</div>`
     : "";
+  const fullW = Math.max(dim + 16, 70);
+  const fullH = dim + (label ? 24 : 0);
   const html = `
-    <div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;user-select:none"${testId ? ` data-testid="${testId}"` : ""}>
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none"${testId ? ` data-testid="${testId}"` : ""}>
       <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 8px 12px rgba(0,0,0,.6));${ring}border-radius:9999px">
         ${carBodySvg(color)}
       </div>
       ${labelHtml}
     </div>`;
-  return L.divIcon({ html, className: "th-car3d", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "th-car3d", iconSize: [fullW, fullH], iconAnchor: [fullW / 2, dim / 2] });
 }
 
 // Marcador "placa" — dirección visual aprobada (ver memory/DIRECCION_VISUAL.md):
@@ -157,8 +161,6 @@ const PILL_DIM = { sm: 30, md: 38, lg: 46 };
 const PILL_RADIUS = { sm: 9, md: 11, lg: 14 };
 
 export function pillCarIcon(estado, { heading = 0, selected = false, label = "", size = "md", testId = "", color: colorOverride } = {}) {
-  // `colorOverride` cubre el caso "este es tu taxi en vivo" (app del pasajero),
-  // donde no hay un estado de flota relevante que mostrar — solo la marca.
   const color = colorOverride || ESTADO_COLORS[estado] || ESTADO_COLORS.fuera_de_servicio;
   const deg = Number(heading) || 0;
   const dim = PILL_DIM[size] || PILL_DIM.md;
@@ -176,8 +178,10 @@ export function pillCarIcon(estado, { heading = 0, selected = false, label = "",
     ? `<div style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:0;height:0;
         border-left:4.5px solid transparent;border-right:4.5px solid transparent;border-bottom:7px solid ${color}"></div>`
     : "";
+  const fullW = Math.max(dim + 16, 70);
+  const fullH = dim + (label ? 24 : 0);
   const html = `
-    <div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;user-select:none"${testId ? ` data-testid="${testId}"` : ""}>
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none"${testId ? ` data-testid="${testId}"` : ""}>
       <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 6px 10px rgba(0,0,0,.55));${offline ? "opacity:.55;" : ""}">
         ${ringPulse}
         <div style="width:100%;height:100%;border-radius:${radius}px;background:${color};
@@ -191,7 +195,7 @@ export function pillCarIcon(estado, { heading = 0, selected = false, label = "",
       </div>
       ${labelHtml}
     </div>`;
-  return L.divIcon({ html, className: "th-pill-car", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "th-pill-car", iconSize: [fullW, fullH], iconAnchor: [fullW / 2, dim / 2] });
 }
 
 // Asset de unidad demo para la App del Operador: conserva la silueta real de
@@ -200,20 +204,20 @@ export function taxiAssetIcon({ heading = 0, size = "sm" } = {}) {
   const dim = size === "lg" ? 78 : size === "md" ? 64 : 52;
   const deg = Number(heading) || 0;
   const html = `
-    <div style="transform:translate(-50%,-50%);width:${dim}px;height:${dim}px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 7px 8px rgba(16,45,42,.28))">
+    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 7px 8px rgba(16,45,42,.28))">
       <img src="/assets/vehicles/taxihub-taxi-azul.png" alt="" style="width:${dim + 16}px;height:${dim + 16}px;object-fit:contain;transform:rotate(${deg}deg)" />
     </div>`;
-  return L.divIcon({ html, className: "th-taxi-asset", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "th-taxi-asset", iconSize: [dim + 16, dim + 16], iconAnchor: [(dim + 16) / 2, (dim + 16) / 2] });
 }
 
 export function taxiRoleAssetIcon({ heading = 0, size = "sm" } = {}) {
   const dim = size === "lg" ? 70 : size === "md" ? 58 : 46;
   const deg = Number(heading) || 0;
   const html = `
-    <div style="transform:translate(-50%,-50%);width:${dim}px;height:${dim}px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 6px 8px rgba(16,45,42,.28))">
+    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 6px 8px rgba(16,45,42,.28))">
       <img src="/assets/vehicles/taxi-operador.png" alt="" style="width:${dim + 12}px;height:${dim + 12}px;object-fit:contain;transform:rotate(${deg}deg)" />
     </div>`;
-  return L.divIcon({ html, className: "th-taxi-role-asset", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "th-taxi-role-asset", iconSize: [dim + 12, dim + 12], iconAnchor: [(dim + 12) / 2, (dim + 12) / 2] });
 }
 
 const TAXI_STATE_ASSETS = {
@@ -238,25 +242,27 @@ export function taxiStateAssetIcon(estado, { heading = 0, selected = false, labe
          <span style="width:6px;height:6px;border-radius:999px;background:${color};box-shadow:0 0 4px ${color}"></span>${label}
        </span>`
     : "";
+  const fullW = Math.max(dim + 20, 80);
+  const fullH = dim + (label ? 24 : 0);
   const html = `
-    <div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;position:relative">
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
       <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 7px 9px rgba(8,24,27,.35))">
         ${pulse}<img src="${asset}" alt="" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1" />
       </div>${labelHtml}
     </div>`;
-  return L.divIcon({ html, className: "th-terminal-state-asset", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "th-terminal-state-asset", iconSize: [fullW, fullH], iconAnchor: [fullW / 2, dim / 2] });
 }
 
 // (helper) marcador pequeño de dirección en la ruta (flecha que pulsa).
 export function routeArrowIcon() {
   const html = `
-    <div class="th-route-arrow" style="transform:translate(-50%,-50%)">
+    <div class="th-route-arrow" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
       <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none"
         stroke="#0b0b0d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2v20M6 9l6-7 6 7" transform="translate(0 1)"/>
       </svg>
     </div>`;
-  return L.divIcon({ html, className: "", iconSize: [1, 1], iconAnchor: [0, 0] });
+  return L.divIcon({ html, className: "", iconSize: [30, 30], iconAnchor: [15, 15] });
 }
 
 export function colorForOperador(op, filtroRutaColor) {

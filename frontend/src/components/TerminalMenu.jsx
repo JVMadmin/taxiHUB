@@ -27,22 +27,19 @@ const SECTIONS = [
   { id: "choferes", label: "Choferes", icon: Users },
   { id: "socios", label: "Socios", icon: UserSquare },
   { id: "vehiculos", label: "Vehículos / Flota", icon: Truck },
-  { id: "tipos-vehiculo", label: "Tipos de vehículo", icon: Layers },
-  { id: "operadores", label: "Operadores", icon: Users },
   { id: "clientes", label: "Clientes", icon: UserSquare },
   { id: "mantenimiento", label: "Mantenimiento", icon: Wrench },
   { id: "combustible", label: "Combustible", icon: DollarSign },
   { id: "reportes", label: "Objetos reportados", icon: Package },
-  { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "rutas", label: "Rutas", icon: RouteIcon },
   { id: "tarifas", label: "Tarifas", icon: DollarSign },
   { id: "dashboard", label: "Dashboard", icon: ClipboardList },
 ];
 
-// Grupos por responsabilidad (prompt premium §9): la rail deja de ser plana.
+// Grupos por responsabilidad: Operar (servicios + WhatsApp), Flota (vehículos + choferes) y Control
 const SECTION_GROUPS = [
-  { label: "Operar", ids: ["servicio", "servicios", "whatsapp", "chat"] },
-  { label: "Flota", ids: ["vehiculos", "choferes", "operadores", "tipos-vehiculo"] },
+  { label: "Operar", ids: ["servicio", "servicios", "whatsapp"] },
+  { label: "Flota", ids: ["vehiculos", "choferes"] },
   { label: "Control", ids: ["socios", "mantenimiento", "combustible", "reportes", "rutas", "tarifas", "dashboard"] },
 ];
 
@@ -67,13 +64,13 @@ export function TerminalMenu({ active: activeProp, onActiveChange, operadores, o
       {/* Rail de iconos agrupado por responsabilidad (derecha, escritorio) */}
       <div
         data-testid="terminal-menu-rail"
-        className={`absolute top-[124px] z-[600] hidden max-h-[calc(100vh-140px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-lg transition-all duration-300 ease-motion lg:block lg:top-24 ${active ? "right-3" : "right-3"} sm:right-4`}
+        className={`absolute top-[124px] z-[600] hidden max-h-[calc(100vh-140px)] overflow-y-auto rounded-2xl border border-white/[0.06] bg-[#17191E] shadow-2xl transition-all duration-300 ease-motion lg:block lg:top-24 ${active ? "right-3" : "right-3"} sm:right-4`}
         style={{ right: active ? `calc(${panelWidth}px + 0.75rem)` : undefined }}
       >
         <div className="flex flex-col gap-1 p-2">
           {SECTION_GROUPS.map((g) => (
-            <div key={g.label} className="flex flex-col items-center gap-1 border-t border-border/60 py-1.5 first:border-0 first:pt-0">
-              <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground/70">{g.label}</span>
+            <div key={g.label} className="flex flex-col items-center gap-1 border-t border-white/[0.06] py-1.5 first:border-0 first:pt-0">
+              <span className="text-[8px] font-bold uppercase tracking-widest text-[#9CA0AA]/70">{g.label}</span>
               {g.ids.map((id) => {
                 const s = SECTIONS.find((x) => x.id === id);
                 return (
@@ -84,7 +81,7 @@ export function TerminalMenu({ active: activeProp, onActiveChange, operadores, o
                     title={s.label}
                     aria-label={s.label}
                     className={cn("th-3d flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
-                      active === id ? "bg-brand text-brand-contrast" : "text-foreground/80 hover:bg-secondary/60")}
+                      active === id ? "bg-[#4F5DFF] text-white shadow-[0_2px_10px_rgba(79,93,255,0.3)]" : "text-[#F5F5F7]/80 hover:bg-white/[0.08]")}
                   >
                     <s.icon className="th-icon-3d h-5 w-5" />
                   </button>
@@ -97,17 +94,17 @@ export function TerminalMenu({ active: activeProp, onActiveChange, operadores, o
 
       {/* Panel deslizable — superficie del Design System (sin cajas negras) */}
       <div
-        className={`absolute right-0 top-0 z-[590] h-full max-w-[92vw] transform border-l border-border bg-[var(--th-surface)] transition-all duration-300 ease-motion ${
+        className={`absolute right-0 top-0 z-[590] h-full max-w-[92vw] transform border-l border-white/[0.06] bg-[#111318] transition-all duration-300 ease-motion ${
           active ? "translate-x-0" : "translate-x-full"
         }`}
         style={{ width: panelWidth }}
       >
         {active && (
           <div data-testid={`panel-${active}`} className="flex h-full animate-fade-in flex-col">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
-              <h2 className="flex items-center gap-2 text-sm font-bold text-foreground">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/15">
-                  {(() => { const I = SECTIONS.find((s) => s.id === active)?.icon; return I ? <I className="h-4 w-4 text-brand-bright" /> : null; })()}
+            <div className="flex items-center justify-between border-b border-white/[0.06] bg-[#17191E] px-4 py-3.5">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-[#F5F5F7]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#4F5DFF]/15 text-[#4F5DFF]">
+                  {(() => { const I = SECTIONS.find((s) => s.id === active)?.icon; return I ? <I className="h-4 w-4" /> : null; })()}
                 </span>
                 {SECTIONS.find((s) => s.id === active)?.label}
               </h2>
@@ -122,7 +119,7 @@ export function TerminalMenu({ active: activeProp, onActiveChange, operadores, o
               {active === "tipos-vehiculo" && <TiposVehiculoPanel />}
               {active === "operadores" && <OperadoresPanel operadores={operadores} rutas={rutas} onChanged={onDataChanged} />}
               {active === "clientes" && <ClientesPanel />}
-              {active === "choferes" && <ChoferesPanel expedienteId={choferExp} setExpedienteId={setChoferExp} />}
+              {active === "choferes" && <ChoferesPanel expedienteId={choferExp} setExpedienteId={setChoferExp} rutas={rutas} onDataChanged={onDataChanged} />}
               {active === "socios" && <SociosPanel />}
               {active === "mantenimiento" && <MantenimientoPanel />}
               {active === "combustible" && <CombustiblePanel />}

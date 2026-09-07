@@ -1,9 +1,13 @@
 import axios from "axios";
 
-export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-export const API = `${BACKEND_URL}/api`;
+export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
+export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
 
-export const WS_BASE = BACKEND_URL.replace(/^http/, "ws") + "/api";
+export const WS_BASE = BACKEND_URL
+  ? BACKEND_URL.replace(/^http/, "ws") + "/api"
+  : (typeof window !== "undefined"
+      ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/api`
+      : "/api");
 
 // Cinco superficies autenticadas (cada una con su propio JWT):
 //  - api      -> operador (op_token)

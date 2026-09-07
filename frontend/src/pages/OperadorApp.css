@@ -33,11 +33,133 @@
 }
 
 .taxi-driver-dark {
-  --driver-ink: #eff7f4;
-  --driver-muted: #9ba9aa;
-  --driver-line: #2a3b3e;
-  --driver-surface: #132226;
-  --driver-canvas: #091316;
+  --driver-ink: #F5F5F7;
+  --driver-muted: #9CA0AA;
+  --driver-line: rgba(255, 255, 255, 0.06);
+  --driver-surface: #17191E;
+  --driver-canvas: #0B0D10;
+  --driver-green: #7CFC3C;
+  --driver-green-dark: #66DB2E;
+  --driver-red: #F4544C;
+  color: var(--driver-ink);
+  background: var(--driver-canvas);
+}
+
+.taxi-driver-dark .leaflet-container {
+  background: #0B0D10 !important;
+}
+
+.taxi-driver-dark .taxi-driver-header-card,
+.taxi-driver-dark .taxi-driver-controls-card,
+.taxi-driver-dark [data-testid="ruta-info"],
+.taxi-driver-dark [data-testid="recentrar-mapa-btn"] {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: rgba(23, 25, 30, 0.96) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+}
+
+.taxi-driver-dark .taxi-driver-avatar-button {
+  border-color: rgba(79, 93, 255, 0.3) !important;
+  background: rgba(79, 93, 255, 0.12) !important;
+}
+
+.taxi-driver-dark .taxi-driver-vehicle-mini {
+  background: #1B1E24 !important;
+}
+
+.taxi-driver-dark .taxi-driver-controls-inner button:hover {
+  color: #F5F5F7 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.taxi-driver-dark [data-testid="connection-badge"],
+.taxi-driver-dark [data-testid="gps-badge"] {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: rgba(23, 25, 30, 0.95) !important;
+  color: #9CA0AA !important;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+.taxi-driver-dark > [data-testid^="driver-sheet"] > div[role],
+.taxi-driver-dark > [data-testid^="driver-sheet"] > div:not([aria-hidden]) {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #17191E !important;
+  box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.55) !important;
+}
+
+.taxi-driver-dark > [data-testid^="driver-sheet"] > div[role] > div:first-child span,
+.taxi-driver-dark > [data-testid^="driver-sheet"] > div:not([aria-hidden]) > div:first-child span {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.taxi-driver-dark [data-testid="estado-actual"] {
+  border-color: rgba(124, 252, 60, 0.3) !important;
+  background: rgba(124, 252, 60, 0.08) !important;
+}
+
+.taxi-driver-dark [data-testid="estado-buttons"] button {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #1B1E24 !important;
+  color: #9CA0AA !important;
+}
+
+.taxi-driver-dark [data-testid="estado-buttons"] button[aria-pressed="true"] {
+  border-color: #7CFC3C !important;
+  color: #7CFC3C !important;
+  background: rgba(124, 252, 60, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(124, 252, 60, 0.15) !important;
+}
+
+.taxi-driver-dark [data-testid="iniciar-servicio-btn"],
+.taxi-driver-dark [data-testid="aceptar-servicio-btn"],
+.taxi-driver-dark [data-testid="iniciar-viaje-btn"] {
+  background: #4F5DFF !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 20px rgba(79, 93, 255, 0.35) !important;
+}
+
+.taxi-driver-dark [data-testid="rechazar-servicio-btn"] {
+  border-color: rgba(244, 84, 76, 0.3) !important;
+  color: #F4544C !important;
+  background: rgba(244, 84, 76, 0.1) !important;
+}
+
+.taxi-driver-dark input,
+.taxi-driver-dark [role="combobox"],
+.taxi-driver-dark [data-testid="ruta-select"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1B1E24 !important;
+  color: #F5F5F7 !important;
+}
+
+.taxi-driver-dark [data-testid="offer-card"],
+.taxi-driver-dark [data-testid="ruta-card-cliente"],
+.taxi-driver-dark [data-testid="ruta-card-destino"],
+.taxi-driver-dark [data-testid="servicio-propio"] {
+  color: #F5F5F7 !important;
+}
+
+.taxi-driver-dark [data-testid="offer-card"] > div:nth-child(3),
+.taxi-driver-dark [data-testid="ruta-card-cliente"] > div:nth-child(2),
+.taxi-driver-dark [data-testid="ruta-card-destino"] > div:nth-child(2) {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #1B1E24 !important;
+}
+
+.taxi-driver-dark [data-testid="offer-card"] [class*="bg-amber"],
+.taxi-driver-dark [data-testid="offer-card"] [class*="border-amber"] {
+  border-color: rgba(255, 178, 36, 0.3) !important;
+  background: rgba(255, 178, 36, 0.12) !important;
+  color: #FFB224 !important;
+}
+
+.taxi-driver-dark [data-testid="reportar-objeto-btn"],
+.taxi-driver-dark [data-testid="abrir-chat-btn"],
+.taxi-driver-dark [data-testid="reporte-enviar"],
+.taxi-driver-dark [data-testid="chat-op-enviar"] {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #1B1E24 !important;
+  color: #F5F5F7 !important;
 }
 
 .taxi-driver-shell .leaflet-container {

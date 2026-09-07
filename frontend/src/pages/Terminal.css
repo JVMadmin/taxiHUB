@@ -1,15 +1,15 @@
 .taxi-terminal-shell {
-  --terminal-ink: #edf7f3;
-  --terminal-muted: #8da09e;
-  --terminal-line: rgba(157, 188, 180, 0.18);
-  --terminal-panel: rgba(7, 19, 25, 0.94);
-  --terminal-green: #08b977;
-  --terminal-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
-  font-family: "Poppins", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --terminal-ink: #F5F5F7;
+  --terminal-muted: #9CA0AA;
+  --terminal-line: rgba(255, 255, 255, 0.06);
+  --terminal-panel: rgba(23, 25, 30, 0.95);
+  --terminal-green: #7CFC3C;
+  --terminal-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .taxi-terminal-shell .leaflet-container {
-  background: #071319;
+  background: #0B0D10;
 }
 
 .taxi-terminal-shell .bezel-shell,

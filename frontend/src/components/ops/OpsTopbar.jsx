@@ -69,7 +69,7 @@ export function OpsTopbar({
               title="Servicios"
               aria-label="Servicios"
               className={cn("th-3d hidden h-10 w-10 items-center justify-center rounded-xl transition-colors lg:flex",
-                serviciosOpen ? "bg-th-live text-[#0B0D10]" : "text-foreground/80 hover:bg-white/[0.08]")}
+                serviciosOpen ? "bg-[#4F5DFF] text-white shadow-[0_2px_10px_rgba(79,93,255,0.3)]" : "text-[#F5F5F7]/80 hover:bg-white/[0.08]")}
             >
               <ClipboardList className="th-icon-3d h-5 w-5" />
             </button>

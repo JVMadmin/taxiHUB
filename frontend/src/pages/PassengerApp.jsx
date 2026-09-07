@@ -358,7 +358,7 @@ export default function PassengerApp() {
           !servicio ? (
             <div className="taxi-passenger-empty-trip" data-testid="pas-sin-viaje">
               <div className="taxi-passenger-map-layer">
-                <MapContainer center={pickup || CENTER} zoom={14} zoomControl={false} className="h-full w-full">
+                <MapContainer center={pickup || CENTER} zoom={14} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
                   <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
                   {pickup && <Marker position={[pickup.lat, pickup.lng]} icon={pointIcon("Mi ubicación", "#22c55e")} />}
                 </MapContainer>
@@ -396,7 +396,7 @@ export default function PassengerApp() {
                   context y esos panes pintan por encima del chip/sheet de abajo aunque
                   tengan un z-[10] mayor en apariencia. Mismo patrón que Terminal.jsx. */}
               <div className="taxi-passenger-map-layer">
-                <MapContainer center={mapCenter} zoom={14} zoomControl={false} className="h-full w-full">
+                <MapContainer center={mapCenter} zoom={14} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
                   <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
                   {/* Ruta plan del viaje (origen → destino) */}
                   {rutaViaje.latlngs?.length > 1 && (
@@ -526,7 +526,7 @@ export default function PassengerApp() {
         {view === "solicitar" && (
           <div className="taxi-passenger-request-view" data-testid="pas-solicitar-inmersivo">
             <div className="taxi-passenger-map-layer">
-              <MapContainer center={pickup || CENTER} zoom={14} zoomControl={false} className="h-full w-full">
+              <MapContainer center={pickup || CENTER} zoom={14} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
                 <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
                 <MapClick onPick={(c) => !pickup ? setPickup(c) : setDropoff(c)} />
                 {pickup && <Marker position={[pickup.lat, pickup.lng]} icon={pointIcon("Origen", "#22c55e")} />}
@@ -607,7 +607,7 @@ export default function PassengerApp() {
                       </div>
                     )}
 
-                    {tiposVehiculo.length > 0 && (
+                    {tiposVehiculo.length > 1 && (
                       <div className="mt-4">
                         <div className="taxi-passenger-subheading">Elige tu vehículo</div>
                         <div className="mt-2 flex gap-2.5 overflow-x-auto pb-1">

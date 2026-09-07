@@ -1,0 +1,51 @@
+﻿version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # TileServer GL: Servidor local de tiles vectoriales y rasterizados
+  # Generado a partir del extracto OSM de Chiapas + Tabasco (.mbtiles)
+  # ---------------------------------------------------------------------------
+  tileserver-gl:
+    image: maptiler/tileserver-gl:latest
+    container_name: taxihub-geo-tileserver
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./geo-data/mbtiles:/data
+    command: ["-c", "/data/config.json", "--verbose"]
+
+  # ---------------------------------------------------------------------------
+  # Nominatim: Geocoder local con filtro estricto (bounded=1 + viewbox)
+  # ---------------------------------------------------------------------------
+  nominatim:
+    image: mediagis/nominatim:4.4
+    container_name: taxihub-geo-nominatim
+    restart: unless-stopped
+    ports:
+      - "8091:8080"
+    environment:
+      - PBF_URL=https://download.geofabrik.de/north-america/mexico-latest.osm.pbf
+      - REPLICATION_URL=https://download.geofabrik.de/north-america/mexico-updates/
+      - NOMINATIM_PASSWORD=taxihub_geo_secret
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+    shm_size: 2gb
+
+  # ---------------------------------------------------------------------------
+  # OSRM Routed: Motor de ruteo y Map-Matching de precisión vial
+  # max-matching-size >= 400 para soportar TRACK_MAX_POINTS
+  # ---------------------------------------------------------------------------
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: taxihub-geo-osrm
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./geo-data/osrm:/data
+    command: >
+      osrm-routed --algorithm mld --max-matching-size 400 /data/chiapas-tabasco-latest.osrm
+
+volumes:
+  nominatim-data:

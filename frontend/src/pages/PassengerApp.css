@@ -19,12 +19,77 @@
 }
 
 .taxi-passenger-dark {
-  --passenger-ink: #eff8f5;
-  --passenger-muted: #9da9aa;
-  --passenger-line: #273739;
-  --passenger-surface: #122025;
-  --passenger-canvas: #091216;
-  --passenger-shadow: 0 12px 32px rgba(0, 0, 0, 0.34);
+  --passenger-ink: #F5F5F7;
+  --passenger-muted: #9CA0AA;
+  --passenger-line: rgba(255, 255, 255, 0.06);
+  --passenger-surface: #17191E;
+  --passenger-canvas: #0B0D10;
+  --passenger-green: #7CFC3C;
+  --passenger-green-dark: #66DB2E;
+  --passenger-red: #F4544C;
+  --passenger-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  color: var(--passenger-ink);
+  background: var(--passenger-canvas);
+}
+
+.taxi-passenger-dark .leaflet-container {
+  background: #0B0D10 !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-auth-orb {
+  background: rgba(79, 93, 255, 0.14) !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-auth-form {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #17191E !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.55) !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-field input,
+.taxi-passenger-dark .taxi-passenger-rating-sheet input,
+.taxi-passenger-dark input {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1B1E24 !important;
+  color: #F5F5F7 !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-driver-sheet,
+.taxi-passenger-dark .taxi-passenger-home-sheet,
+.taxi-passenger-dark .taxi-passenger-request-sheet,
+.taxi-passenger-dark .taxi-passenger-rating-sheet {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #17191E !important;
+  box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.55) !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-sheet-handle span {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-primary-button {
+  background: #4F5DFF !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 20px rgba(79, 93, 255, 0.35) !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-primary-button:hover {
+  background: #3D49D6 !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-secondary-button {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1B1E24 !important;
+  color: #F5F5F7 !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-secondary-button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.taxi-passenger-dark .taxi-passenger-card {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #17191E !important;
 }
 
 .taxi-passenger-shell button,

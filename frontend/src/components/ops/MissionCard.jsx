@@ -69,19 +69,19 @@ export function MissionCard({
           </div>
           <div className="data-cell">
             <span className="data-cell-label">GPS</span>
-            <span className="data-cell-value text-emerald-400">{timeAgo(op.ultima_actualizacion)}</span>
+            <span className="data-cell-value text-[#7CFC3C]">{timeAgo(op.ultima_actualizacion)}</span>
           </div>
         </div>
 
         {trackStats && (
-          <div className="mt-3 rounded-xl border border-border bg-card/60 p-2.5">
+          <div className="mt-3 rounded-xl border border-white/[0.06] bg-[#17191E] p-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Recorrido en vivo</span>
               <button
                 data-testid="ver-recorrido-btn"
                 onClick={onToggleTrack}
                 className={cn("rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors",
-                  showTrack ? "border-brand/50 bg-brand/10 text-brand-bright" : "border-border text-foreground/85 hover:border-border")}
+                  showTrack ? "border-[#4F5DFF]/50 bg-[#4F5DFF]/15 text-[#4F5DFF]" : "border-white/[0.08] text-foreground/85 hover:border-white/[0.15]")}
               >
                 {showTrack ? "Ocultar" : "Ver recorrido"}
               </button>
@@ -96,7 +96,7 @@ export function MissionCard({
 
         {/* Ruta al destino del servicio activo */}
         {servicioActivo && (
-          <div className="mt-3 rounded-xl border border-border surface-ui p-2.5">
+          <div className="mt-3 rounded-xl border border-white/[0.06] bg-[#17191E] p-2.5">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                 <RouteIcon className="h-3 w-3" /> Ruta a destino
@@ -106,7 +106,7 @@ export function MissionCard({
                   data-testid="terminal-ruta-toggle"
                   onClick={onToggleRuta}
                   className={cn("rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors",
-                    verRutaServicio ? "border-brand/50 bg-brand/10 text-brand-bright" : "border-border text-foreground/85 hover:border-border")}
+                    verRutaServicio ? "border-[#4F5DFF]/50 bg-[#4F5DFF]/15 text-[#4F5DFF]" : "border-white/[0.08] text-foreground/85 hover:border-white/[0.15]")}
                 >
                   {verRutaServicio ? "Ocultar" : "Ver ruta"}
                 </button>
@@ -117,12 +117,12 @@ export function MissionCard({
             {servicioDestino && (
               <>
                 <div className="mt-2 flex items-center gap-2 text-xs text-foreground/85">
-                  <NavIcon className="h-3.5 w-3.5 shrink-0 text-brand-bright" />
+                  <NavIcon className="h-3.5 w-3.5 shrink-0 text-[#4F5DFF]" />
                   <span className="truncate">{servicioActivo.destino?.texto || "Destino marcado en el mapa"}</span>
                 </div>
                 {rutaServicio.distance_m != null && (
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span><b className="mono-num text-emerald-400">{fmtDist(rutaServicio.distance_m)}</b> faltante</span>
+                    <span><b className="mono-num text-[#7CFC3C]">{fmtDist(rutaServicio.distance_m)}</b> faltante</span>
                     <span><b className="mono-num text-foreground">{fmtDuration(rutaServicio.duration_s)}</b> ETA</span>
                     <span className="mono-num text-muted-foreground">{rutaServicio.provider === "osrm" ? "rutas reales" : "línea recta"}</span>
                   </div>

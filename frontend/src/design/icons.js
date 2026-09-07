@@ -30,6 +30,7 @@ export {
   ClipboardCheck,
   Clock,
   Clock3,
+  Zap,
   // Mantenimiento / combustible / documentos
   Wrench,
   Fuel,

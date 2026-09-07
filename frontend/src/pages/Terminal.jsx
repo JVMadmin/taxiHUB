@@ -23,17 +23,24 @@ import { MissionCard } from "@/components/ops/MissionCard";
 import { OpsMobileDock } from "@/components/ops/OpsMobileDock";
 import { INDICADORES } from "@/components/ops/indicadores";
 import { MapSearch } from "@/components/maps/MapSearch";
+import { RecorridoGradiente } from "@/components/maps/RecorridoGradiente";
+import { MaplibreVectorTileLayer } from "@/components/maps/MaplibreVectorTileLayer";
+import { Layers, Satellite, ChevronRight, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 const CENTER = [17.5099, -91.9847]; // Palenque, Chiapas
-const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
-const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
-// Capa de referencia (rótulos/calles): la base Gray Canvas sola es muy
-// pobre al alejar el zoom; con el overlay se ven etiquetas a todo nivel.
-const DARK_TILES_REF = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
-const LIGHT_TILES_REF = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
-// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
-const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+// Capa Satelital (Esri World Imagery alta resolución + etiquetas de lugares)
+const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const SATELLITE_REF = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
+
+// Vector Tiles vía TileServer-GL / MapLibre GL
+// Si REACT_APP_TILESERVER_URL está configurado (ej. en el VPS con docker-compose.geo.yml), usa ese estilo local.
+// Por defecto usa OpenFreeMap Liberty (vector tiles globales de OpenStreetMap de alta velocidad, 100% libres, sin API key).
+const TILESERVER_URL = process.env.REACT_APP_TILESERVER_URL;
+const VECTOR_STYLE_URL = TILESERVER_URL
+  ? `${TILESERVER_URL}/styles/basic-preview/style.json`
+  : "https://tiles.openfreemap.org/styles/liberty";
 
 function MapClick({ onClick }) {
   useMapEvents({ click: (e) => onClick(e.latlng) });
@@ -112,6 +119,19 @@ export default function Terminal() {
   const [showTrack, setShowTrack] = useState(false);
   const [servicioFilterOp, setServicioFilterOp] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+  const [mapLayer, setMapLayer] = useState("calles"); // "calles" | "satelite"
+  const userInteractedRef = useRef(false);
+
+  // Auto-colapso de la sidebar a los 5s de inactividad inicial
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!userInteractedRef.current && window.innerWidth >= 768) {
+        setSidebarOpen(false);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [servicioSignal, setServicioSignal] = useState(0);
   const [adminSection, setAdminSection] = useState(null);
   const [choferExpedienteId, setChoferExpedienteId] = useState(null);
@@ -121,7 +141,6 @@ export default function Terminal() {
   const wsRef = useRef(null);
   const now = useClock();
   const mode = useMode();
-  const tiles = mode === "claro" ? LIGHT_TILES : DARK_TILES;
   const trackColor = mode === "claro" ? "#6b7280" : "#94a3b8";
 
   // Transparencia de la interfaz (slider Ajustes de pantalla).
@@ -282,16 +301,20 @@ export default function Terminal() {
 
   const selectedOp = selectedId ? operadores[selectedId] : null;
 
-  // Historial de recorrido del taxi seleccionado (Fase 10), refrescado en vivo.
+  // Historial de recorrido del taxi seleccionado (proyectado a calle real + fallback crudo)
   useEffect(() => {
     setTrack(null);
     setShowTrack(false);
     if (!selectedId) return;
     let cancelled = false;
     const loadTrack = () => {
-      termApi.get(`/operadores/${selectedId}/track`).then((r) => {
+      termApi.get(`/operadores/${selectedId}/recorrido-ajustado`).then((r) => {
         if (!cancelled) setTrack(r.data.track || []);
-      }).catch(() => {});
+      }).catch(() => {
+        termApi.get(`/operadores/${selectedId}/track`).then((r) => {
+          if (!cancelled) setTrack(r.data.track || []);
+        }).catch(() => {});
+      });
     };
     loadTrack();
     const t = setInterval(loadTrack, 8000);
@@ -391,20 +414,67 @@ export default function Terminal() {
         </div>
       )}
 
+      {/* Botón flotante para reabrir la sidebar de flota cuando está colapsada */}
+      {!sidebarOpen && (
+        <button
+          type="button"
+          onClick={() => { userInteractedRef.current = true; setSidebarOpen(true); }}
+          className="absolute left-3 top-24 z-[450] hidden items-center gap-2 rounded-xl border border-border/80 bg-surface/90 px-3 py-2 text-xs font-semibold text-foreground shadow-2xl backdrop-blur transition-all hover:border-brand/50 hover:bg-surface-2 md:flex"
+          title="Expandir panel de flota"
+          data-testid="expand-sidebar-btn"
+        >
+          <ChevronRight className="h-4 w-4 text-brand-bright" />
+          <span>Flota ({visibles.length})</span>
+        </button>
+      )}
+
       {/* ÁREA DE MAPA (protagonista) */}
       <div className="relative min-w-0 flex-1">
+        {/* Toggle de capa de mapa: Calles vs Satélite */}
+        <div className="absolute bottom-20 right-3 lg:bottom-auto lg:top-24 lg:right-20 z-[450] flex items-center gap-1 rounded-xl border border-border/80 bg-surface/90 p-1 shadow-xl backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setMapLayer("calles")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
+              mapLayer === "calles" ? "bg-brand/20 text-brand-bright font-semibold" : "text-muted-foreground hover:text-foreground"
+            )}
+            data-testid="layer-calles-btn"
+          >
+            <Layers className="h-3.5 w-3.5" /> Calles
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapLayer("satelite")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
+              mapLayer === "satelite" ? "bg-brand/20 text-brand-bright font-semibold" : "text-muted-foreground hover:text-foreground"
+            )}
+            data-testid="layer-satelite-btn"
+          >
+            <Satellite className="h-3.5 w-3.5" /> Satélite
+          </button>
+        </div>
+
         <div className="absolute inset-0 z-0" data-testid="terminal-map">
-        <MapContainer center={CENTER} zoom={13} zoomControl={false} className="h-full w-full">
-          <TileLayer
-            url={tiles}
-            attribution="Tiles &copy; Esri"
-            errorTileUrl={FALLBACK_TILE}
-            maxNativeZoom={16}
-          />
-          <TileLayer
-            url={mode === "claro" ? LIGHT_TILES_REF : DARK_TILES_REF}
-            maxNativeZoom={16}
-          />
+        <MapContainer center={CENTER} zoom={13} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
+          {mapLayer === "satelite" ? (
+            <>
+              <TileLayer
+                url={SATELLITE_TILES}
+                attribution="Tiles &copy; Esri World Imagery"
+                maxNativeZoom={18}
+              />
+              <TileLayer
+                url={SATELLITE_REF}
+                maxNativeZoom={18}
+              />
+            </>
+          ) : (
+            <MaplibreVectorTileLayer
+              styleUrl={VECTOR_STYLE_URL}
+            />
+          )}
           <ZoomControl position="bottomleft" />
           <MapClick onClick={onMapClick} />
           <MapRefBridge mapRef={mapRef} />
@@ -415,10 +485,7 @@ export default function Terminal() {
           {coords.origen && <Marker position={[coords.origen.lat, coords.origen.lng]} icon={pointIcon("Origen", PALETA.primary)} />}
           {coords.destino && <Marker position={[coords.destino.lat, coords.destino.lng]} icon={pointIcon("Destino", PALETA.danger)} />}
           {showTrack && track && track.length > 1 && (
-            <Polyline
-              positions={track.map((p) => [p.lat, p.lng])}
-              pathOptions={{ color: trackColor, weight: 3, opacity: 0.55, dashArray: "4 6" }}
-            />
+            <RecorridoGradiente track={track} estado={selectedOp?.estado} />
           )}
           {/* Ruta real (OSRM) del servicio activo del taxi seleccionado */}
           {verRutaServicio && servicioActivo && rutaServicio.latlngs && rutaServicio.latlngs.length > 1 && (

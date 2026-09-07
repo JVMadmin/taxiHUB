@@ -4,20 +4,21 @@
 // EstadoServicio); los marcados `reservado` se adoptan en fases posteriores.
 
 export const PALETA = {
-  primary: "#10B981",
-  primaryDark: "#047857",
-  primaryLight: "#D1FAE5",
-  success: "#10B981",
-  danger: "#EF4444",
-  warning: "#F59E0B",
-  info: "#3B82F6",
-  purple: "#8B5CF6",
-  offline: "#6B7280",
+  primary: "#4F5DFF",
+  primaryDark: "#3D49D6",
+  primaryLight: "#DDE1FF",
+  live: "#7CFC3C",
+  success: "#7CFC3C",
+  danger: "#F4544C",
+  warning: "#FFB224",
+  info: "#4F5DFF",
+  purple: "#9A6BFF",
+  offline: "#9CA0AA",
 };
 
 // Estados de unidad/conductor (EstadoOperador del backend + reservados 2.0)
 export const ESTADOS_OPERADOR = {
-  libre: { key: "libre", label: "Disponible", corto: "DISP", color: PALETA.success, tone: "success", conteo: "Disponibles" },
+  libre: { key: "libre", label: "Disponible", corto: "DISP", color: PALETA.live, tone: "success", conteo: "Disponibles" },
   ocupado: { key: "ocupado", label: "Ocupado", corto: "OCUP", color: PALETA.danger, tone: "danger", conteo: "Ocupados" },
   no_disponible: { key: "no_disponible", label: "Pausado", corto: "PAUSA", color: PALETA.warning, tone: "warning", conteo: "Pausados" },
   fuera_de_servicio: { key: "fuera_de_servicio", label: "Offline", corto: "OFF", color: PALETA.offline, tone: "neutral", conteo: "Offline" },
@@ -31,8 +32,8 @@ export const ESTADOS_SERVICIO = {
   pendiente: { key: "pendiente", label: "Pendiente", color: PALETA.warning, tone: "warning" },
   ofrecido: { key: "ofrecido", label: "Oferta enviada", color: PALETA.info, tone: "info" },
   asignado: { key: "asignado", label: "Asignado", color: PALETA.purple, tone: "purple" },
-  en_curso: { key: "en_curso", label: "En curso", color: PALETA.success, tone: "success" },
-  completado: { key: "completado", label: "Completado", color: PALETA.primary, tone: "success" },
+  en_curso: { key: "en_curso", label: "En curso", color: PALETA.primary, tone: "primary" },
+  completado: { key: "completado", label: "Completado", color: PALETA.live, tone: "success" },
   cancelado: { key: "cancelado", label: "Cancelado", color: PALETA.danger, tone: "danger" },
   vencido: { key: "vencido", label: "Vencido", color: "#F97316", tone: "warning" },
   rechazado: { key: "rechazado", label: "Rechazado", color: PALETA.offline, tone: "neutral" },
@@ -40,7 +41,7 @@ export const ESTADOS_SERVICIO = {
 
 // Estados de unidad para flota/socios (derivado de operador + mantenimiento)
 export const ESTADOS_UNIDAD = {
-  disponible: { key: "disponible", label: "Disponible", color: PALETA.success, tone: "success" },
+  disponible: { key: "disponible", label: "Disponible", color: PALETA.live, tone: "success" },
   en_servicio: { key: "en_servicio", label: "En servicio", color: PALETA.danger, tone: "danger" },
   averiada: { key: "averiada", label: "Averiada", color: PALETA.purple, tone: "purple" },
   mantenimiento: { key: "mantenimiento", label: "Mantenimiento", color: PALETA.warning, tone: "warning" },
@@ -50,7 +51,7 @@ export const ESTADOS_UNIDAD = {
 
 // Estados de documentación (expedientes F8)
 export const ESTADOS_DOCUMENTO = {
-  vigente: { key: "vigente", label: "Vigente", color: PALETA.success, tone: "success" },
+  vigente: { key: "vigente", label: "Vigente", color: PALETA.live, tone: "success" },
   por_vencer: { key: "por_vencer", label: "Próximo a vencer", color: PALETA.warning, tone: "warning" },
   vencido: { key: "vencido", label: "Vencido", color: PALETA.danger, tone: "danger" },
 };
@@ -59,7 +60,7 @@ export const ESTADOS_DOCUMENTO = {
 export const ESTADOS_OBJETO = {
   encontrado: { key: "encontrado", label: "Encontrado", color: PALETA.info, tone: "info" },
   resguardo: { key: "resguardo", label: "En resguardo", color: PALETA.warning, tone: "warning" },
-  devuelto: { key: "devuelto", label: "Devuelto", color: PALETA.success, tone: "success" },
+  devuelto: { key: "devuelto", label: "Devuelto", color: PALETA.live, tone: "success" },
   cerrado: { key: "cerrado", label: "Cerrado", color: PALETA.offline, tone: "neutral" },
 };
 
