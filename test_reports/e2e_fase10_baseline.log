@@ -1,0 +1,25 @@
+﻿>>> sembrado OK, servicio 6a9fd13aab4ca9657a017207 asignado a 6a9fcdfdab4ca9657a0171fe
+py : Traceback (most recent call last):
+En línea: 1 Carácter: 74
++ ... SER='none'; py "C:\Users\Quantum\Desktop\RESPALDO\taxiHUB-RE\.agents\ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\Quantum\Desktop\RESPALDO\taxiHUB-RE\test_reports\e2e_fase10.py", line 142, in <module>
+    main()
+  File "C:\Users\Quantum\Desktop\RESPALDO\taxiHUB-RE\test_reports\e2e_fase10.py", line 81, in main
+    assert page.locator("[data-testid=terminal-sidebar]").count() == 1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Starting server 1/1: cmd /c corepack yarn start
+Waiting for server on port 3000...
+Server ready on port 3000
+
+All 1 server(s) ready
+Running: py ..\test_reports\e2e_fase10.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

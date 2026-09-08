@@ -457,7 +457,7 @@ export default function Terminal() {
         </div>
 
         <div className="absolute inset-0 z-0" data-testid="terminal-map">
-        <MapContainer center={CENTER} zoom={13} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
+        <MapContainer center={CENTER} zoom={13} zoomControl={false} className="h-full w-full">
           {mapLayer === "satelite" ? (
             <>
               <TileLayer

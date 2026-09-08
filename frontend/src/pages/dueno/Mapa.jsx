@@ -63,7 +63,7 @@ export function Mapa({ liveSignal }) {
         </button>
       </div>
 
-      <MapContainer center={center} zoom={13} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
+      <MapContainer center={center} zoom={13} zoomControl={false} className="h-full w-full">
         {mapLayer === "satelite" ? (
           <>
             <TileLayer url={SATELLITE_TILES} attribution="Tiles &copy; Esri World Imagery" maxNativeZoom={18} />

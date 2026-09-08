@@ -350,16 +350,26 @@ frontend:
       - working: true
         agent: "main"
         comment: "Catálogo local extensible en utils.js (`VEHICLE_TYPE_ASSETS`, hoy `march` → /assets/vehicles/march.png) con prioridad foto propia → catálogo por modelo/marca/tipo → imagen del VehicleType → genérica. `/auth/me` ahora embebe el vehículo del operador (`_vehiculo_resumen`). Las tres fichas muestran la misma imagen: ficha del pasajero (nueva miniatura pas-vehiculo-img), header del operador (sustituye el asset azul genérico) y mission card de la terminal. Verificado con Playwright: las tres apps muestran `/assets/vehicles/march.png` para el Nissan March de Carlos (TX-101), sin errores de consola. `craco build` compila."
+  - task: "Fix marcadores congelados en zoom/pan: quitar markerZoomAnimation={false} en Terminal y Mapa del dueño"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Terminal.jsx, frontend/src/pages/dueno/Mapa.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Causa raíz confirmada en leaflet-src.js: `markerZoomAnimation:false` añade `leaflet-zoom-hide` al markerPane → `.leaflet-zoom-anim .leaflet-zoom-hide {visibility:hidden}` oculta los taxis durante el zoom animado y los reaparece al final (efecto de salto). Fix: quitar la prop (default true) en Terminal.jsx:460 y Mapa.jsx:66. Validado con Playwright frame-a-frame (verify_marker_zoom_fix.py / _dueno.py en test_reports/): con el fix, 0 samples ocultos y movimiento continuo (distinct x/y ≥ 6) durante zoom y pan; prueba red/green re-agregando la prop → falla en CHECK1 (zoom-hide presente). Suite pytest completa 86/86 verde (serial -n 0 y paralelo -n 2 --dist loadscope). E2E e2e_fase10.py falla en aserción `terminal-sidebar count==1` tanto ANTES como DESPUÉS del cambio (git stash verificado) — fallo PREEXISTENTE: el testid está duplicado (FleetPanel.jsx:18 renderizado en aside desktop + overlay móvil → count 3), no relacionado con este fix."
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 7
+  test_sequence: 8
   run_ui: true
 
 test_plan:
   current_focus:
-    - "E2E Terminal móvil: dock inferior completo (Llamada/Servicios/Flota/Menú), paneles a pantalla, zoom, mission card a ancho completo y que el dock reaparezca al cerrar paneles."
-    - "E2E Imágenes de vehículo: verificar que el asset local del modelo (march.png) se muestre en ficha del pasajero, header del operador y mission card de la terminal; añadir más modelos al catálogo VEHICLE_TYPE_ASSETS."
+    - "Fix marcadores congelados ya validado E2E; pendiente decisión del usuario sobre el testid duplicado `terminal-sidebar` (FleetPanel.jsx:18 + Terminal.jsx:383) que rompe la aserción count==1 de e2e_fase10.py, y sobre `markerZoomAnimation={false}` aún presente en OperadorApp.jsx:629 y PassengerApp.jsx:361/399/529 (usan TileLayer raster, no MapLibre GL; sin el bug de sincronización, pero candidates a unificar)."
     - "Backend: probar calificación única del pasajero en servicio completado y chat de viaje con scopes/estados/WS."
   stuck_tasks: []
   test_all: false
@@ -367,7 +377,7 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "Implementación Fase 8 completa. 10/10 pruebas backend verdes (mongomock-motor, sin MongoDB real). Frontend compila (yarn build). El entorno local no tiene mongod/Docker, por lo que la verificación E2E en navegador queda pendiente de entorno con servicios."
+    message: "Fix markerZoomAnimation aplicado y validado. Solo se quitaron props de MapContainer en Terminal.jsx y dueno/Mapa.jsx (no se tocaron OperadorApp.jsx ni PassengerApp.jsx). Entorno de validación: backend uvicorn MONGO_URL=memory (mongomock) :8000/:8001 + frontend craco :3000 (corepack yarn). Validación frame-a-frame con Playwright: marcador visible y moviéndose continuamente durante zoom animado (wheel) y pan (drag), 0 ocultamientos; red/green: re-agregar la prop reproduce el bug (markerPane con leaflet-zoom-hide + visibility hidden durante el gesto). pytest 86/86 en ambos modos (serial y xdist). e2e_fase10.py: mismo fallo preexistente con y sin el cambio (testid terminal-sidebar duplicado en FleetPanel; ver test_reports/e2e_fase10_baseline.log con git stash aplicado como evidencia)."
   - agent: "main"
     message: "Fase 8.1 completada con servicios reales: MongoDB 8.0.0 portable + uvicorn + frontend :3000. E2E Dispatcher (Playwright) en verde para solicitud→despacho→asignación→aceptación→seguimiento→completado. WebSockets autenticados (1008 en inválidos) y 10/10 tests verdes. Fix: pestaña 'ofrecido' tras despachar."
   - agent: "main"
