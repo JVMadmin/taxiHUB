@@ -1,4 +1,4 @@
-﻿const http = require('http');
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
@@ -24,7 +24,11 @@ const server = http.createServer((req, res) => {
   const urlPath = req.url.split('?')[0];
   let filePath = path.join(BUILD_DIR, urlPath);
   
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+  try {
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+      filePath = path.join(BUILD_DIR, 'index.html');
+    }
+  } catch (e) {
     filePath = path.join(BUILD_DIR, 'index.html');
   }
 

@@ -48,11 +48,12 @@
   transition: transform 160ms ease-out;
 }
 
-/* §35: el taxi se desliza suavemente entre actualizaciones GPS (9 s)
-   en lugar de saltar. Solo transform (posición del marcador). */
-.leaflet-marker-icon.th-terminal-state-asset {
-  transition: transform 1s linear;
-  will-change: transform;
+/* Marcadores sincronizados instantáneamente con el zoom y paneo del mapa, sin deriva ni lag */
+.leaflet-marker-icon.th-terminal-state-asset,
+.leaflet-marker-icon.th-pill-car,
+.leaflet-marker-icon.th-car3d {
+  transition: none !important;
+  will-change: auto;
 }
 
 .taxi-terminal-shell .th-route-flow {

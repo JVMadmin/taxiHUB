@@ -3474,100 +3474,1311 @@ async def dev_auditoria(_=Depends(require_dev)):
 # ---------------------------------------------------------------------------
 # Simulación Avanzada de Flota (15+ Taxis, WhatsApp, Servicios y Movimiento GPS)
 # ---------------------------------------------------------------------------
-PALENQUE_CIRCUITS = [
-    # Circuito 1: Av. Juárez - Parque Central - Mercado
-    [
-        (17.5098, -91.9820), (17.5110, -91.9830), (17.5125, -91.9842),
-        (17.5138, -91.9850), (17.5128, -91.9828), (17.5108, -91.9812),
-    ],
-    # Circuito 2: La Cañada - Corredor Hotelero - ADO
-    [
-        (17.5140, -91.9855), (17.5156, -91.9834), (17.5172, -91.9808),
-        (17.5185, -91.9788), (17.5168, -91.9818), (17.5148, -91.9842),
-    ],
-    # Circuito 3: Plaza Las Flores - Periférico Sur - Hospital General
-    [
-        (17.5045, -91.9750), (17.5060, -91.9778), (17.5076, -91.9800),
-        (17.5090, -91.9812), (17.5072, -91.9765), (17.5052, -91.9742),
-    ],
-    # Circuito 4: Corredor Federal Pakal-Ná
-    [
-        (17.5180, -91.9780), (17.5210, -91.9715), (17.5242, -91.9648),
-        (17.5268, -91.9588), (17.5238, -91.9658), (17.5198, -91.9725),
-    ],
-    # Circuito 5: Carretera Ruinas / Misión Palenque
-    [
-        (17.5080, -91.9835), (17.5045, -91.9865), (17.5005, -91.9895),
-        (17.4955, -91.9935), (17.4995, -91.9885), (17.5055, -91.9845),
-    ],
-    # Circuito 6: Estación Tren Maya - Libramiento
-    [
-        (17.5255, -91.9605), (17.5292, -91.9562), (17.5325, -91.9532),
-        (17.5305, -91.9552), (17.5262, -91.9592),
-    ]
-]
+# Pistas viales predeterminadas y únicas sobre las calles reales de Palenque, Chiapas (OSRM / OpenStreetMap)
+PALENQUE_PISTAS_VIALES = {
+    "pista_centro_juarez": {
+        "id": "pista_centro_juarez",
+        "nombre": "Pista Centro - Av. Juárez y Mercado",
+        "sentido": "Circuito comercial centro (horario)",
+        "distancia_m": 2113,
+        "duracion_s": 287,
+        "puntos": [
+            [
+                17.509556,
+                -91.981798
+            ],
+            [
+                17.509573,
+                -91.982273
+            ],
+            [
+                17.509952,
+                -91.982282
+            ],
+            [
+                17.510318,
+                -91.982282
+            ],
+            [
+                17.510696,
+                -91.982282
+            ],
+            [
+                17.511376,
+                -91.982282
+            ],
+            [
+                17.512326,
+                -91.982281
+            ],
+            [
+                17.512472,
+                -91.983363
+            ],
+            [
+                17.512527,
+                -91.984504
+            ],
+            [
+                17.512531,
+                -91.984588
+            ],
+            [
+                17.513102,
+                -91.984585
+            ],
+            [
+                17.513836,
+                -91.984582
+            ],
+            [
+                17.513906,
+                -91.984581
+            ],
+            [
+                17.513919,
+                -91.985408
+            ],
+            [
+                17.513922,
+                -91.985601
+            ],
+            [
+                17.51394,
+                -91.986678
+            ],
+            [
+                17.513872,
+                -91.986683
+            ],
+            [
+                17.513849,
+                -91.985407
+            ],
+            [
+                17.513836,
+                -91.984582
+            ],
+            [
+                17.513816,
+                -91.983307
+            ],
+            [
+                17.513268,
+                -91.983329
+            ],
+            [
+                17.512989,
+                -91.98334
+            ],
+            [
+                17.512472,
+                -91.983363
+            ],
+            [
+                17.511441,
+                -91.983402
+            ],
+            [
+                17.510755,
+                -91.983429
+            ],
+            [
+                17.510728,
+                -91.982904
+            ],
+            [
+                17.510696,
+                -91.982282
+            ],
+            [
+                17.510636,
+                -91.981094
+            ],
+            [
+                17.510269,
+                -91.981137
+            ],
+            [
+                17.509912,
+                -91.981179
+            ],
+            [
+                17.509535,
+                -91.981223
+            ],
+            [
+                17.509556,
+                -91.981798
+            ]
+        ]
+    },
+    "pista_canada_ado": {
+        "id": "pista_canada_ado",
+        "nombre": "Pista La Cañada - Corredor Hotelero - ADO",
+        "sentido": "Circuito hotelero poniente",
+        "distancia_m": 2976,
+        "duracion_s": 352,
+        "puntos": [
+            [
+                17.513922,
+                -91.985601
+            ],
+            [
+                17.51394,
+                -91.986678
+            ],
+            [
+                17.513872,
+                -91.986683
+            ],
+            [
+                17.513849,
+                -91.985407
+            ],
+            [
+                17.513836,
+                -91.984582
+            ],
+            [
+                17.513816,
+                -91.983307
+            ],
+            [
+                17.513769,
+                -91.982281
+            ],
+            [
+                17.513731,
+                -91.981394
+            ],
+            [
+                17.513645,
+                -91.980383
+            ],
+            [
+                17.513717,
+                -91.980375
+            ],
+            [
+                17.51413,
+                -91.980313
+            ],
+            [
+                17.514344,
+                -91.980257
+            ],
+            [
+                17.514558,
+                -91.980158
+            ],
+            [
+                17.514783,
+                -91.979972
+            ],
+            [
+                17.515082,
+                -91.979701
+            ],
+            [
+                17.516033,
+                -91.978923
+            ],
+            [
+                17.516147,
+                -91.978923
+            ],
+            [
+                17.51655,
+                -91.9789
+            ],
+            [
+                17.516734,
+                -91.978871
+            ],
+            [
+                17.517022,
+                -91.978946
+            ],
+            [
+                17.517676,
+                -91.979121
+            ],
+            [
+                17.517649,
+                -91.979199
+            ],
+            [
+                17.51672,
+                -91.978981
+            ],
+            [
+                17.516601,
+                -91.979576
+            ],
+            [
+                17.516601,
+                -91.979576
+            ],
+            [
+                17.51672,
+                -91.978981
+            ],
+            [
+                17.51655,
+                -91.9789
+            ],
+            [
+                17.516734,
+                -91.978871
+            ],
+            [
+                17.517022,
+                -91.978946
+            ],
+            [
+                17.51814,
+                -91.979246
+            ],
+            [
+                17.518711,
+                -91.979399
+            ],
+            [
+                17.518688,
+                -91.979478
+            ],
+            [
+                17.517649,
+                -91.979199
+            ],
+            [
+                17.516994,
+                -91.979024
+            ],
+            [
+                17.51672,
+                -91.978981
+            ],
+            [
+                17.51655,
+                -91.9789
+            ],
+            [
+                17.516033,
+                -91.978923
+            ],
+            [
+                17.515843,
+                -91.979012
+            ],
+            [
+                17.515082,
+                -91.979701
+            ],
+            [
+                17.514783,
+                -91.979972
+            ],
+            [
+                17.514558,
+                -91.980158
+            ],
+            [
+                17.514344,
+                -91.980257
+            ],
+            [
+                17.51413,
+                -91.980313
+            ],
+            [
+                17.513752,
+                -91.980728
+            ],
+            [
+                17.513808,
+                -91.981402
+            ],
+            [
+                17.513844,
+                -91.982281
+            ],
+            [
+                17.513886,
+                -91.983306
+            ],
+            [
+                17.513889,
+                -91.983519
+            ],
+            [
+                17.513906,
+                -91.984581
+            ],
+            [
+                17.513919,
+                -91.985408
+            ],
+            [
+                17.513922,
+                -91.985601
+            ]
+        ]
+    },
+    "pista_periferico_sur": {
+        "id": "pista_periferico_sur",
+        "nombre": "Pista Periférico Sur - Hospital General",
+        "sentido": "Circuito hospitalario sur",
+        "distancia_m": 2932,
+        "duracion_s": 374,
+        "puntos": [
+            [
+                17.504608,
+                -91.974937
+            ],
+            [
+                17.504675,
+                -91.975063
+            ],
+            [
+                17.504829,
+                -91.976397
+            ],
+            [
+                17.504351,
+                -91.976461
+            ],
+            [
+                17.504246,
+                -91.97649
+            ],
+            [
+                17.504218,
+                -91.976512
+            ],
+            [
+                17.504196,
+                -91.976545
+            ],
+            [
+                17.504177,
+                -91.976598
+            ],
+            [
+                17.504175,
+                -91.976659
+            ],
+            [
+                17.504238,
+                -91.977246
+            ],
+            [
+                17.504301,
+                -91.977806
+            ],
+            [
+                17.504401,
+                -91.978706
+            ],
+            [
+                17.504519,
+                -91.979766
+            ],
+            [
+                17.505202,
+                -91.97969
+            ],
+            [
+                17.505683,
+                -91.979636
+            ],
+            [
+                17.506431,
+                -91.979552
+            ],
+            [
+                17.506344,
+                -91.97852
+            ],
+            [
+                17.506286,
+                -91.97799
+            ],
+            [
+                17.506252,
+                -91.977679
+            ],
+            [
+                17.506889,
+                -91.977638
+            ],
+            [
+                17.507212,
+                -91.977597
+            ],
+            [
+                17.507558,
+                -91.977556
+            ],
+            [
+                17.507619,
+                -91.978399
+            ],
+            [
+                17.507693,
+                -91.97941
+            ],
+            [
+                17.507722,
+                -91.980063
+            ],
+            [
+                17.507742,
+                -91.980503
+            ],
+            [
+                17.507755,
+                -91.980801
+            ],
+            [
+                17.508338,
+                -91.980746
+            ],
+            [
+                17.508287,
+                -91.979995
+            ],
+            [
+                17.508242,
+                -91.979349
+            ],
+            [
+                17.508173,
+                -91.978345
+            ],
+            [
+                17.508101,
+                -91.977489
+            ],
+            [
+                17.508,
+                -91.976502
+            ],
+            [
+                17.50851,
+                -91.976411
+            ],
+            [
+                17.508559,
+                -91.976994
+            ],
+            [
+                17.508596,
+                -91.977427
+            ],
+            [
+                17.50868,
+                -91.978297
+            ],
+            [
+                17.508173,
+                -91.978345
+            ],
+            [
+                17.508101,
+                -91.977489
+            ],
+            [
+                17.508,
+                -91.976502
+            ],
+            [
+                17.507488,
+                -91.976522
+            ],
+            [
+                17.50715,
+                -91.976504
+            ],
+            [
+                17.50698,
+                -91.976388
+            ],
+            [
+                17.506662,
+                -91.976215
+            ],
+            [
+                17.505667,
+                -91.975693
+            ],
+            [
+                17.505175,
+                -91.975444
+            ],
+            [
+                17.504675,
+                -91.975063
+            ],
+            [
+                17.504608,
+                -91.974937
+            ]
+        ]
+    },
+    "pista_pakal_na": {
+        "id": "pista_pakal_na",
+        "nombre": "Pista Corredor Carretera Federal Pakal-Ná",
+        "sentido": "Palenque a Pakal-Ná (doble sentido)",
+        "distancia_m": 15414,
+        "duracion_s": 1944,
+        "puntos": [
+            [
+                17.518733,
+                -91.977156
+            ],
+            [
+                17.519426,
+                -91.978515
+            ],
+            [
+                17.518688,
+                -91.979478
+            ],
+            [
+                17.516033,
+                -91.978923
+            ],
+            [
+                17.513717,
+                -91.980375
+            ],
+            [
+                17.513344,
+                -91.977029
+            ],
+            [
+                17.513239,
+                -91.975061
+            ],
+            [
+                17.513527,
+                -91.974046
+            ],
+            [
+                17.513901,
+                -91.973435
+            ],
+            [
+                17.514804,
+                -91.972955
+            ],
+            [
+                17.515654,
+                -91.972496
+            ],
+            [
+                17.516476,
+                -91.971788
+            ],
+            [
+                17.51775,
+                -91.970431
+            ],
+            [
+                17.518659,
+                -91.969731
+            ],
+            [
+                17.519378,
+                -91.96879
+            ],
+            [
+                17.520439,
+                -91.96861
+            ],
+            [
+                17.519109,
+                -91.969146
+            ],
+            [
+                17.518128,
+                -91.969931
+            ],
+            [
+                17.517085,
+                -91.970931
+            ],
+            [
+                17.516302,
+                -91.972189
+            ],
+            [
+                17.515571,
+                -91.972611
+            ],
+            [
+                17.514258,
+                -91.973152
+            ],
+            [
+                17.513629,
+                -91.973753
+            ],
+            [
+                17.513501,
+                -91.974581
+            ],
+            [
+                17.513193,
+                -91.975867
+            ],
+            [
+                17.513521,
+                -91.978612
+            ],
+            [
+                17.514783,
+                -91.979972
+            ],
+            [
+                17.516734,
+                -91.978871
+            ],
+            [
+                17.519612,
+                -91.979596
+            ],
+            [
+                17.523787,
+                -91.978329
+            ],
+            [
+                17.526229,
+                -91.97748
+            ],
+            [
+                17.526232,
+                -91.969076
+            ],
+            [
+                17.538742,
+                -91.965665
+            ],
+            [
+                17.546602,
+                -91.972585
+            ],
+            [
+                17.54587,
+                -91.975348
+            ],
+            [
+                17.545707,
+                -91.977303
+            ],
+            [
+                17.544821,
+                -91.983608
+            ],
+            [
+                17.54644,
+                -91.983758
+            ],
+            [
+                17.548708,
+                -91.984529
+            ],
+            [
+                17.550787,
+                -91.980928
+            ],
+            [
+                17.549586,
+                -91.974308
+            ],
+            [
+                17.549598,
+                -91.972827
+            ],
+            [
+                17.550708,
+                -91.972342
+            ],
+            [
+                17.550277,
+                -91.970642
+            ],
+            [
+                17.548007,
+                -91.968851
+            ],
+            [
+                17.548139,
+                -91.967186
+            ],
+            [
+                17.54346,
+                -91.964469
+            ],
+            [
+                17.541271,
+                -91.962234
+            ],
+            [
+                17.539345,
+                -91.959949
+            ],
+            [
+                17.536583,
+                -91.959997
+            ],
+            [
+                17.535944,
+                -91.959212
+            ]
+        ]
+    },
+    "pista_carretera_ruinas": {
+        "id": "pista_carretera_ruinas",
+        "nombre": "Pista Carretera Zona Arqueológica - Misión Palenque",
+        "sentido": "Centro a Ruinas (sur-poniente)",
+        "distancia_m": 5797,
+        "duracion_s": 618,
+        "puntos": [
+            [
+                17.508,
+                -91.983496
+            ],
+            [
+                17.507349,
+                -91.983498
+            ],
+            [
+                17.506603,
+                -91.983532
+            ],
+            [
+                17.505915,
+                -91.983564
+            ],
+            [
+                17.504933,
+                -91.983607
+            ],
+            [
+                17.505094,
+                -91.985116
+            ],
+            [
+                17.505201,
+                -91.986136
+            ],
+            [
+                17.50443,
+                -91.986217
+            ],
+            [
+                17.504174,
+                -91.986942
+            ],
+            [
+                17.504116,
+                -91.986976
+            ],
+            [
+                17.50423,
+                -91.988192
+            ],
+            [
+                17.504989,
+                -91.988116
+            ],
+            [
+                17.50532,
+                -91.987289
+            ],
+            [
+                17.505217,
+                -91.986288
+            ],
+            [
+                17.505152,
+                -91.985663
+            ],
+            [
+                17.505036,
+                -91.984574
+            ],
+            [
+                17.50321,
+                -91.983804
+            ],
+            [
+                17.502265,
+                -91.983912
+            ],
+            [
+                17.501364,
+                -91.984015
+            ],
+            [
+                17.500454,
+                -91.984119
+            ],
+            [
+                17.499596,
+                -91.984217
+            ],
+            [
+                17.498721,
+                -91.984316
+            ],
+            [
+                17.496196,
+                -91.984593
+            ],
+            [
+                17.495542,
+                -91.985994
+            ],
+            [
+                17.495499,
+                -91.986269
+            ],
+            [
+                17.497474,
+                -91.987707
+            ],
+            [
+                17.49871,
+                -91.988704
+            ],
+            [
+                17.49962,
+                -91.989848
+            ],
+            [
+                17.500129,
+                -91.990294
+            ],
+            [
+                17.501044,
+                -91.990657
+            ],
+            [
+                17.502505,
+                -91.991113
+            ],
+            [
+                17.504615,
+                -91.991786
+            ],
+            [
+                17.504988,
+                -91.991821
+            ],
+            [
+                17.505095,
+                -91.991861
+            ],
+            [
+                17.505156,
+                -91.991961
+            ],
+            [
+                17.505145,
+                -91.99208
+            ],
+            [
+                17.505091,
+                -91.992151
+            ],
+            [
+                17.504814,
+                -91.992435
+            ],
+            [
+                17.504323,
+                -91.993
+            ],
+            [
+                17.503789,
+                -91.993744
+            ],
+            [
+                17.503625,
+                -91.994149
+            ],
+            [
+                17.503444,
+                -91.995427
+            ],
+            [
+                17.502002,
+                -91.995556
+            ],
+            [
+                17.500178,
+                -91.995762
+            ],
+            [
+                17.498942,
+                -91.996003
+            ],
+            [
+                17.497057,
+                -91.996231
+            ],
+            [
+                17.494442,
+                -91.99661
+            ],
+            [
+                17.493587,
+                -91.996674
+            ],
+            [
+                17.493524,
+                -91.996205
+            ],
+            [
+                17.493312,
+                -91.994772
+            ],
+            [
+                17.493247,
+                -91.994351
+            ]
+        ]
+    },
+    "pista_tren_maya": {
+        "id": "pista_tren_maya",
+        "nombre": "Pista Estación Tren Maya - Boulevard Aeropuerto",
+        "sentido": "Acceso ferroviario y enlace libramiento",
+        "distancia_m": 1135,
+        "duracion_s": 191,
+        "puntos": [
+            [
+                17.535944,
+                -91.959212
+            ],
+            [
+                17.536023,
+                -91.958254
+            ],
+            [
+                17.536161,
+                -91.956843
+            ],
+            [
+                17.536292,
+                -91.955566
+            ],
+            [
+                17.536363,
+                -91.955341
+            ],
+            [
+                17.536315,
+                -91.955129
+            ],
+            [
+                17.535683,
+                -91.954027
+            ],
+            [
+                17.535294,
+                -91.953281
+            ],
+            [
+                17.534785,
+                -91.952345
+            ],
+            [
+                17.534785,
+                -91.952345
+            ],
+            [
+                17.534724,
+                -91.952147
+            ],
+            [
+                17.534752,
+                -91.951752
+            ],
+            [
+                17.534882,
+                -91.951414
+            ],
+            [
+                17.535018,
+                -91.951042
+            ],
+            [
+                17.534895,
+                -91.950851
+            ],
+            [
+                17.535018,
+                -91.951042
+            ],
+            [
+                17.534882,
+                -91.951414
+            ],
+            [
+                17.534752,
+                -91.951752
+            ],
+            [
+                17.534724,
+                -91.952147
+            ],
+            [
+                17.534724,
+                -91.952147
+            ],
+            [
+                17.534785,
+                -91.952345
+            ],
+            [
+                17.534865,
+                -91.952492
+            ]
+        ]
+    }
+}
 
 DEMO_TAXIS = [
-    {"usuario": "op1", "nombre": "Carlos Ramírez", "telefono": "916-200-0001", "placa": "TX-101",
-     "marca": "Nissan", "modelo": "March", "color": "Blanco", "estado": "libre",
-     "lat": 17.5098, "lng": -91.9820, "circuito": 0, "offset": 0},
-    {"usuario": "op2", "nombre": "Ana Torres", "telefono": "916-200-0002", "placa": "TX-102",
-     "marca": "Chevrolet", "modelo": "Aveo", "color": "Gris", "estado": "libre",
-     "lat": 17.5140, "lng": -91.9855, "circuito": 1, "offset": 1},
-    {"usuario": "op3", "nombre": "Luis Méndez", "telefono": "916-200-0003", "placa": "TX-103",
-     "marca": "Toyota", "modelo": "Yaris", "color": "Café", "estado": "ocupado",
-     "lat": 17.5005, "lng": -91.9895, "circuito": 4, "offset": 2},
-    {"usuario": "op4", "nombre": "José Hernández", "telefono": "916-200-0004", "placa": "TX-104",
-     "marca": "Nissan", "modelo": "Versa", "color": "Rojo", "estado": "libre",
-     "lat": 17.5045, "lng": -91.9750, "circuito": 2, "offset": 3},
-    {"usuario": "op5", "nombre": "Roberto Morales", "telefono": "916-200-0005", "placa": "TX-105",
-     "marca": "Volkswagen", "modelo": "Vento", "color": "Plata", "estado": "asignado",
-     "lat": 17.5160, "lng": -91.9812, "circuito": 1, "offset": 4},
-    {"usuario": "op6", "nombre": "Miguel Sánchez", "telefono": "916-200-0006", "placa": "TX-106",
-     "marca": "Nissan", "modelo": "Tsuru", "color": "Blanco", "estado": "libre",
-     "lat": 17.5125, "lng": -91.9840, "circuito": 0, "offset": 5},
-    {"usuario": "op7", "nombre": "Jorge Albores", "telefono": "916-200-0007", "placa": "TX-107",
-     "marca": "Nissan", "modelo": "Sentra", "color": "Azul Marino", "estado": "ocupado",
-     "lat": 17.4955, "lng": -91.9935, "circuito": 4, "offset": 0},
-    {"usuario": "op8", "nombre": "Fernando Gómez", "telefono": "916-200-0008", "placa": "TX-108",
-     "marca": "Toyota", "modelo": "Corolla", "color": "Blanco", "estado": "libre",
-     "lat": 17.5210, "lng": -91.9715, "circuito": 3, "offset": 1},
-    {"usuario": "op9", "nombre": "Gabriel Estrada", "telefono": "916-200-0009", "placa": "TX-109",
-     "marca": "Chevrolet", "modelo": "Spark", "color": "Amarillo", "estado": "asignado",
-     "lat": 17.5110, "lng": -91.9830, "circuito": 0, "offset": 2},
-    {"usuario": "op10", "nombre": "Ricardo Domínguez", "telefono": "916-200-0010", "placa": "TX-110",
-     "marca": "Nissan", "modelo": "V-Drive", "color": "Gris Oscuro", "estado": "ocupado",
-     "lat": 17.5292, "lng": -91.9562, "circuito": 5, "offset": 3},
-    {"usuario": "op11", "nombre": "Manuel Velasco", "telefono": "916-200-0011", "placa": "TX-111",
-     "marca": "Volkswagen", "modelo": "Gol", "color": "Rojo", "estado": "libre",
-     "lat": 17.5076, "lng": -91.9800, "circuito": 2, "offset": 4},
-    {"usuario": "op12", "nombre": "Alberto Castellanos", "telefono": "916-200-0012", "placa": "TX-112",
-     "marca": "Kia", "modelo": "Rio", "color": "Blanco", "estado": "ocupado",
-     "lat": 17.5242, "lng": -91.9648, "circuito": 3, "offset": 5},
-    {"usuario": "op13", "nombre": "Javier Mendoza", "telefono": "916-200-0013", "placa": "TX-113",
-     "marca": "Nissan", "modelo": "Tiida", "color": "Plata", "estado": "libre",
-     "lat": 17.5172, "lng": -91.9808, "circuito": 1, "offset": 0},
-    {"usuario": "op14", "nombre": "Daniel Morales", "telefono": "916-200-0014", "placa": "TX-114",
-     "marca": "Volkswagen", "modelo": "Virtus", "color": "Azul", "estado": "libre",
-     "lat": 17.5138, "lng": -91.9850, "circuito": 0, "offset": 1},
-    {"usuario": "op15", "nombre": "Oscar Trujillo", "telefono": "916-200-0015", "placa": "TX-115",
-     "marca": "Ford", "modelo": "Figo", "color": "Blanco", "estado": "fuera_de_servicio",
-     "lat": 17.5120, "lng": -91.9880, "circuito": 0, "offset": 2},
+    {
+        "usuario": "op1",
+        "nombre": "Carlos Ramírez",
+        "telefono": "916-200-0001",
+        "placa": "TX-101",
+        "marca": "Nissan",
+        "modelo": "March",
+        "color": "Blanco",
+        "estado": "libre",
+        "pista_id": "pista_centro_juarez",
+        "idx": 0,
+        "lat": 17.509556,
+        "lng": -91.981798
+    },
+    {
+        "usuario": "op2",
+        "nombre": "Ana Torres",
+        "telefono": "916-200-0002",
+        "placa": "TX-102",
+        "marca": "Chevrolet",
+        "modelo": "Aveo",
+        "color": "Gris",
+        "estado": "libre",
+        "pista_id": "pista_canada_ado",
+        "idx": 0,
+        "lat": 17.513922,
+        "lng": -91.985601
+    },
+    {
+        "usuario": "op3",
+        "nombre": "Luis Méndez",
+        "telefono": "916-200-0003",
+        "placa": "TX-103",
+        "marca": "Toyota",
+        "modelo": "Yaris",
+        "color": "Café",
+        "estado": "ocupado",
+        "pista_id": "pista_carretera_ruinas",
+        "idx": 0,
+        "lat": 17.508,
+        "lng": -91.983496
+    },
+    {
+        "usuario": "op4",
+        "nombre": "José Hernández",
+        "telefono": "916-200-0004",
+        "placa": "TX-104",
+        "marca": "Nissan",
+        "modelo": "Versa",
+        "color": "Rojo",
+        "estado": "libre",
+        "pista_id": "pista_periferico_sur",
+        "idx": 0,
+        "lat": 17.504608,
+        "lng": -91.974937
+    },
+    {
+        "usuario": "op5",
+        "nombre": "Roberto Morales",
+        "telefono": "916-200-0005",
+        "placa": "TX-105",
+        "marca": "Volkswagen",
+        "modelo": "Vento",
+        "color": "Plata",
+        "estado": "asignado",
+        "pista_id": "pista_canada_ado",
+        "idx": 20,
+        "lat": 17.517676,
+        "lng": -91.979121
+    },
+    {
+        "usuario": "op6",
+        "nombre": "Miguel Sánchez",
+        "telefono": "916-200-0006",
+        "placa": "TX-106",
+        "marca": "Nissan",
+        "modelo": "Tsuru",
+        "color": "Blanco",
+        "estado": "libre",
+        "pista_id": "pista_centro_juarez",
+        "idx": 10,
+        "lat": 17.513102,
+        "lng": -91.984585
+    },
+    {
+        "usuario": "op7",
+        "nombre": "Jorge Albores",
+        "telefono": "916-200-0007",
+        "placa": "TX-107",
+        "marca": "Nissan",
+        "modelo": "Sentra",
+        "color": "Azul Marino",
+        "estado": "ocupado",
+        "pista_id": "pista_carretera_ruinas",
+        "idx": 25,
+        "lat": 17.497474,
+        "lng": -91.987707
+    },
+    {
+        "usuario": "op8",
+        "nombre": "Fernando Gómez",
+        "telefono": "916-200-0008",
+        "placa": "TX-108",
+        "marca": "Toyota",
+        "modelo": "Corolla",
+        "color": "Blanco",
+        "estado": "libre",
+        "pista_id": "pista_pakal_na",
+        "idx": 15,
+        "lat": 17.520439,
+        "lng": -91.96861
+    },
+    {
+        "usuario": "op9",
+        "nombre": "Gabriel Estrada",
+        "telefono": "916-200-0009",
+        "placa": "TX-109",
+        "marca": "Chevrolet",
+        "modelo": "Spark",
+        "color": "Amarillo",
+        "estado": "asignado",
+        "pista_id": "pista_centro_juarez",
+        "idx": 22,
+        "lat": 17.512472,
+        "lng": -91.983363
+    },
+    {
+        "usuario": "op10",
+        "nombre": "Ricardo Domínguez",
+        "telefono": "916-200-0010",
+        "placa": "TX-110",
+        "marca": "Nissan",
+        "modelo": "V-Drive",
+        "color": "Gris Oscuro",
+        "estado": "ocupado",
+        "pista_id": "pista_tren_maya",
+        "idx": 0,
+        "lat": 17.535944,
+        "lng": -91.959212
+    },
+    {
+        "usuario": "op11",
+        "nombre": "Manuel Velasco",
+        "telefono": "916-200-0011",
+        "placa": "TX-111",
+        "marca": "Volkswagen",
+        "modelo": "Gol",
+        "color": "Rojo",
+        "estado": "libre",
+        "pista_id": "pista_periferico_sur",
+        "idx": 24,
+        "lat": 17.507722,
+        "lng": -91.980063
+    },
+    {
+        "usuario": "op12",
+        "nombre": "Alberto Castellanos",
+        "telefono": "916-200-0012",
+        "placa": "TX-112",
+        "marca": "Kia",
+        "modelo": "Rio",
+        "color": "Blanco",
+        "estado": "ocupado",
+        "pista_id": "pista_pakal_na",
+        "idx": 35,
+        "lat": 17.545707,
+        "lng": -91.977303
+    },
+    {
+        "usuario": "op13",
+        "nombre": "Javier Mendoza",
+        "telefono": "916-200-0013",
+        "placa": "TX-113",
+        "marca": "Nissan",
+        "modelo": "Tiida",
+        "color": "Plata",
+        "estado": "libre",
+        "pista_id": "pista_canada_ado",
+        "idx": 38,
+        "lat": 17.515082,
+        "lng": -91.979701
+    },
+    {
+        "usuario": "op14",
+        "nombre": "Daniel Morales",
+        "telefono": "916-200-0014",
+        "placa": "TX-114",
+        "marca": "Volkswagen",
+        "modelo": "Virtus",
+        "color": "Azul",
+        "estado": "libre",
+        "pista_id": "pista_centro_juarez",
+        "idx": 30,
+        "lat": 17.509535,
+        "lng": -91.981223
+    },
+    {
+        "usuario": "op15",
+        "nombre": "Oscar Trujillo",
+        "telefono": "916-200-0015",
+        "placa": "TX-115",
+        "marca": "Ford",
+        "modelo": "Figo",
+        "color": "Blanco",
+        "estado": "fuera_de_servicio",
+        "pista_id": "pista_centro_juarez",
+        "idx": 15,
+        "lat": 17.51394,
+        "lng": -91.986678
+    }
 ]
 
 _simulacion_activa = False
 _simulacion_task = None
 
 
-def _generar_track_inicial(center_lat: float, center_lng: float, puntos: int = 15) -> list:
+def _generar_track_calle(puntos_calle: list, current_idx: int, cant_puntos: int = 15) -> list:
+    """Genera un historial de recorrido previo (track) estrictamente sobre la calzada vial."""
     track = []
-    base_time = datetime.now(timezone.utc) - timedelta(minutes=puntos * 2)
-    lat, lng = center_lat, center_lng
-    for i in range(puntos):
-        lat += (random.random() - 0.5) * 0.0005
-        lng += (random.random() - 0.5) * 0.0005
+    total = len(puntos_calle)
+    base_time = datetime.now(timezone.utc) - timedelta(minutes=cant_puntos * 2)
+    for i in range(cant_puntos):
+        idx = (current_idx - (cant_puntos - 1 - i)) % total
+        pt = puntos_calle[idx]
         ts = (base_time + timedelta(minutes=i * 2)).isoformat()
-        track.append([round(lat, 6), round(lng, 6), ts])
+        track.append([round(pt[0], 6), round(pt[1], 6), ts])
     return track
 
 
@@ -3596,7 +4807,9 @@ async def sembrar_datos_simulacion():
     op_ids = {}
     for i, t in enumerate(DEMO_TAXIS):
         lat, lng = t["lat"], t["lng"]
-        track = _generar_track_inicial(lat, lng, 15)
+        pista = PALENQUE_PISTAS_VIALES.get(t["pista_id"], {})
+        puntos_calle = pista.get("puntos", [[lat, lng]])
+        track = _generar_track_calle(puntos_calle, t["idx"], 15)
         op_doc = {
             "nombre": t["nombre"],
             "telefono": t["telefono"],
@@ -3924,9 +5137,9 @@ async def sembrar_datos_simulacion():
 
 
 async def _bucle_patrullaje():
-    """Bucle continuo que mueve los 15 taxis por las calles de Palenque y emite GPS en vivo vía WebSocket."""
+    """Bucle de patrullaje que avanza los taxis únicamente sobre las coordenadas exactas de las calles."""
     global _simulacion_activa
-    logger.info("Iniciando bucle de patrullaje continuo para 15 taxis en Palenque...")
+    logger.info("Iniciando bucle de patrullaje vial sobre calles reales...")
     paso = 0
     while _simulacion_activa:
         paso += 1
@@ -3935,22 +5148,20 @@ async def _bucle_patrullaje():
             if taxi.get("estado") == "fuera_de_servicio":
                 continue
             u = taxi["usuario"]
-            circuito = PALENQUE_CIRCUITS[taxi["circuito"]]
-            num_pts = len(circuito)
+            pista = PALENQUE_PISTAS_VIALES.get(taxi["pista_id"], {})
+            puntos = pista.get("puntos", [])
+            if not puntos:
+                continue
+            num_pts = len(puntos)
+            # Avanzar estrictamente punto por punto sobre la calzada asfaltada
+            pt_idx = (taxi.get("idx", 0) + paso) % num_pts
+            next_idx = (pt_idx + 1) % num_pts
+            p1 = puntos[pt_idx]
+            p2 = puntos[next_idx]
+            new_lat, new_lng = p1[0], p1[1]
 
-            # Interpolación progresiva a lo largo del circuito asignado
-            idx = (paso // 6 + taxi.get("offset", 0)) % num_pts
-            next_idx = (idx + 1) % num_pts
-
-            subpaso = (paso % 6) / 6.0
-            p1_lat, p1_lng = circuito[idx]
-            p2_lat, p2_lng = circuito[next_idx]
-
-            new_lat = p1_lat + (p2_lat - p1_lat) * subpaso + (random.random() - 0.5) * 0.00008
-            new_lng = p1_lng + (p2_lng - p1_lng) * subpaso + (random.random() - 0.5) * 0.00008
-
-            speed = round(random.uniform(18.0, 36.0), 1)
-            heading = round(math.degrees(math.atan2(p2_lng - p1_lng, p2_lat - p1_lat)) % 360, 1)
+            speed = round(random.uniform(22.0, 38.0), 1)
+            heading = round(math.degrees(math.atan2(p2[1] - p1[1], p2[0] - p1[0])) % 360, 1)
 
             op = await db.operadores.find_one({"usuario": u})
             if not op:
@@ -3966,7 +5177,7 @@ async def _bucle_patrullaje():
                         "lng": round(new_lng, 6),
                         "gps_speed": round(speed / 3.6, 2),
                         "gps_heading": heading,
-                        "gps_accuracy": round(random.uniform(2.5, 4.5), 1),
+                        "gps_accuracy": 3.0,
                         "ultima_actualizacion": ts,
                     },
                     "$push": {
@@ -3989,7 +5200,6 @@ async def _bucle_patrullaje():
                     }
                 )
 
-            # Notificar vía WebSocket a la Terminal para actualización a 60fps
             ubi_msg = {
                 "type": "ubicacion",
                 "operador_id": op_id,
@@ -4024,15 +5234,13 @@ def _detener_patrullaje():
 async def seed():
     """Siembra completa y arranque de la simulación."""
     res = await sembrar_datos_simulacion()
-    _iniciar_patrullaje()
-    res["patrullaje_activo"] = True
+    res["patrullaje_activo"] = False
     return res
 
 
 @api_router.post("/simulacion/sembrar")
 async def api_simulacion_sembrar():
     res = await sembrar_datos_simulacion()
-    _iniciar_patrullaje()
     return res
 
 
@@ -4046,6 +5254,12 @@ async def api_simulacion_iniciar():
 async def api_simulacion_detener():
     _detener_patrullaje()
     return {"ok": True, "mensaje": "Patrullaje GPS detenido"}
+
+
+@api_router.get("/pistas-viales")
+async def api_pistas_viales():
+    """Retorna las pistas viales predeterminadas y únicas sobre las calles reales de Palenque."""
+    return list(PALENQUE_PISTAS_VIALES.values())
 
 
 @api_router.get("/simulacion/estado")
@@ -4222,7 +5436,6 @@ async def startup():
     logger.info("Central de Taxis API iniciada")
     if await db.operadores.count_documents({}) == 0:
         await sembrar_datos_simulacion()
-    _iniciar_patrullaje()
 
 
 DEFAULT_TIPOS_VEHICULO = [
