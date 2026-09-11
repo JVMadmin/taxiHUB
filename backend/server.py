@@ -5485,10 +5485,74 @@ async def sembrar_datos_simulacion():
     }
 
 
+def _haversine_dist_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    R = 6371000.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp, dl = math.radians(lat2 - lat1), math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _calc_azimuth_bearing(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dl = math.radians(lon2 - lon1)
+    y = math.sin(dl) * math.cos(p2)
+    x = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl)
+    return round((math.degrees(math.atan2(y, x)) + 360) % 360, 1)
+
+
+def _init_pistas_metricas():
+    """Calcula distancias acumuladas y rumbos exactos para interpolación continua a escala milimétrica."""
+    for pid, p in PALENQUE_PISTAS_VIALES.items():
+        pts = p.get("puntos", [])
+        if not pts:
+            continue
+        cum_dist = [0.0]
+        bearings = []
+        for i in range(len(pts) - 1):
+            p1, p2 = pts[i], pts[i + 1]
+            d = _haversine_dist_m(p1[0], p1[1], p2[0], p2[1])
+            cum_dist.append(cum_dist[-1] + d)
+            bearings.append(_calc_azimuth_bearing(p1[0], p1[1], p2[0], p2[1]))
+        bearings.append(bearings[-1] if bearings else 0.0)
+        p["cum_dist"] = cum_dist
+        p["total_dist"] = cum_dist[-1]
+        p["bearings_fwd"] = bearings
+
+
+def _interpolar_posicion_pista(pista: dict, dist_m: float):
+    """Interpola exactamente lat, lng y rumbo sobre la pista vial según la distancia recorrida."""
+    cum_dist = pista.get("cum_dist", [0.0])
+    pts = pista.get("puntos", [])
+    bearings = pista.get("bearings_fwd", [])
+    total = pista.get("total_dist", 0.0)
+    if not pts or total <= 0:
+        return (pts[0][0], pts[0][1], 0.0) if pts else (17.5099, -91.9847, 0.0)
+
+    d = max(0.0, min(total, dist_m))
+    idx = 0
+    for i in range(len(cum_dist) - 1):
+        if cum_dist[i] <= d <= cum_dist[i + 1]:
+            idx = i
+            break
+        elif d > cum_dist[i + 1]:
+            idx = i
+
+    seg_len = cum_dist[idx + 1] - cum_dist[idx]
+    frac = 0.0 if seg_len <= 1e-6 else (d - cum_dist[idx]) / seg_len
+    p1 = pts[idx]
+    p2 = pts[idx + 1]
+    lat = p1[0] + frac * (p2[0] - p1[0])
+    lng = p1[1] + frac * (p2[1] - p1[1])
+    brg = bearings[idx] if idx < len(bearings) else 0.0
+    return lat, lng, brg
+
+
 async def _bucle_patrullaje():
-    """Bucle de patrullaje vial continuo que recorre las calles de Palenque según sus sentidos."""
+    """Bucle de patrullaje vial continuo que recorre las calles de Palenque a velocidad urbana realista (< 40 km/h)."""
     global _simulacion_activa
-    logger.info("Iniciando bucle de patrullaje vial continuo sobre calles de Palenque...")
+    _init_pistas_metricas()
+    logger.info("Iniciando bucle de patrullaje continuo a velocidad realista (< 40 km/h) sobre pistas viales de Palenque...")
     while _simulacion_activa:
         ts = now_iso()
         for taxi in DEMO_TAXIS:
@@ -5496,43 +5560,45 @@ async def _bucle_patrullaje():
                 continue
             u = taxi["usuario"]
             pista = PALENQUE_PISTAS_VIALES.get(taxi["pista_id"], {})
-            puntos = pista.get("puntos", [])
-            bearings = pista.get("bearings_fwd", [])
+            cum_dist = pista.get("cum_dist", [])
+            total_dist = pista.get("total_dist", 0.0)
             doble_sentido = pista.get("doble_sentido", False)
-            if not puntos:
+            if not cum_dist or total_dist <= 0:
                 continue
 
-            num_pts = len(puntos)
-            curr_idx = taxi.get("idx", 0)
+            # Inicializar posición métrica si no existe
+            if "dist_m" not in taxi:
+                init_idx = min(taxi.get("idx", 0), len(cum_dist) - 1)
+                taxi["dist_m"] = cum_dist[init_idx]
+
             sentido_dir = taxi.get("sentido_direccion", "adelante")
-
-            # Avanzar según el sentido de la calle
-            if sentido_dir == "adelante":
-                next_idx = curr_idx + 1
-                if next_idx >= num_pts:
-                    if doble_sentido:
-                        sentido_dir = "reversa"
-                        next_idx = max(0, num_pts - 2)
-                    else:
-                        next_idx = 0
-            else:
-                next_idx = curr_idx - 1
-                if next_idx < 0:
-                    if doble_sentido:
-                        sentido_dir = "adelante"
-                        next_idx = min(num_pts - 1, 1)
-                    else:
-                        next_idx = num_pts - 1
-
-            taxi["idx"] = next_idx
-            taxi["sentido_direccion"] = sentido_dir
-
-            pt = puntos[next_idx]
-            new_lat, new_lng = pt[0], pt[1]
-            brg_fwd = bearings[next_idx] if next_idx < len(bearings) else 0.0
-            heading = round((brg_fwd + 180) % 360, 1) if sentido_dir == "reversa" else brg_fwd
-            speed_kmh = round(random.uniform(25.0, 42.0), 1)
+            # Velocidad estrictamente controlada < 40 km/h (promedio urbano 26 a 34 km/h)
+            speed_kmh = round(random.uniform(26.0, 34.0), 1)
             speed_ms = round(speed_kmh / 3.6, 2)
+            dt = 2.0
+            step_m = speed_ms * dt  # ~14.4 a 18.8 metros por ciclo
+
+            if sentido_dir == "adelante":
+                taxi["dist_m"] += step_m
+                if taxi["dist_m"] >= total_dist:
+                    if doble_sentido:
+                        overshoot = taxi["dist_m"] - total_dist
+                        taxi["dist_m"] = max(0.0, total_dist - overshoot)
+                        sentido_dir = "reversa"
+                    else:
+                        taxi["dist_m"] = taxi["dist_m"] % total_dist
+            else:  # reversa en calles de doble sentido
+                taxi["dist_m"] -= step_m
+                if taxi["dist_m"] <= 0.0:
+                    if doble_sentido:
+                        taxi["dist_m"] = abs(taxi["dist_m"])
+                        sentido_dir = "adelante"
+                    else:
+                        taxi["dist_m"] = total_dist - abs(taxi["dist_m"])
+
+            taxi["sentido_direccion"] = sentido_dir
+            new_lat, new_lng, brg_fwd = _interpolar_posicion_pista(pista, taxi["dist_m"])
+            heading = round((brg_fwd + 180) % 360, 1) if sentido_dir == "reversa" else brg_fwd
 
             op = await db.operadores.find_one({"usuario": u})
             if not op:
@@ -5554,7 +5620,7 @@ async def _bucle_patrullaje():
                     "$push": {
                         "track": {
                             "$each": [track_pt],
-                            "$slice": -35
+                            "$slice": -45
                         }
                     }
                 }
@@ -5584,7 +5650,7 @@ async def _bucle_patrullaje():
             await manager.broadcast_terminal(ubi_msg)
             await _notificar_dueno_de_operador(op_id, ubi_msg)
 
-        await asyncio.sleep(2.5)
+        await asyncio.sleep(2.0)
 
 
 def _iniciar_patrullaje():

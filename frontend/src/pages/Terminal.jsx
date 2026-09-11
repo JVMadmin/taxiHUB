@@ -25,6 +25,7 @@ import { INDICADORES } from "@/components/ops/indicadores";
 import { MapSearch } from "@/components/maps/MapSearch";
 import { RecorridoGradiente } from "@/components/maps/RecorridoGradiente";
 import { MaplibreVectorTileLayer } from "@/components/maps/MaplibreVectorTileLayer";
+import { SmoothTaxiMarker } from "@/components/maps/SmoothTaxiMarker";
 import { Layers, Satellite, ChevronRight, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -542,37 +543,14 @@ export default function Terminal() {
             return ahead ? <Marker position={[ahead.lat, ahead.lng]} icon={routeArrowIcon()} /> : null;
           })()}
           {visibles.map((o) => (
-            <Marker
+            <SmoothTaxiMarker
               key={o.id}
-              position={[o.lat, o.lng]}
-              zIndexOffset={selectedId === o.id ? 1000 : 0}
-              icon={taxiStateAssetIcon(o.estado, {
-                label: o.placa,
-                selected: selectedId === o.id,
-                heading: o.id === selectedId ? destinoHeading : (o.gps_heading || 0),
-              })}
-              eventHandlers={{ click: () => { setSelectedId(o.id); setFollow(false); } }}
-            >
-              <Popup>
-                <div className="min-w-[200px] text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold">{o.nombre}</span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold" style={{ color: ESTADO_COLORS[o.estado] }}>
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: ESTADO_COLORS[o.estado] }} />
-                      {ESTADO_LABEL[o.estado]}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
-                    <div>Unidad: {o.vehiculo?.numero_economico || o.placa || "—"}</div>
-                    <div>Ruta: {nombreRuta(o.ruta_asignada)}</div>
-                    {o.descripcion_sentido && (
-                      <div className="text-emerald-400/90 font-medium">Sentido: {o.descripcion_sentido}</div>
-                    )}
-                    <div>GPS: {timeAgo(o.ultima_actualizacion)} ({Math.round(o.gps_heading || 0)}°)</div>
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
+              op={o}
+              selected={selectedId === o.id}
+              destinoHeading={destinoHeading}
+              onSelect={() => { setSelectedId(o.id); setFollow(false); }}
+              nombreRuta={nombreRuta}
+            />
           ))}
         </MapContainer>
       </div>

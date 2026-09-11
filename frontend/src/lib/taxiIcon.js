@@ -257,7 +257,7 @@ export function taxiStateAssetIcon(estado, { heading = 0, selected = false, labe
   const fullH = dim + (label ? 24 : 0);
   const html = `
     <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
-      <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 7px 9px rgba(8,24,27,.35))">
+      <div class="th-taxi-rotator" style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 7px 9px rgba(8,24,27,.35))">
         ${pulse}<img src="${asset}" alt="" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1" />
       </div>${labelHtml}
     </div>`;
