@@ -22,6 +22,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 import uuid
 import httpx
+import random
+import asyncio
 
 
 # ---------------------------------------------------------------------------
@@ -120,8 +122,11 @@ def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+def now_iso(offset_minutes: float = 0) -> str:
+    dt = datetime.now(timezone.utc)
+    if offset_minutes:
+        dt += timedelta(minutes=offset_minutes)
+    return dt.isoformat()
 
 
 def to_oid(id_str: str) -> ObjectId:
@@ -3467,66 +3472,599 @@ async def dev_auditoria(_=Depends(require_dev)):
 
 
 # ---------------------------------------------------------------------------
-# Seed (manual)
+# Simulación Avanzada de Flota (15+ Taxis, WhatsApp, Servicios y Movimiento GPS)
 # ---------------------------------------------------------------------------
-@api_router.post("/seed")
-async def seed():
-    if await db.operadores.count_documents({}) > 0:
-        return {"ok": True, "message": "La base ya tiene datos, seed omitido."}
+PALENQUE_CIRCUITS = [
+    # Circuito 1: Av. Juárez - Parque Central - Mercado
+    [
+        (17.5098, -91.9820), (17.5110, -91.9830), (17.5125, -91.9842),
+        (17.5138, -91.9850), (17.5128, -91.9828), (17.5108, -91.9812),
+    ],
+    # Circuito 2: La Cañada - Corredor Hotelero - ADO
+    [
+        (17.5140, -91.9855), (17.5156, -91.9834), (17.5172, -91.9808),
+        (17.5185, -91.9788), (17.5168, -91.9818), (17.5148, -91.9842),
+    ],
+    # Circuito 3: Plaza Las Flores - Periférico Sur - Hospital General
+    [
+        (17.5045, -91.9750), (17.5060, -91.9778), (17.5076, -91.9800),
+        (17.5090, -91.9812), (17.5072, -91.9765), (17.5052, -91.9742),
+    ],
+    # Circuito 4: Corredor Federal Pakal-Ná
+    [
+        (17.5180, -91.9780), (17.5210, -91.9715), (17.5242, -91.9648),
+        (17.5268, -91.9588), (17.5238, -91.9658), (17.5198, -91.9725),
+    ],
+    # Circuito 5: Carretera Ruinas / Misión Palenque
+    [
+        (17.5080, -91.9835), (17.5045, -91.9865), (17.5005, -91.9895),
+        (17.4955, -91.9935), (17.4995, -91.9885), (17.5055, -91.9845),
+    ],
+    # Circuito 6: Estación Tren Maya - Libramiento
+    [
+        (17.5255, -91.9605), (17.5292, -91.9562), (17.5325, -91.9532),
+        (17.5305, -91.9552), (17.5262, -91.9592),
+    ]
+]
 
+DEMO_TAXIS = [
+    {"usuario": "op1", "nombre": "Carlos Ramírez", "telefono": "916-200-0001", "placa": "TX-101",
+     "marca": "Nissan", "modelo": "March", "color": "Blanco", "estado": "libre",
+     "lat": 17.5098, "lng": -91.9820, "circuito": 0, "offset": 0},
+    {"usuario": "op2", "nombre": "Ana Torres", "telefono": "916-200-0002", "placa": "TX-102",
+     "marca": "Chevrolet", "modelo": "Aveo", "color": "Gris", "estado": "libre",
+     "lat": 17.5140, "lng": -91.9855, "circuito": 1, "offset": 1},
+    {"usuario": "op3", "nombre": "Luis Méndez", "telefono": "916-200-0003", "placa": "TX-103",
+     "marca": "Toyota", "modelo": "Yaris", "color": "Café", "estado": "ocupado",
+     "lat": 17.5005, "lng": -91.9895, "circuito": 4, "offset": 2},
+    {"usuario": "op4", "nombre": "José Hernández", "telefono": "916-200-0004", "placa": "TX-104",
+     "marca": "Nissan", "modelo": "Versa", "color": "Rojo", "estado": "libre",
+     "lat": 17.5045, "lng": -91.9750, "circuito": 2, "offset": 3},
+    {"usuario": "op5", "nombre": "Roberto Morales", "telefono": "916-200-0005", "placa": "TX-105",
+     "marca": "Volkswagen", "modelo": "Vento", "color": "Plata", "estado": "asignado",
+     "lat": 17.5160, "lng": -91.9812, "circuito": 1, "offset": 4},
+    {"usuario": "op6", "nombre": "Miguel Sánchez", "telefono": "916-200-0006", "placa": "TX-106",
+     "marca": "Nissan", "modelo": "Tsuru", "color": "Blanco", "estado": "libre",
+     "lat": 17.5125, "lng": -91.9840, "circuito": 0, "offset": 5},
+    {"usuario": "op7", "nombre": "Jorge Albores", "telefono": "916-200-0007", "placa": "TX-107",
+     "marca": "Nissan", "modelo": "Sentra", "color": "Azul Marino", "estado": "ocupado",
+     "lat": 17.4955, "lng": -91.9935, "circuito": 4, "offset": 0},
+    {"usuario": "op8", "nombre": "Fernando Gómez", "telefono": "916-200-0008", "placa": "TX-108",
+     "marca": "Toyota", "modelo": "Corolla", "color": "Blanco", "estado": "libre",
+     "lat": 17.5210, "lng": -91.9715, "circuito": 3, "offset": 1},
+    {"usuario": "op9", "nombre": "Gabriel Estrada", "telefono": "916-200-0009", "placa": "TX-109",
+     "marca": "Chevrolet", "modelo": "Spark", "color": "Amarillo", "estado": "asignado",
+     "lat": 17.5110, "lng": -91.9830, "circuito": 0, "offset": 2},
+    {"usuario": "op10", "nombre": "Ricardo Domínguez", "telefono": "916-200-0010", "placa": "TX-110",
+     "marca": "Nissan", "modelo": "V-Drive", "color": "Gris Oscuro", "estado": "ocupado",
+     "lat": 17.5292, "lng": -91.9562, "circuito": 5, "offset": 3},
+    {"usuario": "op11", "nombre": "Manuel Velasco", "telefono": "916-200-0011", "placa": "TX-111",
+     "marca": "Volkswagen", "modelo": "Gol", "color": "Rojo", "estado": "libre",
+     "lat": 17.5076, "lng": -91.9800, "circuito": 2, "offset": 4},
+    {"usuario": "op12", "nombre": "Alberto Castellanos", "telefono": "916-200-0012", "placa": "TX-112",
+     "marca": "Kia", "modelo": "Rio", "color": "Blanco", "estado": "ocupado",
+     "lat": 17.5242, "lng": -91.9648, "circuito": 3, "offset": 5},
+    {"usuario": "op13", "nombre": "Javier Mendoza", "telefono": "916-200-0013", "placa": "TX-113",
+     "marca": "Nissan", "modelo": "Tiida", "color": "Plata", "estado": "libre",
+     "lat": 17.5172, "lng": -91.9808, "circuito": 1, "offset": 0},
+    {"usuario": "op14", "nombre": "Daniel Morales", "telefono": "916-200-0014", "placa": "TX-114",
+     "marca": "Volkswagen", "modelo": "Virtus", "color": "Azul", "estado": "libre",
+     "lat": 17.5138, "lng": -91.9850, "circuito": 0, "offset": 1},
+    {"usuario": "op15", "nombre": "Oscar Trujillo", "telefono": "916-200-0015", "placa": "TX-115",
+     "marca": "Ford", "modelo": "Figo", "color": "Blanco", "estado": "fuera_de_servicio",
+     "lat": 17.5120, "lng": -91.9880, "circuito": 0, "offset": 2},
+]
+
+_simulacion_activa = False
+_simulacion_task = None
+
+
+def _generar_track_inicial(center_lat: float, center_lng: float, puntos: int = 15) -> list:
+    track = []
+    base_time = datetime.now(timezone.utc) - timedelta(minutes=puntos * 2)
+    lat, lng = center_lat, center_lng
+    for i in range(puntos):
+        lat += (random.random() - 0.5) * 0.0005
+        lng += (random.random() - 0.5) * 0.0005
+        ts = (base_time + timedelta(minutes=i * 2)).isoformat()
+        track.append([round(lat, 6), round(lng, 6), ts])
+    return track
+
+
+async def sembrar_datos_simulacion():
+    """Siembra 15 taxis completos, rutas, servicios activos y 10 conversaciones de WhatsApp."""
     await _migraciones()
 
-    # Rutas
-    rutas = [
-        {"nombre": "Palenque - Pakal Ná", "color_hex": "#00b894"},
-        {"nombre": "Centro - La Cañada", "color_hex": "#0984e3"},
+    # 1. Rutas
+    rutas_data = [
+        {"nombre": "Palenque - Pakal Ná", "color_hex": "#4F5DFF"},
+        {"nombre": "Centro - La Cañada", "color_hex": "#7CFC3C"},
+        {"nombre": "Circuito Hotelero", "color_hex": "#FFB224"},
     ]
-    r_ids = [(await db.rutas.insert_one(r)).inserted_id for r in rutas]
+    rutas_ids = []
+    for r in rutas_data:
+        existente = await db.rutas.find_one({"nombre": r["nombre"]})
+        if existente:
+            rutas_ids.append(str(existente["_id"]))
+        else:
+            ins = await db.rutas.insert_one(r)
+            rutas_ids.append(str(ins.inserted_id))
 
-    # Clientes (y un pasajero con cuenta)
-    clientes = [
-        {"nombre": "María López", "telefono": "916-100-0001", "creado": now_iso(), "sitio_id": DEFAULT_SITIO},
-        {"nombre": "Juan Pérez", "telefono": "916-100-0002", "creado": now_iso(), "sitio_id": DEFAULT_SITIO},
-    ]
-    for c in clientes:
-        await db.clientes.insert_one(c)
-
-    # Operadores + vehículos vinculados
-    operadores = [
-        {"nombre": "Carlos Ramírez", "telefono": "916-200-0001", "placa": "TX-101",
-         "ruta_asignada": str(r_ids[0]), "usuario": "op1", "password_hash": hash_password("taxi123"),
-         "marca": "Nissan", "modelo": "March", "color": "Blanco"},
-        {"nombre": "Ana Torres", "telefono": "916-200-0002", "placa": "TX-102",
-         "ruta_asignada": None, "usuario": "op2", "password_hash": hash_password("taxi123"),
-         "marca": "Chevrolet", "modelo": "Aveo", "color": "Gris"},
-        {"nombre": "Luis Méndez", "telefono": "916-200-0003", "placa": "TX-103",
-         "ruta_asignada": str(r_ids[1]), "usuario": "op3", "password_hash": hash_password("taxi123"),
-         "marca": "Toyota", "modelo": "Yaris", "color": "Café"},
-    ]
     tipo_estandar_id = await _tipo_vehiculo_default_id()
-    for o in operadores:
-        doc = {k: v for k, v in o.items() if k not in ("marca", "modelo", "color")}
-        doc.update({"estado": EstadoOperador.fuera_de_servicio.value,
-                    "lat": None, "lng": None, "ultima_actualizacion": None,
-                    "sitio_id": DEFAULT_SITIO, "activo": True})
-        res = await db.operadores.insert_one(doc)
-        op_id = str(res.inserted_id)
-        v_res = await db.vehiculos.insert_one({
-            "numero_economico": o["placa"], "placa": None,
-            "marca": o.get("marca"), "modelo": o.get("modelo"), "color": o.get("color"),
-            "estado": "activo", "activo": True, "sitio_id": DEFAULT_SITIO,
-            "operador_conductor_id": op_id, "lat": None, "lng": None, "ultima_actualizacion": None,
-            "tipo_vehiculo_id": tipo_estandar_id, "foto_url": None,
-        })
-        await db.operadores.update_one({"_id": res.inserted_id}, {"$set": {"vehiculo_id": str(v_res.inserted_id)}})
 
-    return {"ok": True, "message": "Datos de ejemplo creados",
-            "operadores": ["op1", "op2", "op3"], "contrasena": "taxi123"}
+    # 2. 15 Taxis y Operadores
+    op_ids = {}
+    for i, t in enumerate(DEMO_TAXIS):
+        lat, lng = t["lat"], t["lng"]
+        track = _generar_track_inicial(lat, lng, 15)
+        op_doc = {
+            "nombre": t["nombre"],
+            "telefono": t["telefono"],
+            "placa": t["placa"],
+            "ruta_asignada": rutas_ids[i % len(rutas_ids)],
+            "usuario": t["usuario"],
+            "password_hash": hash_password("taxi123"),
+            "estado": t["estado"],
+            "lat": lat,
+            "lng": lng,
+            "gps_speed": 6.5 if t["estado"] != "fuera_de_servicio" else 0.0,
+            "gps_heading": (i * 24) % 360,
+            "gps_accuracy": round(random.uniform(2.5, 4.5), 1),
+            "ultima_actualizacion": now_iso(),
+            "sitio_id": DEFAULT_SITIO,
+            "activo": True,
+            "track": track,
+        }
+        existente = await db.operadores.find_one({"usuario": t["usuario"]})
+        if existente:
+            await db.operadores.update_one({"_id": existente["_id"]}, {"$set": op_doc})
+            op_id = str(existente["_id"])
+        else:
+            ins = await db.operadores.insert_one(op_doc)
+            op_id = str(ins.inserted_id)
+        op_ids[t["usuario"]] = op_id
+
+        # Vehículo vinculado
+        v_doc = {
+            "numero_economico": t["placa"],
+            "placa": t["placa"],
+            "marca": t["marca"],
+            "modelo": t["modelo"],
+            "color": t["color"],
+            "estado": "activo" if t["estado"] != "fuera_de_servicio" else "mantenimiento",
+            "activo": True,
+            "sitio_id": DEFAULT_SITIO,
+            "operador_conductor_id": op_id,
+            "lat": lat,
+            "lng": lng,
+            "ultima_actualizacion": now_iso(),
+            "tipo_vehiculo_id": tipo_estandar_id,
+            "foto_url": None,
+        }
+        await db.vehiculos.update_one(
+            {"numero_economico": t["placa"]},
+            {"$set": v_doc},
+            upsert=True
+        )
+        v_obj = await db.vehiculos.find_one({"numero_economico": t["placa"]})
+        await db.operadores.update_one({"_id": to_oid(op_id)}, {"$set": {"vehiculo_id": str(v_obj["_id"])}})
+
+    # 3. Servicios en varios estados
+    await db.servicios.delete_many({})
+    servicios = [
+        # En curso
+        {
+            "cliente_nombre": "Dr. Fernando Ruiz", "cliente_telefono": "916-555-0101",
+            "origen": {"texto": "Hotel Ciudad Real, Palenque", "lat": 17.5100, "lng": -91.9830},
+            "destino": {"texto": "Zona Arqueológica de Palenque", "lat": 17.4840, "lng": -92.0460},
+            "estado": "en_curso", "operador_asignado_id": op_ids["op3"],
+            "costo": 180.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-15), "timestamp_creacion": now_iso(-15),
+            "timestamp_asignacion": now_iso(-12), "timestamp_inicio": now_iso(-8),
+        },
+        {
+            "cliente_nombre": "Lic. Mónica Estrada", "cliente_telefono": "916-555-0102",
+            "origen": {"texto": "Terminal ADO Palenque", "lat": 17.5140, "lng": -91.9855},
+            "destino": {"texto": "Hotel Chan-Kah Resort Village", "lat": 17.4920, "lng": -92.0200},
+            "estado": "en_curso", "operador_asignado_id": op_ids["op7"],
+            "costo": 150.0, "metodo_pago": "tarjeta", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-10), "timestamp_creacion": now_iso(-10),
+            "timestamp_asignacion": now_iso(-8), "timestamp_inicio": now_iso(-5),
+        },
+        {
+            "cliente_nombre": "Arqueólogo Mateo Ramos", "cliente_telefono": "916-555-0103",
+            "origen": {"texto": "Estación Tren Maya Palenque", "lat": 17.5320, "lng": -91.9540},
+            "destino": {"texto": "Parque Central de Palenque", "lat": 17.5098, "lng": -91.9820},
+            "estado": "en_curso", "operador_asignado_id": op_ids["op10"],
+            "costo": 90.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-8), "timestamp_creacion": now_iso(-8),
+            "timestamp_asignacion": now_iso(-6), "timestamp_inicio": now_iso(-3),
+        },
+        {
+            "cliente_nombre": "Verónica Salgado", "cliente_telefono": "916-555-0104",
+            "origen": {"texto": "Hospital General de Palenque", "lat": 17.5060, "lng": -91.9780},
+            "destino": {"texto": "Colonia Pakal Ná Centro", "lat": 17.5250, "lng": -91.9600},
+            "estado": "en_curso", "operador_asignado_id": op_ids["op12"],
+            "costo": 80.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-6), "timestamp_creacion": now_iso(-6),
+            "timestamp_asignacion": now_iso(-4), "timestamp_inicio": now_iso(-2),
+        },
+        # Asignados
+        {
+            "cliente_nombre": "María López (Hotel Maya)", "cliente_telefono": "916-100-0001",
+            "origen": {"texto": "Hotel Maya Tulipanes, La Cañada", "lat": 17.5165, "lng": -91.9810},
+            "destino": {"texto": "Restaurante Bajlum", "lat": 17.5080, "lng": -91.9850},
+            "estado": "asignado", "operador_asignado_id": op_ids["op5"],
+            "costo": 60.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-4), "timestamp_creacion": now_iso(-4), "timestamp_asignacion": now_iso(-2),
+        },
+        {
+            "cliente_nombre": "Carmen Velasco (Super Che)", "cliente_telefono": "916-100-0006",
+            "origen": {"texto": "Super Che Palenque, Av. Juárez", "lat": 17.5125, "lng": -91.9840},
+            "destino": {"texto": "Fracc. La Ceiba, Mza 4", "lat": 17.5020, "lng": -91.9720},
+            "estado": "asignado", "operador_asignado_id": op_ids["op9"],
+            "costo": 55.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-3), "timestamp_creacion": now_iso(-3), "timestamp_asignacion": now_iso(-1),
+        },
+        # Pendientes (listos para despacho en la terminal)
+        {
+            "cliente_nombre": "Guillermo Zepeda", "cliente_telefono": "916-555-0201",
+            "origen": {"texto": "Restaurante Maya Cañada", "lat": 17.5180, "lng": -91.9790},
+            "destino": {"texto": "Balneario Nututún", "lat": 17.4760, "lng": -91.9980},
+            "estado": "pendiente", "operador_asignado_id": None,
+            "costo": 120.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-3), "timestamp_creacion": now_iso(-3),
+        },
+        {
+            "cliente_nombre": "Familia Barrientos", "cliente_telefono": "916-100-0008",
+            "origen": {"texto": "Parque Central frente a Catedral", "lat": 17.5098, "lng": -91.9820},
+            "destino": {"texto": "Ecoparque Aluxes", "lat": 17.5010, "lng": -92.0120},
+            "estado": "pendiente", "operador_asignado_id": None,
+            "costo": 95.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-2), "timestamp_creacion": now_iso(-2),
+        },
+        {
+            "cliente_nombre": "Ing. David Trujillo", "cliente_telefono": "916-100-0007",
+            "origen": {"texto": "Estación Tren Maya Palenque", "lat": 17.5320, "lng": -91.9540},
+            "destino": {"texto": "Hotel Misión Palenque", "lat": 17.5130, "lng": -91.9790},
+            "estado": "pendiente", "operador_asignado_id": None,
+            "costo": 110.0, "metodo_pago": "transferencia", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-1), "timestamp_creacion": now_iso(-1),
+        },
+        # Completados hoy
+        {
+            "cliente_nombre": "Sofía Castro", "cliente_telefono": "916-555-0301",
+            "origen": {"texto": "Terminal ADO"}, "destino": {"texto": "Parque Central"},
+            "estado": "completado", "operador_asignado_id": op_ids["op1"],
+            "costo": 50.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-120), "timestamp_creacion": now_iso(-120), "timestamp_fin": now_iso(-100),
+        },
+        {
+            "cliente_nombre": "Alberto Núñez", "cliente_telefono": "916-555-0302",
+            "origen": {"texto": "Mercado Municipal"}, "destino": {"texto": "Hotel Chan-Kah"},
+            "estado": "completado", "operador_asignado_id": op_ids["op2"],
+            "costo": 130.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-90), "timestamp_creacion": now_iso(-90), "timestamp_fin": now_iso(-70),
+        },
+        {
+            "cliente_nombre": "Lucía Domínguez", "cliente_telefono": "916-555-0303",
+            "origen": {"texto": "Colonia Pakal Ná"}, "destino": {"texto": "Centro Médico Palenque"},
+            "estado": "completado", "operador_asignado_id": op_ids["op4"],
+            "costo": 65.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-75), "timestamp_creacion": now_iso(-75), "timestamp_fin": now_iso(-55),
+        },
+        {
+            "cliente_nombre": "Gustavo Morales", "cliente_telefono": "916-555-0304",
+            "origen": {"texto": "Hotel Tulijá Express"}, "destino": {"texto": "Plaza Las Flores"},
+            "estado": "completado", "operador_asignado_id": op_ids["op6"],
+            "costo": 55.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-60), "timestamp_creacion": now_iso(-60), "timestamp_fin": now_iso(-40),
+        },
+        {
+            "cliente_nombre": "Elena Morales", "cliente_telefono": "916-555-0305",
+            "origen": {"texto": "Plaza de las Artesanías"}, "destino": {"texto": "Hotel Maya Tulipanes"},
+            "estado": "completado", "operador_asignado_id": op_ids["op8"],
+            "costo": 45.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-45), "timestamp_creacion": now_iso(-45), "timestamp_fin": now_iso(-25),
+        },
+        {
+            "cliente_nombre": "Mariana Cifuentes", "cliente_telefono": "916-555-0306",
+            "origen": {"texto": "Aeropuerto de Palenque"}, "destino": {"texto": "Hotel Ciudad Real"},
+            "estado": "completado", "operador_asignado_id": op_ids["op11"],
+            "costo": 220.0, "metodo_pago": "tarjeta", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-40), "timestamp_creacion": now_iso(-40), "timestamp_fin": now_iso(-15),
+        },
+        {
+            "cliente_nombre": "Ignacio Rivas", "cliente_telefono": "916-555-0307",
+            "origen": {"texto": "Gasolinera Periférico"}, "destino": {"texto": "Terminal ADO"},
+            "estado": "completado", "operador_asignado_id": op_ids["op13"],
+            "costo": 50.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-30), "timestamp_creacion": now_iso(-30), "timestamp_fin": now_iso(-10),
+        },
+        {
+            "cliente_nombre": "Raúl Santillán", "cliente_telefono": "916-555-0308",
+            "origen": {"texto": "Palacio Municipal"}, "destino": {"texto": "Colonia Los Ángeles"},
+            "estado": "completado", "operador_asignado_id": op_ids["op14"],
+            "costo": 60.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-20), "timestamp_creacion": now_iso(-20), "timestamp_fin": now_iso(-5),
+        },
+    ]
+    await db.servicios.insert_many(servicios)
+
+    # 4. 10 Conversaciones de WhatsApp
+    await db.wa_conversaciones.delete_many({})
+    wa_conversaciones = [
+        # 1: María López - Reciente (< 2 min), Hotel Maya Tulipanes
+        {
+            "cliente_nombre": "María López",
+            "cliente_telefono": "+52 916 100 0001",
+            "creada_en": now_iso(-1),
+            "actualizada_en": now_iso(-1),
+            "mensajes": [
+                {"de": "cliente", "texto": "Buenas tardes central, ¿tienen un taxi disponible?", "ts": now_iso(-2)},
+                {"de": "cliente", "texto": "Estoy aquí en la recepción del Hotel Maya Tulipanes con mi maleta", "lat": 17.5165, "lng": -91.9810, "ts": now_iso(-1)}
+            ]
+        },
+        # 2: Dr. Alejandro Gómez - Advertencia (2-5 min), Hospital General
+        {
+            "cliente_nombre": "Dr. Alejandro Gómez",
+            "cliente_telefono": "+52 916 100 0002",
+            "creada_en": now_iso(-4),
+            "actualizada_en": now_iso(-3),
+            "mensajes": [
+                {"de": "cliente", "texto": "Hola central, salgo de turno de guardia médica", "ts": now_iso(-4)},
+                {"de": "cliente", "texto": "Comparto mi ubicación frente a Urgencias del Hospital General", "lat": 17.5060, "lng": -91.9780, "ts": now_iso(-3)}
+            ]
+        },
+        # 3: Elena Morales (ADO) - Urgente (> 5 min, URGENTE rojo), Terminal ADO
+        {
+            "cliente_nombre": "Elena Morales (ADO)",
+            "cliente_telefono": "+52 916 100 0003",
+            "creada_en": now_iso(-8),
+            "actualizada_en": now_iso(-7),
+            "mensajes": [
+                {"de": "cliente", "texto": "Buenas tardes, ¿me pueden mandar una unidad a la Terminal ADO? Llegó mi autobús.", "ts": now_iso(-8)},
+                {"de": "cliente", "texto": "Aquí los espero afuera sobre la banqueta principal con 2 maletas", "lat": 17.5140, "lng": -91.9855, "ts": now_iso(-7)}
+            ]
+        },
+        # 4: Pedro Santos - Turista (Pregunta tarifas Misol-Ha)
+        {
+            "cliente_nombre": "Pedro Santos (Turista)",
+            "cliente_telefono": "+52 916 100 0004",
+            "creada_en": now_iso(-14),
+            "actualizada_en": now_iso(-10),
+            "mensajes": [
+                {"de": "cliente", "texto": "Hola buenas tardes, ¿cuánto cobran por llevarnos y esperarnos en las Cascadas de Misol-Ha?", "ts": now_iso(-12)},
+                {"de": "operadora", "texto": "Buenas tardes Pedro, el viaje redondo con 2 horas de espera está en $450 pesos.", "ts": now_iso(-11)},
+                {"de": "cliente", "texto": "Excelente, ¿tienen unidad para salir en 20 minutos?", "ts": now_iso(-10)}
+            ]
+        },
+        # 5: Lic. Roberto Coutiño - Ejecutivo Aeropuerto Palenque
+        {
+            "cliente_nombre": "Lic. Roberto Coutiño",
+            "cliente_telefono": "+52 916 100 0005",
+            "creada_en": now_iso(-5),
+            "actualizada_en": now_iso(-4),
+            "mensajes": [
+                {"de": "cliente", "texto": "Buenos días, requiero una unidad ejecutiva hacia el Aeropuerto de Palenque para vuelo de las 11:30 am.", "ts": now_iso(-5)},
+                {"de": "cliente", "texto": "Estoy en el Centro frente a Banamex, ¿pueden emitir factura?", "lat": 17.5100, "lng": -91.9825, "ts": now_iso(-4)}
+            ]
+        },
+        # 6: Carmen Velasco - Super Chedraui (Compras)
+        {
+            "cliente_nombre": "Carmen Velasco",
+            "cliente_telefono": "+52 916 100 0006",
+            "creada_en": now_iso(-2),
+            "actualizada_en": now_iso(-2),
+            "mensajes": [
+                {"de": "cliente", "texto": "Hola, salgo de hacer despensa de Super Che con varios carritos", "ts": now_iso(-2)},
+                {"de": "cliente", "texto": "Ocupo un taxi con cajuela amplia por favor, estoy en el estacionamiento", "lat": 17.5125, "lng": -91.9840, "ts": now_iso(-2)}
+            ]
+        },
+        # 7: Ing. David Trujillo - Tren Maya Palenque (> 5 min, URGENTE rojo)
+        {
+            "cliente_nombre": "Ing. David Trujillo (Tren Maya)",
+            "cliente_telefono": "+52 916 100 0007",
+            "creada_en": now_iso(-7),
+            "actualizada_en": now_iso(-6),
+            "mensajes": [
+                {"de": "cliente", "texto": "Acabamos de bajar del Tren Maya en la estación Palenque", "ts": now_iso(-7)},
+                {"de": "cliente", "texto": "Somos 3 personas con equipaje hacia el Hotel Misión, les mando ubicación", "lat": 17.5320, "lng": -91.9540, "ts": now_iso(-6)}
+            ]
+        },
+        # 8: Familia Barrientos - Parque Central (5 personas)
+        {
+            "cliente_nombre": "Familia Barrientos",
+            "cliente_telefono": "+52 916 100 0008",
+            "creada_en": now_iso(-1),
+            "actualizada_en": now_iso(-1),
+            "mensajes": [
+                {"de": "cliente", "texto": "Buenas tardes, ¿tendrán una unidad tipo Avanza o amplia para 5 pasajeros?", "ts": now_iso(-1)},
+                {"de": "cliente", "texto": "Estamos aquí junto al quiosco del Parque Central", "lat": 17.5098, "lng": -91.9820, "ts": now_iso(-1)}
+            ]
+        },
+        # 9: Valeria Ramos - Métodos de pago Nututún
+        {
+            "cliente_nombre": "Valeria Ramos",
+            "cliente_telefono": "+52 916 100 0009",
+            "creada_en": now_iso(-15),
+            "actualizada_en": now_iso(-8),
+            "mensajes": [
+                {"de": "cliente", "texto": "Hola buenas tardes, ¿los choferes aceptan pago por transferencia CoDi o tarjeta?", "ts": now_iso(-15)},
+                {"de": "operadora", "texto": "¡Hola Valeria! Sí, tenemos unidades equipadas con terminal clip y cobro por transferencia.", "ts": now_iso(-10)},
+                {"de": "cliente", "texto": "Perfecto, en 15 minutos les pido uno para el Balneario Nututún.", "ts": now_iso(-8)}
+            ]
+        },
+        # 10: Don Javier Méndez - Mercado Municipal (Cliente habitual)
+        {
+            "cliente_nombre": "Don Javier Méndez",
+            "cliente_telefono": "+52 916 100 0010",
+            "creada_en": now_iso(-2),
+            "actualizada_en": now_iso(-2),
+            "mensajes": [
+                {"de": "cliente", "texto": "Buenos días muchachas, ¿me mandan mi taxi de siempre al Mercado por favor?", "ts": now_iso(-2)},
+                {"de": "cliente", "texto": "Estoy en el portal de las flores como todos los días", "lat": 17.5080, "lng": -91.9835, "ts": now_iso(-2)}
+            ]
+        },
+    ]
+    await db.wa_conversaciones.insert_many(wa_conversaciones)
+
+    logger.info("Simulación sembrada: 15 taxis, 17 servicios, 10 chats de WhatsApp.")
+    return {
+        "ok": True,
+        "message": "Datos de simulación sembrados con éxito",
+        "taxis": len(DEMO_TAXIS),
+        "servicios": len(servicios),
+        "conversaciones_wa": len(wa_conversaciones),
+        "operadores": [t["usuario"] for t in DEMO_TAXIS],
+        "contrasena_operadores": "taxi123",
+        "usuario_terminal": "central",
+        "contrasena_terminal": "central123",
+    }
+
+
+async def _bucle_patrullaje():
+    """Bucle continuo que mueve los 15 taxis por las calles de Palenque y emite GPS en vivo vía WebSocket."""
+    global _simulacion_activa
+    logger.info("Iniciando bucle de patrullaje continuo para 15 taxis en Palenque...")
+    paso = 0
+    while _simulacion_activa:
+        paso += 1
+        ts = now_iso()
+        for taxi in DEMO_TAXIS:
+            if taxi.get("estado") == "fuera_de_servicio":
+                continue
+            u = taxi["usuario"]
+            circuito = PALENQUE_CIRCUITS[taxi["circuito"]]
+            num_pts = len(circuito)
+
+            # Interpolación progresiva a lo largo del circuito asignado
+            idx = (paso // 6 + taxi.get("offset", 0)) % num_pts
+            next_idx = (idx + 1) % num_pts
+
+            subpaso = (paso % 6) / 6.0
+            p1_lat, p1_lng = circuito[idx]
+            p2_lat, p2_lng = circuito[next_idx]
+
+            new_lat = p1_lat + (p2_lat - p1_lat) * subpaso + (random.random() - 0.5) * 0.00008
+            new_lng = p1_lng + (p2_lng - p1_lng) * subpaso + (random.random() - 0.5) * 0.00008
+
+            speed = round(random.uniform(18.0, 36.0), 1)
+            heading = round(math.degrees(math.atan2(p2_lng - p1_lng, p2_lat - p1_lat)) % 360, 1)
+
+            op = await db.operadores.find_one({"usuario": u})
+            if not op:
+                continue
+            op_id = str(op["_id"])
+
+            track_pt = [round(new_lat, 6), round(new_lng, 6), ts]
+            await db.operadores.update_one(
+                {"_id": op["_id"]},
+                {
+                    "$set": {
+                        "lat": round(new_lat, 6),
+                        "lng": round(new_lng, 6),
+                        "gps_speed": round(speed / 3.6, 2),
+                        "gps_heading": heading,
+                        "gps_accuracy": round(random.uniform(2.5, 4.5), 1),
+                        "ultima_actualizacion": ts,
+                    },
+                    "$push": {
+                        "track": {
+                            "$each": [track_pt],
+                            "$slice": -35
+                        }
+                    }
+                }
+            )
+            if op.get("vehiculo_id"):
+                await db.vehiculos.update_one(
+                    {"_id": to_oid(op["vehiculo_id"])},
+                    {
+                        "$set": {
+                            "lat": round(new_lat, 6),
+                            "lng": round(new_lng, 6),
+                            "ultima_actualizacion": ts,
+                        }
+                    }
+                )
+
+            # Notificar vía WebSocket a la Terminal para actualización a 60fps
+            ubi_msg = {
+                "type": "ubicacion",
+                "operador_id": op_id,
+                "lat": round(new_lat, 6),
+                "lng": round(new_lng, 6),
+                "ts": ts
+            }
+            await manager.broadcast_terminal(ubi_msg)
+            await _notificar_dueno_de_operador(op_id, ubi_msg)
+
+        await asyncio.sleep(2.5)
+
+
+def _iniciar_patrullaje():
+    global _simulacion_activa, _simulacion_task
+    if not _simulacion_activa:
+        _simulacion_activa = True
+        _simulacion_task = asyncio.create_task(_bucle_patrullaje())
+        logger.info("Patrullaje GPS continuo activado.")
+
+
+def _detener_patrullaje():
+    global _simulacion_activa, _simulacion_task
+    _simulacion_activa = False
+    if _simulacion_task:
+        _simulacion_task.cancel()
+        _simulacion_task = None
+        logger.info("Patrullaje GPS continuo detenido.")
+
+
+@api_router.post("/seed")
+async def seed():
+    """Siembra completa y arranque de la simulación."""
+    res = await sembrar_datos_simulacion()
+    _iniciar_patrullaje()
+    res["patrullaje_activo"] = True
+    return res
+
+
+@api_router.post("/simulacion/sembrar")
+async def api_simulacion_sembrar():
+    res = await sembrar_datos_simulacion()
+    _iniciar_patrullaje()
+    return res
+
+
+@api_router.post("/simulacion/iniciar")
+async def api_simulacion_iniciar():
+    _iniciar_patrullaje()
+    return {"ok": True, "mensaje": "Patrullaje GPS de 15 taxis iniciado en tiempo real"}
+
+
+@api_router.post("/simulacion/detener")
+async def api_simulacion_detener():
+    _detener_patrullaje()
+    return {"ok": True, "mensaje": "Patrullaje GPS detenido"}
+
+
+@api_router.get("/simulacion/estado")
+async def api_simulacion_estado():
+    count_taxis = await db.operadores.count_documents({})
+    count_servicios = await db.servicios.count_documents({})
+    count_wa = await db.wa_conversaciones.count_documents({})
+    return {
+        "patrullaje_activo": _simulacion_activa,
+        "taxis_total": count_taxis,
+        "servicios_total": count_servicios,
+        "conversaciones_wa": count_wa,
+    }
 
 
 @api_router.get("/")
 async def root():
     return {"message": "Central de Taxis API", "status": "ok"}
+
 
 
 # ---------------------------------------------------------------------------
@@ -3682,6 +4220,9 @@ async def startup():
     (UPLOAD_DIR / "logo").mkdir(parents=True, exist_ok=True)
     logger.info("Directorio de archivos listo: %s", UPLOAD_DIR)
     logger.info("Central de Taxis API iniciada")
+    if await db.operadores.count_documents({}) == 0:
+        await sembrar_datos_simulacion()
+    _iniciar_patrullaje()
 
 
 DEFAULT_TIPOS_VEHICULO = [
@@ -3779,4 +4320,5 @@ async def _migraciones():
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    _detener_patrullaje()
     client.close()
