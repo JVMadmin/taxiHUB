@@ -552,7 +552,10 @@ export default function Terminal() {
                   <div className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
                     <div>Unidad: {o.vehiculo?.numero_economico || o.placa || "—"}</div>
                     <div>Ruta: {nombreRuta(o.ruta_asignada)}</div>
-                    <div>GPS: {timeAgo(o.ultima_actualizacion)}</div>
+                    {o.descripcion_sentido && (
+                      <div className="text-emerald-400/90 font-medium">Sentido: {o.descripcion_sentido}</div>
+                    )}
+                    <div>GPS: {timeAgo(o.ultima_actualizacion)} ({Math.round(o.gps_heading || 0)}°)</div>
                   </div>
                 </div>
               </Popup>

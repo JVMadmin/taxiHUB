@@ -3475,11 +3475,13 @@ async def dev_auditoria(_=Depends(require_dev)):
 # Simulación Avanzada de Flota (15+ Taxis, WhatsApp, Servicios y Movimiento GPS)
 # ---------------------------------------------------------------------------
 # Pistas viales predeterminadas y únicas sobre las calles reales de Palenque, Chiapas (OSRM / OpenStreetMap)
+# Pistas viales predeterminadas y únicas sobre las calles reales de Palenque, Chiapas (OSRM / OpenStreetMap)
 PALENQUE_PISTAS_VIALES = {
     "pista_centro_juarez": {
         "id": "pista_centro_juarez",
         "nombre": "Pista Centro - Av. Juárez y Mercado",
         "sentido": "Circuito comercial centro (horario)",
+        "doble_sentido": False,
         "distancia_m": 2113,
         "duracion_s": 287,
         "puntos": [
@@ -3611,12 +3613,47 @@ PALENQUE_PISTAS_VIALES = {
                 17.509556,
                 -91.981798
             ]
+        ],
+        "bearings_fwd": [
+            272.1,
+            358.7,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            278.1,
+            272.9,
+            272.9,
+            0.3,
+            0.2,
+            0.8,
+            270.9,
+            270.9,
+            271.0,
+            184.0,
+            91.1,
+            90.9,
+            90.9,
+            182.2,
+            182.2,
+            182.4,
+            182.1,
+            182.1,
+            93.1,
+            93.1,
+            93.0,
+            186.4,
+            186.4,
+            186.4,
+            272.2,
+            272.2
         ]
     },
     "pista_canada_ado": {
         "id": "pista_canada_ado",
         "nombre": "Pista La Cañada - Corredor Hotelero - ADO",
         "sentido": "Circuito hotelero poniente",
+        "doble_sentido": True,
         "distancia_m": 2976,
         "duracion_s": 352,
         "puntos": [
@@ -3824,12 +3861,66 @@ PALENQUE_PISTAS_VIALES = {
                 17.513922,
                 -91.985601
             ]
+        ],
+        "bearings_fwd": [
+            271.0,
+            184.0,
+            91.1,
+            90.9,
+            90.9,
+            92.7,
+            92.6,
+            95.1,
+            6.0,
+            8.1,
+            14.0,
+            23.8,
+            38.3,
+            40.8,
+            38.0,
+            0.0,
+            3.1,
+            8.5,
+            346.1,
+            345.7,
+            250.0,
+            167.4,
+            258.2,
+            0.0,
+            78.2,
+            155.6,
+            8.5,
+            346.1,
+            345.6,
+            345.7,
+            253.0,
+            165.6,
+            165.7,
+            171.5,
+            155.6,
+            182.4,
+            204.1,
+            220.8,
+            220.8,
+            218.3,
+            203.8,
+            194.0,
+            226.3,
+            275.0,
+            272.5,
+            272.5,
+            270.8,
+            271.0,
+            270.9,
+            270.9,
+            270.9
         ]
     },
     "pista_periferico_sur": {
         "id": "pista_periferico_sur",
         "nombre": "Pista Periférico Sur - Hospital General",
         "sentido": "Circuito hospitalario sur",
+        "doble_sentido": True,
         "distancia_m": 2932,
         "duracion_s": 374,
         "puntos": [
@@ -4025,12 +4116,63 @@ PALENQUE_PISTAS_VIALES = {
                 17.504608,
                 -91.974937
             ]
+        ],
+        "bearings_fwd": [
+            299.1,
+            276.9,
+            187.3,
+            194.8,
+            216.8,
+            235.0,
+            249.4,
+            268.0,
+            276.4,
+            276.7,
+            276.6,
+            276.7,
+            6.1,
+            6.1,
+            6.1,
+            95.1,
+            96.5,
+            96.5,
+            3.5,
+            6.9,
+            6.4,
+            274.3,
+            274.4,
+            272.7,
+            272.7,
+            272.6,
+            5.1,
+            94.1,
+            94.2,
+            94.1,
+            95.0,
+            96.1,
+            9.7,
+            275.0,
+            275.1,
+            275.8,
+            185.2,
+            95.0,
+            96.1,
+            182.1,
+            177.1,
+            146.9,
+            152.6,
+            153.4,
+            154.2,
+            144.0,
+            119.1,
+            119.1
         ]
     },
     "pista_pakal_na": {
         "id": "pista_pakal_na",
         "nombre": "Pista Corredor Carretera Federal Pakal-Ná",
         "sentido": "Palenque a Pakal-Ná (doble sentido)",
+        "doble_sentido": True,
         "distancia_m": 15414,
         "duracion_s": 1944,
         "puntos": [
@@ -4238,12 +4380,66 @@ PALENQUE_PISTAS_VIALES = {
                 17.535944,
                 -91.959212
             ]
+        ],
+        "bearings_fwd": [
+            298.1,
+            231.2,
+            168.7,
+            210.9,
+            96.7,
+            93.2,
+            73.4,
+            57.3,
+            26.9,
+            27.2,
+            39.4,
+            45.4,
+            36.3,
+            51.3,
+            9.2,
+            201.0,
+            217.3,
+            222.4,
+            236.9,
+            208.8,
+            201.5,
+            222.3,
+            260.8,
+            255.9,
+            277.1,
+            314.2,
+            28.3,
+            346.5,
+            16.1,
+            18.3,
+            90.0,
+            14.6,
+            320.0,
+            254.5,
+            265.0,
+            261.6,
+            355.0,
+            342.0,
+            58.8,
+            100.8,
+            89.5,
+            22.6,
+            104.9,
+            143.0,
+            85.2,
+            151.0,
+            135.8,
+            131.5,
+            180.9,
+            130.5,
+            130.5
         ]
     },
     "pista_carretera_ruinas": {
         "id": "pista_carretera_ruinas",
         "nombre": "Pista Carretera Zona Arqueológica - Misión Palenque",
         "sentido": "Centro a Ruinas (sur-poniente)",
+        "doble_sentido": True,
         "distancia_m": 5797,
         "duracion_s": 618,
         "puntos": [
@@ -4451,12 +4647,66 @@ PALENQUE_PISTAS_VIALES = {
                 17.493247,
                 -91.994351
             ]
+        ],
+        "bearings_fwd": [
+            180.2,
+            182.5,
+            182.5,
+            182.4,
+            276.4,
+            276.3,
+            185.7,
+            249.7,
+            209.2,
+            275.6,
+            5.5,
+            67.2,
+            96.2,
+            96.2,
+            96.4,
+            158.1,
+            186.2,
+            186.2,
+            186.2,
+            186.2,
+            186.2,
+            186.0,
+            243.9,
+            260.7,
+            325.2,
+            322.4,
+            309.8,
+            320.1,
+            339.3,
+            343.4,
+            343.1,
+            354.9,
+            340.4,
+            302.6,
+            264.5,
+            231.4,
+            224.4,
+            227.7,
+            233.0,
+            247.0,
+            261.6,
+            184.9,
+            186.1,
+            190.5,
+            186.6,
+            187.9,
+            184.1,
+            98.0,
+            98.8,
+            99.2,
+            99.2
         ]
     },
     "pista_tren_maya": {
         "id": "pista_tren_maya",
         "nombre": "Pista Estación Tren Maya - Boulevard Aeropuerto",
         "sentido": "Acceso ferroviario y enlace libramiento",
+        "doble_sentido": True,
         "distancia_m": 1135,
         "duracion_s": 191,
         "puntos": [
@@ -4548,6 +4798,30 @@ PALENQUE_PISTAS_VIALES = {
                 17.534865,
                 -91.952492
             ]
+        ],
+        "bearings_fwd": [
+            85.1,
+            84.1,
+            83.9,
+            71.7,
+            103.4,
+            121.0,
+            118.7,
+            119.7,
+            0.0,
+            107.9,
+            85.7,
+            68.0,
+            69.0,
+            124.0,
+            304.0,
+            249.0,
+            248.0,
+            265.7,
+            0.0,
+            287.9,
+            299.7,
+            299.7
         ]
     }
 }
@@ -4564,8 +4838,12 @@ DEMO_TAXIS = [
         "estado": "libre",
         "pista_id": "pista_centro_juarez",
         "idx": 0,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "unico",
+        "descripcion_sentido": "Av. Hidalgo hacia Parque Central (sentido único)",
         "lat": 17.509556,
-        "lng": -91.981798
+        "lng": -91.981798,
+        "gps_heading": 272.1
     },
     {
         "usuario": "op2",
@@ -4578,8 +4856,12 @@ DEMO_TAXIS = [
         "estado": "libre",
         "pista_id": "pista_canada_ado",
         "idx": 0,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Av. 20 de Noviembre hacia poniente (carril ADO-Cañada)",
         "lat": 17.513922,
-        "lng": -91.985601
+        "lng": -91.985601,
+        "gps_heading": 271.0
     },
     {
         "usuario": "op3",
@@ -4592,8 +4874,12 @@ DEMO_TAXIS = [
         "estado": "ocupado",
         "pista_id": "pista_carretera_ruinas",
         "idx": 0,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Carretera Ruinas hacia Misión Palenque (carril sur-poniente)",
         "lat": 17.508,
-        "lng": -91.983496
+        "lng": -91.983496,
+        "gps_heading": 180.2
     },
     {
         "usuario": "op4",
@@ -4606,8 +4892,12 @@ DEMO_TAXIS = [
         "estado": "libre",
         "pista_id": "pista_periferico_sur",
         "idx": 0,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Periférico Sur hacia Hospital General (carril poniente)",
         "lat": 17.504608,
-        "lng": -91.974937
+        "lng": -91.974937,
+        "gps_heading": 299.1
     },
     {
         "usuario": "op5",
@@ -4620,8 +4910,12 @@ DEMO_TAXIS = [
         "estado": "asignado",
         "pista_id": "pista_canada_ado",
         "idx": 20,
+        "sentido_direccion": "reversa",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Calzada La Cañada retornando hacia ADO (doble sentido, carril oriente)",
         "lat": 17.517676,
-        "lng": -91.979121
+        "lng": -91.979121,
+        "gps_heading": 70.0
     },
     {
         "usuario": "op6",
@@ -4634,8 +4928,12 @@ DEMO_TAXIS = [
         "estado": "libre",
         "pista_id": "pista_centro_juarez",
         "idx": 10,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "unico",
+        "descripcion_sentido": "Av. Juárez pasando Mercado Municipal (sentido único)",
         "lat": 17.513102,
-        "lng": -91.984585
+        "lng": -91.984585,
+        "gps_heading": 0.2
     },
     {
         "usuario": "op7",
@@ -4648,8 +4946,12 @@ DEMO_TAXIS = [
         "estado": "ocupado",
         "pista_id": "pista_carretera_ruinas",
         "idx": 25,
+        "sentido_direccion": "reversa",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Carretera Ruinas retornando hacia Centro (doble sentido, carril norte)",
         "lat": 17.497474,
-        "lng": -91.987707
+        "lng": -91.987707,
+        "gps_heading": 142.4
     },
     {
         "usuario": "op8",
@@ -4662,8 +4964,12 @@ DEMO_TAXIS = [
         "estado": "libre",
         "pista_id": "pista_pakal_na",
         "idx": 15,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Carretera Federal hacia Pakal-Ná (doble sentido, carril nor-oriente)",
         "lat": 17.520439,
-        "lng": -91.96861
+        "lng": -91.96861,
+        "gps_heading": 201.0
     },
     {
         "usuario": "op9",
@@ -4676,8 +4982,12 @@ DEMO_TAXIS = [
         "estado": "asignado",
         "pista_id": "pista_centro_juarez",
         "idx": 22,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "unico",
+        "descripcion_sentido": "Calle 5 de Mayo hacia Parque Central (sentido único)",
         "lat": 17.512472,
-        "lng": -91.983363
+        "lng": -91.983363,
+        "gps_heading": 182.1
     },
     {
         "usuario": "op10",
@@ -4690,8 +5000,12 @@ DEMO_TAXIS = [
         "estado": "ocupado",
         "pista_id": "pista_tren_maya",
         "idx": 0,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Boulevard de acceso hacia Estación Tren Maya (doble sentido)",
         "lat": 17.535944,
-        "lng": -91.959212
+        "lng": -91.959212,
+        "gps_heading": 85.1
     },
     {
         "usuario": "op11",
@@ -4704,8 +5018,12 @@ DEMO_TAXIS = [
         "estado": "libre",
         "pista_id": "pista_periferico_sur",
         "idx": 24,
+        "sentido_direccion": "reversa",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Hospital General retornando hacia Plaza Las Flores (doble sentido, carril oriente)",
         "lat": 17.507722,
-        "lng": -91.980063
+        "lng": -91.980063,
+        "gps_heading": 92.7
     },
     {
         "usuario": "op12",
@@ -4718,8 +5036,12 @@ DEMO_TAXIS = [
         "estado": "ocupado",
         "pista_id": "pista_pakal_na",
         "idx": 35,
+        "sentido_direccion": "reversa",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Carretera Federal retornando de Pakal-Ná hacia Palenque (doble sentido, carril sur-poniente)",
         "lat": 17.545707,
-        "lng": -91.977303
+        "lng": -91.977303,
+        "gps_heading": 81.6
     },
     {
         "usuario": "op13",
@@ -4732,8 +5054,12 @@ DEMO_TAXIS = [
         "estado": "libre",
         "pista_id": "pista_canada_ado",
         "idx": 38,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Calzada de los Empleados hacia La Cañada (doble sentido)",
         "lat": 17.515082,
-        "lng": -91.979701
+        "lng": -91.979701,
+        "gps_heading": 220.8
     },
     {
         "usuario": "op14",
@@ -4746,8 +5072,12 @@ DEMO_TAXIS = [
         "estado": "libre",
         "pista_id": "pista_centro_juarez",
         "idx": 30,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "unico",
+        "descripcion_sentido": "Calle Abasolo hacia Parque Central (sentido único)",
         "lat": 17.509535,
-        "lng": -91.981223
+        "lng": -91.981223,
+        "gps_heading": 272.2
     },
     {
         "usuario": "op15",
@@ -4760,8 +5090,12 @@ DEMO_TAXIS = [
         "estado": "fuera_de_servicio",
         "pista_id": "pista_centro_juarez",
         "idx": 15,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "unico",
+        "descripcion_sentido": "Base Poniente entrada vehicular (estacionado)",
         "lat": 17.51394,
-        "lng": -91.986678
+        "lng": -91.986678,
+        "gps_heading": 184.0
     }
 ]
 
@@ -4769,13 +5103,15 @@ _simulacion_activa = False
 _simulacion_task = None
 
 
-def _generar_track_calle(puntos_calle: list, current_idx: int, cant_puntos: int = 15) -> list:
-    """Genera un historial de recorrido previo (track) estrictamente sobre la calzada vial."""
+def _generar_track_calle(puntos_calle: list, current_idx: int, sentido_direccion: str = "adelante", cant_puntos: int = 15) -> list:
+    """Genera un historial de recorrido previo (track) estrictamente sobre la calzada vial y en el sentido correcto."""
     track = []
     total = len(puntos_calle)
     base_time = datetime.now(timezone.utc) - timedelta(minutes=cant_puntos * 2)
+    step = 1 if sentido_direccion == "adelante" else -1
     for i in range(cant_puntos):
-        idx = (current_idx - (cant_puntos - 1 - i)) % total
+        delta = (cant_puntos - 1 - i) * step
+        idx = (current_idx - delta) % total
         pt = puntos_calle[idx]
         ts = (base_time + timedelta(minutes=i * 2)).isoformat()
         track.append([round(pt[0], 6), round(pt[1], 6), ts])
@@ -4809,7 +5145,8 @@ async def sembrar_datos_simulacion():
         lat, lng = t["lat"], t["lng"]
         pista = PALENQUE_PISTAS_VIALES.get(t["pista_id"], {})
         puntos_calle = pista.get("puntos", [[lat, lng]])
-        track = _generar_track_calle(puntos_calle, t["idx"], 15)
+        sentido_dir = t.get("sentido_direccion", "adelante")
+        track = _generar_track_calle(puntos_calle, t["idx"], sentido_dir, 15)
         op_doc = {
             "nombre": t["nombre"],
             "telefono": t["telefono"],
@@ -4821,7 +5158,10 @@ async def sembrar_datos_simulacion():
             "lat": lat,
             "lng": lng,
             "gps_speed": 6.5 if t["estado"] != "fuera_de_servicio" else 0.0,
-            "gps_heading": (i * 24) % 360,
+            "gps_heading": t.get("gps_heading", 0),
+            "sentido_calle": t.get("sentido_calle", "doble"),
+            "sentido_direccion": t.get("sentido_direccion", "adelante"),
+            "descripcion_sentido": t.get("descripcion_sentido", ""),
             "gps_accuracy": round(random.uniform(2.5, 4.5), 1),
             "ultima_actualizacion": now_iso(),
             "sitio_id": DEFAULT_SITIO,

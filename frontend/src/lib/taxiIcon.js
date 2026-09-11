@@ -202,7 +202,7 @@ export function pillCarIcon(estado, { heading = 0, selected = false, label = "",
 // TAXI1.png sin sustituir el marcador 3D usado por Terminal/Pasajero.
 export function taxiAssetIcon({ heading = 0, size = "sm" } = {}) {
   const dim = size === "lg" ? 78 : size === "md" ? 64 : 52;
-  const deg = Number(heading) || 0;
+  const deg = (Number(heading) || 0) - 90;
   const html = `
     <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 7px 8px rgba(16,45,42,.28))">
       <img src="/assets/vehicles/taxihub-taxi-azul.png" alt="" style="width:${dim + 16}px;height:${dim + 16}px;object-fit:contain;transform:rotate(${deg}deg)" />
@@ -212,7 +212,7 @@ export function taxiAssetIcon({ heading = 0, size = "sm" } = {}) {
 
 export function taxiRoleAssetIcon({ heading = 0, size = "sm" } = {}) {
   const dim = size === "lg" ? 70 : size === "md" ? 58 : 46;
-  const deg = Number(heading) || 0;
+  const deg = (Number(heading) || 0) - 90;
   const html = `
     <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 6px 8px rgba(16,45,42,.28))">
       <img src="/assets/vehicles/taxi-operador.png" alt="" style="width:${dim + 12}px;height:${dim + 12}px;object-fit:contain;transform:rotate(${deg}deg)" />
@@ -230,7 +230,9 @@ const TAXI_STATE_ASSETS = {
 
 export function taxiStateAssetIcon(estado, { heading = 0, selected = false, label = "", size = "md" } = {}) {
   const dim = size === "lg" ? 62 : size === "sm" ? 44 : 52;
-  const deg = Number(heading) || 0;
+  // El asset PNG del vehículo viene orientado hacia la derecha (90°).
+  // Se resta 90° para que el rumbo compás (0° = Norte) apunte exactamente al sentido de circulación.
+  const deg = (Number(heading) || 0) - 90;
   const asset = TAXI_STATE_ASSETS[estado] || TAXI_STATE_ASSETS.fuera_de_servicio;
   const color = ESTADO_COLORS[estado] || ESTADO_COLORS.fuera_de_servicio;
   const pulse = selected
