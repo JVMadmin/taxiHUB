@@ -4961,7 +4961,7 @@ DEMO_TAXIS = [
         "marca": "Toyota",
         "modelo": "Corolla",
         "color": "Blanco",
-        "estado": "libre",
+        "estado": "ocupado",
         "pista_id": "pista_pakal_na",
         "idx": 15,
         "sentido_direccion": "adelante",
@@ -5205,11 +5205,11 @@ async def sembrar_datos_simulacion():
     # 3. Servicios en varios estados
     await db.servicios.delete_many({})
     servicios = [
-        # En curso
+        # 5 Servicios en curso con destinos viales reales en Palenque
         {
             "cliente_nombre": "Dr. Fernando Ruiz", "cliente_telefono": "916-555-0101",
             "origen": {"texto": "Hotel Ciudad Real, Palenque", "lat": 17.5100, "lng": -91.9830},
-            "destino": {"texto": "Zona Arqueológica de Palenque", "lat": 17.4840, "lng": -92.0460},
+            "destino": {"texto": "Zona Arqueológica de Palenque", "lat": 17.4840, "lng": -91.9950},
             "estado": "en_curso", "operador_asignado_id": op_ids["op3"],
             "costo": 180.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
             "creado_en": now_iso(-15), "timestamp_creacion": now_iso(-15),
@@ -5218,35 +5218,44 @@ async def sembrar_datos_simulacion():
         {
             "cliente_nombre": "Lic. Mónica Estrada", "cliente_telefono": "916-555-0102",
             "origen": {"texto": "Terminal ADO Palenque", "lat": 17.5140, "lng": -91.9855},
-            "destino": {"texto": "Hotel Chan-Kah Resort Village", "lat": 17.4920, "lng": -92.0200},
+            "destino": {"texto": "Hotel Misión Palenque y Spa", "lat": 17.5130, "lng": -91.9790},
             "estado": "en_curso", "operador_asignado_id": op_ids["op7"],
-            "costo": 150.0, "metodo_pago": "tarjeta", "sitio_id": DEFAULT_SITIO,
+            "costo": 80.0, "metodo_pago": "tarjeta", "sitio_id": DEFAULT_SITIO,
             "creado_en": now_iso(-10), "timestamp_creacion": now_iso(-10),
             "timestamp_asignacion": now_iso(-8), "timestamp_inicio": now_iso(-5),
+        },
+        {
+            "cliente_nombre": "Ing. Carlos Valenzuela", "cliente_telefono": "916-555-0105",
+            "origen": {"texto": "Centro de Convenciones Palenque", "lat": 17.5150, "lng": -91.9820},
+            "destino": {"texto": "Estación Tren Maya Palenque", "lat": 17.5359, "lng": -91.9592},
+            "estado": "en_curso", "operador_asignado_id": op_ids["op8"],
+            "costo": 120.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "creado_en": now_iso(-9), "timestamp_creacion": now_iso(-9),
+            "timestamp_asignacion": now_iso(-7), "timestamp_inicio": now_iso(-4),
         },
         {
             "cliente_nombre": "Arqueólogo Mateo Ramos", "cliente_telefono": "916-555-0103",
             "origen": {"texto": "Estación Tren Maya Palenque", "lat": 17.5320, "lng": -91.9540},
             "destino": {"texto": "Parque Central de Palenque", "lat": 17.5098, "lng": -91.9820},
             "estado": "en_curso", "operador_asignado_id": op_ids["op10"],
-            "costo": 90.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "costo": 95.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
             "creado_en": now_iso(-8), "timestamp_creacion": now_iso(-8),
             "timestamp_asignacion": now_iso(-6), "timestamp_inicio": now_iso(-3),
         },
         {
             "cliente_nombre": "Verónica Salgado", "cliente_telefono": "916-555-0104",
-            "origen": {"texto": "Hospital General de Palenque", "lat": 17.5060, "lng": -91.9780},
-            "destino": {"texto": "Colonia Pakal Ná Centro", "lat": 17.5250, "lng": -91.9600},
+            "origen": {"texto": "Fracc. Pakal-Ná Norte", "lat": 17.5260, "lng": -91.9580},
+            "destino": {"texto": "Hospital General de Palenque", "lat": 17.5077, "lng": -91.9800},
             "estado": "en_curso", "operador_asignado_id": op_ids["op12"],
-            "costo": 80.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "costo": 85.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
             "creado_en": now_iso(-6), "timestamp_creacion": now_iso(-6),
             "timestamp_asignacion": now_iso(-4), "timestamp_inicio": now_iso(-2),
         },
-        # Asignados
+        # 2 Servicios Asignados
         {
             "cliente_nombre": "María López (Hotel Maya)", "cliente_telefono": "916-100-0001",
-            "origen": {"texto": "Hotel Maya Tulipanes, La Cañada", "lat": 17.5165, "lng": -91.9810},
-            "destino": {"texto": "Restaurante Bajlum", "lat": 17.5080, "lng": -91.9850},
+            "origen": {"texto": "Terminal ADO Palenque", "lat": 17.5140, "lng": -91.9855},
+            "destino": {"texto": "Hotel Maya Tulipanes, La Cañada", "lat": 17.5165, "lng": -91.9810},
             "estado": "asignado", "operador_asignado_id": op_ids["op5"],
             "costo": 60.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
             "creado_en": now_iso(-4), "timestamp_creacion": now_iso(-4), "timestamp_asignacion": now_iso(-2),
@@ -5254,9 +5263,9 @@ async def sembrar_datos_simulacion():
         {
             "cliente_nombre": "Carmen Velasco (Super Che)", "cliente_telefono": "916-100-0006",
             "origen": {"texto": "Super Che Palenque, Av. Juárez", "lat": 17.5125, "lng": -91.9840},
-            "destino": {"texto": "Fracc. La Ceiba, Mza 4", "lat": 17.5020, "lng": -91.9720},
+            "destino": {"texto": "Mercado Municipal de Palenque", "lat": 17.5131, "lng": -91.9845},
             "estado": "asignado", "operador_asignado_id": op_ids["op9"],
-            "costo": 55.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
+            "costo": 50.0, "metodo_pago": "efectivo", "sitio_id": DEFAULT_SITIO,
             "creado_en": now_iso(-3), "timestamp_creacion": now_iso(-3), "timestamp_asignacion": now_iso(-1),
         },
         # Pendientes (listos para despacho en la terminal)
@@ -5477,12 +5486,10 @@ async def sembrar_datos_simulacion():
 
 
 async def _bucle_patrullaje():
-    """Bucle de patrullaje que avanza los taxis únicamente sobre las coordenadas exactas de las calles."""
+    """Bucle de patrullaje vial continuo que recorre las calles de Palenque según sus sentidos."""
     global _simulacion_activa
-    logger.info("Iniciando bucle de patrullaje vial sobre calles reales...")
-    paso = 0
+    logger.info("Iniciando bucle de patrullaje vial continuo sobre calles de Palenque...")
     while _simulacion_activa:
-        paso += 1
         ts = now_iso()
         for taxi in DEMO_TAXIS:
             if taxi.get("estado") == "fuera_de_servicio":
@@ -5490,18 +5497,42 @@ async def _bucle_patrullaje():
             u = taxi["usuario"]
             pista = PALENQUE_PISTAS_VIALES.get(taxi["pista_id"], {})
             puntos = pista.get("puntos", [])
+            bearings = pista.get("bearings_fwd", [])
+            doble_sentido = pista.get("doble_sentido", False)
             if not puntos:
                 continue
-            num_pts = len(puntos)
-            # Avanzar estrictamente punto por punto sobre la calzada asfaltada
-            pt_idx = (taxi.get("idx", 0) + paso) % num_pts
-            next_idx = (pt_idx + 1) % num_pts
-            p1 = puntos[pt_idx]
-            p2 = puntos[next_idx]
-            new_lat, new_lng = p1[0], p1[1]
 
-            speed = round(random.uniform(22.0, 38.0), 1)
-            heading = round(math.degrees(math.atan2(p2[1] - p1[1], p2[0] - p1[0])) % 360, 1)
+            num_pts = len(puntos)
+            curr_idx = taxi.get("idx", 0)
+            sentido_dir = taxi.get("sentido_direccion", "adelante")
+
+            # Avanzar según el sentido de la calle
+            if sentido_dir == "adelante":
+                next_idx = curr_idx + 1
+                if next_idx >= num_pts:
+                    if doble_sentido:
+                        sentido_dir = "reversa"
+                        next_idx = max(0, num_pts - 2)
+                    else:
+                        next_idx = 0
+            else:
+                next_idx = curr_idx - 1
+                if next_idx < 0:
+                    if doble_sentido:
+                        sentido_dir = "adelante"
+                        next_idx = min(num_pts - 1, 1)
+                    else:
+                        next_idx = num_pts - 1
+
+            taxi["idx"] = next_idx
+            taxi["sentido_direccion"] = sentido_dir
+
+            pt = puntos[next_idx]
+            new_lat, new_lng = pt[0], pt[1]
+            brg_fwd = bearings[next_idx] if next_idx < len(bearings) else 0.0
+            heading = round((brg_fwd + 180) % 360, 1) if sentido_dir == "reversa" else brg_fwd
+            speed_kmh = round(random.uniform(25.0, 42.0), 1)
+            speed_ms = round(speed_kmh / 3.6, 2)
 
             op = await db.operadores.find_one({"usuario": u})
             if not op:
@@ -5515,9 +5546,9 @@ async def _bucle_patrullaje():
                     "$set": {
                         "lat": round(new_lat, 6),
                         "lng": round(new_lng, 6),
-                        "gps_speed": round(speed / 3.6, 2),
+                        "gps_speed": speed_ms,
                         "gps_heading": heading,
-                        "gps_accuracy": 3.0,
+                        "sentido_direccion": sentido_dir,
                         "ultima_actualizacion": ts,
                     },
                     "$push": {
@@ -5545,6 +5576,9 @@ async def _bucle_patrullaje():
                 "operador_id": op_id,
                 "lat": round(new_lat, 6),
                 "lng": round(new_lng, 6),
+                "gps_speed": speed_ms,
+                "gps_heading": heading,
+                "sentido_direccion": sentido_dir,
                 "ts": ts
             }
             await manager.broadcast_terminal(ubi_msg)
@@ -5574,7 +5608,8 @@ def _detener_patrullaje():
 async def seed():
     """Siembra completa y arranque de la simulación."""
     res = await sembrar_datos_simulacion()
-    res["patrullaje_activo"] = False
+    _iniciar_patrullaje()
+    res["patrullaje_activo"] = True
     return res
 
 
@@ -5776,6 +5811,7 @@ async def startup():
     logger.info("Central de Taxis API iniciada")
     if await db.operadores.count_documents({}) == 0:
         await sembrar_datos_simulacion()
+    _iniciar_patrullaje()
 
 
 DEFAULT_TIPOS_VEHICULO = [

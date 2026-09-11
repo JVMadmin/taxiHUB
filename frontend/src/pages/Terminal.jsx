@@ -239,9 +239,22 @@ export default function Terminal() {
       ws.onmessage = (ev) => {
         const msg = JSON.parse(ev.data);
         if (msg.type === "ubicacion") {
-          startTransition(() => setOperadores((prev) => prev[msg.operador_id]
-            ? { ...prev, [msg.operador_id]: { ...prev[msg.operador_id], lat: msg.lat, lng: msg.lng, ultima_actualizacion: msg.ts } }
-            : prev));
+          startTransition(() => setOperadores((prev) => {
+            const op = prev[msg.operador_id];
+            if (!op) return prev;
+            return {
+              ...prev,
+              [msg.operador_id]: {
+                ...op,
+                lat: msg.lat,
+                lng: msg.lng,
+                gps_heading: msg.gps_heading != null ? msg.gps_heading : op.gps_heading,
+                gps_speed: msg.gps_speed != null ? msg.gps_speed : op.gps_speed,
+                sentido_direccion: msg.sentido_direccion || op.sentido_direccion,
+                ultima_actualizacion: msg.ts,
+              },
+            };
+          }));
         } else if (msg.type === "estado") {
           startTransition(() => setOperadores((prev) => prev[msg.operador_id]
             ? { ...prev, [msg.operador_id]: { ...prev[msg.operador_id], estado: msg.estado } }

@@ -24,51 +24,60 @@ export function taxiIcon(color, label, { selected = false } = {}) {
   return L.divIcon({ html, className: "th-taxi-pin", iconSize: [80, 42], iconAnchor: [40, 42] });
 }
 
-// Marcador de punto (origen/destino/yo): pin clásico de geolocalización en 3D.
-// Cabeza esférica con gradiente + brillo especular + sombra inferior, agujero
-// central estilo GPS y etiqueta tipo "tag" sobre el pin. Colores típicos:
-// verde para origen/ubicación/cliente, rojo para destino.
+// Marcador de punto moderno (Origen, Destino, Búsqueda, Cliente):
+// Pin aerodinámico estilizado con halo luminoso, núcleo concéntrico y tag flotante
+// tipo HUD oscuro con badge de color y tipografía limpia de la aplicación.
 let _pinUid = 0;
 
 export function pointIcon(label, color, { size = "md" } = {}) {
-  const c = color || "#22c55e";
-  const scale = size === "lg" ? 1.4 : size === "sm" ? 0.85 : 1.1;
-  const w = Math.round(40 * scale);
-  const h = Math.round(52 * scale);
-  const fullW = Math.max(w + 40, 90);
-  const fullH = h + 26;
+  const lbl = String(label || "").trim();
+  const isDestino = lbl.toLowerCase().includes("destino");
+  const isOrigen = lbl.toLowerCase().includes("origen") || lbl.toLowerCase().includes("cliente");
+  const c = isDestino ? "#f43f5e" : isOrigen ? "#10b981" : (color || "#10b981");
+
+  const scale = size === "lg" ? 1.2 : size === "sm" ? 0.85 : 1.0;
+  const w = Math.round(32 * scale);
+  const h = Math.round(44 * scale);
+  const fullW = Math.max(w + 60, 110);
+  const fullH = h + 28;
   const uid = ++_pinUid;
-  const chipFont = size === "lg" ? "12px" : "10.5px";
-  const chipPad = size === "lg" ? "5px 10px" : "4px 8px";
-  const inner = (20 * scale).toFixed(1);
-  const hole = (9.5 * scale).toFixed(1);
-  const center = (7 * scale).toFixed(1);
-  const dot = (3.2 * scale).toFixed(1);
+
   const html = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:100%;height:100%;filter:drop-shadow(0 10px 12px rgba(0,0,0,.38))">
-      <div style="margin-bottom:3px;background:#0b0b0d;color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:7px;padding:${chipPad};font-size:${chipFont};font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 6px rgba(0,0,0,.35)">${label}</div>
-      <svg width="${w}" height="${h}" viewBox="0 0 40 52" style="overflow:visible">
-        <defs>
-          <radialGradient id="th-pin-g${uid}" cx="0.32" cy="0.26" r="0.75">
-            <stop offset="0" stop-color="#ffffff" stop-opacity="0.65"/>
-            <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.12"/>
-            <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-          </radialGradient>
-          <linearGradient id="th-pin-s${uid}" x1="0" y1="0.5" x2="0" y2="1">
-            <stop offset="0" stop-color="#000000" stop-opacity="0"/>
-            <stop offset="1" stop-color="#000000" stop-opacity="0.42"/>
-          </linearGradient>
-        </defs>
-        <path d="M20 2 C30 2 38 10 38 20 C38 32 27 44 20 50 C13 44 2 32 2 20 C2 10 10 2 20 2 Z" fill="${c}" stroke="#0b0b0d" stroke-width="2"/>
-        <path d="M20 2 C30 2 38 10 38 20 C38 32 27 44 20 50 C13 44 2 32 2 20 C2 10 10 2 20 2 Z" fill="url(#th-pin-g${uid})"/>
-        <path d="M20 2 C30 2 38 10 38 20 C38 32 27 44 20 50 C13 44 2 32 2 20 C2 10 10 2 20 2 Z" fill="url(#th-pin-s${uid})"/>
-        <circle cx="20" cy="20" r="${hole}" fill="#ffffff" opacity="0.96"/>
-        <circle cx="20" cy="20" r="${center}" fill="${c}"/>
-        <circle cx="20" cy="20" r="${dot}" fill="#ffffff"/>
-        <circle cx="20" cy="20" r="${inner}" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/>
-      </svg>
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;user-select:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,0.55));">
+      <!-- Tag / Pill superior estilo HUD Dark -->
+      <div style="margin-bottom:4px;display:inline-flex;align-items:center;gap:5px;background:rgba(11,13,16,0.92);color:#f1f5f9;border:1.2px solid rgba(255,255,255,0.14);border-radius:18px;padding:3px 9px;font-size:10.5px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-family:'Inter',system-ui,sans-serif;box-shadow:0 4px 10px rgba(0,0,0,0.45);backdrop-filter:blur(6px);white-space:nowrap;">
+        <span style="width:6.5px;height:6.5px;border-radius:50%;background:${c};box-shadow:0 0 7px ${c};"></span>
+        ${lbl}
+      </div>
+
+      <!-- Pin aerodinámico tipo vector con halo neón -->
+      <div style="position:relative;width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;">
+        <svg width="${w}" height="${h}" viewBox="0 0 32 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+          <defs>
+            <radialGradient id="th-pin-grad-${uid}" cx="50%" cy="38%" r="55%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+              <stop offset="65%" stop-color="${c}" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="${c}" stop-opacity="1"/>
+            </radialGradient>
+            <filter id="th-shadow-${uid}" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="${c}" flood-opacity="0.5"/>
+            </filter>
+          </defs>
+          <!-- Sombra en suelo -->
+          <ellipse cx="16" cy="42" rx="6.5" ry="2" fill="rgba(0,0,0,0.6)"/>
+
+          <!-- Cuerpo estilizado del pin -->
+          <path d="M16 42 C16 42 29 25.5 29 16 C29 8.2 23.2 2 16 2 C8.8 2 3 8.2 3 16 C3 25.5 16 42 16 42 Z"
+                fill="url(#th-pin-grad-${uid})"
+                stroke="#090B0E" stroke-width="1.8" filter="url(#th-shadow-${uid})"/>
+
+          <!-- Núcleo central con halo de alto contraste -->
+          <circle cx="16" cy="16" r="6" fill="#090B0E" stroke="#ffffff" stroke-width="1.5" opacity="0.95"/>
+          <circle cx="16" cy="16" r="3" fill="${c}"/>
+        </svg>
+      </div>
     </div>`;
-  return L.divIcon({ html, className: "th-point-pin", iconSize: [fullW, fullH], iconAnchor: [fullW / 2, fullH] });
+  return L.divIcon({ html, className: "th-point-pin", iconSize: [fullW, fullH], iconAnchor: [fullW / 2, fullH - 2] });
 }
 
 // Flecha de "tú / vehículo" orientada por rumbo (heading) en la Driver App.
