@@ -27,9 +27,15 @@ import httpx
 # ---------------------------------------------------------------------------
 # DB + app setup
 # ---------------------------------------------------------------------------
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+mongo_url = os.environ.get('MONGO_URL', 'memory')
+db_name = os.environ.get('DB_NAME', 'taxihub_test')
+if mongo_url in ('memory', 'mock', '') or mongo_url.startswith('mock'):
+    from mongomock_motor import AsyncMongoMockClient
+    client = AsyncMongoMockClient()
+    db = client[db_name]
+else:
+    client = AsyncIOMotorClient(mongo_url)
+    db = client[db_name]
 
 # ---- Almacenamiento local de archivos ----
 APP_NAME = "central-taxis"
@@ -56,7 +62,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("central_taxis")
 
-JWT_SECRET = os.environ["JWT_SECRET"]
+JWT_SECRET = os.environ.get("JWT_SECRET", "dev-jwt-secret-taxihub")
 JWT_ALGORITHM = "HS256"
 
 SCOPES = {"operador": "operador", "terminal": "terminal", "pasajero": "pasajero", "dev": "dev", "dueno": "dueno"}

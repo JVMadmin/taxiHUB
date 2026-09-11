@@ -1,6 +1,10 @@
 import axios from "axios";
 
-export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
+export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL !== undefined
+  ? process.env.REACT_APP_BACKEND_URL
+  : (typeof window !== "undefined" && ["3000", "3080", "5173", "3001"].includes(window.location.port)
+      ? `http://${window.location.hostname}:8080`
+      : "");
 export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
 
 export const WS_BASE = BACKEND_URL

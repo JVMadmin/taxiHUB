@@ -93,3 +93,7 @@ android-sdk/
 credentials.json
 *.key
 .credentials
+
+test_reports/
+*.log
+*.pid
