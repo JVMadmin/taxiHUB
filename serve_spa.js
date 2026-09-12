@@ -21,6 +21,26 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
+  // Proxy transparente para llamadas /api hacia el Backend en puerto 8080
+  if (req.url.startsWith('/api')) {
+    const proxyReq = http.request({
+      hostname: '127.0.0.1',
+      port: 8080,
+      path: req.url,
+      method: req.method,
+      headers: { ...req.headers, host: '127.0.0.1:8080' }
+    }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res);
+    });
+    proxyReq.on('error', (err) => {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ detail: 'No se pudo conectar con el Backend (puerto 8080)' }));
+    });
+    req.pipe(proxyReq);
+    return;
+  }
+
   const urlPath = req.url.split('?')[0];
   let filePath = path.join(BUILD_DIR, urlPath);
   
@@ -44,6 +64,33 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': contentType });
     res.end(content);
   });
+});
+
+// Proxy para WebSockets en vivo (/api/ws/terminal, etc.)
+server.on('upgrade', (req, socket, head) => {
+  if (req.url.startsWith('/api') || req.url.startsWith('/ws')) {
+    const proxyReq = http.request({
+      hostname: '127.0.0.1',
+      port: 8080,
+      path: req.url,
+      method: req.method,
+      headers: { ...req.headers, host: '127.0.0.1:8080' }
+    });
+    proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
+      socket.write(`HTTP/${proxyRes.httpVersion} ${proxyRes.statusCode} ${proxyRes.statusMessage}\r\n`);
+      for (const [key, value] of Object.entries(proxyRes.headers)) {
+        socket.write(`${key}: ${value}\r\n`);
+      }
+      socket.write('\r\n');
+      if (proxyHead && proxyHead.length) socket.write(proxyHead);
+      proxySocket.pipe(socket);
+      socket.pipe(proxySocket);
+    });
+    proxyReq.on('error', () => {
+      socket.destroy();
+    });
+    proxyReq.end();
+  }
 });
 
 server.listen(PORT, '0.0.0.0', () => {

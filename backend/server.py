@@ -5836,10 +5836,20 @@ app.include_router(build_terminal_consulta_router(
     require_terminal=require_terminal, TRACK_MAX_POINTS=TRACK_MAX_POINTS,
 ))
 
+cors_origins_env = os.environ.get('CORS_ORIGINS', '')
+cors_origins = [o.strip() for o in cors_origins_env.split(',') if o.strip()]
+if not cors_origins or '*' in cors_origins:
+    cors_origins = ["*"]
+else:
+    for extra in ["http://localhost:3005", "http://127.0.0.1:3005", "http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001"]:
+        if extra not in cors_origins:
+            cors_origins.append(extra)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=cors_origins,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_methods=["*"],
     allow_headers=["*"],
 )
