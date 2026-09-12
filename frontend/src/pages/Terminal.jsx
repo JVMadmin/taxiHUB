@@ -45,8 +45,8 @@ const VECTOR_STYLE_URL = TILESERVER_URL
   ? `${TILESERVER_URL}/styles/basic-preview/style.json`
   : "https://tiles.openfreemap.org/styles/liberty";
 
-const STREET_TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-const STREET_ATTR = '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const STREET_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const STREET_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 function MapEventsHandler({ onClick, onContextMenu }) {
   useMapEvents({
@@ -626,7 +626,8 @@ export default function Terminal() {
             <TileLayer
               url={STREET_TILES}
               attribution={STREET_ATTR}
-              maxZoom={19}
+              maxZoom={20}
+              maxNativeZoom={19}
               keepBuffer={16}
               updateWhenIdle={false}
               updateWhenZooming={false}
