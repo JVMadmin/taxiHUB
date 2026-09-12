@@ -88,3 +88,32 @@
     animation: none;
   }
 }
+
+/* Estilos de alto contraste para el Popup del taxi en mapa */
+.th-taxi-popup .leaflet-popup-content-wrapper {
+  background: #17191E !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75) !important;
+  padding: 2px !important;
+}
+
+.th-taxi-popup .leaflet-popup-tip {
+  background: #17191E !important;
+}
+
+.th-taxi-popup .leaflet-popup-content {
+  margin: 8px 10px !important;
+  line-height: 1.3 !important;
+  color: #FFFFFF !important;
+}
+
+.th-taxi-popup a.leaflet-popup-close-button {
+  color: #9CA0AA !important;
+  padding: 4px 6px 0 0 !important;
+}
+
+.th-taxi-popup a.leaflet-popup-close-button:hover {
+  color: #FFFFFF !important;
+}

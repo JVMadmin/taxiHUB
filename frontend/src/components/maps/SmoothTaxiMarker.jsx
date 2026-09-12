@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useMemo, memo } from "react";
+import React, { useEffect, useRef, useMemo, useState, memo } from "react";
+import { createPortal } from "react-dom";
+import { X, ZoomIn } from "lucide-react";
 import { Marker, Popup } from "react-leaflet";
 import { taxiStateAssetIcon } from "@/lib/taxiIcon";
 import { ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
@@ -113,57 +115,212 @@ function SmoothTaxiMarkerComponent({
     });
   }, [op.estado, op.placa, selected]);
 
+  const [fotoModal, setFotoModal] = useState(false);
   const speedKmh = Math.round((op.gps_speed || 0) * 3.6);
 
   return (
-    <Marker
-      ref={markerRef}
-      position={[op.lat, op.lng]}
-      zIndexOffset={selected ? 1000 : 0}
-      icon={icon}
-      eventHandlers={{ click: onSelect }}
-    >
-      <Popup className="th-taxi-popup" minWidth={160} maxWidth={200}>
-        <div style={{ fontFamily: "Inter, sans-serif", padding: "6px 2px", display: "flex", flexDirection: "column", gap: "6px", minWidth: "160px" }}>
-          {/* Foto + Nombre + Unidad */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {op.foto_url ? (
+    <>
+      <Marker
+        ref={markerRef}
+        position={[op.lat, op.lng]}
+        zIndexOffset={selected ? 1000 : 0}
+        icon={icon}
+        eventHandlers={{ click: onSelect }}
+      >
+        <Popup className="th-taxi-popup" minWidth={170} maxWidth={220}>
+          <div style={{ fontFamily: "Inter, sans-serif", padding: "6px 2px", display: "flex", flexDirection: "column", gap: "8px", minWidth: "170px" }}>
+            {/* Foto + Nombre + Unidad */}
+            <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+              <div
+                style={{ position: "relative", cursor: "pointer", flexShrink: 0 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFotoModal(true);
+                }}
+                title="Clic para ampliar fotografía del chofer"
+              >
+                {op.foto_url ? (
+                  <img
+                    src={op.foto_url}
+                    alt={op.nombre}
+                    style={{ height: "40px", width: "40px", borderRadius: "50%", objectFit: "cover", border: "2px solid #4F5DFF", display: "block" }}
+                  />
+                ) : (
+                  <div style={{ height: "40px", width: "40px", borderRadius: "50%", background: "rgba(79,93,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#FFFFFF", fontSize: "16px" }}>
+                    {op.nombre?.[0] || "T"}
+                  </div>
+                )}
+                <span
+                  style={{
+                    position: "absolute",
+                    bottom: "-2px",
+                    right: "-2px",
+                    background: "#4F5DFF",
+                    borderRadius: "50%",
+                    padding: "2px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.5)"
+                  }}
+                >
+                  <ZoomIn style={{ width: "9px", height: "9px", color: "#FFFFFF" }} />
+                </span>
+              </div>
+
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: "13px", color: "#FFFFFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "-0.2px" }}>
+                  {op.nombre}
+                </div>
+                <div style={{ fontSize: "11px", color: "#CBD5E1", marginTop: "2px", fontWeight: 500 }}>
+                  Unidad <span style={{ fontFamily: "monospace", color: "#FBBF24", fontWeight: 800, fontSize: "12px" }}>#{op.vehiculo?.numero_economico || op.placa}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Imagen vehículo */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.06)", borderRadius: "9px", padding: "5px 7px", border: "1px solid rgba(255,255,255,0.06)" }}>
               <img
-                src={op.foto_url}
-                alt={op.nombre}
-                style={{ height: "36px", width: "36px", borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(79,93,255,0.5)", flexShrink: 0 }}
+                src={resolveVehicleImage(op.vehiculo)}
+                alt={op.vehiculo?.modelo || "Vehículo"}
+                style={{ height: "30px", width: "50px", objectFit: "contain", flexShrink: 0 }}
               />
-            ) : (
-              <div style={{ height: "36px", width: "36px", borderRadius: "50%", background: "rgba(79,93,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", color: "#A8B1FF", fontSize: "14px", flexShrink: 0 }}>
-                {op.nombre?.[0] || "T"}
+              <div style={{ fontSize: "11px", color: "#FFFFFF", fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {op.vehiculo?.marca || ""} {op.vehiculo?.modelo || "Taxi"}
               </div>
-            )}
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: "13px", color: "#F5F5F7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{op.nombre}</div>
-              <div style={{ fontSize: "10px", color: "#9CA0AA", marginTop: "1px" }}>
-                Unidad <span style={{ fontFamily: "monospace", color: "#F5F5F7", fontWeight: 700 }}>#{op.vehiculo?.numero_economico || op.placa}</span>
+            </div>
+
+            {/* Estado */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(0,0,0,0.25)", borderRadius: "6px", padding: "3px 6px" }}>
+              <span style={{ height: "8px", width: "8px", borderRadius: "50%", background: ESTADO_COLORS[op.estado], flexShrink: 0 }} />
+              <span style={{ fontSize: "11px", fontWeight: 700, color: ESTADO_COLORS[op.estado] }}>
+                {ESTADO_LABEL[op.estado]}
+              </span>
+              <span style={{ marginLeft: "auto", fontSize: "10px", color: "#94A3B8", fontFamily: "monospace" }}>
+                {speedKmh} km/h
+              </span>
+            </div>
+          </div>
+        </Popup>
+      </Marker>
+
+      {/* Modal de visualización ampliada de conductor */}
+      {fotoModal && typeof document !== "undefined" && createPortal(
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(8px)",
+            padding: "16px",
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setFotoModal(false);
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              maxWidth: "340px",
+              width: "100%",
+              borderRadius: "20px",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
+              backgroundColor: "#17191E",
+              padding: "24px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.75)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setFotoModal(false)}
+              style={{
+                position: "absolute",
+                top: "14px",
+                right: "14px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                border: "none",
+                color: "#FFFFFF",
+                padding: "6px",
+                cursor: "pointer",
+              }}
+              title="Cerrar"
+            >
+              <X style={{ width: "18px", height: "18px" }} />
+            </button>
+
+            {/* Foto grande */}
+            <div
+              style={{
+                margin: "0 auto 16px",
+                height: "160px",
+                width: "160px",
+                borderRadius: "50%",
+                overflow: "hidden",
+                border: "3px solid #4F5DFF",
+                boxShadow: "0 10px 25px rgba(79, 93, 255, 0.35)",
+                backgroundColor: "#0B0D10",
+              }}
+            >
+              {op.foto_url ? (
+                <img
+                  src={op.foto_url}
+                  alt={op.nombre}
+                  style={{ height: "100%", width: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <div style={{ height: "100%", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "48px", fontWeight: 800, color: "#FFFFFF", background: "rgba(79,93,255,0.3)" }}>
+                  {op.nombre?.[0] || "T"}
+                </div>
+              )}
+            </div>
+
+            <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#FFFFFF", margin: "0 0 4px" }}>
+              {op.nombre}
+            </h3>
+
+            <div style={{ display: "inline-block", backgroundColor: "rgba(251, 191, 36, 0.15)", border: "1px solid rgba(251, 191, 36, 0.3)", borderRadius: "8px", padding: "4px 10px", margin: "4px 0 14px" }}>
+              <span style={{ fontSize: "13px", fontWeight: 800, color: "#FBBF24", fontFamily: "monospace" }}>
+                Unidad #{op.vehiculo?.numero_economico || op.placa}
+              </span>
+            </div>
+
+            <div style={{ textAlign: "left", background: "rgba(255, 255, 255, 0.05)", borderRadius: "12px", padding: "12px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                <img
+                  src={resolveVehicleImage(op.vehiculo)}
+                  alt="Vehículo"
+                  style={{ height: "36px", width: "60px", objectFit: "contain" }}
+                />
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#FFFFFF" }}>
+                    {op.vehiculo?.marca} {op.vehiculo?.modelo || "Vehículo estándar"}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#94A3B8" }}>
+                    Color: {op.vehiculo?.color || "Blanco"} · Placas: <span style={{ color: "#FFFFFF", fontFamily: "monospace" }}>{op.placa}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "8px", fontSize: "11px" }}>
+                <span style={{ color: "#94A3B8" }}>Estado operativo:</span>
+                <span style={{ color: ESTADO_COLORS[op.estado], fontWeight: 700 }}>
+                  {ESTADO_LABEL[op.estado]}
+                </span>
               </div>
             </div>
           </div>
-          {/* Imagen vehículo */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "4px 6px" }}>
-            <img
-              src={resolveVehicleImage(op.vehiculo)}
-              alt={op.vehiculo?.modelo || "Vehículo"}
-              style={{ height: "32px", width: "52px", objectFit: "contain", flexShrink: 0 }}
-            />
-            <div style={{ fontSize: "11px", color: "#F5F5F7", fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {op.vehiculo?.marca} {op.vehiculo?.modelo || "Taxi"}
-            </div>
-          </div>
-          {/* Estado */}
-          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            <span style={{ height: "7px", width: "7px", borderRadius: "50%", background: ESTADO_COLORS[op.estado], flexShrink: 0 }} />
-            <span style={{ fontSize: "11px", fontWeight: 600, color: ESTADO_COLORS[op.estado] }}>{ESTADO_LABEL[op.estado]}</span>
-          </div>
-        </div>
-      </Popup>
-    </Marker>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
 

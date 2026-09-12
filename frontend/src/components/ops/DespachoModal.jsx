@@ -72,6 +72,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
   const [cliente, setCliente] = useState({ nombre: "", telefono: "" });
   const [asignando, setAsignando] = useState(null);
   const [clienteOpen, setClienteOpen] = useState(false);
+  const [confirmDestinoModal, setConfirmDestinoModal] = useState(null);
 
   const cercanos = useMemo(() => {
     if (!coords.origen) return [];
@@ -82,21 +83,38 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
 
   if (!open) return null;
 
-  const asignar = async (op) => {
+  const handleIntentarAsignar = (op) => {
+    if (coords.destino && coords.destino.lat) {
+      asignar(op);
+      return;
+    }
+    setConfirmDestinoModal(op);
+  };
+
+  const asignar = async (op, options = {}) => {
     setAsignando(op.id);
     try {
+      const destData = coords.destino && coords.destino.lat
+        ? { texto: coords.destinoTexto || "Destino marcado en mapa", lat: coords.destino.lat, lng: coords.destino.lng }
+        : options.sinDestino
+        ? { texto: "A indicaciones del cliente (Sin destino fijo)" }
+        : coords.destinoTexto
+        ? { texto: coords.destinoTexto }
+        : {};
+
       const { data: created } = await termApi.post("/servicios", {
         cliente_nombre: cliente.nombre || "Servicio de llamada",
         cliente_telefono: cliente.telefono || "",
         origen: { texto: coords.origenTexto || "Origen marcado en mapa", lat: coords.origen.lat, lng: coords.origen.lng },
-        destino: coords.destino
-          ? { texto: coords.destinoTexto || "Destino marcado en mapa", lat: coords.destino.lat, lng: coords.destino.lng }
-          : {},
+        destino: destData,
       });
       await termApi.post(`/servicios/${created.servicio.id}/asignar`, { operador_id: op.id });
-      toast.success(`Servicio asignado a ${op.placa || op.nombre}`);
+      toast.success(`Servicio asignado a ${op.placa || op.nombre}`, {
+        description: options.sinDestino ? "Destino: A indicaciones directas del cliente" : undefined,
+      });
       setCliente({ nombre: "", telefono: "" });
       setCoords?.({ origen: null, destino: null, origenTexto: null, destinoTexto: null });
+      setConfirmDestinoModal(null);
       onCreated?.();
       onClose();
     } catch (e) {
@@ -156,19 +174,36 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
             {!coords.destino ? (
               <>
                 <GeoInput placeholder="Buscar destino…" onPick={(r) => setCoords((c) => ({ ...c, destino: { lat: r.lat, lng: r.lng }, destinoTexto: `${r.label}${r.sublabel ? `, ${r.sublabel}` : ""}` }))} />
-                <button
-                  type="button"
-                  data-testid="despacho-marcar-destino"
-                  onClick={() => pedirPunto("destino")}
-                  className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#9CA0AA] hover:text-[#F5F5F7] transition-colors"
-                >
-                  <Flag className="h-3.5 w-3.5" /> Marcar en mapa
-                </button>
+                <div className="mt-1.5 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    data-testid="despacho-marcar-destino"
+                    onClick={() => pedirPunto("destino")}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#9CA0AA] hover:text-[#F5F5F7] transition-colors"
+                  >
+                    <Flag className="h-3.5 w-3.5" /> Marcar en mapa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCoords((c) => ({ ...c, destino: null, destinoTexto: "A indicaciones del cliente (Sin destino fijo)" }))}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    ⚡ Sin destino fijo (A indicaciones)
+                  </button>
+                </div>
               </>
             ) : (
               <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#1B1E24] px-3 py-2 text-sm text-[#F5F5F7]">
                 <Flag className="h-4 w-4 shrink-0 text-[#4F5DFF]" />
-                <span className="truncate">{coords.destinoTexto || `${coords.destino.lat.toFixed(5)}, ${coords.destino.lng.toFixed(5)}`}</span>
+                <span className="truncate">{coords.destinoTexto || (coords.destino?.lat ? `${coords.destino.lat.toFixed(5)}, ${coords.destino.lng.toFixed(5)}` : "Destino fijado")}</span>
+                <button
+                  type="button"
+                  onClick={() => setCoords((c) => ({ ...c, destino: null, destinoTexto: null }))}
+                  className="ml-auto text-[11px] text-muted-foreground hover:text-rose-400 p-1"
+                  title="Quitar destino"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
             )}
           </section>
@@ -226,7 +261,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                       size="sm"
                       className="shrink-0 !px-3"
                       disabled={asignando !== null}
-                      onClick={() => asignar(t)}
+                      onClick={() => handleIntentarAsignar(t)}
                     >
                       {asignando === t.id ? "…" : <><Check className="h-3.5 w-3.5" /> Asignar</>}
                     </Button>
@@ -237,6 +272,76 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
           </section>
         </div>
       </div>
+
+      {/* Ventana de confirmación: Seleccionar Destino o Crear Sin Destino */}
+      {confirmDestinoModal && (
+        <div className="fixed inset-0 z-[950] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[#17191E] p-6 shadow-2xl text-foreground">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+              <h4 className="text-base font-bold text-white flex items-center gap-2">
+                <Flag className="h-4 w-4 text-amber-400" />
+                Destino del servicio
+              </h4>
+              <button
+                type="button"
+                onClick={() => setConfirmDestinoModal(null)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="text-sm text-slate-200 mb-2">
+              Asignando a <strong className="text-white">{confirmDestinoModal.nombre}</strong> (Unidad <span className="font-mono text-amber-400 font-bold">#{confirmDestinoModal.vehiculo?.numero_economico || confirmDestinoModal.placa}</span>).
+            </p>
+            <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
+              No se ha seleccionado un destino fijo en el mapa. Puedes crear el servicio de inmediato para que el cliente le dé indicaciones al taxista directamente en el camino, o puedes elegir el destino en el mapa ahora.
+            </p>
+
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                disabled={asignando !== null}
+                onClick={() => {
+                  const op = confirmDestinoModal;
+                  setConfirmDestinoModal(null);
+                  asignar(op, { sinDestino: true });
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold py-3 px-4 text-sm transition-all shadow-lg shadow-emerald-950/40"
+              >
+                <Check className="h-4 w-4" />
+                <span>Crear servicio sin destino fijado</span>
+              </button>
+              <div className="text-[11px] text-center text-emerald-400/90 -mt-1 font-medium">
+                (El cliente da indicaciones directas al taxista)
+              </div>
+
+              <button
+                type="button"
+                disabled={asignando !== null}
+                onClick={() => {
+                  setConfirmDestinoModal(null);
+                  onClose();
+                  pedirPunto("destino");
+                  toast.info("Haz clic en el mapa para marcar el destino");
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-semibold py-2.5 px-4 text-xs transition-colors"
+              >
+                <MapPin className="h-3.5 w-3.5 text-sky-400" />
+                <span>Seleccionar destino en el mapa</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfirmDestinoModal(null)}
+                className="w-full py-1.5 text-xs text-muted-foreground hover:text-white transition-colors"
+              >
+                Regresar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
