@@ -26,7 +26,8 @@ import { MapSearch } from "@/components/maps/MapSearch";
 import { RecorridoGradiente } from "@/components/maps/RecorridoGradiente";
 import { MaplibreVectorTileLayer } from "@/components/maps/MaplibreVectorTileLayer";
 import { SmoothTaxiMarker } from "@/components/maps/SmoothTaxiMarker";
-import { Layers, Satellite, ChevronRight, ChevronLeft } from "lucide-react";
+import { ColoniasLayer } from "@/components/maps/ColoniasLayer";
+import { Layers, Satellite, ChevronRight, ChevronLeft, Eye, EyeOff, Shapes } from "lucide-react";
 import { toast } from "sonner";
 
 const CENTER = [17.5099, -91.9847]; // Palenque, Chiapas
@@ -121,6 +122,8 @@ export default function Terminal() {
   const [servicioFilterOp, setServicioFilterOp] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [mapLayer, setMapLayer] = useState("calles"); // "calles" | "satelite"
+  const [mostrarColonias, setMostrarColonias] = useState(false);
+  const [mostrarFlota, setMostrarFlota] = useState(true);
   const userInteractedRef = useRef(false);
 
   // Auto-colapso de la sidebar a los 5s de inactividad inicial
@@ -444,14 +447,16 @@ export default function Terminal() {
 
       {/* ÁREA DE MAPA (protagonista) */}
       <div className="relative min-w-0 flex-1">
-        {/* Toggle de capa de mapa: Calles vs Satélite */}
-        <div className="absolute bottom-20 right-3 lg:bottom-auto lg:top-24 lg:right-20 z-[450] flex items-center gap-1 rounded-xl border border-border/80 bg-surface/90 p-1 shadow-xl backdrop-blur">
+        {/* Barra de control de capas y visualización del mapa: Calles, Satélite, Colonias y Flota */}
+        <div className="absolute bottom-5 left-14 z-[450] flex items-center gap-1 rounded-xl border border-border/80 bg-surface/95 p-1 shadow-2xl backdrop-blur-md">
           <button
             type="button"
             onClick={() => setMapLayer("calles")}
             className={cn(
               "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
-              mapLayer === "calles" ? "bg-brand/20 text-brand-bright font-semibold" : "text-muted-foreground hover:text-foreground"
+              mapLayer === "calles"
+                ? "bg-brand/20 text-brand-bright font-semibold shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
             )}
             data-testid="layer-calles-btn"
           >
@@ -462,11 +467,54 @@ export default function Terminal() {
             onClick={() => setMapLayer("satelite")}
             className={cn(
               "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
-              mapLayer === "satelite" ? "bg-brand/20 text-brand-bright font-semibold" : "text-muted-foreground hover:text-foreground"
+              mapLayer === "satelite"
+                ? "bg-brand/20 text-brand-bright font-semibold shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
             )}
             data-testid="layer-satelite-btn"
           >
             <Satellite className="h-3.5 w-3.5" /> Satélite
+          </button>
+          <button
+            type="button"
+            onClick={() => setMostrarColonias((v) => !v)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
+              mostrarColonias
+                ? "bg-indigo-500/25 text-indigo-300 font-semibold border border-indigo-500/40 shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+            )}
+            data-testid="layer-colonias-btn"
+            title="Activar vista delimitada de colonias por colores"
+          >
+            <Shapes className="h-3.5 w-3.5" /> Colonias
+          </button>
+
+          <div className="mx-1 h-4 w-px bg-border/80" />
+
+          <button
+            type="button"
+            onClick={() => setMostrarFlota((v) => !v)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
+              mostrarFlota
+                ? "bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
+                : "bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40"
+            )}
+            data-testid="toggle-flota-btn"
+            title={mostrarFlota ? "Ocultar flota en operación" : "Mostrar flota en operación"}
+          >
+            {mostrarFlota ? (
+              <>
+                <Eye className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Flota ({visibles.length})</span>
+              </>
+            ) : (
+              <>
+                <EyeOff className="h-3.5 w-3.5 text-amber-400" />
+                <span>Flota oculta</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -476,7 +524,7 @@ export default function Terminal() {
             zoom={13}
             zoomControl={false}
             zoomAnimation={true}
-            markerZoomAnimation={false}
+            markerZoomAnimation={true}
             wheelDebounceTime={40}
             className="h-full w-full"
           >
@@ -542,7 +590,8 @@ export default function Terminal() {
             const ahead = puntoAdelanteEnRuta({ lat: selectedOp.lat, lng: selectedOp.lng }, rutaServicio.latlngs, 180);
             return ahead ? <Marker position={[ahead.lat, ahead.lng]} icon={routeArrowIcon()} /> : null;
           })()}
-          {visibles.map((o) => (
+          {mostrarColonias && <ColoniasLayer />}
+          {mostrarFlota && visibles.map((o) => (
             <SmoothTaxiMarker
               key={o.id}
               op={o}

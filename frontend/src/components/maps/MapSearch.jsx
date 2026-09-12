@@ -68,8 +68,23 @@ export function MapSearch({ onGoto, onPickOrigen, onPickDestino, className }) {
   const reset = () => { setQ(""); setResults(null); setSelected(null); setOpen(false); };
 
   return (
-    <div ref={boxRef} className={cn("relative", className)} data-testid="map-search">
-      <div className="bezel-shell pointer-events-auto">
+    <div
+      ref={boxRef}
+      className={cn(
+        "relative transition-all duration-300 ease-out",
+        open || selected || q ? "opacity-100 shadow-2xl" : "opacity-45 hover:opacity-100 focus-within:opacity-100 shadow-md",
+        className
+      )}
+      data-testid="map-search"
+    >
+      <div
+        className={cn(
+          "bezel-shell pointer-events-auto backdrop-blur-md transition-all duration-300",
+          open || selected || q
+            ? "bg-card/95 border-border shadow-2xl"
+            : "bg-card/40 hover:bg-card/90 focus-within:bg-card/95 border-border/50 hover:border-border"
+        )}
+      >
         <div className="flex items-center gap-2 rounded-[var(--radius)] px-3 py-1.5">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input

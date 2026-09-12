@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, memo } from "react";
+import React, { useEffect, useRef, useMemo, memo } from "react";
 import { Marker, Popup } from "react-leaflet";
 import { taxiStateAssetIcon } from "@/lib/taxiIcon";
 import { ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
@@ -101,13 +101,16 @@ function SmoothTaxiMarkerComponent({
     };
   }, [op.lat, op.lng, op.gps_heading, selected, destinoHeading]);
 
-  const activeHeading = selected && destinoHeading != null ? destinoHeading : (op.gps_heading || 0);
-
-  const icon = taxiStateAssetIcon(op.estado, {
-    label: op.placa,
-    selected,
-    heading: activeHeading,
-  });
+  // Memoizar la instancia del icono para que Leaflet NUNCA destruya y re-cree el nodo DOM
+  // en cada ciclo de animación o paquete GPS. La rotación continua a 60 FPS se efectúa
+  // directamente sobre .th-taxi-rotator en cada fotograma.
+  const icon = useMemo(() => {
+    return taxiStateAssetIcon(op.estado, {
+      label: op.placa,
+      selected,
+      heading: initialHeading,
+    });
+  }, [op.estado, op.placa, selected]);
 
   const speedKmh = Math.round((op.gps_speed || 0) * 3.6);
 
