@@ -123,56 +123,43 @@ function SmoothTaxiMarkerComponent({
       icon={icon}
       eventHandlers={{ click: onSelect }}
     >
-      <Popup className="th-taxi-popup">
-        <div className="min-w-[220px] text-xs">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
+      <Popup className="th-taxi-popup" minWidth={160} maxWidth={200}>
+        <div style={{ fontFamily: "Inter, sans-serif", padding: "6px 2px", display: "flex", flexDirection: "column", gap: "6px", minWidth: "160px" }}>
+          {/* Foto + Nombre + Unidad */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {op.foto_url ? (
               <img
                 src={op.foto_url}
                 alt={op.nombre}
-                className="h-10 w-10 rounded-full object-cover border border-white/20 shadow-sm"
+                style={{ height: "36px", width: "36px", borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(79,93,255,0.5)", flexShrink: 0 }}
               />
             ) : (
-              <div className="h-10 w-10 rounded-full bg-brand/20 flex items-center justify-center font-bold text-brand-bright">
+              <div style={{ height: "36px", width: "36px", borderRadius: "50%", background: "rgba(79,93,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", color: "#A8B1FF", fontSize: "14px", flexShrink: 0 }}>
                 {op.nombre?.[0] || "T"}
               </div>
             )}
-            <div className="min-w-0 flex-1">
-              <div className="font-bold text-sm text-foreground truncate">{op.nombre}</div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="h-2 w-2 rounded-full" style={{ background: ESTADO_COLORS[op.estado] }} />
-                <span className="text-[11px] font-semibold" style={{ color: ESTADO_COLORS[op.estado] }}>
-                  {ESTADO_LABEL[op.estado]}
-                </span>
-                <span className="text-muted-foreground text-[10px]">· {op.placa}</span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: "13px", color: "#F5F5F7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{op.nombre}</div>
+              <div style={{ fontSize: "10px", color: "#9CA0AA", marginTop: "1px" }}>
+                Unidad <span style={{ fontFamily: "monospace", color: "#F5F5F7", fontWeight: 700 }}>#{op.vehiculo?.numero_economico || op.placa}</span>
               </div>
             </div>
           </div>
-
-          <div className="mt-2 flex items-center gap-2.5 rounded-lg bg-surface-2/70 p-1.5 border border-white/5">
+          {/* Imagen vehículo */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "4px 6px" }}>
             <img
               src={resolveVehicleImage(op.vehiculo)}
               alt={op.vehiculo?.modelo || "Vehículo"}
-              className="h-9 w-14 object-contain"
+              style={{ height: "32px", width: "52px", objectFit: "contain", flexShrink: 0 }}
             />
-            <div className="min-w-0 flex-1 text-[11px]">
-              <div className="font-semibold text-foreground">
-                {op.vehiculo?.marca || ""} {op.vehiculo?.modelo || "Vehículo estándar"}
-              </div>
-              <div className="text-[10px] text-muted-foreground">
-                Unidad: <span className="font-mono text-foreground font-bold">{op.vehiculo?.numero_economico || op.placa}</span> ({op.vehiculo?.color || "Blanco"})
-              </div>
+            <div style={{ fontSize: "11px", color: "#F5F5F7", fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {op.vehiculo?.marca} {op.vehiculo?.modelo || "Taxi"}
             </div>
           </div>
-
-          <div className="mt-2 space-y-1 text-[11px] text-muted-foreground">
-            <div>Ruta: <span className="text-foreground">{nombreRuta ? nombreRuta(op.ruta_asignada) : "Taxi libre"}</span></div>
-            {op.descripcion_sentido && (
-              <div className="text-emerald-400 font-medium">Sentido: {op.descripcion_sentido}</div>
-            )}
-            <div>
-              GPS: {timeAgo(op.ultima_actualizacion)} ({Math.round(op.gps_heading || 0)}°) · <span className="mono-num text-foreground font-semibold">{speedKmh} km/h</span>
-            </div>
+          {/* Estado */}
+          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <span style={{ height: "7px", width: "7px", borderRadius: "50%", background: ESTADO_COLORS[op.estado], flexShrink: 0 }} />
+            <span style={{ fontSize: "11px", fontWeight: 600, color: ESTADO_COLORS[op.estado] }}>{ESTADO_LABEL[op.estado]}</span>
           </div>
         </div>
       </Popup>

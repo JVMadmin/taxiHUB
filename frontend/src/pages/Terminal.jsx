@@ -29,7 +29,7 @@ import { SmoothTaxiMarker } from "@/components/maps/SmoothTaxiMarker";
 import { ColoniasLayer, getColoniaAt } from "@/components/maps/ColoniasLayer";
 import { MapContextMenu } from "@/components/maps/MapContextMenu";
 import { precargarTilesPalenque } from "@/lib/PalenqueTileCache";
-import { Layers, Satellite, ChevronRight, ChevronLeft, Eye, EyeOff, Shapes } from "lucide-react";
+import { Layers, Satellite, ChevronRight, ChevronLeft, Eye, EyeOff, Shapes, X } from "lucide-react";
 import { toast } from "sonner";
 
 const CENTER = [17.5099, -91.9847]; // Palenque, Chiapas

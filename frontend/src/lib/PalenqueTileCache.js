@@ -50,18 +50,12 @@ export function obtenerUrlsTeselasPalenque() {
   return urls;
 }
 
-export function precargarTilesPalenque(concurrencia = 4) {
+export function precargarTilesPalenque(concurrencia = 12) {
   if (yaPrecargado) return Promise.resolve(0);
   if (typeof window === 'undefined') return Promise.resolve(0);
-
-  // Comprobar si ya se precargó en esta sesión de navegador
-  if (sessionStorage.getItem('palenque_tiles_precargados') === 'true') {
-    yaPrecargado = true;
-    return Promise.resolve(0);
-  }
+  yaPrecargado = true;
 
   const urls = obtenerUrlsTeselasPalenque();
-  yaPrecargado = true;
 
   return new Promise((resolve) => {
     let index = 0;
@@ -70,9 +64,6 @@ export function precargarTilesPalenque(concurrencia = 4) {
 
     function cargarSiguiente() {
       if (index >= urls.length && activos === 0) {
-        try {
-          sessionStorage.setItem('palenque_tiles_precargados', 'true');
-        } catch (_) {}
         resolve(completados);
         return;
       }
@@ -80,17 +71,15 @@ export function precargarTilesPalenque(concurrencia = 4) {
       while (activos < concurrencia && index < urls.length) {
         const url = urls[index++];
         activos++;
-        const img = new Image();
-        img.onload = img.onerror = () => {
-          activos--;
-          completados++;
-          cargarSiguiente();
-        };
-        img.src = url;
+        // fetch con cache:force-cache persiste en caché de disco HTTP
+        // más efectivo que new Image() en navegadores modernos
+        fetch(url, { cache: 'force-cache', mode: 'no-cors' })
+          .then(() => { activos--; completados++; cargarSiguiente(); })
+          .catch(() => { activos--; completados++; cargarSiguiente(); });
       }
     }
 
-    // Iniciar con micro-delay para no competir con el primer render
-    setTimeout(cargarSiguiente, 200);
+    // Iniciar tras 50ms para no bloquear el primer render de la UI
+    setTimeout(cargarSiguiente, 50);
   });
 }
