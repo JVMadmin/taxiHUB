@@ -28,6 +28,7 @@ import { MaplibreVectorTileLayer } from "@/components/maps/MaplibreVectorTileLay
 import { SmoothTaxiMarker } from "@/components/maps/SmoothTaxiMarker";
 import { ColoniasLayer, getColoniaAt } from "@/components/maps/ColoniasLayer";
 import { MapContextMenu } from "@/components/maps/MapContextMenu";
+import { precargarTilesPalenque } from "@/lib/PalenqueTileCache";
 import { Layers, Satellite, ChevronRight, ChevronLeft, Eye, EyeOff, Shapes } from "lucide-react";
 import { toast } from "sonner";
 
@@ -185,6 +186,12 @@ export default function Terminal() {
   const [picking, setPicking] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
 
+  const handleLimpiarPuntos = () => {
+    setCoords({ origen: null, destino: null, origenTexto: null, destinoTexto: null });
+    setPuntoBuscado(null);
+    toast.info("Puntos del mapa borrados");
+  };
+
   const handleSetOrigen = (latlng) => {
     const col = getColoniaAt(latlng.lat, latlng.lng);
     const desc = col ? `${col.nombre}` : `Punto en mapa (${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
@@ -280,6 +287,11 @@ export default function Terminal() {
   }, [navigate]);
 
   useEffect(() => { if (getTerminalToken()) load(); }, [load]);
+
+  // Precarga fluida de teselas de Palenque para zoom in/out sin lag ni parpadeo
+  useEffect(() => {
+    precargarTilesPalenque();
+  }, []);
 
   // WebSocket en vivo
   useEffect(() => {
@@ -606,16 +618,12 @@ export default function Terminal() {
                 url={SATELLITE_TILES}
                 attribution="Tiles &copy; Esri World Imagery"
                 maxNativeZoom={18}
-                keepBuffer={12}
-                updateWhenIdle={false}
-                updateWhenZooming={false}
+                keepBuffer={6}
               />
               <TileLayer
                 url={SATELLITE_REF}
                 maxNativeZoom={18}
-                keepBuffer={12}
-                updateWhenIdle={false}
-                updateWhenZooming={false}
+                keepBuffer={6}
               />
             </>
           ) : TILESERVER_URL ? (
@@ -628,9 +636,7 @@ export default function Terminal() {
               attribution={STREET_ATTR}
               maxZoom={20}
               maxNativeZoom={19}
-              keepBuffer={16}
-              updateWhenIdle={false}
-              updateWhenZooming={false}
+              keepBuffer={6}
             />
           )}
           <ZoomControl position="bottomleft" />
@@ -783,6 +789,51 @@ export default function Terminal() {
       )}
       </div>
 
+        {/* HUD Flotante: Servicio en borrador y control de puntos */}
+        {(coords.origen || coords.destino) && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[800] flex items-center gap-2 rounded-2xl border border-white/15 bg-[#13151A]/95 px-4 py-2 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
+            <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+              {coords.origen ? (
+                <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="max-w-[150px] truncate">{coords.origenTexto || "Origen marcado"}</span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground/70 italic text-[11px]">Clic derecho p/ Origen</span>
+              )}
+              <span className="text-muted-foreground/50 font-bold">&rarr;</span>
+              {coords.destino ? (
+                <span className="flex items-center gap-1.5 text-rose-400 font-semibold">
+                  <span className="h-2 w-2 rounded-full bg-rose-400 shrink-0" />
+                  <span className="max-w-[150px] truncate">{coords.destinoTexto || "Destino marcado"}</span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground/70 italic text-[11px]">Clic derecho p/ Destino</span>
+              )}
+            </div>
+
+            <div className="h-4 w-px bg-white/10 mx-1" />
+
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 transition-colors border border-emerald-500/30"
+              title="Abrir formulario de despacho y asignar taxi"
+            >
+              Despachar Taxi
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLimpiarPuntos}
+              className="flex items-center gap-1 rounded-xl bg-white/5 p-1.5 text-muted-foreground hover:bg-rose-500/20 hover:text-rose-300 transition-colors"
+              title="Borrar puntos y cancelar borrador"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
         <MapContextMenu
         isOpen={!!contextMenu}
         position={contextMenu?.position}
@@ -795,6 +846,8 @@ export default function Terminal() {
         onCopiarCoordenadas={handleCopiarCoordenadas}
         onCentrar={handleCentrar}
         onIdentificarColonia={handleIdentificarColonia}
+        hasPuntosMarcados={!!(coords.origen || coords.destino || puntoBuscado)}
+        onLimpiarPuntos={handleLimpiarPuntos}
       />
 
         <DespachoModal
@@ -804,7 +857,11 @@ export default function Terminal() {
           setCoords={setCoords}
           pedirPunto={pedirPunto}
           operadoresLibres={operadoresLibres}
-          onCreated={() => load()}
+          onCreated={() => {
+            setCoords({ origen: null, destino: null, origenTexto: null, destinoTexto: null });
+            setPuntoBuscado(null);
+            load();
+          }}
         />
 
       <TerminalMenu

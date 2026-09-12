@@ -96,6 +96,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
       await termApi.post(`/servicios/${created.servicio.id}/asignar`, { operador_id: op.id });
       toast.success(`Servicio asignado a ${op.placa || op.nombre}`);
       setCliente({ nombre: "", telefono: "" });
+      setCoords?.({ origen: null, destino: null, origenTexto: null, destinoTexto: null });
       onCreated?.();
       onClose();
     } catch (e) {

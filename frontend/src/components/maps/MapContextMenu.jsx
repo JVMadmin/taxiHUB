@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Navigation, Flag, MapPin, Copy, Crosshair, Shapes, X } from "lucide-react";
+import { Navigation, Flag, MapPin, Copy, Crosshair, Shapes, X, RotateCcw } from "lucide-react";
 
 /**
  * MapContextMenu — Menú contextual flotante al hacer clic derecho en el mapa.
@@ -18,6 +18,8 @@ export function MapContextMenu({
   onCentrar,
   onIdentificarColonia,
   coloniaCercana,
+  hasPuntosMarcados = false,
+  onLimpiarPuntos,
 }) {
   const menuRef = useRef(null);
 
@@ -78,6 +80,17 @@ export function MapContextMenu({
 
       {/* Opciones operativas principales */}
       <div className="py-1 flex flex-col gap-0.5">
+        {hasPuntosMarcados && (
+          <button
+            type="button"
+            onClick={() => { onLimpiarPuntos?.(); onClose(); }}
+            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left text-xs font-semibold text-amber-300 hover:bg-amber-500/15 hover:text-amber-200 transition-colors border border-amber-500/20 bg-amber-500/5 mb-1"
+            data-testid="context-limpiar-btn"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-amber-400" />
+            <span>Limpiar puntos del mapa</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => { onSetOrigen(latlng); onClose(); }}
