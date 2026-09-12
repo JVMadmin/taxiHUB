@@ -296,15 +296,22 @@ export function Flota({ liveSignal }) {
               type="button"
               onClick={() => setFollow((f) => !f)}
               className={cn(
-                "flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold shadow-xl backdrop-blur-md transition-all",
+                "flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs shadow-2xl transition-all select-none backdrop-blur-md",
                 follow
-                  ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                  : "border-border/80 bg-surface/90 text-muted-foreground hover:text-foreground"
+                  ? "border-emerald-400/80 bg-[#13151A] text-white font-black ring-1 ring-emerald-500/50 shadow-emerald-950/50"
+                  : "border-white/15 bg-[#17191E]/95 text-slate-200 hover:text-white hover:border-white/30 font-bold"
               )}
             >
-              <Crosshair className={cn("h-3.5 w-3.5", follow && "animate-spin")} />
-              <span>{follow ? "Seguimiento activo (Cámara centrada)" : "Activar seguimiento"}</span>
-              {follow && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />}
+              <Crosshair className={cn("h-4 w-4 shrink-0", follow ? "text-emerald-400 animate-spin" : "text-slate-400")} />
+              <span className={cn("tracking-tight font-extrabold", follow ? "text-white" : "text-slate-200")}>
+                {follow ? "Seguimiento activo (Cámara fija)" : "Activar seguimiento"}
+              </span>
+              {follow && (
+                <span className="flex h-2 w-2 relative ml-0.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                </span>
+              )}
             </button>
           )}
         </div>
