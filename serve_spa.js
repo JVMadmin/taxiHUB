@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT, 10) || 3005;
 const BUILD_DIR = path.join(__dirname, 'frontend', 'build');
 
 const MIME_TYPES = {

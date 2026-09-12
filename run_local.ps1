@@ -1,4 +1,4 @@
-﻿# TaxiHUB Local Runner (Sin Docker)
+# TaxiHUB Local Runner (Sin Docker)
 Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host "  Iniciando TaxiHUB 2.0 Localmente (Sin Docker)" -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
@@ -18,8 +18,8 @@ $backendProcess = Start-Process -FilePath "$scriptDir\venv\Scripts\uvicorn.exe" 
 
 Start-Sleep -Seconds 2
 
-# 2. Iniciar Frontend SPA en puerto 3000
-Write-Host "[2/2] Levantando Frontend en http://localhost:3000..." -ForegroundColor Green
-Start-Process "http://localhost:3000/"
+# 2. Iniciar Frontend SPA en puerto 3005
+Write-Host "[2/2] Levantando Frontend en http://localhost:3005..." -ForegroundColor Green
+Start-Process "http://localhost:3005/"
 
 & node "$scriptDir\serve_spa.js"

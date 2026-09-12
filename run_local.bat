@@ -14,10 +14,10 @@ set DB_NAME=taxihub_test
 set JWT_SECRET=dev-jwt-secret-taxihub
 start "TaxiHUB Backend (8080)" /min "%~dp0venv\Scripts\uvicorn.exe" server:app --host 127.0.0.1 --port 8080 --app-dir "%~dp0backend"
 
-:: 2. Frontend SPA Server en puerto 3000
-echo [2/2] Iniciando Frontend en http://localhost:3000 ...
+:: 2. Frontend SPA Server en puerto 3005
+echo [2/2] Iniciando Frontend en http://localhost:3005 ...
 timeout /t 2 /nobreak >nul
-start http://localhost:3000/
+start http://localhost:3005/
 node "%~dp0serve_spa.js"
 
 pause
