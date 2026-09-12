@@ -782,6 +782,8 @@ def _vehiculo_resumen(v: Optional[dict], tipos: Optional[Dict[str, dict]] = None
         "marca": v.get("marca"),
         "modelo": v.get("modelo"),
         "color": v.get("color"),
+        "foto_url": v.get("foto_url"),
+        "propietario_id": str(v.get("propietario_id")) if v.get("propietario_id") else None,
         "tipo_vehiculo": {"nombre": tipo.get("nombre"), "imagen_url": tipo.get("imagen_url")} if tipo else None,
         "imagen_resuelta": _imagen_resuelta_vehiculo(v, tipos),
     }
@@ -4833,7 +4835,7 @@ DEMO_TAXIS = [
         "telefono": "916-200-0001",
         "placa": "TX-101",
         "marca": "Nissan",
-        "modelo": "March",
+        "modelo": "Tsuru",
         "color": "Blanco",
         "estado": "libre",
         "pista_id": "pista_centro_juarez",
@@ -4868,9 +4870,9 @@ DEMO_TAXIS = [
         "nombre": "Luis Méndez",
         "telefono": "916-200-0003",
         "placa": "TX-103",
-        "marca": "Toyota",
-        "modelo": "Yaris",
-        "color": "Café",
+        "marca": "Nissan",
+        "modelo": "Versa",
+        "color": "Rojo",
         "estado": "ocupado",
         "pista_id": "pista_carretera_ruinas",
         "idx": 0,
@@ -4887,8 +4889,8 @@ DEMO_TAXIS = [
         "telefono": "916-200-0004",
         "placa": "TX-104",
         "marca": "Nissan",
-        "modelo": "Versa",
-        "color": "Rojo",
+        "modelo": "Sentra",
+        "color": "Plata",
         "estado": "libre",
         "pista_id": "pista_periferico_sur",
         "idx": 0,
@@ -4905,8 +4907,8 @@ DEMO_TAXIS = [
         "telefono": "916-200-0005",
         "placa": "TX-105",
         "marca": "Volkswagen",
-        "modelo": "Vento",
-        "color": "Plata",
+        "modelo": "Gol",
+        "color": "Blanco",
         "estado": "asignado",
         "pista_id": "pista_canada_ado",
         "idx": 20,
@@ -4922,9 +4924,9 @@ DEMO_TAXIS = [
         "nombre": "Miguel Sánchez",
         "telefono": "916-200-0006",
         "placa": "TX-106",
-        "marca": "Nissan",
-        "modelo": "Tsuru",
-        "color": "Blanco",
+        "marca": "Volkswagen",
+        "modelo": "Virtus",
+        "color": "Azul",
         "estado": "libre",
         "pista_id": "pista_centro_juarez",
         "idx": 10,
@@ -4940,63 +4942,63 @@ DEMO_TAXIS = [
         "nombre": "Jorge Albores",
         "telefono": "916-200-0007",
         "placa": "TX-107",
-        "marca": "Nissan",
-        "modelo": "Sentra",
-        "color": "Azul Marino",
+        "marca": "Chevrolet",
+        "modelo": "Onix",
+        "color": "Negro",
         "estado": "ocupado",
         "pista_id": "pista_carretera_ruinas",
         "idx": 25,
         "sentido_direccion": "reversa",
         "sentido_calle": "doble",
-        "descripcion_sentido": "Carretera Ruinas retornando hacia Centro (doble sentido, carril norte)",
-        "lat": 17.497474,
-        "lng": -91.987707,
-        "gps_heading": 142.4
+        "descripcion_sentido": "Carretera Ruinas retornando hacia La Cañada (doble sentido, carril nororiente)",
+        "lat": 17.484,
+        "lng": -92.046,
+        "gps_heading": 30.0
     },
     {
         "usuario": "op8",
-        "nombre": "Fernando Gómez",
+        "nombre": "David López",
         "telefono": "916-200-0008",
         "placa": "TX-108",
-        "marca": "Toyota",
-        "modelo": "Corolla",
+        "marca": "Volkswagen",
+        "modelo": "Jetta",
         "color": "Blanco",
         "estado": "ocupado",
         "pista_id": "pista_pakal_na",
         "idx": 15,
         "sentido_direccion": "adelante",
         "sentido_calle": "doble",
-        "descripcion_sentido": "Carretera Federal hacia Pakal-Ná (doble sentido, carril nor-oriente)",
-        "lat": 17.520439,
-        "lng": -91.96861,
-        "gps_heading": 201.0
+        "descripcion_sentido": "Carretera Federal hacia Pakal-Ná (doble sentido, carril nororiente)",
+        "lat": 17.525501,
+        "lng": -91.958221,
+        "gps_heading": 40.5
     },
     {
         "usuario": "op9",
-        "nombre": "Gabriel Estrada",
+        "nombre": "Pedro Gómez",
         "telefono": "916-200-0009",
         "placa": "TX-109",
-        "marca": "Chevrolet",
-        "modelo": "Spark",
-        "color": "Amarillo",
+        "marca": "Renault",
+        "modelo": "Kwid",
+        "color": "Naranja",
         "estado": "asignado",
         "pista_id": "pista_centro_juarez",
         "idx": 22,
         "sentido_direccion": "adelante",
         "sentido_calle": "unico",
-        "descripcion_sentido": "Calle 5 de Mayo hacia Parque Central (sentido único)",
-        "lat": 17.512472,
-        "lng": -91.983363,
-        "gps_heading": 182.1
+        "descripcion_sentido": "Av. Reforma hacia Bulevar Cabeza Maya (sentido único)",
+        "lat": 17.51352,
+        "lng": -91.98681,
+        "gps_heading": 273.5
     },
     {
         "usuario": "op10",
-        "nombre": "Ricardo Domínguez",
+        "nombre": "Alejandro Castro",
         "telefono": "916-200-0010",
         "placa": "TX-110",
-        "marca": "Nissan",
-        "modelo": "V-Drive",
-        "color": "Gris Oscuro",
+        "marca": "Volkswagen",
+        "modelo": "Golf",
+        "color": "Rojo",
         "estado": "ocupado",
         "pista_id": "pista_tren_maya",
         "idx": 0,
@@ -5012,9 +5014,9 @@ DEMO_TAXIS = [
         "nombre": "Manuel Velasco",
         "telefono": "916-200-0011",
         "placa": "TX-111",
-        "marca": "Volkswagen",
-        "modelo": "Gol",
-        "color": "Rojo",
+        "marca": "Nissan",
+        "modelo": "March",
+        "color": "Plata",
         "estado": "libre",
         "pista_id": "pista_periferico_sur",
         "idx": 24,
@@ -5030,9 +5032,9 @@ DEMO_TAXIS = [
         "nombre": "Alberto Castellanos",
         "telefono": "916-200-0012",
         "placa": "TX-112",
-        "marca": "Kia",
-        "modelo": "Rio",
-        "color": "Blanco",
+        "marca": "Chevrolet",
+        "modelo": "Aveo",
+        "color": "Azul",
         "estado": "ocupado",
         "pista_id": "pista_pakal_na",
         "idx": 35,
@@ -5049,8 +5051,8 @@ DEMO_TAXIS = [
         "telefono": "916-200-0013",
         "placa": "TX-113",
         "marca": "Nissan",
-        "modelo": "Tiida",
-        "color": "Plata",
+        "modelo": "Tsuru",
+        "color": "Blanco",
         "estado": "libre",
         "pista_id": "pista_canada_ado",
         "idx": 38,
@@ -5066,9 +5068,9 @@ DEMO_TAXIS = [
         "nombre": "Daniel Morales",
         "telefono": "916-200-0014",
         "placa": "TX-114",
-        "marca": "Volkswagen",
-        "modelo": "Virtus",
-        "color": "Azul",
+        "marca": "Nissan",
+        "modelo": "Sentra",
+        "color": "Gris",
         "estado": "libre",
         "pista_id": "pista_centro_juarez",
         "idx": 30,
@@ -5084,8 +5086,8 @@ DEMO_TAXIS = [
         "nombre": "Oscar Trujillo",
         "telefono": "916-200-0015",
         "placa": "TX-115",
-        "marca": "Ford",
-        "modelo": "Figo",
+        "marca": "Estándar",
+        "modelo": "Generico",
         "color": "Blanco",
         "estado": "fuera_de_servicio",
         "pista_id": "pista_centro_juarez",
@@ -5139,7 +5141,36 @@ async def sembrar_datos_simulacion():
 
     tipo_estandar_id = await _tipo_vehiculo_default_id()
 
-    # 2. 15 Taxis y Operadores
+    # 2. Socios Concesionarios / Inversionistas (Dueños de Flota)
+    socios_data = [
+        {"nombre": "Don Roberto Méndez Solís", "usuario": "socio_roberto", "contrasena": "socio123", "telefono": "916-345-0010", "taxis": ["TX-101", "TX-102", "TX-103"]},
+        {"nombre": "Doña Carmen Velasco Cruz", "usuario": "socia_carmen", "contrasena": "socio123", "telefono": "916-345-0020", "taxis": ["TX-104", "TX-105"]},
+        {"nombre": "Lic. Jorge Domínguez Arcos", "usuario": "socio_jorge", "contrasena": "socio123", "telefono": "916-345-0030", "taxis": ["TX-106", "TX-107", "TX-108", "TX-109"]},
+        {"nombre": "Ing. Manuel Guzmán Peña", "usuario": "socio_manuel", "contrasena": "socio123", "telefono": "916-345-0040", "taxis": ["TX-110"]},
+        {"nombre": "Sra. Patricia Morales López", "usuario": "socia_patricia", "contrasena": "socio123", "telefono": "916-345-0050", "taxis": ["TX-111", "TX-112", "TX-113"]},
+        {"nombre": "Sr. Fernando Estrada Ruiz", "usuario": "socio_fernando", "contrasena": "socio123", "telefono": "916-345-0060", "taxis": ["TX-114", "TX-115"]},
+    ]
+    socio_por_placa = {}
+    for s in socios_data:
+        existente = await db.usuarios_dueno.find_one({"usuario": s["usuario"]})
+        doc = {
+            "nombre": s["nombre"],
+            "usuario": s["usuario"],
+            "password_hash": hash_password(s["contrasena"]),
+            "telefono": s["telefono"],
+            "activo": True,
+            "creado": now_iso(),
+        }
+        if existente:
+            await db.usuarios_dueno.update_one({"_id": existente["_id"]}, {"$set": doc})
+            socio_id = str(existente["_id"])
+        else:
+            ins = await db.usuarios_dueno.insert_one(doc)
+            socio_id = str(ins.inserted_id)
+        for placa in s["taxis"]:
+            socio_por_placa[placa] = socio_id
+
+    # 3. 15 Taxis y Operadores Vinculados
     op_ids = {}
     for i, t in enumerate(DEMO_TAXIS):
         lat, lng = t["lat"], t["lng"]
@@ -5147,6 +5178,8 @@ async def sembrar_datos_simulacion():
         puntos_calle = pista.get("puntos", [[lat, lng]])
         sentido_dir = t.get("sentido_direccion", "adelante")
         track = _generar_track_calle(puntos_calle, t["idx"], sentido_dir, 15)
+        driver_foto = f"/assets/drivers/driver-{i+1:02d}.jpg"
+
         op_doc = {
             "nombre": t["nombre"],
             "telefono": t["telefono"],
@@ -5167,6 +5200,7 @@ async def sembrar_datos_simulacion():
             "sitio_id": DEFAULT_SITIO,
             "activo": True,
             "track": track,
+            "foto_url": driver_foto,
         }
         existente = await db.operadores.find_one({"usuario": t["usuario"]})
         if existente:
@@ -5177,7 +5211,15 @@ async def sembrar_datos_simulacion():
             op_id = str(ins.inserted_id)
         op_ids[t["usuario"]] = op_id
 
-        # Vehículo vinculado
+        # Mapeo de foto del modelo según los assets subidos
+        modelo_lower = t["modelo"].lower()
+        if modelo_lower == "sentra":
+            vehiculo_foto = "/assets/vehicles/Sentra.png"
+        else:
+            vehiculo_foto = f"/assets/vehicles/{modelo_lower}.png"
+
+        # Vehículo vinculado con socio propietario
+        propietario_socio_id = socio_por_placa.get(t["placa"])
         v_doc = {
             "numero_economico": t["placa"],
             "placa": t["placa"],
@@ -5188,11 +5230,12 @@ async def sembrar_datos_simulacion():
             "activo": True,
             "sitio_id": DEFAULT_SITIO,
             "operador_conductor_id": op_id,
+            "propietario_id": propietario_socio_id,
             "lat": lat,
             "lng": lng,
             "ultima_actualizacion": now_iso(),
             "tipo_vehiculo_id": tipo_estandar_id,
-            "foto_url": None,
+            "foto_url": vehiculo_foto,
         }
         await db.vehiculos.update_one(
             {"numero_economico": t["placa"]},

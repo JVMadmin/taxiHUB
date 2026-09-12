@@ -26,7 +26,8 @@ import { MapSearch } from "@/components/maps/MapSearch";
 import { RecorridoGradiente } from "@/components/maps/RecorridoGradiente";
 import { MaplibreVectorTileLayer } from "@/components/maps/MaplibreVectorTileLayer";
 import { SmoothTaxiMarker } from "@/components/maps/SmoothTaxiMarker";
-import { ColoniasLayer } from "@/components/maps/ColoniasLayer";
+import { ColoniasLayer, getColoniaAt } from "@/components/maps/ColoniasLayer";
+import { MapContextMenu } from "@/components/maps/MapContextMenu";
 import { Layers, Satellite, ChevronRight, ChevronLeft, Eye, EyeOff, Shapes } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,8 +45,20 @@ const VECTOR_STYLE_URL = TILESERVER_URL
   ? `${TILESERVER_URL}/styles/basic-preview/style.json`
   : "https://tiles.openfreemap.org/styles/liberty";
 
-function MapClick({ onClick }) {
-  useMapEvents({ click: (e) => onClick(e.latlng) });
+const STREET_TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const STREET_ATTR = '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+function MapEventsHandler({ onClick, onContextMenu }) {
+  useMapEvents({
+    click: (e) => onClick(e.latlng),
+    contextmenu: (e) => {
+      e.originalEvent.preventDefault();
+      onContextMenu({
+        position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+        latlng: e.latlng,
+      });
+    },
+  });
   return null;
 }
 
@@ -170,6 +183,54 @@ export default function Terminal() {
   const [servicioForm, setServicioForm] = useState({ cliente_nombre: "", cliente_telefono: "" });
   const [coords, setCoords] = useState({ origen: null, destino: null, origenTexto: null, destinoTexto: null });
   const [picking, setPicking] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
+
+  const handleSetOrigen = (latlng) => {
+    const col = getColoniaAt(latlng.lat, latlng.lng);
+    const desc = col ? `${col.nombre}` : `Punto en mapa (${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
+    setCoords((c) => ({ ...c, origen: { lat: +latlng.lat.toFixed(6), lng: +latlng.lng.toFixed(6) }, origenTexto: desc }));
+    setModalOpen(true);
+    toast.success("Origen establecido para nuevo servicio", { description: desc });
+  };
+
+  const handleSetDestino = (latlng) => {
+    const col = getColoniaAt(latlng.lat, latlng.lng);
+    const desc = col ? `${col.nombre}` : `Destino (${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
+    setCoords((c) => ({ ...c, destino: { lat: +latlng.lat.toFixed(6), lng: +latlng.lng.toFixed(6) }, destinoTexto: desc }));
+    toast.success("Destino fijado en el mapa", { description: desc });
+  };
+
+  const handleMarcarPunto = (latlng) => {
+    const col = getColoniaAt(latlng.lat, latlng.lng);
+    setPuntoBuscado({
+      lat: latlng.lat,
+      lng: latlng.lng,
+      label: col ? col.nombre : "Punto Marcado",
+    });
+    toast.info("Punto de referencia marcado en el mapa");
+  };
+
+  const handleCopiarCoordenadas = (latlng) => {
+    navigator.clipboard?.writeText(`${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`);
+    toast.success("Coordenadas GPS copiadas al portapapeles");
+  };
+
+  const handleCentrar = (latlng) => {
+    mapRef.current?.flyTo([latlng.lat, latlng.lng], 16, { duration: 0.8 });
+  };
+
+  const handleIdentificarColonia = (latlng) => {
+    const col = getColoniaAt(latlng.lat, latlng.lng);
+    if (col) {
+      setMostrarColonias(true);
+      toast.info(`📍 ${col.nombre}`, {
+        description: `Límites: ${col.limites.norte} a ${col.limites.sur}`,
+        duration: 6000,
+      });
+    } else {
+      toast.info("Ubicación en zona periférica de Palenque");
+    }
+  };
 
   const abrirNuevaLlamada = () => {
     setServicioForm({ cliente_nombre: "", cliente_telefono: "" });
@@ -394,7 +455,7 @@ export default function Terminal() {
 
   return (
     <div className="taxi-terminal-shell flex h-screen w-screen overflow-hidden bg-background" style={{ "--ui-alpha": uiAlpha }}>
-      {/* SIDEBAR IZQUIERDA — flota fija (split view premium, ya no flota sobre el mapa) */}
+      {/* SIDEBAR IZQUIERDA — flota fija con pestaña flotante de colapso rápido */}
       {sidebarOpen && (
         <aside
           data-testid="terminal-sidebar"
@@ -411,6 +472,16 @@ export default function Terminal() {
             onSelect={(o) => { setSelectedId(o.id); setFollow(false); }}
             onClose={() => setSidebarOpen(false)}
           />
+          {/* Pestaña flotante en el borde para colapsar rápidamente la barra */}
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-surface/95 text-muted-foreground shadow-lg backdrop-blur hover:bg-surface-2 hover:text-foreground transition-all"
+            title="Ocultar barra lateral de flota"
+            aria-label="Ocultar barra lateral"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
         </aside>
       )}
 
@@ -431,13 +502,13 @@ export default function Terminal() {
         </div>
       )}
 
-      {/* Botón flotante para reabrir la sidebar de flota cuando está colapsada */}
+      {/* Botón flotante para reabrir la sidebar de flota cuando está colapsada (visible en todas las resoluciones) */}
       {!sidebarOpen && (
         <button
           type="button"
           onClick={() => { userInteractedRef.current = true; setSidebarOpen(true); }}
-          className="absolute left-3 top-24 z-[450] hidden items-center gap-2 rounded-xl border border-border/80 bg-surface/90 px-3 py-2 text-xs font-semibold text-foreground shadow-2xl backdrop-blur transition-all hover:border-brand/50 hover:bg-surface-2 md:flex"
-          title="Expandir panel de flota"
+          className="absolute left-3 top-20 z-[490] flex items-center gap-2 rounded-xl border border-brand/50 bg-surface/95 px-3.5 py-2 text-xs font-semibold text-foreground shadow-2xl backdrop-blur-md transition-all hover:scale-105 hover:border-brand hover:bg-surface-2"
+          title="Mostrar barra de flota"
           data-testid="expand-sidebar-btn"
         >
           <ChevronRight className="h-4 w-4 text-brand-bright" />
@@ -526,6 +597,7 @@ export default function Terminal() {
             zoomAnimation={true}
             markerZoomAnimation={true}
             wheelDebounceTime={40}
+            preferCanvas={true}
             className="h-full w-full"
           >
           {mapLayer === "satelite" ? (
@@ -534,19 +606,37 @@ export default function Terminal() {
                 url={SATELLITE_TILES}
                 attribution="Tiles &copy; Esri World Imagery"
                 maxNativeZoom={18}
+                keepBuffer={12}
+                updateWhenIdle={false}
+                updateWhenZooming={false}
               />
               <TileLayer
                 url={SATELLITE_REF}
                 maxNativeZoom={18}
+                keepBuffer={12}
+                updateWhenIdle={false}
+                updateWhenZooming={false}
               />
             </>
-          ) : (
+          ) : TILESERVER_URL ? (
             <MaplibreVectorTileLayer
               styleUrl={VECTOR_STYLE_URL}
             />
+          ) : (
+            <TileLayer
+              url={STREET_TILES}
+              attribution={STREET_ATTR}
+              maxZoom={19}
+              keepBuffer={16}
+              updateWhenIdle={false}
+              updateWhenZooming={false}
+            />
           )}
           <ZoomControl position="bottomleft" />
-          <MapClick onClick={onMapClick} />
+          <MapEventsHandler
+            onClick={(latlng) => { setContextMenu(null); onMapClick(latlng); }}
+            onContextMenu={setContextMenu}
+          />
           <MapRefBridge mapRef={mapRef} />
           <FollowController target={selectedOp} follow={follow} />
           <GotoController target={gotoTarget} />
@@ -691,6 +781,20 @@ export default function Terminal() {
         </DraggablePanel>
       )}
       </div>
+
+        <MapContextMenu
+        isOpen={!!contextMenu}
+        position={contextMenu?.position}
+        latlng={contextMenu?.latlng}
+        coloniaCercana={contextMenu?.latlng ? getColoniaAt(contextMenu.latlng.lat, contextMenu.latlng.lng)?.nombre : null}
+        onClose={() => setContextMenu(null)}
+        onSetOrigen={handleSetOrigen}
+        onSetDestino={handleSetDestino}
+        onMarcarPunto={handleMarcarPunto}
+        onCopiarCoordenadas={handleCopiarCoordenadas}
+        onCentrar={handleCentrar}
+        onIdentificarColonia={handleIdentificarColonia}
+      />
 
         <DespachoModal
           open={modalOpen}

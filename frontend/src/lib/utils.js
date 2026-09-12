@@ -7,34 +7,55 @@ export function cn(...inputs) {
 }
 
 // Imagen genérica cuando el vehículo no tiene foto propia NI tipo con imagen.
-export const VEHICLE_IMAGE_FALLBACK = "/vehicle-types/otros.svg";
+export const VEHICLE_IMAGE_FALLBACK = "/assets/vehicles/generico.png";
 
 // Catálogo local de imágenes por modelo/marca/tipo de vehículo — referencia
 // visual inmediata en la ficha del pasajero, del operador y de la terminal.
-// Para añadir más modelos: copia la imagen a frontend/public/assets/vehicles/
-// con la clave en kebab-case y regístrala aquí (p. ej. "aveo", "yaris").
 export const VEHICLE_TYPE_ASSETS = {
+  aveo: "/assets/vehicles/aveo.png",
+  gol: "/assets/vehicles/gol.png",
+  golf: "/assets/vehicles/golf.png",
+  sentra: "/assets/vehicles/Sentra.png",
+  jetta: "/assets/vehicles/jetta.png",
+  kwid: "/assets/vehicles/kwid.png",
+  onix: "/assets/vehicles/onix.png",
+  virtus: "/assets/vehicles/virtus.png",
+  tsuru: "/assets/vehicles/tsuru.png",
+  versa: "/assets/vehicles/versa.png",
   march: "/assets/vehicles/march.png",
+  generico: "/assets/vehicles/generico.png",
+  estandar: "/assets/vehicles/generico.png",
+  taxi: "/assets/vehicles/generico.png",
 };
 
 const _normClave = (s) =>
   (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
 // Devuelve el asset local que corresponde al vehículo (por tipo, marca o
-// modelo), o null si no hay catálogo para él.
+// modelo), o fallback genérico si no hay catálogo específico para él.
 export function vehicleTypeAssetKey(vehiculo) {
-  if (!vehiculo) return null;
+  if (!vehiculo) return VEHICLE_IMAGE_FALLBACK;
   const t = vehiculo.tipo_vehiculo || {};
   const candidatos = [
-    t.nombre, t.modelo, t.marca, vehiculo.marca, vehiculo.modelo, vehiculo.nombre,
-  ];
+    vehiculo.modelo, vehiculo.marca, t.modelo, t.marca, t.nombre, vehiculo.nombre,
+  ].filter(Boolean);
+
   for (const c of candidatos) {
     const clave = _normClave(c);
     if (clave && VEHICLE_TYPE_ASSETS[clave]) return VEHICLE_TYPE_ASSETS[clave];
+    // Coincidencia por subcadena (p. ej. "Nissan Sentra 2021" contiene "sentra")
+    for (const [k, url] of Object.entries(VEHICLE_TYPE_ASSETS)) {
+      if (clave.includes(k)) return url;
+    }
   }
   const combinada = _normClave([vehiculo.marca, vehiculo.modelo].filter(Boolean).join(" "));
-  if (combinada && VEHICLE_TYPE_ASSETS[combinada]) return VEHICLE_TYPE_ASSETS[combinada];
-  return null;
+  if (combinada) {
+    if (VEHICLE_TYPE_ASSETS[combinada]) return VEHICLE_TYPE_ASSETS[combinada];
+    for (const [k, url] of Object.entries(VEHICLE_TYPE_ASSETS)) {
+      if (combinada.includes(k)) return url;
+    }
+  }
+  return VEHICLE_IMAGE_FALLBACK;
 }
 
 // Prioridad de imagen: foto propia del vehículo -> catálogo local por modelo

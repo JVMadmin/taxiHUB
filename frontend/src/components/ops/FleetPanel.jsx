@@ -21,7 +21,16 @@ export function FleetPanel({
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <Truck className="h-3.5 w-3.5" /> Flota en operación
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground lg:hidden" aria-label="Cerrar panel de flota"><X className="h-4 w-4" /></button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors"
+            title="Ocultar barra lateral de flota"
+            aria-label="Ocultar panel de flota"
+          >
+            <span className="text-[11px]">Ocultar</span>
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
 
         <div>
