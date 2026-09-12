@@ -3132,25 +3132,62 @@ async def dueno_flota(current: dict = Depends(require_dueno)):
     op_oids = [to_oid(x) for x in operador_ids]
     operadores = {str(o["_id"]): o for o in (await db.operadores.find({"_id": {"$in": op_oids}}).to_list(1000) if op_oids else [])}
 
-    # Conteo de servicios completados por conductor, en una sola consulta (evita N+1).
+    # Conteo de servicios completados totales y de hoy por conductor
+    hoy = _hoy_str()
     conteos: Dict[str, int] = {}
+    conteos_hoy: Dict[str, int] = {}
+    servicios_activos: Dict[str, dict] = {}
     if operador_ids:
         docs = await db.servicios.find(
             {"operador_asignado_id": {"$in": operador_ids}, "estado": "completado"},
-            {"operador_asignado_id": 1},
+            {"operador_asignado_id": 1, "timestamp_fin": 1, "timestamp_creacion": 1},
         ).to_list(20000)
         for d in docs:
             oid = d.get("operador_asignado_id")
             conteos[oid] = conteos.get(oid, 0) + 1
+            ts = d.get("timestamp_fin") or d.get("timestamp_creacion") or ""
+            if ts.startswith(hoy):
+                conteos_hoy[oid] = conteos_hoy.get(oid, 0) + 1
+
+        s_activos = await db.servicios.find(
+            {"operador_asignado_id": {"$in": operador_ids}, "estado": {"$in": ["asignado", "en_curso"]}}
+        ).to_list(100)
+        for sa in s_activos:
+            servicios_activos[sa.get("operador_asignado_id")] = serialize(sa)
 
     tipos = await _mapa_tipos_vehiculo()
     out = []
     for v in vehiculos:
         item = _enriquecer_vehiculo(serialize(v), tipos)
-        op = operadores.get(v.get("operador_conductor_id"))
-        item["conductor"] = {"id": str(op["_id"]), "nombre": op["nombre"], "telefono": op.get("telefono"),
-                              "estado": op.get("estado")} if op else None
-        item["servicios_realizados"] = conteos.get(v.get("operador_conductor_id"), 0)
+        op_id = v.get("operador_conductor_id")
+        op = operadores.get(op_id)
+        if op:
+            item["conductor"] = {
+                "id": str(op["_id"]),
+                "nombre": op["nombre"],
+                "telefono": op.get("telefono"),
+                "estado": op.get("estado", "libre"),
+                "foto_url": op.get("foto_url"),
+                "ultima_actualizacion": op.get("ultima_actualizacion"),
+                "gps_heading": op.get("gps_heading", 0),
+                "gps_speed": op.get("gps_speed", 0),
+            }
+            item["lat"] = op.get("lat")
+            item["lng"] = op.get("lng")
+            item["gps_heading"] = op.get("gps_heading", 0)
+            item["gps_speed"] = op.get("gps_speed", 0)
+            item["foto_url"] = op.get("foto_url")
+            item["estado"] = op.get("estado", "libre")
+            item["track"] = [{"lat": p[0], "lng": p[1], "ts": p[2]} for p in (op.get("track") or [])[-TRACK_MAX_POINTS:]]
+            item["servicio_activo"] = servicios_activos.get(op_id)
+        else:
+            item["conductor"] = None
+            item["track"] = []
+            item["estado"] = "fuera_de_servicio"
+            item["servicio_activo"] = None
+
+        item["servicios_realizados"] = conteos.get(op_id, 0)
+        item["servicios_hoy"] = conteos_hoy.get(op_id, 0)
         out.append(item)
     return out
 
