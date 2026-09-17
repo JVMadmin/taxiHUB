@@ -2844,10 +2844,60 @@ def _resolve_file_mime(path: str, record_ct: Optional[str] = None) -> str:
     }.get(ext, "image/jpeg")
 
 
+async def _require_file_actor(request: Request) -> dict:
+    """Auth para /files: acepta terminal | operador | dueño (Fase 1 hardening)."""
+    last_exc = None
+    for fn in (require_terminal, require_operador_estricto, require_operador, require_dueno, require_pasajero):
+        try:
+            return await fn(request)
+        except HTTPException as exc:
+            last_exc = exc
+            # 401/403 de scope incorrecto -> probar siguiente; si es 401 por falta de token, corta
+            if exc.status_code == 401 and "No autenticado" in str(exc.detail):
+                # Si no hay token, no intentar más
+                raise
+            continue
+    # Fallback al decode genérico para dar mensaje útil
+    if last_exc:
+        raise last_exc
+    raise HTTPException(status_code=401, detail="No autenticado")
+
+
 @api_router.get("/files/{path:path}")
-async def download_file(path: str):
+async def download_file(path: str, current=Depends(_require_file_actor)):
+    # Sanitización básica de path y pertenencia al tenant
+    if ".." in path or path.startswith("/") or path.startswith("\\"):
+        raise HTTPException(status_code=400, detail="Path inválido")
+    if not path.startswith(f"{APP_NAME}/"):
+        raise HTTPException(status_code=403, detail="Path fuera del tenant")
+    sitio_actor = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
+    # Validación de pertenencia: si el archivo está ligado a un operador/vehículo, debe ser del mismo sitio
+    # Heurística 1: reporte con operador_id
+    rec_reporte = await db.reportes_objetos.find_one({"storage_path": path})
+    if rec_reporte and rec_reporte.get("operador_id"):
+        op = await db.operadores.find_one({"_id": to_oid(rec_reporte["operador_id"])}, {"sitio_id": 1})
+        if op and op.get("sitio_id") and op.get("sitio_id") != sitio_actor:
+            raise HTTPException(status_code=403, detail="Archivo no pertenece a tu sitio")
+    # Heurística 2: path contiene id de operador (combustible/reportes)
+    for prefix in (f"{APP_NAME}/combustible/", f"{APP_NAME}/reportes/"):
+        if path.startswith(prefix):
+            maybe_id = path[len(prefix):].split("/")[0]
+            try:
+                op = await db.operadores.find_one({"_id": to_oid(maybe_id)}, {"sitio_id": 1})
+                if op and op.get("sitio_id") and op.get("sitio_id") != sitio_actor:
+                    raise HTTPException(status_code=403, detail="Archivo no pertenece a tu sitio")
+            except HTTPException:
+                raise
+            except Exception:
+                pass
+            break
+    # Heurística 3: foto de vehículo ligada por foto_url
+    foto_url = f"/api/files/{path}"
+    veh = await db.vehiculos.find_one({"foto_url": foto_url}, {"sitio_id": 1})
+    if veh and veh.get("sitio_id") and veh.get("sitio_id") != sitio_actor:
+        raise HTTPException(status_code=403, detail="Archivo no pertenece a tu sitio")
     data, _ = get_object(path)
-    record = await db.reportes_objetos.find_one({"storage_path": path}) or await db.archivos.find_one({"storage_path": path})
+    record = rec_reporte or await db.archivos.find_one({"storage_path": path})
     media_type = _resolve_file_mime(path, record.get("content_type") if record else None)
     return Response(
         content=data,
