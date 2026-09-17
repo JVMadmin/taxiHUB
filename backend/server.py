@@ -154,8 +154,17 @@ def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
-def create_token(subject_id: str, usuario: str, scope: str = "operador") -> str:
-    payload = {"sub": subject_id, "usuario": usuario, "scope": scope, "iat": datetime.now(timezone.utc)}
+def create_token(subject_id: str, usuario: str, scope: str = "operador", sitio_id: Optional[str] = None) -> str:
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": subject_id,
+        "usuario": usuario,
+        "scope": scope,
+        "iat": now,
+        "exp": now + timedelta(hours=24),
+        "sitio_id": sitio_id or DEFAULT_SITIO,
+        "tenant_id": sitio_id or DEFAULT_SITIO,
+    }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
@@ -166,12 +175,21 @@ async def get_current_operador(request: Request) -> dict:
     token = auth[7:]
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido")
+    # Validación exp centralizada
+    _exige_scope(payload, SCOPES["operador"], permitir_sin_scope=True)
     op = await db.operadores.find_one({"_id": to_oid(payload["sub"])})
     if not op or op.get("activo") is False:
         raise HTTPException(status_code=401, detail="Operador no encontrado")
-    return serialize(op)
+    out = serialize(op)
+    # Inyección de tenant desde el token (Fase 1): el token manda, pero se valida contra DB
+    tenant = payload.get("sitio_id") or payload.get("tenant_id") or out.get("sitio_id") or DEFAULT_SITIO
+    out["_tenant"] = tenant
+    out["sitio_id"] = out.get("sitio_id") or tenant
+    return out
 
 
 def _decode(request: Request) -> dict:
@@ -180,12 +198,32 @@ def _decode(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="No autenticado")
     try:
         payload = jwt.decode(auth[7:], JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido")
     return payload
 
 
 def _exige_scope(payload: dict, scope: str, permitir_sin_scope: bool = False) -> None:
+    # Validación de expiración (hardening Fase 1): si el token trae exp, debe ser futuro.
+    exp = payload.get("exp")
+    if exp is not None:
+        try:
+            if isinstance(exp, (int, float)):
+                exp_dt = datetime.fromtimestamp(exp, tz=timezone.utc)
+            elif isinstance(exp, datetime):
+                exp_dt = exp if exp.tzinfo else exp.replace(tzinfo=timezone.utc)
+            else:
+                exp_dt = datetime.fromisoformat(str(exp))
+                if exp_dt.tzinfo is None:
+                    exp_dt = exp_dt.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) > exp_dt:
+                raise HTTPException(status_code=401, detail="Token expirado")
+        except HTTPException:
+            raise
+        except Exception:
+            pass
     actual = payload.get("scope")
     if actual == scope:
         return
@@ -205,14 +243,23 @@ async def require_operador(request: Request) -> dict:
     """Token de operador (v2). Tokens antiguos sin scope también se aceptan."""
     payload = _decode(request)
     _exige_scope(payload, SCOPES["operador"], permitir_sin_scope=True)
-    return await _read_operador(payload)
+    op = await _read_operador(payload)
+    tenant = payload.get("sitio_id") or payload.get("tenant_id") or op.get("sitio_id") or DEFAULT_SITIO
+    op["_tenant"] = tenant
+    op["sitio_id"] = op.get("sitio_id") or tenant
+    # Si el token trae sitio_id distinto al de la DB, se respeta la DB pero se deja traza
+    return op
 
 
 async def require_operador_estricto(request: Request) -> dict:
     """Token de operador sin fallback a tokens viejos (para acciones mutables)."""
     payload = _decode(request)
     _exige_scope(payload, SCOPES["operador"])
-    return await _read_operador(payload)
+    op = await _read_operador(payload)
+    tenant = payload.get("sitio_id") or payload.get("tenant_id") or op.get("sitio_id") or DEFAULT_SITIO
+    op["_tenant"] = tenant
+    op["sitio_id"] = op.get("sitio_id") or tenant
+    return op
 
 
 async def require_terminal(request: Request) -> dict:
@@ -221,7 +268,11 @@ async def require_terminal(request: Request) -> dict:
     u = await db.usuarios_terminal.find_one({"_id": to_oid(payload["sub"])})
     if not u or u.get("activo") is False:
         raise HTTPException(status_code=401, detail="Usuario de terminal no encontrado")
-    return serialize(u)
+    out = serialize(u)
+    tenant = payload.get("sitio_id") or payload.get("tenant_id") or out.get("sitio_id") or DEFAULT_SITIO
+    out["_tenant"] = tenant
+    out["sitio_id"] = out.get("sitio_id") or tenant
+    return out
 
 
 async def require_pasajero(request: Request) -> dict:
@@ -230,7 +281,11 @@ async def require_pasajero(request: Request) -> dict:
     c = await db.clientes.find_one({"_id": to_oid(payload["sub"])})
     if not c or c.get("activo") is False:
         raise HTTPException(status_code=401, detail="Cliente no encontrado")
-    return serialize(c)
+    out = serialize(c)
+    tenant = payload.get("sitio_id") or payload.get("tenant_id") or out.get("sitio_id") or DEFAULT_SITIO
+    out["_tenant"] = tenant
+    out["sitio_id"] = out.get("sitio_id") or tenant
+    return out
 
 
 async def require_dev(request: Request) -> dict:
@@ -247,7 +302,11 @@ async def require_dueno(request: Request) -> dict:
     d = await db.usuarios_dueno.find_one({"_id": to_oid(payload["sub"])})
     if not d or d.get("activo") is False:
         raise HTTPException(status_code=401, detail="Cuenta de dueño no encontrada")
-    return serialize(d)
+    out = serialize(d)
+    tenant = payload.get("sitio_id") or payload.get("tenant_id") or out.get("sitio_id") or DEFAULT_SITIO
+    out["_tenant"] = tenant
+    out["sitio_id"] = out.get("sitio_id") or tenant
+    return out
 
 
 async def _mismo_o_terminal(request: Request, operador_id: str):
@@ -632,7 +691,7 @@ async def login(body: LoginBody):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     if op.get("activo") is False:
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
-    token = create_token(str(op["_id"]), op["usuario"], scope="operador")
+    token = create_token(str(op["_id"]), op["usuario"], scope="operador", sitio_id=op.get("sitio_id") or DEFAULT_SITIO)
     return {"token": token, "operador": serialize(op)}
 
 
@@ -657,12 +716,14 @@ async def cliente_login(body: ClienteLoginBody):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     if c.get("activo") is False:
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
-    token = create_token(str(c["_id"]), body.usuario, scope="pasajero")
+    token = create_token(str(c["_id"]), body.usuario, scope="pasajero", sitio_id=c.get("sitio_id") or DEFAULT_SITIO)
     return {"token": token, "cliente": serialize(c)}
 
 
-def create_terminal_token(user_id: str, usuario: str) -> str:
-    payload = {"sub": user_id, "usuario": usuario, "scope": "terminal", "iat": datetime.now(timezone.utc)}
+def create_terminal_token(user_id: str, usuario: str, sitio_id: Optional[str] = None) -> str:
+    now = datetime.now(timezone.utc)
+    sid = sitio_id or DEFAULT_SITIO
+    payload = {"sub": user_id, "usuario": usuario, "scope": "terminal", "iat": now, "exp": now + timedelta(hours=24), "sitio_id": sid, "tenant_id": sid}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
@@ -689,13 +750,15 @@ async def terminal_login(body: TerminalLoginBody):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     if u.get("activo") is False:
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
-    token = create_terminal_token(str(u["_id"]), u["usuario"])
+    token = create_terminal_token(str(u["_id"]), u["usuario"], sitio_id=u.get("sitio_id") or DEFAULT_SITIO)
     return {"token": token, "usuario": serialize(u)}
 
 
 # ---- Dueños de flota ----
-def create_dueno_token(user_id: str, usuario: str) -> str:
-    payload = {"sub": user_id, "usuario": usuario, "scope": "dueno", "iat": datetime.now(timezone.utc)}
+def create_dueno_token(user_id: str, usuario: str, sitio_id: Optional[str] = None) -> str:
+    now = datetime.now(timezone.utc)
+    sid = sitio_id or DEFAULT_SITIO
+    payload = {"sub": user_id, "usuario": usuario, "scope": "dueno", "iat": now, "exp": now + timedelta(hours=24), "sitio_id": sid, "tenant_id": sid}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
@@ -727,7 +790,7 @@ async def dueno_login(body: DuenoLoginBody):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     if d.get("activo") is False:
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
-    token = create_dueno_token(str(d["_id"]), d["usuario"])
+    token = create_dueno_token(str(d["_id"]), d["usuario"], sitio_id=d.get("sitio_id") or DEFAULT_SITIO)
     return {"token": token, "usuario": serialize(d)}
 
 
@@ -1535,7 +1598,7 @@ async def create_cliente(body: ClienteCreate, request: Request):
     }
     res = await db.clientes.insert_one(doc)
     doc["_id"] = res.inserted_id
-    token = create_token(str(res.inserted_id), body.usuario, scope="pasajero")
+    token = create_token(str(res.inserted_id), body.usuario, scope="pasajero", sitio_id=sitio_id)
     logger.info("cliente/pasajero registrado id=%s usuario=%s", res.inserted_id, body.usuario)
     return {"cliente": serialize(doc), "token": token}
 
@@ -3458,7 +3521,8 @@ class ActivoBody(BaseModel):
 async def dev_login(body: DevLoginBody):
     if body.usuario != os.environ.get("DEV_USER") or body.contrasena != os.environ.get("DEV_PASSWORD"):
         raise HTTPException(status_code=401, detail="Credenciales de desarrollador inválidas")
-    token = jwt.encode({"sub": "dev", "scope": "dev", "iat": datetime.now(timezone.utc)}, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    now = datetime.now(timezone.utc)
+    token = jwt.encode({"sub": "dev", "scope": "dev", "iat": now, "exp": now + timedelta(hours=24), "sitio_id": DEFAULT_SITIO, "tenant_id": DEFAULT_SITIO}, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return {"token": token}
 
 
