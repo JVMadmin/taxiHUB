@@ -2592,18 +2592,30 @@ async def rechazar_servicio(servicio_id: str, current: dict = Depends(require_op
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
     if s.get("estado") != "ofrecido" or current["id"] not in (s.get("ofrecido_a") or []):
         raise HTTPException(status_code=403, detail="No tienes una oferta activa para este servicio")
-    ofrecidos = [o for o in s.get("ofrecido_a", []) if o != current["id"]]
-    updates = {
-        "rechazados": list(set(s.get("rechazados", []) + [current["id"]])),
-        "ofrecido_a": ofrecidos,
-    }
-    if not ofrecidos:
-        updates["estado"] = EstadoServicio.pendiente.value
-        updates.pop("expira_en", None)
-    await db.servicios.update_one({"_id": to_oid(servicio_id)}, {"$set": updates})
+    # Operación atómica: $addToSet/$pull evita recálculo en memoria y carreras entre rechazos concurrentes
+    res = await db.servicios.update_one(
+        {"_id": to_oid(servicio_id), "estado": EstadoServicio.ofrecido.value, "ofrecido_a": current["id"]},
+        {"$addToSet": {"rechazados": current["id"]}, "$pull": {"ofrecido_a": current["id"]}},
+    )
+    if res.matched_count == 0:
+        # Validar si perdió la carrera o el servicio cambió de estado
+        s2 = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+        if not s2:
+            raise HTTPException(status_code=404, detail="Servicio no encontrado")
+        if s2.get("estado") != "ofrecido" or current["id"] not in (s2.get("ofrecido_a") or []) and current["id"] not in (s2.get("rechazados") or []):
+            raise HTTPException(status_code=403, detail="No tienes una oferta activa para este servicio")
+    s_fresh = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+    restantes = len(s_fresh.get("ofrecido_a") or [])
+    if restantes == 0 and s_fresh.get("estado") == EstadoServicio.ofrecido.value:
+        await db.servicios.update_one(
+            {"_id": to_oid(servicio_id), "estado": EstadoServicio.ofrecido.value},
+            {"$set": {"estado": EstadoServicio.pendiente.value}, "$unset": {"expira_en": ""}},
+        )
+        s_fresh = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+        restantes = 0
     logger.info("servicio rechazado id=%s por operador=%s (quedan %s)",
-                servicio_id, current["id"], len(ofrecidos))
-    return serialize(await db.servicios.find_one({"_id": to_oid(servicio_id)}))
+                servicio_id, current["id"], restantes)
+    return serialize(s_fresh)
 
 
 async def _cancelar_servicio(servicio_id: str, motivo: Optional[str] = None) -> dict:
