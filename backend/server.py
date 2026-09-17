@@ -731,7 +731,7 @@ def create_terminal_token(user_id: str, usuario: str, sitio_id: Optional[str] = 
 async def crear_usuario_terminal(body: TerminalUserCreate):
     if await db.usuarios_terminal.find_one({"usuario": body.usuario}):
         raise HTTPException(status_code=409, detail="El usuario ya existe")
-    doc = {"nombre": body.nombre, "usuario": body.usuario, "password_hash": hash_password(body.contrasena)}
+    doc = {"nombre": body.nombre, "usuario": body.usuario, "password_hash": hash_password(body.contrasena), "sitio_id": DEFAULT_SITIO, "activo": True, "creado": now_iso()}
     res = await db.usuarios_terminal.insert_one(doc)
     doc["_id"] = res.inserted_id
     return serialize(doc)
@@ -1010,16 +1010,18 @@ async def create_operador(body: OperadorCreate, current=Depends(require_terminal
 
 
 @api_router.get("/operadores")
-async def list_operadores(_=Depends(require_terminal)):
-    docs = await db.operadores.find().to_list(1000)
+async def list_operadores(current=Depends(require_terminal)):
+    sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
+    docs = await db.operadores.find({"sitio_id": sitio}).to_list(1000)
     return await _enriquecer_operadores_con_vehiculos([serialize(d) for d in docs])
 
 
 @api_router.get("/operadores/activos")
-async def list_operadores_activos(_=Depends(require_terminal)):
+async def list_operadores_activos(current=Depends(require_terminal)):
     """Operadores en operación (todo menos fuera_de_servicio) con estado y ubicación, para el mapa."""
+    sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
     docs = await db.operadores.find(
-        {"estado": {"$ne": EstadoOperador.fuera_de_servicio.value}}
+        {"estado": {"$ne": EstadoOperador.fuera_de_servicio.value}, "sitio_id": sitio}
     ).to_list(1000)
     return await _enriquecer_operadores_con_vehiculos([serialize(d) for d in docs])
 
@@ -1604,8 +1606,9 @@ async def create_cliente(body: ClienteCreate, request: Request):
 
 
 @api_router.get("/clientes")
-async def list_clientes(_=Depends(require_terminal)):
-    docs = await db.clientes.find().to_list(1000)
+async def list_clientes(current=Depends(require_terminal)):
+    sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
+    docs = await db.clientes.find({"sitio_id": sitio}).to_list(1000)
     return [serialize(d) for d in docs]
 
 
@@ -1770,9 +1773,10 @@ async def create_vehiculo(body: VehiculoCreate, _=Depends(require_terminal)):
 
 
 @api_router.get("/vehiculos")
-async def list_vehiculos(_=Depends(require_terminal)):
-    docs = await db.vehiculos.find().to_list(1000)
-    ops = {str(o["_id"]): o for o in await db.operadores.find().to_list(1000)}
+async def list_vehiculos(current=Depends(require_terminal)):
+    sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
+    docs = await db.vehiculos.find({"sitio_id": sitio}).to_list(1000)
+    ops = {str(o["_id"]): o for o in await db.operadores.find({"sitio_id": sitio}).to_list(1000)}
     tipos = await _mapa_tipos_vehiculo()
     out = []
     for d in docs:
@@ -2449,19 +2453,23 @@ async def create_servicio(body: ServicioCreate, request: Request):
 
 
 @api_router.get("/servicios")
-async def list_servicios(estado: Optional[EstadoServicio] = None, _=Depends(require_terminal)):
-    query = {"estado": estado.value} if estado else {}
+async def list_servicios(estado: Optional[EstadoServicio] = None, current=Depends(require_terminal)):
+    sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
+    query = {"sitio_id": sitio}
+    if estado:
+        query["estado"] = estado.value
     docs = await db.servicios.find(query).sort("timestamp_creacion", -1).to_list(1000)
     return [serialize(d) for d in docs]
 
 
 @api_router.get("/servicios/hoy")
-async def list_servicios_hoy(_=Depends(require_terminal)):
+async def list_servicios_hoy(current=Depends(require_terminal)):
+    sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
     hoy = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     docs = await db.servicios.find(
-        {"timestamp_creacion": {"$regex": f"^{hoy}"}}
+        {"timestamp_creacion": {"$regex": f"^{hoy}"}, "sitio_id": sitio}
     ).sort("timestamp_creacion", -1).to_list(1000)
-    ops = {str(o["_id"]): o for o in await db.operadores.find().to_list(1000)}
+    ops = {str(o["_id"]): o for o in await db.operadores.find({"sitio_id": sitio}).to_list(1000)}
     out = []
     for d in docs:
         s = serialize(d)
@@ -5876,8 +5884,26 @@ def _ws_payload_valido(token: Optional[str], scope: str, subject_id: Optional[st
         return False
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        return False
     except jwt.InvalidTokenError:
         return False
+    # Validación exp adicional (si el token trae exp, debe ser futuro)
+    exp = payload.get("exp")
+    if exp is not None:
+        try:
+            if isinstance(exp, (int, float)):
+                exp_dt = datetime.fromtimestamp(exp, tz=timezone.utc)
+            elif isinstance(exp, datetime):
+                exp_dt = exp if exp.tzinfo else exp.replace(tzinfo=timezone.utc)
+            else:
+                exp_dt = datetime.fromisoformat(str(exp))
+                if exp_dt.tzinfo is None:
+                    exp_dt = exp_dt.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) > exp_dt:
+                return False
+        except Exception:
+            pass
     actual = payload.get("scope")
     if actual != scope:
         # Compat: los tokens de operador antiguos no traían scope.
@@ -6063,9 +6089,11 @@ async def _migraciones():
     if not await db.sitios.find_one({"clave": DEFAULT_SITIO}):
         await db.sitios.insert_one({"clave": DEFAULT_SITIO, "nombre": "Sitio principal", "creado": now_iso()})
 
-    # 2) sitio_id backfill
-    for col in ("operadores", "clientes", "servicios", "vehiculos"):
+    # 2) sitio_id backfill (incluye terminal y dueño - hardening Fase 1)
+    for col in ("operadores", "clientes", "servicios", "vehiculos", "usuarios_terminal", "usuarios_dueno"):
         await db[col].update_many({"sitio_id": {"$exists": False}}, {"$set": {"sitio_id": DEFAULT_SITIO}})
+    for col in ("operadores", "clientes", "servicios", "vehiculos", "usuarios_terminal", "usuarios_dueno"):
+        await db[col].update_many({"sitio_id": None}, {"$set": {"sitio_id": DEFAULT_SITIO}})
     # activo a True (operadores/clientes antiguos no tenían el campo)
     await db.operadores.update_many({"activo": {"$exists": False}}, {"$set": {"activo": True}})
     await db.clientes.update_many({"activo": {"$exists": False}}, {"$set": {"activo": True}})
