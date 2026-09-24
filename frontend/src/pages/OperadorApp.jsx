@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import "./OperadorApp.css";
 import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL, SERVICIO_LABEL, BACKEND_URL, WS_BASE } from "@/lib/api";
 import { elapsed, timeAgo } from "@/lib/time";
-import { cn, iniciales } from "@/lib/utils";
+import { cn, iniciales, fileUrl } from "@/lib/utils";
 import { distM, fmtDist, fmtDuration, bearing } from "@/lib/geo";
 import { useRouting } from "@/hooks/useRouting";
 import { pointIcon, pillCarIcon, taxiRoleAssetIcon } from "@/lib/taxiIcon";
@@ -149,7 +149,7 @@ export default function OperadorApp() {
   const ignoreInitialModeEvent = useRef(true);
   const tiles = driverLight ? LIGHT_TILES : DARK_TILES;
   const rutaColor = driverLight ? "#059669" : "#10b981";
-  const driverAvatar = op?.foto_url ? `${BACKEND_URL}${op.foto_url}` : DEMO_DRIVER_AVATARS[op?.usuario] || "/assets/drivers/default-driver.svg";
+  const driverAvatar = op?.foto_url ? fileUrl(op.foto_url) : DEMO_DRIVER_AVATARS[op?.usuario] || "/assets/drivers/default-driver.svg";
 
   // ---- Ajustes del operador (voz IA, comandos de voz, notificaciones, GPS) ----
   const [ajustesOpen, setAjustesOpen] = useState(false);

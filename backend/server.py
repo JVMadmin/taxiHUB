@@ -209,6 +209,25 @@ def _decode(request: Request) -> dict:
     return payload
 
 
+def _load_token(request: Request) -> Optional[dict]:
+    """Extrae el JWT del header Authorization Bearer o del query param `token`
+    para <img> / fetch sin propagar cabeceras (miniaturas de vehículos y
+    usuarios). Devuelve el payload decodificado."""
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        t = auth[7:]
+    else:
+        t = request.query_params.get("token", "")
+    if not t:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    try:
+        return jwt.decode(t, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+
 def _exige_scope(payload: dict, scope: str, permitir_sin_scope: bool = False) -> None:
     # Validación de expiración (hardening Fase 1): si el token trae exp, debe ser futuro.
     exp = payload.get("exp")
@@ -2862,22 +2881,41 @@ def _resolve_file_mime(path: str, record_ct: Optional[str] = None) -> str:
 
 
 async def _require_file_actor(request: Request) -> dict:
-    """Auth para /files: acepta terminal | operador | dueño (Fase 1 hardening)."""
-    last_exc = None
-    for fn in (require_terminal, require_operador_estricto, require_operador, require_dueno, require_pasajero):
-        try:
-            return await fn(request)
-        except HTTPException as exc:
-            last_exc = exc
-            # 401/403 de scope incorrecto -> probar siguiente; si es 401 por falta de token, corta
-            if exc.status_code == 401 and "No autenticado" in str(exc.detail):
-                # Si no hay token, no intentar más
-                raise
-            continue
-    # Fallback al decode genérico para dar mensaje útil
-    if last_exc:
-        raise last_exc
-    raise HTTPException(status_code=401, detail="No autenticado")
+    """Auth para /files: acepta terminal | operador | dueño (Fase 1 hardening).
+    El JWT se lee del header `Authorization: Bearer` (Bearer normal) o, si
+    falta, del query param `token` (miniaturas y QR de chofer/vehículo)."""
+    payload = _load_token(request)
+    scope = payload.get("scope")
+    tenant = payload.get("sitio_id") or payload.get("tenant_id")
+
+    if scope == "terminal":
+        u = await db.usuarios_terminal.find_one({"_id": to_oid(payload["sub"])})
+        if not u or u.get("activo") is False:
+            raise HTTPException(status_code=401, detail="Usuario de terminal no encontrado")
+        out = serialize(u)
+        out["_tenant"] = tenant or out.get("sitio_id") or DEFAULT_SITIO
+        return out
+    if scope in ("operador", None):
+        _exige_scope(payload, SCOPES["operador"], permitir_sin_scope=True)
+        op = await _read_operador(payload)
+        op["_tenant"] = tenant or op.get("sitio_id") or DEFAULT_SITIO
+        return op
+    if scope == "dueno":
+        d = await db.usuarios_dueno.find_one({"_id": to_oid(payload["sub"])})
+        if not d or d.get("activo") is False:
+            raise HTTPException(status_code=401, detail="Dueño no encontrado")
+        out = serialize(d)
+        out["_tenant"] = tenant or out.get("sitio_id") or DEFAULT_SITIO
+        return out
+    if scope == "pasajero":
+        c = await db.clientes.find_one({"_id": to_oid(payload["sub"])})
+        if not c:
+            raise HTTPException(status_code=401, detail="Pasajero no encontrado")
+        out = serialize(c)
+        out["_tenant"] = tenant or out.get("sitio_id") or DEFAULT_SITIO
+        return out
+    raise HTTPException(status_code=403, detail="No autorizado para el archivo")
+
 
 
 @api_router.get("/files/{path:path}")

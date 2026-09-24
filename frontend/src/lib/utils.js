@@ -9,6 +9,26 @@ export function cn(...inputs) {
 // Imagen genérica cuando el vehículo no tiene foto propia NI tipo con imagen.
 export const VEHICLE_IMAGE_FALLBACK = "/assets/vehicles/generico.png";
 
+// Token de auth para fotos del backend (archivos protegidos). Se usa en
+// <img>/<a> que no pueden enviar cabecera Authorization; el backend lo acepta
+// como query param `?token=` (sin riesgo: no expone datos sensibles, solo la
+// foto del conductor/vehículo del sitio de la sesión).
+export function _appendTokenToFileUrl(url) {
+  let token = null;
+  try {
+    token = localStorage.getItem("term_token") || localStorage.getItem("op_token") || localStorage.getItem("dueno_token") || localStorage.getItem("pas_token");
+  } catch { /* noop */ }
+  if (!token) return url;
+  const joiner = url.includes("?") ? "&" : "?";
+  return `${url}${joiner}token=${encodeURIComponent(token)}`;
+}
+
+export function fileUrl(url) {
+  if (!url) return VEHICLE_IMAGE_FALLBACK;
+  const abs = url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
+  return _appendTokenToFileUrl(abs);
+}
+
 // Catálogo local de imágenes por modelo/marca/tipo de vehículo — referencia
 // visual inmediata en la ficha del pasajero, del operador y de la terminal.
 export const VEHICLE_TYPE_ASSETS = {
@@ -65,13 +85,12 @@ export function vehicleTypeAssetKey(vehiculo) {
 // y los assets de modelo son estáticos del frontend) y aplica los fallbacks.
 export function resolveVehicleImage(vehiculo) {
   if (vehiculo?.foto_url) {
-    const f = vehiculo.foto_url;
-    return f.startsWith("/api/") ? `${BACKEND_URL}${f}` : f;
+    return fileUrl(vehiculo.foto_url);
   }
   const local = vehicleTypeAssetKey(vehiculo);
   if (local) return local;
   const url = vehiculo?.imagen_resuelta ?? vehiculo?.tipo_vehiculo?.imagen_url;
-  if (url) return url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
+  if (url) return fileUrl(url);
   return VEHICLE_IMAGE_FALLBACK;
 }
 
