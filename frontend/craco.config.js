@@ -2,6 +2,13 @@
 const path = require("path");
 require("dotenv").config();
 
+let GenerateSW = null;
+try {
+  ({ GenerateSW } = require("workbox-webpack-plugin"));
+} catch (_) {
+  // workbox-webpack-plugin aún no instalado — se omite PWA en dev hasta yarn install
+}
+
 // Environment variable overrides
 const config = {
   enableHealthCheck: process.env.ENABLE_HEALTH_CHECK === "true",
@@ -98,6 +105,87 @@ let webpackConfig = {
       if (config.enableHealthCheck && healthPluginInstance) {
         webpackConfig.plugins.push(healthPluginInstance);
       }
+
+      // PWA — Workbox GenerateSW (solo en production build)
+      if (GenerateSW && process.env.NODE_ENV === "production") {
+        webpackConfig.plugins.push(
+          new GenerateSW({
+            clientsClaim: true,
+            skipWaiting: true,
+            maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+            navigateFallback: "/index.html",
+            navigateFallbackDenylist: [/^\/api\//],
+            runtimeCaching: [
+              {
+                urlPattern: /^https:\/\/(?:[a-c]\.)?tile\.openstreetmap\.org\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "osm-tiles",
+                  expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+              {
+                urlPattern: /^https:\/\/.*\.tile\.openstreetmap\.org\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "osm-tiles-fallback",
+                  expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+              {
+                urlPattern: /^https:\/\/.*\.arcgisonline\.com\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "esri-tiles",
+                  expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+              {
+                urlPattern: /^https:\/\/.*\.maptiler\.com\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "maptiler-tiles",
+                  expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+              {
+                urlPattern: /^https:\/\/demotiles\.maplibre\.org\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "maplibre-tiles",
+                  expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+              {
+                urlPattern: /^https?:\/\/.*\/api\/.*/i,
+                handler: "NetworkFirst",
+                options: {
+                  cacheName: "api-cache",
+                  networkTimeoutSeconds: 10,
+                  expiration: { maxEntries: 50, maxAgeSeconds: 5 * 60 },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+              {
+                urlPattern: /^https?:\/\/[^/]+\/api\/.*/i,
+                handler: "NetworkFirst",
+                options: {
+                  cacheName: "api-cache-alt",
+                  networkTimeoutSeconds: 10,
+                  expiration: { maxEntries: 50, maxAgeSeconds: 5 * 60 },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+            ],
+          })
+        );
+      }
+
       return webpackConfig;
     },
   },

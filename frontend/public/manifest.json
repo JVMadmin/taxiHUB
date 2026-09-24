@@ -1,0 +1,25 @@
+{
+  "name": "taxiHUB",
+  "short_name": "taxiHUB",
+  "description": "Plataforma de despacho para central de taxis",
+  "start_url": "/operador",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0a",
+  "theme_color": "#4F5DFF",
+  "icons": [
+    {
+      "src": "/assets/vehicles/march.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/vehicles/march.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 name: taxihub-test
 
 services:
+  # --- Dual DB: Mongo se mantiene para transición (será removido en Fase 3) ---
   mongo:
     image: mongo:7
     container_name: taxihub-test-mongo
@@ -16,6 +17,28 @@ services:
       timeout: 10s
       retries: 5
 
+  # Postgres 16 — infra Fase 2 (dual con Mongo). Cambiar a postgis/postgis:16-3.4
+  # si se requiere GIS nativo (actualmente geo es haversine en Python + OSRM externo,
+  # no se usa PostGIS; por eso se usa postgres:16-alpine liviano).
+  postgres:
+    image: postgres:16-alpine
+    # Alternativa geo: image: postgis/postgis:16-3.4
+    container_name: taxihub-test-postgres
+    ports:
+      - "5435:5432" # Aislado: 5432 (silkroad) y 5433 (rysa) ocupados; se usa 5435 libre
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: taxihub
+      POSTGRES_USER: taxihub
+      POSTGRES_PASSWORD: taxihub_secret
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taxihub -d taxihub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   backend:
     build: ./backend
     container_name: taxihub-test-backend
@@ -24,9 +47,12 @@ services:
     environment:
       MONGO_URL: mongodb://mongo:27017
       DB_NAME: taxihub_test
+      DATABASE_URL: postgresql+asyncpg://taxihub:taxihub_secret@postgres:5432/taxihub
       CORS_ORIGINS: http://localhost:3080,http://localhost:8080,http://localhost:3000,http://localhost
     depends_on:
       mongo:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     ports:
       - "8080:8000" # Aislado: no colisiona con backend estándar (8000)
@@ -60,4 +86,5 @@ services:
 
 volumes:
   mongo_data_test:
+  pg_data:
   uploads_data_test:
