@@ -625,7 +625,7 @@ export default function OperadorApp() {
     setMicEscuchando(true);
     if (!auto) toast.info("Escuchando… di “aceptar” o “rechazar”");
     micRef.current = crearReconocimiento({
-      onFinal: ejecutarComando,
+      onFinal: manejarComandoOferta,
       onEnd: () => { micRef.current = null; setMicEscuchando(false); },
       onError: () => { micRef.current = null; setMicEscuchando(false); },
     }) || null;
@@ -633,26 +633,65 @@ export default function OperadorApp() {
   }, []);
 
   // Anuncia el servicio con voz IA + notificación del sistema (+ auto-escucha).
+  // Anuncia el servicio con voz IA + notificación del sistema (+ auto-escucha).
+  // Formato pedido (bot): "Unidad {placa}, servicio disponible para pasajero
+  // en {calle esquina calle}, destino {calle}, costo ${n} pesos. Confirma para
+  // aceptar." → tras el anuncio se abre la escucha automática de comandos.
+  const getUnidadTxt = () => opRef.current?.placa || opRef.current?.vehiculo?.numero_economico;
+
+  // Responde por voz a la pregunta del conductor sobre la distancia.
+  const decirDistancia = () => {
+    const s = servicioRef.current;
+    const my = lastPosRef.current;
+    const o = s?.origen;
+    if (!s || !my || o?.lat == null) return;
+    const m = distM({ lat: my.lat, lng: my.lng }, { lat: o.lat, lng: o.lng });
+    if (m == null) return;
+    const kmTxt = fmtDist(m).replace(" m ", " metros ").replace(" km", " kilómetros");
+    const min = Math.max(1, Math.round(m / (25_000 / 3600)));
+    hablarVoz(`Estás a ${kmTxt} de ${o.texto || "la ubicación del cliente"}, unos ${min} minuto${min === 1 ? "" : "s"}. Confirma para aceptar.`);
+  };
+
+  // Distancia si el conductor lo pregunta durante la escucha de la oferta.
+  const manejarComandoOferta = (texto) => {
+    if (clasificarComandoOferta(texto) === "distancia") {
+      decirDistancia();
+      // Sigue escuchando para aceptar/rechazar después de informar distancia.
+      micRef.current = null;
+      setMicEscuchando(true);
+      micRef.current = crearReconocimiento({
+        onFinal: manejarComandoOferta,
+        onEnd: () => { micRef.current = null; setMicEscuchando(false); },
+        onError: () => { micRef.current = null; setMicEscuchando(false); },
+      }) || null;
+      return;
+    }
+    ejecutarComando(texto);
+  };
+
   const notificarServicio = (s) => {
+    const unidadTxt = getUnidadTxt() ? `Unidad ${getUnidadTxt()}` : "Taxi libre";
     const origen = s?.origen?.texto || "ubicación marcada en mapa";
     const destinoTxt = s?.destino?.texto ? `, destino ${s.destino.texto}` : "";
     const costoTxt = s?.costo != null ? `, costo ${s.costo} pesos` : "";
-    const frase = `Nuevo servicio. Cliente en ${origen}${destinoTxt}${costoTxt}.`;
+    const frase = `${unidadTxt}, servicio disponible para pasajero en ${origen}${destinoTxt}${costoTxt}. Confirma para aceptar.`;
     if (vozOnRef.current) {
       hablarVoz(frase);
-      // Tras terminar el anuncio (~4s), auto-escuchar el comando si está activo.
+      vibrar();
+      // Tras terminar el anuncio (~4.3s), auto-escuchar el comando si está activo.
       if (comandosVozOnRef.current) setTimeout(() => {
         if (servicioRef.current?.estado === "ofrecido") escucharComandoOferta(true);
-      }, 4500);
+      }, 4300);
+    } else {
+      vibrar();
     }
     if (notifOnRef.current) {
       mostrarNotificacion({
-        titulo: "Nuevo servicio disponible",
-        cuerpo: `Cliente en ${origen}${destinoTxt}${costoTxt} — ábrela para aceptar o rechazar`,
+        titulo: `${unidadTxt}: servicio disponible`,
+        cuerpo: `Cliente en ${origen}${destinoTxt}${costoTxt} — Confirma para aceptar.`,
         tag: "taxihub-oferta",
       });
     }
-    vibrar();
   };
 
   // ---- Navegación GPS (Fase 9D/9E) ----

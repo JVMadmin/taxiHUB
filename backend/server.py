@@ -2029,6 +2029,58 @@ async def routing_route(body: RoutingBody, _=Depends(_any_autenticado_o_pasajero
 # propio y evita exponer el proveedor al frontend.
 GEOCODING_PROVIDER_URL = os.environ.get("GEOCODING_PROVIDER_URL", "https://photon.komoot.io").rstrip("/")
 GEOCODING_TIMEOUT_SECONDS = float(os.environ.get("GEOCODING_TIMEOUT_SECONDS", "6"))
+# Reverse-geocoding (nombres de calle para la voz del operador). Cache en la
+# colección `geo_cache` redondeada a ~110 m para no volver a consultar.
+NOMINATIM_URL = os.environ.get("NOMINATIM_URL", "https://nominatim.openstreetmap.org").rstrip("/")
+
+
+async def _etiqueta_lugar(lat: float, lng: float) -> Optional[str]:
+    """Devuelve "Calle House, Colonia" legible para la voz del operador
+    (reverse-geocoding Nominatim con cache en `geo_cache` redondeado ~110 m).
+    Si el proveedor no responde, devuelve None y se usa el fallback textual."""
+    key_lat, key_lng = round(float(lat), 3), round(float(lng), 3)
+    try:
+        cached = await db.geo_cache.find_one({"lat": key_lat, "lng": key_lng})
+        if cached and cached.get("texto"):
+            return cached["texto"]
+    except Exception:
+        pass
+    texto: Optional[str] = None
+    try:
+        async with httpx.AsyncClient(timeout=GEOCODING_TIMEOUT_SECONDS) as hc:
+            r = await hc.get(
+                f"{NOMINATIM_URL}/reverse",
+                params={
+                    "lat": f"{lat:.6f}", "lon": f"{lng:.6f}",
+                    "format": "jsonv2", "addressdetails": "1", "zoom": "18",
+                },
+                headers={"User-Agent": "TaxiHUB/2.0 (central de taxis de Palenque)"},
+            )
+            if r.status_code == 200:
+                item = r.json() or {}
+                a = item.get("address") or {}
+                road = (a.get("road") or a.get("pedestrian") or a.get("footway")
+                        or a.get("path") or item.get("name"))
+                house = a.get("house_number")
+                suburb = (a.get("suburb") or a.get("neighbourhood")
+                          or a.get("residential") or a.get("quarter")
+                          or a.get("city_district") or a.get("town"))
+                calle = f"{road} {house}".strip() if house else road
+                partes = [p for p in (calle, suburb) if p]
+                if partes:
+                    texto = ", ".join(partes)
+    except Exception as exc:
+        logger.warning("reverse geocode fallo: %s", exc)
+    if texto:
+        try:
+            await db.geo_cache.update_one(
+                {"lat": key_lat, "lng": key_lng},
+                {"$set": {"lat": key_lat, "lng": key_lng, "texto": texto}},
+                upsert=True,
+            )
+        except Exception:
+            pass
+    return texto
 
 
 @api_router.get("/geo/search")
@@ -2457,6 +2509,15 @@ async def create_servicio(body: ServicioCreate, request: Request):
         sitio_id = DEFAULT_SITIO
 
     doc = _situar_servicio(body, pasajero, sitio_id)
+    # Calles reales para la voz del operador (Fase bot): si el origen/destino
+    # vienen solo con coordenadas, se rellena el texto con reverse-geocoding.
+    o_geo, d_geo = doc["origen"], doc["destino"]
+    for punto, campo in ((o_geo, "origen_texto"), (d_geo, "destino_texto")):
+        if punto.get("lat") is not None and not punto.get("texto"):
+            etiqueta = await _etiqueta_lugar(punto["lat"], punto["lng"])
+            if etiqueta:
+                punto["texto"] = etiqueta
+                doc[campo] = etiqueta
     res = await db.servicios.insert_one(doc)
     doc["_id"] = res.inserted_id
     logger.info("servicio creado id=%s tipo=%s estado=pendiente", res.inserted_id, doc.get("tipo"))

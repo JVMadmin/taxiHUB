@@ -144,7 +144,8 @@ export function crearReconocimiento({ lang = "es-MX", timeoutMs = 15000, onFinal
 export function clasificarComandoOferta(texto) {
   const t = (texto || "").toLowerCase();
   if (/(rechaz|rechazo|no quiero|cancela|declin)/.test(t)) return "rechazar";
-  if (/(acept|acepto|sí|si voy|voy|dale|confirmo|ok\b|vale)/.test(t)) return "aceptar";
+  if (/(acept|acepto|sí, voy|sí voy|sí)\b|voy|dale|confirmo|ok\b|vale|confirmar|ok$/.test(t)) return "confirmar";
+  if (/(distancia|dónde|donde|cuántos|minutos)/.test(t)) return "distancia";
   return null;
 }
 
