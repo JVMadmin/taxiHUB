@@ -360,7 +360,18 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Causa raíz confirmada en leaflet-src.js: `markerZoomAnimation:false` añade `leaflet-zoom-hide` al markerPane → `.leaflet-zoom-anim .leaflet-zoom-hide {visibility:hidden}` oculta los taxis durante el zoom animado y los reaparece al final (efecto de salto). Fix: quitar la prop (default true) en Terminal.jsx:460 y Mapa.jsx:66. Validado con Playwright frame-a-frame (verify_marker_zoom_fix.py / _dueno.py en test_reports/): con el fix, 0 samples ocultos y movimiento continuo (distinct x/y ≥ 6) durante zoom y pan; prueba red/green re-agregando la prop → falla en CHECK1 (zoom-hide presente). Suite pytest completa 86/86 verde (serial -n 0 y paralelo -n 2 --dist loadscope). E2E e2e_fase10.py falla en aserción `terminal-sidebar count==1` tanto ANTES como DESPUÉS del cambio (git stash verificado) — fallo PREEXISTENTE: el testid está duplicado (FleetPanel.jsx:18 renderizado en aside desktop + overlay móvil → count 3), no relacionado con este fix."
+        comment: "Causa raíz confirmada en leaflet-src.js: `markerZoomAnimation:false` añade `leaflet-zoom-hide` al markerPane → `.leaflet-zoom-anim .leaflet-zoom-hide {visibility:hidden}` oculta los taxis durante el zoom animado y los reaparece al final (efecto de salto). Fix: quitar la prop (default true) en Terminal.jsx:460 y Mapa.jsx:66. Validado con Playwright frame-a-frame (verify_marker_zoom_fix.py / _dueno.py en test_reports/): con el fix, 0 samples ocultos y movimiento continuo (distinct x/y ≥ 6) durante zoom y pan; prueba red/green re-agregando la prop → falla en CHECK1 (zoom-hide presente). Suite pytest completa 86/86 verde (serial -n 0 y xdist -n 2 --dist loadscope). E2E e2e_fase10.py falla en aserción `terminal-sidebar count==1` tanto ANTES como DESPUÉS del cambio (git stash verificado) — fallo PREEXISTENTE: el testid está duplicado (FleetPanel.jsx:18 renderizado en aside desktop + overlay móvil → count 3), no relacionado con este fix."
+  - task: "Fix rendimiento mapa Terminal: zoom-pause en SmoothTaxiMarker, match OSRM fail-fast, PNGs 256px, botón Clientes"
+    implemented: true
+    working: true
+    file: "frontend/src/components/maps/SmoothTaxiMarker.jsx, frontend/src/components/TerminalMenu.jsx, backend/server.py, frontend/public/assets/vehicles/*.png"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Causas raíz separadas con evidencia: (1) Docker Desktop networking colgado + mongo caído + simulador externo peleando con patrol loop (teleport) — resuelto con stack nativo; (2) rAF setLatLng durante zoom peleaba con animación — pausa en zoomstart/reanuda en zoomend + mountPosition estable (A/B: 0 reversiones, sin errores, click-select OK); (3) OSRM público 400 TooBig con >10 pts — MATCH_MAX_POINTS=10 fail-fast (recorrido-ajustado 3.8s→0.0s); (4) sección clientes sin botón en rail — añadida a grupo Control; (5) PNGs taxi 1024→256px. CRUD backend 7-29ms. pytest: 3 fallos PREEXISTENTES en test_server.py (despacho/rechazo/track, del batch Sep-16) verificados sin mi cambio; resto verde."
 metadata:
   created_by: "main_agent"
   version: "1.0"

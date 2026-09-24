@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useMemo, useState, memo } from "react";
+import React, { useEffect, useRef, useMemo, useState, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 import { X, ZoomIn } from "lucide-react";
-import { Marker, Popup } from "react-leaflet";
+import { Marker, Popup, useMap } from "react-leaflet";
 import { taxiStateAssetIcon } from "@/lib/taxiIcon";
 import { ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
 import { timeAgo } from "@/lib/time";
@@ -24,24 +24,34 @@ function SmoothTaxiMarkerComponent({
   onSelect,
   nombreRuta,
 }) {
+  const map = useMap();
   const markerRef = useRef(null);
   const animRef = useRef(null);
+  // Durante la animación de zoom Leaflet proyecta lat/lng con el zoom viejo:
+  // cualquier setLatLng en esa ventana pelea con la animación (drift visible).
+  // Se pausa el loop y se reanuda hacia el último objetivo en zoomend.
+  const zoomingRef = useRef(false);
+  const targetRef = useRef(null);
+
+  // Posición de montaje estable: react-leaflet solo la usa al crear el marcador.
+  // Todo movimiento posterior lo dirige el loop rAF (evita escrituras con
+  // proyección stale en cada render, que también pelean con el zoom).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const mountPosition = useMemo(() => [op.lat, op.lng], []);
 
   const initialHeading = selected && destinoHeading != null ? destinoHeading : (op.gps_heading || 0);
   const posRef = useRef({ lat: op.lat, lng: op.lng });
   const headingRef = useRef(initialHeading);
 
-  // Animación fluida continua de 60fps al recibir un nuevo punto GPS o rumbo
-  useEffect(() => {
-    const targetLat = op.lat;
-    const targetLng = op.lng;
+  // Arranca (o reanuda) la interpolación hacia `target` desde la posición visible actual.
+  const startAnimation = useCallback((target) => {
+    const targetLat = target.lat;
+    const targetLng = target.lng;
     if (targetLat == null || targetLng == null) return;
-
-    const targetHeading = selected && destinoHeading != null ? destinoHeading : (op.gps_heading || 0);
 
     const startLat = posRef.current.lat ?? targetLat;
     const startLng = posRef.current.lng ?? targetLng;
-    const startHeading = headingRef.current ?? targetHeading;
+    const startHeading = headingRef.current ?? target.heading;
 
     // Si es el primer punto o un salto anómalo gigante (> 5 km), saltar directo
     const dLat = targetLat - startLat;
@@ -50,20 +60,20 @@ function SmoothTaxiMarkerComponent({
 
     if (distSq > 0.005) {
       posRef.current = { lat: targetLat, lng: targetLng };
-      headingRef.current = targetHeading;
+      headingRef.current = target.heading;
       if (markerRef.current) {
         markerRef.current.setLatLng([targetLat, targetLng]);
         const el = markerRef.current.getElement();
         if (el) {
           const rotator = el.querySelector(".th-taxi-rotator");
-          if (rotator) rotator.style.transform = `rotate(${targetHeading - 90}deg)`;
+          if (rotator) rotator.style.transform = `rotate(${target.heading - 90}deg)`;
         }
       }
       return;
     }
 
     // Delta angular más corto (evita giros de 350° al pasar por el norte 0°/360°)
-    const diffHeading = ((targetHeading - startHeading + 540) % 360) - 180;
+    const diffHeading = ((target.heading - startHeading + 540) % 360) - 180;
 
     // Duración de la interpolación: 2000ms (coincide con el intervalo de transmisión del backend)
     const DURATION_MS = 2000;
@@ -98,11 +108,38 @@ function SmoothTaxiMarkerComponent({
     };
 
     animRef.current = requestAnimationFrame(animate);
+  }, []);
 
+  // Nuevo punto GPS o rumbo: animar hacia él, salvo en pleno zoom (se difiere a zoomend).
+  useEffect(() => {
+    const targetHeading = selected && destinoHeading != null ? destinoHeading : (op.gps_heading || 0);
+    const target = { lat: op.lat, lng: op.lng, heading: targetHeading };
+    targetRef.current = target;
+    if (zoomingRef.current) return;
+    startAnimation(target);
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [op.lat, op.lng, op.gps_heading, selected, destinoHeading]);
+  }, [op.lat, op.lng, op.gps_heading, selected, destinoHeading, startAnimation]);
+
+  // Pausar la interpolación durante el zoom y reanudar al terminar.
+  useEffect(() => {
+    const onZoomStart = () => {
+      zoomingRef.current = true;
+      if (animRef.current) { cancelAnimationFrame(animRef.current); animRef.current = null; }
+    };
+    const onZoomEnd = () => {
+      zoomingRef.current = false;
+      const t = targetRef.current;
+      if (t) startAnimation(t);
+    };
+    map.on("zoomstart", onZoomStart);
+    map.on("zoomend", onZoomEnd);
+    return () => {
+      map.off("zoomstart", onZoomStart);
+      map.off("zoomend", onZoomEnd);
+    };
+  }, [map, startAnimation]);
 
   // Memoizar la instancia del icono para que Leaflet NUNCA destruya y re-cree el nodo DOM
   // en cada ciclo de animación o paquete GPS. La rotación continua a 60 FPS se efectúa
@@ -122,7 +159,7 @@ function SmoothTaxiMarkerComponent({
     <>
       <Marker
         ref={markerRef}
-        position={[op.lat, op.lng]}
+        position={mountPosition}
         zIndexOffset={selected ? 1000 : 0}
         icon={icon}
         eventHandlers={{ click: onSelect }}

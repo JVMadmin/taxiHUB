@@ -40,7 +40,7 @@ const SECTIONS = [
 const SECTION_GROUPS = [
   { label: "Operar", ids: ["servicio", "servicios", "whatsapp"] },
   { label: "Flota", ids: ["vehiculos", "choferes"] },
-  { label: "Control", ids: ["socios", "mantenimiento", "combustible", "reportes", "rutas", "tarifas", "dashboard"] },
+  { label: "Control", ids: ["socios", "clientes", "mantenimiento", "combustible", "reportes", "rutas", "tarifas", "dashboard"] },
 ];
 
 export function TerminalMenu({ active: activeProp, onActiveChange, operadores, operadoresLibres = [], rutas, onRutasChanged, onDataChanged, onOpenServicio, onMarkWaLocation, onVerWaMapa, onAssigned, choferExpedienteId, liveMessage, liveReporte, servicioSignal }) {

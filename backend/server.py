@@ -73,6 +73,10 @@ DEFAULT_SITIO = "default"
 # Historial de recorrido del taxi (Fase 10): rastro acotado y sin ruido.
 TRACK_MAX_POINTS = 400            # cuántos puntos conservar por operador
 TRACK_MIN_DIST_M = 8              # solo guardar punto si se movió ≥ este umbral
+# El proveedor OSRM público rechaza el map-matching con más de ~10-12
+# coordenadas (400 {"code":"TooBig"}). Con historial largo el match siempre
+# fallaría tras 1-4 s desperdiciados: se devuelve el track crudo de inmediato.
+MATCH_MAX_POINTS = 10             # tope de puntos enviados a /match de OSRM
 
 
 # ---------------------------------------------------------------------------
@@ -1516,11 +1520,12 @@ async def get_recorrido_ajustado(operador_id: str, limite: int = Query(TRACK_MAX
     if not op:
         raise HTTPException(status_code=404, detail="Operador no encontrado")
     raw_track = (op.get("track") or [])[-limite:]
-    if len(raw_track) < 2:
+    raw = [{"lat": p[0], "lng": p[1], "ts": p[2], "matched": False} for p in raw_track]
+    if len(raw_track) < 2 or len(raw_track) > MATCH_MAX_POINTS:
         return {
             "operador_id": operador_id,
             "ajustado": False,
-            "track": [{"lat": p[0], "lng": p[1], "ts": p[2], "matched": False} for p in raw_track],
+            "track": raw,
         }
 
     # Intentar proyectar vía OSRM /match
@@ -1554,7 +1559,7 @@ async def get_recorrido_ajustado(operador_id: str, limite: int = Query(TRACK_MAX
     return {
         "operador_id": operador_id,
         "ajustado": False,
-        "track": [{"lat": p[0], "lng": p[1], "ts": p[2], "matched": False} for p in raw_track],
+        "track": raw,
     }
 
 
