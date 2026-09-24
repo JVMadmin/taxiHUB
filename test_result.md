@@ -372,10 +372,21 @@ frontend:
       - working: true
         agent: "main"
         comment: "Causas raíz separadas con evidencia: (1) Docker Desktop networking colgado + mongo caído + simulador externo peleando con patrol loop (teleport) — resuelto con stack nativo; (2) rAF setLatLng durante zoom peleaba con animación — pausa en zoomstart/reanuda en zoomend + mountPosition estable (A/B: 0 reversiones, sin errores, click-select OK); (3) OSRM público 400 TooBig con >10 pts — MATCH_MAX_POINTS=10 fail-fast (recorrido-ajustado 3.8s→0.0s); (4) sección clientes sin botón en rail — añadida a grupo Control; (5) PNGs taxi 1024→256px. CRUD backend 7-29ms. pytest: 3 fallos PREEXISTENTES en test_server.py (despacho/rechazo/track, del batch Sep-16) verificados sin mi cambio; resto verde."
+  - task: "Driver App — modo nocturno default, HUD compacto, Ajustes (voz/comandos/notif/GPS) + logout, comandos de voz oferta"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/OperadorApp.jsx, frontend/src/lib/voz.js, frontend/src/components/ModeToggle.jsx, frontend/src/components/ThemeSwitcher.jsx, frontend/src/constants/testIds/driver.js, frontend/src/pages/OperadorApp.css"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "E2E Playwright verde (verify_driver_hud.py + verify_driver_flow.py): (1) Noche por defecto (`driver_mode` ausente => oscuro; toggle primero => claro guardando); (2) HUD compacto `zoom 0.65` en recuadro acciones home + header controls (-35%); (3) Ajustes abre con 5 toggles toggleables + Cerrar sesión (logout => /login); (4) Oferta real: card + botón micrófono + anuncio; (5) clasificación comandos aceptar/rechazar 8/8 verde; (6) flujo completo aceptar/iniciar/terminar OK; 0 errores JS. Nota: GPS con pantalla apagada 100% requiere la APK (documentado en toggle); en web se mantiene WakeLock + notificación."
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 8
+  test_sequence: 9
   run_ui: true
 
 test_plan:

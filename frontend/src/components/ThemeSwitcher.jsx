@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Settings, Check } from "lucide-react";
 import { THEME_LIST, applyTheme, getTheme } from "@/lib/theme";
 
-export function ThemeSwitcher({ className = "" }) {
+export function ThemeSwitcher({ className = "", compact = false }) {
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState(getTheme());
   const ref = useRef(null);
@@ -21,9 +21,11 @@ export function ThemeSwitcher({ className = "" }) {
         data-testid="theme-switcher-btn"
         onClick={() => setOpen((o) => !o)}
         title="Colores"
-        className="th-3d flex h-10 w-10 items-center justify-center rounded-xl text-foreground/80 hover:bg-secondary"
+        className={compact
+          ? "th-3d flex h-7 w-7 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary"
+          : "th-3d flex h-10 w-10 items-center justify-center rounded-xl text-foreground/80 hover:bg-secondary"}
       >
-        <Settings className="th-icon-3d h-5 w-5" />
+        <Settings className={compact ? "th-icon-3d h-3.5 w-3.5" : "th-icon-3d h-5 w-5"} />
       </button>
       {open && (
         <div

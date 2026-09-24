@@ -4,7 +4,7 @@ import { Moon, Sun } from "lucide-react";
 
 // Botón sol/luna: cambia entre modo claro (día) y oscuro (noche).
 // En claro muestra el sol; en oscuro, la luna.
-export function ModeToggle() {
+export function ModeToggle({ compact = false }) {
   const mode = useMode();
   const claro = mode === "claro";
   return (
@@ -13,12 +13,14 @@ export function ModeToggle() {
       onClick={() => applyMode(claro ? "oscuro" : "claro")}
       title={claro ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
       aria-label={claro ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
-      className="th-3d flex h-10 w-10 items-center justify-center rounded-xl text-foreground/80 hover:bg-secondary"
+      className={compact
+        ? "th-3d flex h-7 w-7 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary"
+        : "th-3d flex h-10 w-10 items-center justify-center rounded-xl text-foreground/80 hover:bg-secondary"}
     >
       {claro ? (
-        <Sun className="th-icon-3d h-5 w-5 text-amber-500" />
+        <Sun className={compact ? "th-icon-3d h-3.5 w-3.5 text-amber-500" : "th-icon-3d h-5 w-5 text-amber-500"} />
       ) : (
-        <Moon className="th-icon-3d h-5 w-5" />
+        <Moon className={compact ? "th-icon-3d h-3.5 w-3.5" : "th-icon-3d h-5 w-5"} />
       )}
     </button>
   );

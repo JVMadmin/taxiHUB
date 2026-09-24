@@ -474,3 +474,18 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Recuadro de acciones compacto del HUD (-35%): padding y gaps reducidos.
+   Se usa en la tarjeta de controles del header del operador. */
+.taxi-driver-controls-compact {
+  padding: 3px !important;
+  border-radius: 12px !important;
+}
+.taxi-driver-controls-compact .taxi-driver-controls-inner {
+  gap: 2px !important;
+}
+/* Recuadro de acciones del sheet (home): 35% más pequeño vía zoom de layout
+   (Chromium/WebView). Los botones siguen siendo táctiles relativos. */
+.driver-actions-compact {
+  zoom: 0.65;
+}

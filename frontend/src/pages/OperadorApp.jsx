@@ -27,8 +27,13 @@ import { toast } from "sonner";
 import {
   Car, Power, LogOut, MapPin, Bell, Package, MessageSquare, Send, X,
   PlayCircle, StopCircle, Check, LocateFixed, Navigation as NavIcon, Wallet,
-  Clock, Flag, User, AlertTriangle, Gauge, Fuel,
+  Clock, Flag, User, AlertTriangle, Gauge, Fuel, Mic, Settings,
 } from "lucide-react";
+import { applyMode } from "@/lib/theme";
+import {
+  hablarVoz, detenerVoz, reconocimientoDisponible, crearReconocimiento,
+  clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar,
+} from "@/lib/voz";
 
 const fmtMoney2 = (n) => `$${Number(n || 0).toLocaleString("es-MX")}`;
 
@@ -139,11 +144,33 @@ export default function OperadorApp() {
   const [gpsStale, setGpsStale] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [recenterN, setRecenterN] = useState(0);
-  const [driverLight, setDriverLight] = useState(() => localStorage.getItem("driver_mode") !== "oscuro");
+  // Modo nocturno prioritario: default oscuro salvo que el usuario elija claro.
+  const [driverLight, setDriverLight] = useState(() => localStorage.getItem("driver_mode") === "claro");
   const ignoreInitialModeEvent = useRef(true);
   const tiles = driverLight ? LIGHT_TILES : DARK_TILES;
   const rutaColor = driverLight ? "#059669" : "#10b981";
   const driverAvatar = op?.foto_url ? `${BACKEND_URL}${op.foto_url}` : DEMO_DRIVER_AVATARS[op?.usuario] || "/assets/drivers/default-driver.svg";
+
+  // ---- Ajustes del operador (voz IA, comandos de voz, notificaciones, GPS) ----
+  const [ajustesOpen, setAjustesOpen] = useState(false);
+  const [vozOn, setVozOn] = useState(() => localStorage.getItem("driver_voz") !== "off");
+  const [comandosVozOn, setComandosVozOn] = useState(() => localStorage.getItem("driver_comandos_voz") !== "off");
+  const [notifOn, setNotifOn] = useState(() => localStorage.getItem("driver_notif") !== "off");
+  const [gpsFondoOn, setGpsFondoOn] = useState(() => localStorage.getItem("driver_gps_fondo") !== "off");
+  const [micEscuchando, setMicEscuchando] = useState(false);
+  const micRef = useRef(null);
+  const servicioRef = useRef(null);
+  const chatServicioActivoRef = useRef(null);
+  const accionesRef = useRef({});
+  const vozOnRef = useRef(vozOn);
+  const notifOnRef = useRef(notifOn);
+  const comandosVozOnRef = useRef(comandosVozOn);
+  const gpsFondoOnRef = useRef(gpsFondoOn);
+  const opRef = useRef(null);
+  useEffect(() => { vozOnRef.current = vozOn; notifOnRef.current = notifOn; comandosVozOnRef.current = comandosVozOn; gpsFondoOnRef.current = gpsFondoOn; });
+  useEffect(() => { servicioRef.current = servicio; }, [servicio]);
+  useEffect(() => { opRef.current = op; });
+  useEffect(() => { accionesRef.current = { aceptarOferta, rechazarOferta }; });
 
   useEffect(() => {
     const onMode = (event) => {
@@ -197,12 +224,26 @@ export default function OperadorApp() {
       .catch(() => { logoutOperador(); navigate("/login"); });
   }, [navigate]);
 
-  // Wake Lock: mantiene la pantalla activa en turno
+  // Wake Lock: mantiene la pantalla activa en turno.
+  // Segundo plano web: con la app oculta los navegadores limitan temporizadores
+  // y GPS; se mantiene el intervalo y se avisa con notificación persistente.
+  // Seguimiento real con pantalla apagada requiere la APK nativa (Capacitor).
   useEffect(() => {
     let lock = null;
     const req = async () => { try { lock = await navigator.wakeLock?.request("screen"); } catch (_) {} };
     if (enOperacion) req();
-    const onVis = () => { if (enOperacion && document.visibilityState === "visible") req(); };
+    const onVis = () => {
+      if (!enOperacion) return;
+      if (document.visibilityState === "visible") {
+        req();
+      } else if (gpsFondoOnRef.current && notifOnRef.current) {
+        mostrarNotificacion({
+          titulo: "GPS activo en segundo plano",
+          cuerpo: "Sigues en operación. Vuelve a la app para ver el mapa.",
+          tag: "taxihub-gps-fondo",
+        });
+      }
+    };
     document.addEventListener("visibilitychange", onVis);
     return () => { document.removeEventListener("visibilitychange", onVis); try { lock?.release(); } catch (_) {} };
   }, [enOperacion]);
@@ -278,14 +319,21 @@ export default function OperadorApp() {
           setServicio(msg.servicio);
           setServicioPropio(null);
           toast.info("ðŸš• Nuevo servicio asignado");
+          notificarServicio(msg.servicio);
         } else if (msg.type === "destino_alcanzado") {
           // Auto-finalización por geofence (F5): sin acción del taxista.
           toast.success("Servicio completado", { description: "Destino alcanzado. Quedas disponible." });
+          if (vozOnRef.current) hablarVoz("Destino alcanzado. Servicio completado, quedas disponible.");
+          if (notifOnRef.current) mostrarNotificacion({ titulo: "Servicio completado", cuerpo: "Destino alcanzado. Quedas disponible.", tag: "taxihub-destino" });
         } else if (msg.type === "mensaje") {
           if (!msg.servicio_id || msg.servicio_id === chatServicioRef.current) {
             setChatMsgs((m) => (m.some((x) => x.id === msg.mensaje.id) ? m : [...m, msg.mensaje]));
           }
-          if (msg.mensaje.remitente === "terminal") toast.info("ðŸ’¬ Mensaje de la central");
+          if (msg.mensaje.remitente === "terminal") {
+            toast.info("ðŸ’¬ Mensaje de la central");
+            if (vozOnRef.current) hablarVoz(`Mensaje de la central: ${msg.mensaje.texto || ""}`);
+            if (notifOnRef.current) mostrarNotificacion({ titulo: "Mensaje de la central", cuerpo: msg.mensaje.texto || "", tag: "taxihub-chat" });
+          }
         }
       };
     };
@@ -508,6 +556,7 @@ export default function OperadorApp() {
     setServicio(data);
   };
   const aceptarOferta = async () => {
+    detenerEscucha();
     try {
       await api.post(`/servicios/${servicio.id}/aceptar`);
       await actualizarServicio();
@@ -516,6 +565,7 @@ export default function OperadorApp() {
     } catch (e) { toast.error(e.response?.data?.detail || "No se pudo aceptar"); setServicio(null); }
   };
   const rechazarOferta = async () => {
+    detenerEscucha();
     try {
       await api.post(`/servicios/${servicio.id}/rechazar`);
       setServicio(null);
@@ -534,6 +584,75 @@ export default function OperadorApp() {
       setOp((p) => ({ ...p, estado: "libre" }));
       toast.success("Viaje terminado");
     } catch (e) { toast.error(e.response?.data?.detail || "No se pudo terminar"); }
+  };
+
+  // ---- Voz IA + comandos de voz + notificaciones (tiempo real) ----
+  const detenerEscucha = () => {
+    micRef.current?.detener?.();
+    micRef.current = null;
+    setMicEscuchando(false);
+  };
+
+  const ejecutarComando = (texto) => {
+    const accion = clasificarComandoOferta(texto);
+    if (!accion) {
+      toast("No te entendí", { description: `Dime "aceptar" o "rechazar" (escuché: ${texto.slice(0, 40)})` });
+      return;
+    }
+    detenerEscucha();
+    const s = servicioRef.current;
+    if (!s) return;
+    if (accion === "aceptar") {
+      api.post(`/servicios/${s.id}/aceptar`)
+        .then(() => api.get(`/servicios/${s.id}`))
+        .then(({ data }) => { setServicio(data); setOp((p) => ({ ...p, estado: "ocupado" })); })
+        .then(() => toast.success("Servicio aceptado"))
+        .catch(() => { toast.error("No se pudo aceptar"); setServicio(null); });
+    } else {
+      api.post(`/servicios/${s.id}/rechazar`)
+        .then(() => { setServicio(null); toast("Oferta rechazada"); })
+        .catch(() => toast.error("No se pudo rechazar"));
+    }
+  };
+
+  // Micrófono manual (botón en la oferta) o automático tras la voz IA.
+  const escucharComandoOferta = useCallback((auto = false) => {
+    if (!reconocimientoDisponible()) {
+      toast.error("Tu navegador no soporta comandos de voz");
+      return;
+    }
+    if (micRef.current) { micRef.current.detener(); micRef.current = null; }
+    setMicEscuchando(true);
+    if (!auto) toast.info("Escuchando… di “aceptar” o “rechazar”");
+    micRef.current = crearReconocimiento({
+      onFinal: ejecutarComando,
+      onEnd: () => { micRef.current = null; setMicEscuchando(false); },
+      onError: () => { micRef.current = null; setMicEscuchando(false); },
+    }) || null;
+    if (!micRef.current) setMicEscuchando(false);
+  }, []);
+
+  // Anuncia el servicio con voz IA + notificación del sistema (+ auto-escucha).
+  const notificarServicio = (s) => {
+    const origen = s?.origen?.texto || "ubicación marcada en mapa";
+    const destinoTxt = s?.destino?.texto ? `, destino ${s.destino.texto}` : "";
+    const costoTxt = s?.costo != null ? `, costo ${s.costo} pesos` : "";
+    const frase = `Nuevo servicio. Cliente en ${origen}${destinoTxt}${costoTxt}.`;
+    if (vozOnRef.current) {
+      hablarVoz(frase);
+      // Tras terminar el anuncio (~4s), auto-escuchar el comando si está activo.
+      if (comandosVozOnRef.current) setTimeout(() => {
+        if (servicioRef.current?.estado === "ofrecido") escucharComandoOferta(true);
+      }, 4500);
+    }
+    if (notifOnRef.current) {
+      mostrarNotificacion({
+        titulo: "Nuevo servicio disponible",
+        cuerpo: `Cliente en ${origen}${destinoTxt}${costoTxt} — ábrela para aceptar o rechazar`,
+        tag: "taxihub-oferta",
+      });
+    }
+    vibrar();
   };
 
   // ---- Navegación GPS (Fase 9D/9E) ----
@@ -576,7 +695,9 @@ export default function OperadorApp() {
   useEffect(() => {
     if (ofertaExpira === 0 && servicio?.estado === "ofrecido") {
       setServicio(null);
+      detenerEscucha();
       toast("Oferta expirada", { description: "La solicitud fue reasignada." });
+      if (vozOnRef.current) hablarVoz("La oferta expiró. Fue reasignada.");
     }
   }, [ofertaExpira, servicio]);
 
@@ -674,20 +795,21 @@ export default function OperadorApp() {
           </div>
 
           <div className="pointer-events-auto flex flex-col items-end gap-2">
-            <div className="taxi-driver-controls-card">
+            {/* Recuadro de acciones compacto (-35%): ajustes + tema + modo.
+                Cerrar sesión vive dentro de Ajustes. */}
+            <div className="taxi-driver-controls-card taxi-driver-controls-compact">
               <div className="taxi-driver-controls-inner">
-                <ModeToggle />
-                <ThemeSwitcher />
-                <Button
-                  data-testid="logout-btn"
-                  variant="ghost"
-                  size="icon"
-                  onClick={logout}
-                  className="th-3d"
-                  aria-label="Cerrar sesión"
+                <button
+                  data-testid="driver-ajustes-btn"
+                  onClick={() => setAjustesOpen(true)}
+                  title="Ajustes y cerrar sesión"
+                  aria-label="Ajustes y cerrar sesión"
+                  className="th-3d flex h-7 w-7 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary"
                 >
-                  <LogOut className="th-icon-3d h-5 w-5" />
-                </Button>
+                  <Settings className="th-icon-3d h-3.5 w-3.5" />
+                </button>
+                <ModeToggle compact />
+                <ThemeSwitcher compact />
               </div>
             </div>
             <div className="flex items-center gap-1.5">
@@ -785,7 +907,8 @@ export default function OperadorApp() {
           </div>
         )}
 
-        {/* Botones de estado */}
+        {/* Botones de estado + acciones: recuadro compacto (-35%) */}
+        <div className="driver-actions-compact" data-testid="driver-acciones">
         <div className="mt-3" data-testid="estado-buttons">
           <div className="grid grid-cols-4 gap-2">
             {["libre", "ocupado", "no_disponible", "averiado"].map((e) => {
@@ -858,6 +981,7 @@ export default function OperadorApp() {
         >
           <Power className="h-4 w-4" /> Salir de operación
         </button>
+        </div>
       </BottomSheet>
 
       {/* 3) Servicio digital (oferta / en camino / en curso) */}
@@ -939,6 +1063,21 @@ export default function OperadorApp() {
                 <Check className="h-5 w-5" /> Aceptar
               </Button>
             </div>
+
+            {/* Comando de voz: aceptar/rechazar hablando */}
+            <button
+              type="button"
+              data-testid="driver-mic-oferta"
+              onClick={() => escucharComandoOferta()}
+              className={`mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition-colors ${
+                micEscuchando
+                  ? "border-brand bg-brand/15 text-brand-bright animate-pulse"
+                  : "border-border bg-surface-2 text-foreground hover:border-brand/50"
+              }`}
+            >
+              <Mic className={`h-4 w-4 ${micEscuchando ? "text-brand-bright" : ""}`} />
+              {micEscuchando ? "Escuchando… di “aceptar” o “rechazar”" : "Responder con voz"}
+            </button>
           </div>
         )}
 
@@ -1277,6 +1416,113 @@ export default function OperadorApp() {
           </div>
         </div>
       )}
+
+      {/* Overlay: Ajustes del operador (voz IA, comandos, notificaciones, GPS, sesión) */}
+      {ajustesOpen && (
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="driver-ajustes">
+          <div className="w-full max-w-md animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
+                <Settings className="h-5 w-5 text-brand-bright" /> Ajustes
+              </h3>
+              <button onClick={() => setAjustesOpen(false)} aria-label="Cerrar ajustes" className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="grid gap-2">
+              <AjusteFila
+                testId="driver-ajuste-noche"
+                titulo="Modo nocturno"
+                descripcion="Tema oscuro prioritario para conducir de noche"
+                activo={!driverLight}
+                onToggle={() => {
+                  // Set directo (no solo evento): el listener ignora el primer
+                  // app:mode y el tap quedaría sin efecto visible.
+                  const nextLight = !driverLight;
+                  setDriverLight(nextLight);
+                  try { localStorage.setItem("driver_mode", nextLight ? "claro" : "oscuro"); } catch {}
+                  applyMode(nextLight ? "claro" : "oscuro");
+                }}
+              />
+              <AjusteFila
+                testId="driver-ajuste-voz"
+                titulo="Voz IA"
+                descripcion="La asistente anuncia servicios, mensajes y avisos"
+                activo={vozOn}
+                onToggle={() => { const v = !vozOn; setVozOn(v); localStorage.setItem("driver_voz", v ? "on" : "off"); if (v) hablarVoz("Voz activada. Te avisaré de cada servicio."); else detenerVoz(); }}
+              />
+              <AjusteFila
+                testId="driver-ajuste-comandos"
+                titulo="Comandos de voz"
+                descripcion={reconocimientoDisponible() ? "Di “aceptar” o “rechazar” al llegar una oferta" : "No soportado por este navegador"}
+                activo={comandosVozOn}
+                onToggle={() => { const v = !comandosVozOn; setComandosVozOn(v); localStorage.setItem("driver_comandos_voz", v ? "on" : "off"); if (!v) detenerEscucha(); }}
+              />
+              <AjusteFila
+                testId="driver-ajuste-notif"
+                titulo="Notificaciones"
+                descripcion="Aviso del sistema al llegar un servicio"
+                activo={notifOn}
+                onToggle={async () => {
+                  const v = !notifOn;
+                  setNotifOn(v);
+                  localStorage.setItem("driver_notif", v ? "on" : "off");
+                  if (v) {
+                    const p = await pedirPermisoNotificaciones();
+                    if (p !== "granted") toast.error("Activa el permiso de notificaciones en el navegador");
+                  }
+                }}
+              />
+              <AjusteFila
+                testId="driver-ajuste-gps"
+                titulo="GPS en segundo plano"
+                descripcion="Mantiene el envío de ubicación con la app oculta (pantalla apagada requiere la APK)"
+                activo={gpsFondoOn}
+                onToggle={() => { const v = !gpsFondoOn; setGpsFondoOn(v); localStorage.setItem("driver_gps_fondo", v ? "on" : "off"); }}
+              />
+            </div>
+
+            <Button
+              data-testid="driver-logout-ajustes"
+              variant="destructive"
+              size="lg"
+              onClick={logout}
+              className="mt-4 w-full"
+            >
+              <LogOut className="h-5 w-5" /> Cerrar sesión
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function AjusteFila({ testId, titulo, descripcion, activo, onToggle }) {
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      role="switch"
+      aria-checked={activo}
+      onClick={onToggle}
+      className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-left"
+    >
+      <span className={cn(
+        "relative h-6 w-11 shrink-0 rounded-full transition-colors",
+        activo ? "bg-brand" : "bg-secondary"
+      )}>
+        <span className={cn(
+          "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
+          activo ? "left-[22px]" : "left-0.5"
+        )} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold text-foreground">{titulo}</span>
+        <span className="block truncate text-xs text-muted-foreground">{descripcion}</span>
+      </span>
+      <span className={cn("text-xs font-bold", activo ? "text-brand-bright" : "text-muted-foreground")}>
+        {activo ? "ON" : "OFF"}
+      </span>
+    </button>
   );
 }
