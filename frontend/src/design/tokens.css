@@ -55,23 +55,29 @@
 }
 
 html[data-mode="claro"] {
-  /* Paleta clara normativa (prompt TaxiHUB 2.0) */
-  --th-bg: #F6F8F7;
+  /* Paleta diurna unificada — perla pizarra de alto contraste conservando el acento de la paleta */
+  --th-bg: #EEF2F6;
   --th-surface: #FFFFFF;
-  --th-surface-2: #F0F4F2;
-  --th-surface-3: #E7EDEA;
-  --th-text: #172026;
-  --th-muted: #6B7280;
-  --th-border: #E5E7EB;
-  --th-shadow-1: 0 1px 2px rgba(23, 32, 38, 0.08), 0 2px 8px rgba(23, 32, 38, 0.06);
-  --th-shadow-2: 0 2px 6px rgba(23, 32, 38, 0.08), 0 10px 28px rgba(23, 32, 38, 0.1);
-  --th-shadow-brand: 0 6px 20px rgba(79, 93, 255, 0.22);
+  --th-surface-2: #F4F6F9;
+  --th-surface-3: #E6ECF2;
+  --th-text: #0F172A;
+  --th-muted: #475569;
+  --th-border: #CBD5E1;
+  --th-border-strong: #94A3B8;
+  --th-live: #059669;
+  --th-live-soft: rgba(5, 150, 105, 0.14);
+  --th-success: #059669;
+  --th-danger: #DC2626;
+  --th-warning: #D97706;
+  --th-shadow-1: 0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --th-shadow-2: 0 4px 12px rgba(15, 23, 42, 0.08), 0 14px 32px rgba(15, 23, 42, 0.12);
+  --th-shadow-brand: 0 6px 20px hsl(var(--brand) / 26%);
 }
 
 /* --------------------------------------------------------------------------
    Puente de tokens semánticos (shadcn) — html:root gana la cascada sobre los
    :root de index.css sin modificarlos. Mismo mundo de color: un solo tono
-   frío-cálido (#0B0D10→#17191E), acento índigo, verde neón solo semántico.
+   frío-cálido (#0B0D10→#17191E), acento por paleta, verde neón solo semántico.
    -------------------------------------------------------------------------- */
 html:root {
   --background: 220 19% 5%;
@@ -80,7 +86,7 @@ html:root {
   --card-foreground: 240 11% 96%;
   --popover: 222 17% 12%;
   --popover-foreground: 240 11% 96%;
-  --primary: 235 100% 65%;
+  --primary: 158 64% 52%;
   --primary-foreground: 0 0% 100%;
   --secondary: 222 12% 13%;
   --secondary-foreground: 240 11% 96%;
@@ -92,20 +98,121 @@ html:root {
   --destructive-foreground: 0 0% 98%;
   --border: 220 8% 16%;
   --input: 220 9% 19%;
-  --ring: 235 100% 65%;
-  --chart-1: 235 100% 65%;
+  --ring: 158 64% 52%;
+  --chart-1: 158 64% 52%;
   --chart-2: 99 100% 66%;
   --chart-3: 38 92% 50%;
   --chart-4: 0 72% 51%;
   --chart-5: 271 81% 56%;
-  /* Acento de marca por paleta — base = identidad índigo */
-  --brand: 235 100% 65%;
-  --brand-bright: 235 100% 72%;
-  --brand-strong: 235 66% 56%;
-  --brand-contrast: 0 0% 100%;
+  /* Acento de marca por paleta (default esmeralda, sobreescrito por data-theme) */
+  --brand: 158 64% 52%;
+  --brand-bright: 160 84% 62%;
+  --brand-strong: 160 84% 39%;
+  --brand-contrast: 240 6% 4%;
   --surface: 220 16% 7%;
   --surface-2: 223 13% 10%;
   --surface-3: 224 11% 13%;
+}
+
+html:root[data-theme="oceano"] {
+  --primary: 217 91% 60%;
+  --ring: 217 91% 60%;
+  --brand: 217 91% 60%;
+  --brand-bright: 217 91% 67%;
+  --brand-strong: 217 91% 53%;
+  --brand-contrast: 0 0% 100%;
+}
+
+html:root[data-theme="ambar"] {
+  --primary: 38 92% 50%;
+  --ring: 38 92% 50%;
+  --brand: 38 92% 50%;
+  --brand-bright: 38 92% 56%;
+  --brand-strong: 26 90% 44%;
+  --brand-contrast: 240 6% 4%;
+}
+
+html:root[data-theme="rubi"] {
+  --primary: 350 89% 60%;
+  --ring: 350 89% 60%;
+  --brand: 350 89% 60%;
+  --brand-bright: 350 89% 68%;
+  --brand-strong: 347 77% 50%;
+  --brand-contrast: 0 0% 100%;
+}
+
+html:root[data-theme="violeta"] {
+  --primary: 262 83% 58%;
+  --ring: 262 83% 58%;
+  --brand: 262 83% 58%;
+  --brand-bright: 262 83% 68%;
+  --brand-strong: 263 70% 50%;
+  --brand-contrast: 0 0% 100%;
+}
+
+html:root[data-mode="claro"] {
+  --background: 210 28% 95%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 160 84% 34%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 214 25% 92%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 214 24% 93%;
+  --muted-foreground: 215 19% 38%;
+  --accent: 214 25% 91%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 74% 46%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 24% 83%;
+  --input: 214 24% 85%;
+  --ring: 160 84% 34%;
+  --surface: 0 0% 100%;
+  --surface-2: 214 28% 96%;
+  --surface-3: 214 24% 91%;
+  --brand: 160 84% 34%;
+  --brand-bright: 160 84% 29%;
+  --brand-strong: 160 86% 24%;
+  --brand-contrast: 0 0% 100%;
+}
+
+html:root[data-mode="claro"][data-theme="oceano"] {
+  --primary: 217 85% 46%;
+  --ring: 217 85% 46%;
+  --brand: 217 85% 46%;
+  --brand-bright: 217 85% 39%;
+  --brand-strong: 217 88% 33%;
+  --brand-contrast: 0 0% 100%;
+}
+
+html:root[data-mode="claro"][data-theme="ambar"] {
+  --primary: 32 92% 40%;
+  --ring: 32 92% 40%;
+  --brand: 32 92% 40%;
+  --brand-bright: 32 92% 34%;
+  --brand-strong: 26 90% 30%;
+  --brand-contrast: 0 0% 100%;
+}
+
+html:root[data-mode="claro"][data-theme="rubi"] {
+  --primary: 348 83% 47%;
+  --ring: 348 83% 47%;
+  --brand: 348 83% 47%;
+  --brand-bright: 348 83% 40%;
+  --brand-strong: 347 80% 35%;
+  --brand-contrast: 0 0% 100%;
+}
+
+html:root[data-mode="claro"][data-theme="violeta"] {
+  --primary: 262 76% 50%;
+  --ring: 262 76% 50%;
+  --brand: 262 76% 50%;
+  --brand-bright: 262 76% 43%;
+  --brand-strong: 263 72% 37%;
+  --brand-contrast: 0 0% 100%;
 }
 
 /* Tipografía base: Inter (gana sobre el body de index.css) */
@@ -239,33 +346,55 @@ html .btn-danger-elev {
     0 4px 24px hsl(0 72% 51% / 20%);
 }
 
-/* Chasis "machined" del Terminal → mundo #17191E, borde blanco 6% */
-html .bezel-shell {
+/* Chasis "machined" del Terminal → mundo #17191E en oscuro, perla/blanco en diurno */
+html:not([data-mode="claro"]) .bezel-shell {
   background: hsl(223 13% 10% / var(--ui-alpha, 0.85));
   border-color: rgba(255, 255, 255, 0.06);
 }
-html .surface-ui {
+html:not([data-mode="claro"]) .surface-ui {
   background: hsl(223 13% 10% / var(--ui-alpha, 0.85));
   border-color: rgba(255, 255, 255, 0.06);
 }
-html .bezel-core {
+html:not([data-mode="claro"]) .bezel-core {
   background: hsl(223 12% 12%);
   border-color: rgba(255, 255, 255, 0.06);
 }
-html .input-inset {
+html:not([data-mode="claro"]) .input-inset {
   background: hsl(220 16% 7%) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-mode="claro"] .bezel-shell {
+  background: rgba(255, 255, 255, var(--ui-alpha, 0.94));
+  border-color: #CBD5E1;
+}
+html[data-mode="claro"] .surface-ui {
+  background: rgba(255, 255, 255, var(--ui-alpha, 0.95));
+  border-color: #CBD5E1;
+}
+html[data-mode="claro"] .bezel-core {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+html[data-mode="claro"] .input-inset {
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
 }
 html .data-cell-value { font-weight: 600; }
 
 /* Botón de icono del chasis: elevación susurrada, hover blanco 8% */
-html .th-3d {
+html:not([data-mode="claro"]) .th-3d {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 1px 2px rgba(0, 0, 0, 0.3);
 }
-html .th-3d:active:not(:disabled) {
+html:not([data-mode="claro"]) .th-3d:active:not(:disabled) {
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+html[data-mode="claro"] .th-3d {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 3px rgba(15, 23, 42, 0.1);
 }
 
 /* Iconografía outline delgada (lucide): 1.5 en vez de 2 */
@@ -273,13 +402,18 @@ html svg.th-icon-3d,
 html .th-3d svg {
   stroke-width: 1.5;
 }
-html .th-icon-3d {
+html:not([data-mode="claro"]) .th-icon-3d {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
 }
 
-/* Puente emerald → verde neón semántico (solo dark; claro conserva el suyo) */
-html .text-emerald-400, html .text-emerald-500 { color: var(--th-live); }
-html .bg-emerald-400, html .bg-emerald-500 { background-color: var(--th-live); }
+/* Puente emerald → verde neón semántico (solo dark; claro conserva verde esmeralda de alto contraste) */
+html:not([data-mode="claro"]) .text-emerald-400,
+html:not([data-mode="claro"]) .text-emerald-500 { color: var(--th-live); }
+html:not([data-mode="claro"]) .bg-emerald-400,
+html:not([data-mode="claro"]) .bg-emerald-500 { background-color: var(--th-live); }
+html[data-mode="claro"] .text-emerald-400,
+html[data-mode="claro"] .text-emerald-500 { color: #047857 !important; }
+html[data-mode="claro"] .text-emerald-300 { color: #065F46 !important; }
 
 /* --------------------------------------------------------------------------
    App del Operador — piel oscura ("taxi-driver-dark") alineada al sistema.

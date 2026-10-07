@@ -34,6 +34,18 @@
   --brand-strong: 26 90% 44%;
 }
 
+[data-theme="rubi"] {
+  --brand: 350 89% 60%;
+  --brand-bright: 350 89% 68%;
+  --brand-strong: 347 77% 50%;
+}
+
+[data-theme="violeta"] {
+  --brand: 262 83% 58%;
+  --brand-bright: 262 83% 68%;
+  --brand-strong: 263 70% 50%;
+}
+
 /* ---- Paletas heredadas (emerald = default sin atributo) ---- */
 [data-theme="oceano"] .bg-emerald-500 { background-color: #3b82f6 !important; }
 [data-theme="oceano"] .hover\:bg-emerald-400:hover { background-color: #60a5fa !important; }
@@ -59,11 +71,24 @@
 
 html {
   color-scheme: dark;
-  /* Escala compacta del sistema: baja la base rem de 16px a 14px.
-     Encoge UI (cards, paneles, botones, paddings de Tailwind) sin tocar
-     el mapa ni elementos definidos en px. NO usar body{zoom}: rompe
-     el layout interno de Leaflet (tiles negras/desalineadas). */
-  font-size: 87.5%;
+  /* Escala de referencia tipo zoom al 85% (13.6px base rem).
+     Compacta toda la interfaz (barras, modales, cajones, tarjetas) sin usar
+     CSS zoom sobre el contenedor de Leaflet (para no desalinear coordenadas). */
+  font-size: 85%;
+}
+
+/* Piso de legibilidad para etiquetas micro en escala 85%: todo permanece 100% legible */
+.text-\[8px\] {
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+}
+.text-\[9px\] {
+  font-size: 10.5px !important;
+  line-height: 1.3 !important;
+}
+.text-\[10px\] {
+  font-size: 11px !important;
+  line-height: 1.35 !important;
 }
 
 body {
@@ -614,10 +639,10 @@ button:active:not(:disabled) {
 }
 
 /* ==========================================================================
-   Modo claro — piel "papel cálido" (Tipo C)
-   Mismo thumbl: bezel/machined, acento de marca por paleta, pero superficie
-   de papel cáildo, tinta grafito, profundidad por sombras suaves.
-   Modo oscuro sigue siendo el default (sin [data-mode]).
+   Modo Diurno (data-mode="claro") — Superficie Unificada Perla-Pizarra
+   Todos los módulos, pestañas, cajones, modales y tarjetas comparten el mismo
+   color luminoso (#FFFFFF / #F8FAFC / #F1F5F9), tinta #0F172A de alta
+   legibilidad y acento de marca que conserva la paleta activa.
    ========================================================================== */
 
 html[data-mode="claro"] {
@@ -625,169 +650,280 @@ html[data-mode="claro"] {
 }
 
 :root[data-mode="claro"] {
-  --background: 45 15% 91%;
-  --foreground: 26 14% 11%;
-  --card: 45 20% 96%;
-  --card-foreground: 26 14% 11%;
-  --popover: 45 20% 97%;
-  --popover-foreground: 26 14% 11%;
-  --primary: 158 70% 42%;
+  --background: 210 28% 95%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 160 84% 34%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 44 18% 90%;
-  --secondary-foreground: 26 14% 11%;
-  --muted: 44 10% 92%;
-  --muted-foreground: 32 8% 44%;
-  --accent: 44 14% 90%;
-  --accent-foreground: 26 14% 11%;
-  --destructive: 0 72% 46%;
+  --secondary: 214 25% 92%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 214 24% 93%;
+  --muted-foreground: 215 19% 38%;
+  --accent: 214 25% 91%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 74% 46%;
   --destructive-foreground: 0 0% 100%;
-  --border: 40 10% 80%;
-  --input: 40 10% 80%;
-  --ring: 158 70% 42%;
-  --surface: 45 14% 94%;
-  --surface-2: 45 18% 91%;
-  --surface-3: 44 10% 88%;
-  --brand: 158 72% 42%;
-  --brand-bright: 160 82% 35%;
-  --brand-strong: 160 84% 28%;
+  --border: 214 24% 83%;
+  --input: 214 24% 85%;
+  --ring: 160 84% 34%;
+  --surface: 0 0% 100%;
+  --surface-2: 214 28% 96%;
+  --surface-3: 214 24% 91%;
+  --brand: 160 84% 34%;
+  --brand-bright: 160 84% 29%;
+  --brand-strong: 160 86% 24%;
   --brand-contrast: 0 0% 100%;
-  --th-hi: rgba(255, 255, 255, 0.85);
-  --th-lo: rgba(60, 52, 40, 0.18);
-  --th-drop: rgba(60, 52, 40, 0.22);
+  --th-hi: rgba(255, 255, 255, 0.92);
+  --th-lo: rgba(15, 23, 42, 0.1);
+  --th-drop: rgba(15, 23, 42, 0.14);
 }
 
 [data-theme="oceano"][data-mode="claro"] {
-  --brand: 217 84% 47%;
-  --brand-bright: 217 84% 40%;
-  --brand-strong: 217 88% 35%;
+  --brand: 217 85% 46%;
+  --brand-bright: 217 85% 39%;
+  --brand-strong: 217 88% 33%;
+  --brand-contrast: 0 0% 100%;
 }
 
 [data-theme="ambar"][data-mode="claro"] {
-  --brand: 38 95% 45%;
-  --brand-bright: 38 95% 35%;
-  --brand-strong: 28 90% 40%;
+  --brand: 32 92% 40%;
+  --brand-bright: 32 92% 34%;
+  --brand-strong: 26 90% 30%;
+  --brand-contrast: 0 0% 100%;
 }
 
-/* ---- Overrides de utilidades zinc (las pantallas usan zinc-* fijo) ---- */
-[data-mode="claro"] .bg-zinc-950 { background-color: #f3eee4 !important; }
-[data-mode="claro"] .bg-zinc-900 { background-color: #faf7f0 !important; }
-[data-mode="claro"] .bg-zinc-800 { background-color: #efe8db !important; }
-[data-mode="claro"] .bg-zinc-700 { background-color: #e4dbca !important; }
-[data-mode="claro"] .bg-zinc-950\/95 { background-color: rgba(243, 238, 228, 0.95) !important; }
-[data-mode="claro"] .bg-zinc-950\/90 { background-color: rgba(243, 238, 228, 0.9) !important; }
-[data-mode="claro"] .bg-zinc-900\/95 { background-color: rgba(250, 247, 240, 0.95) !important; }
-[data-mode="claro"] .bg-zinc-900\/80 { background-color: rgba(250, 247, 240, 0.8) !important; }
-[data-mode="claro"] .bg-zinc-900\/70 { background-color: rgba(250, 247, 240, 0.7) !important; }
-[data-mode="claro"] .bg-zinc-900\/60 { background-color: rgba(250, 247, 240, 0.6) !important; }
-[data-mode="claro"] .bg-zinc-900\/40 { background-color: rgba(250, 247, 240, 0.4) !important; }
-[data-mode="claro"] .bg-zinc-800\/80 { background-color: rgba(239, 232, 219, 0.8) !important; }
-[data-mode="claro"] .bg-zinc-800\/70 { background-color: rgba(239, 232, 219, 0.7) !important; }
-[data-mode="claro"] .bg-zinc-800\/60 { background-color: rgba(239, 232, 219, 0.6) !important; }
-[data-mode="claro"] .bg-zinc-800\/40 { background-color: rgba(239, 232, 219, 0.4) !important; }
+[data-theme="rubi"][data-mode="claro"] {
+  --brand: 348 83% 47%;
+  --brand-bright: 348 83% 40%;
+  --brand-strong: 347 80% 35%;
+  --brand-contrast: 0 0% 100%;
+}
 
-[data-mode="claro"] .text-zinc-50 { color: #1f1c15 !important; }
-[data-mode="claro"] .text-zinc-100 { color: #26221a !important; }
-[data-mode="claro"] .text-zinc-200 { color: #37332a !important; }
-[data-mode="claro"] .text-zinc-300 { color: #555045 !important; }
-[data-mode="claro"] .text-zinc-400 { color: #837c6e !important; }
-[data-mode="claro"] .text-zinc-500 { color: #6c6559 !important; }
-[data-mode="claro"] .text-zinc-600 { color: #5a5348 !important; }
-[data-mode="claro"] .placeholder\:text-zinc-500::placeholder { color: #a79f8e !important; }
+[data-theme="violeta"][data-mode="claro"] {
+  --brand: 262 76% 50%;
+  --brand-bright: 262 76% 43%;
+  --brand-strong: 263 72% 37%;
+  --brand-contrast: 0 0% 100%;
+}
 
-[data-mode="claro"] .border-zinc-700 { border-color: #ddd5c3 !important; }
-[data-mode="claro"] .border-zinc-800 { border-color: rgba(60, 52, 40, 0.15) !important; }
-[data-mode="claro"] .border-zinc-800\/80 { border-color: rgba(60, 52, 40, 0.1) !important; }
-[data-mode="claro"] .border-zinc-800\/60 { border-color: rgba(60, 52, 40, 0.07) !important; }
-[data-mode="claro"] .ring-zinc-800 { --tw-ring-color: rgba(60, 52, 40, 0.15) !important; }
+/* ---- Overrides de fondos oscuros arbitrarios y zinc para que ningún módulo o pestaña quede negro ---- */
+[data-mode="claro"] .bg-zinc-950,
+[data-mode="claro"] .bg-\[\#0B0D10\],
+[data-mode="claro"] .bg-\[\#111318\],
+[data-mode="claro"] .bg-\[\#13151A\],
+[data-mode="claro"] .bg-\[\#14161B\],
+[data-mode="claro"] .bg-\[\#141829\] {
+  background-color: #F1F5F9 !important;
+}
+
+[data-mode="claro"] .bg-zinc-900,
+[data-mode="claro"] .bg-\[\#17191E\],
+[data-mode="claro"] .bg-\[\#181B20\] {
+  background-color: #FFFFFF !important;
+}
+
+[data-mode="claro"] .bg-zinc-800,
+[data-mode="claro"] .bg-\[\#1B1E24\],
+[data-mode="claro"] .bg-\[\#22252C\] {
+  background-color: #F8FAFC !important;
+}
+
+[data-mode="claro"] .bg-zinc-700 {
+  background-color: #E2E8F0 !important;
+}
+
+[data-mode="claro"] .bg-zinc-950\/95,
+[data-mode="claro"] .bg-zinc-950\/90,
+[data-mode="claro"] .bg-\[\#13151A\]\/95,
+[data-mode="claro"] .bg-\[\#13151A\]\/90,
+[data-mode="claro"] .bg-\[\#141829\]\/95,
+[data-mode="claro"] .bg-\[\#17191E\]\/95 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+}
+
+[data-mode="claro"] .bg-zinc-900\/95,
+[data-mode="claro"] .bg-zinc-900\/80,
+[data-mode="claro"] .bg-zinc-900\/70,
+[data-mode="claro"] .bg-zinc-900\/60,
+[data-mode="claro"] .bg-zinc-900\/40 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+[data-mode="claro"] .bg-zinc-800\/80,
+[data-mode="claro"] .bg-zinc-800\/70,
+[data-mode="claro"] .bg-zinc-800\/60,
+[data-mode="claro"] .bg-zinc-800\/40 {
+  background-color: rgba(241, 245, 249, 0.9) !important;
+}
+
+/* Bloques bg-black/* usados dentro de cards y pestañas (ninguno queda negro) */
+[data-mode="claro"] .bg-black\/15,
+[data-mode="claro"] .bg-black\/20,
+[data-mode="claro"] .bg-black\/25,
+[data-mode="claro"] .bg-black\/30,
+[data-mode="claro"] .bg-black\/35,
+[data-mode="claro"] .bg-black\/40,
+[data-mode="claro"] .bg-black\/50 {
+  background-color: #F1F5F9 !important;
+}
+
+[data-mode="claro"] .bg-white\/5,
+[data-mode="claro"] .bg-white\/\[0\.03\],
+[data-mode="claro"] .bg-white\/\[0\.04\],
+[data-mode="claro"] .bg-white\/\[0\.06\] {
+  background-color: #F8FAFC !important;
+}
+
+[data-mode="claro"] .hover\:bg-white\/5:hover,
+[data-mode="claro"] .hover\:bg-white\/10:hover,
+[data-mode="claro"] .hover\:bg-\[\#22262E\]:hover,
+[data-mode="claro"] .hover\:bg-zinc-800:hover,
+[data-mode="claro"] .hover\:bg-zinc-800\/70:hover {
+  background-color: #E2E8F0 !important;
+}
+
+/* Textos de alta legibilidad en Modo Diurno */
+[data-mode="claro"] .text-zinc-50,
+[data-mode="claro"] .text-zinc-100,
+[data-mode="claro"] .text-\[\#F5F5F7\] {
+  color: #0F172A !important;
+}
+[data-mode="claro"] .text-zinc-200 { color: #1E293B !important; }
+[data-mode="claro"] .text-zinc-300 { color: #334155 !important; }
+[data-mode="claro"] .text-zinc-400,
+[data-mode="claro"] .text-\[\#9CA0AA\] { color: #475569 !important; }
+[data-mode="claro"] .text-zinc-500 { color: #64748B !important; }
+[data-mode="claro"] .text-zinc-600 { color: #475569 !important; }
+[data-mode="claro"] .placeholder\:text-zinc-500::placeholder { color: #94A3B8 !important; }
+
+/* Texto blanco dentro de superficies convertidas a claro pasa a grafito (#0F172A),
+   conservando blanco en botones primarios/peligro/badges sólidos */
+[data-mode="claro"] .surface-ui .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
+[data-mode="claro"] .bezel-shell .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
+[data-mode="claro"] .bg-\[\#111318\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
+[data-mode="claro"] .bg-\[\#17191E\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
+[data-mode="claro"] .bg-\[\#13151A\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]) {
+  color: #0F172A !important;
+}
+
+/* Bordes limpios y uniformes en Modo Diurno */
+[data-mode="claro"] .border-zinc-700,
+[data-mode="claro"] .border-zinc-800,
+[data-mode="claro"] .border-zinc-800\/80,
+[data-mode="claro"] .border-zinc-800\/60,
+[data-mode="claro"] .border-white\/5,
+[data-mode="claro"] .border-white\/10,
+[data-mode="claro"] .border-white\/15,
+[data-mode="claro"] .border-white\/20,
+[data-mode="claro"] .border-white\/\[0\.06\],
+[data-mode="claro"] .border-white\/\[0\.08\] {
+  border-color: #CBD5E1 !important;
+}
+[data-mode="claro"] .ring-zinc-800 { --tw-ring-color: #CBD5E1 !important; }
 
 /* ---- Componentes del sistema en claro ---- */
 [data-mode="claro"] .glass-panel {
-  background: rgba(250, 246, 238, 0.78);
-  border: 1px solid rgba(60, 52, 40, 0.13);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #CBD5E1;
 }
 [data-mode="claro"] .bezel-shell {
-  background: rgba(60, 52, 40, 0.055);
-  border: 1px solid rgba(60, 52, 40, 0.16);
+  background: rgba(255, 255, 255, var(--ui-alpha, 0.95));
+  border: 1px solid #CBD5E1;
+}
+[data-mode="claro"] .surface-ui {
+  background: rgba(255, 255, 255, var(--ui-alpha, 0.96));
+  border: 1px solid #CBD5E1;
 }
 [data-mode="claro"] .bezel-core {
-  background: #fbf8f1;
-  border: 1px solid rgba(60, 52, 40, 0.1);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
 }
 [data-mode="claro"] .input-inset {
-  background: #ece5d7 !important;
-  border-color: #d8cfba !important;
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
 }
-[data-mode="claro"] .data-cell-value { color: #26221a; }
-[data-mode="claro"] .th-skeleton { background: #e9e1d1; }
+[data-mode="claro"] .data-cell-label { color: #64748B; }
+[data-mode="claro"] .data-cell-value { color: #0F172A; }
+[data-mode="claro"] .th-skeleton { background: #E2E8F0; }
 [data-mode="claro"] .th-skeleton::after {
-  background: linear-gradient(90deg, transparent, #f4efe3, transparent);
+  background: linear-gradient(90deg, transparent, #F8FAFC, transparent);
 }
 
 [data-mode="claro"] .chip {
-  border-color: #d8cfba;
-  color: #5c554b;
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+  color: #334155;
 }
 [data-mode="claro"] .chip:hover {
-  border-color: #b9ae96;
-  color: #26221a;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
+[data-mode="claro"] .chip-active {
+  border-color: hsl(var(--brand) / 65%);
+  background: hsl(var(--brand) / 15%);
+  color: hsl(var(--brand-strong));
 }
 [data-mode="claro"] .elev-1 {
-  box-shadow: 0 1px 2px rgba(60, 52, 40, 0.08), 0 2px 8px rgba(60, 52, 40, 0.05);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 [data-mode="claro"] .elev-2 {
-  box-shadow: 0 2px 6px rgba(60, 52, 40, 0.07), 0 12px 28px rgba(60, 52, 40, 0.1);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08), 0 14px 28px rgba(15, 23, 42, 0.1);
 }
 [data-mode="claro"] .elev-3 {
-  box-shadow: 0 4px 12px rgba(60, 52, 40, 0.09), 0 20px 48px rgba(60, 52, 40, 0.15);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1), 0 22px 48px rgba(15, 23, 42, 0.14);
 }
 
 [data-mode="claro"] ::selection {
-  color: #26221a;
-  background: hsl(var(--brand) / 30%);
+  color: #0F172A;
+  background: hsl(var(--brand) / 25%);
 }
 [data-mode="claro"] * {
-  scrollbar-color: hsl(40 10% 74%) transparent;
+  scrollbar-color: #CBD5E1 transparent;
 }
 [data-mode="claro"] *::-webkit-scrollbar-thumb {
-  background: hsl(40 10% 74%);
+  background: #CBD5E1;
 }
 [data-mode="claro"] *::-webkit-scrollbar-thumb:hover {
-  background: hsl(40 10% 64%);
+  background: #94A3B8;
 }
 [data-mode="claro"] :focus-visible {
-  outline-color: hsl(var(--brand) / 60%);
+  outline-color: hsl(var(--brand) / 70%);
 }
 
 /* ---- Mapa Leaflet en claro ---- */
-[data-mode="claro"] .leaflet-container { background: #efebe0; }
+[data-mode="claro"] .leaflet-container { background: #E2E8F0; }
 [data-mode="claro"] .leaflet-popup-content-wrapper {
-  background: rgba(250, 247, 240, 0.98);
-  color: #26221a;
-  border: 1px solid rgba(60, 52, 40, 0.16);
-  box-shadow: 0 12px 32px rgba(60, 52, 40, 0.18);
+  background: rgba(255, 255, 255, 0.98);
+  color: #0F172A;
+  border: 1px solid #CBD5E1;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
 }
 [data-mode="claro"] .leaflet-popup-tip {
-  background: rgba(250, 247, 240, 0.98);
-  border: 1px solid rgba(60, 52, 40, 0.16);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #CBD5E1;
 }
 [data-mode="claro"] .leaflet-bar {
-  border: 1px solid rgba(60, 52, 40, 0.16) !important;
-  box-shadow: 0 4px 14px rgba(60, 52, 40, 0.12) !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1) !important;
 }
 [data-mode="claro"] .leaflet-bar a {
-  background: #faf7f0 !important;
-  color: #33302a !important;
-  border-bottom: 1px solid rgba(60, 52, 40, 0.1) !important;
+  background: #FFFFFF !important;
+  color: #1E293B !important;
+  border-bottom: 1px solid #E2E8F0 !important;
 }
 [data-mode="claro"] .leaflet-bar a:hover {
-  background: #efe8db !important;
+  background: #F1F5F9 !important;
 }
 [data-mode="claro"] .leaflet-control-attribution {
-  background: rgba(243, 238, 228, 0.75) !important;
-  color: #8c8577 !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #64748B !important;
 }
 [data-mode="claro"] .leaflet-control-attribution a {
-  color: #6e675c !important;
+  color: #334155 !important;
 }
 
 /* ==========================================================================
@@ -823,9 +959,9 @@ html[data-mode="claro"] {
 }
 [data-mode="claro"] .th-3d:active:not(:disabled) {
   box-shadow:
-    inset 0 2px 3px rgba(60, 52, 40, 0.2),
-    inset 0 1px 0 rgba(60, 52, 40, 0.18),
-    0 1px 1px rgba(60, 52, 40, 0.14);
+    inset 0 2px 3px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(15, 23, 42, 0.1),
+    0 1px 1px rgba(15, 23, 42, 0.08);
 }
 
 /* Icono con profundidad de vidrio/metal */
@@ -833,7 +969,7 @@ html[data-mode="claro"] {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.28));
 }
 [data-mode="claro"] .th-icon-3d {
-  filter: drop-shadow(0 1px 1px rgba(60, 52, 40, 0.25));
+  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.16));
 }
 
 /* CTA principal: añade destello superior al elevado "machined" */
@@ -847,13 +983,13 @@ html[data-mode="claro"] {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     0 2px 0 hsl(var(--brand-strong)),
-    0 8px 18px hsl(var(--brand) / 38%);
+    0 8px 18px hsl(var(--brand) / 34%);
 }
 [data-mode="claro"] .btn-danger-elev {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
     0 2px 0 hsl(0 72% 40%),
-    0 8px 18px hsl(0 72% 48% / 35%);
+    0 8px 18px hsl(0 72% 48% / 32%);
 }
 
 /* Badge semántico (estado/gps/conexión): tinte+borde por color-mix desde
@@ -865,5 +1001,5 @@ html[data-mode="claro"] {
   border-color: color-mix(in srgb, var(--sc) 40%, transparent);
 }
 [data-mode="claro"] .sem-badge {
-  color: color-mix(in srgb, var(--sc) 82%, #1c1b1a);
+  color: color-mix(in srgb, var(--sc) 82%, #0F172A);
 }

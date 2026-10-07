@@ -1,0 +1,48 @@
+{
+  "appId": "com.taxihub.operador",
+  "appName": "TaxiHub Operador",
+  "webDir": "build",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "BackgroundGeolocation": {
+      "notificationTitle": "TaxiHub — En turno activo",
+      "notificationText": "GPS y alertas de voz activos con pantalla apagada",
+      "enableHighAccuracy": true,
+      "distanceFilter": 12,
+      "stopOnTerminate": false,
+      "startOnBoot": true
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_taxihub",
+      "iconColor": "#10B981",
+      "sound": "dispatch_alert.wav"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0B0D10"
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false,
+    "permissions": [
+      "android.permission.ACCESS_COARSE_LOCATION",
+      "android.permission.ACCESS_FINE_LOCATION",
+      "android.permission.ACCESS_BACKGROUND_LOCATION",
+      "android.permission.FOREGROUND_SERVICE",
+      "android.permission.FOREGROUND_SERVICE_LOCATION",
+      "android.permission.WAKE_LOCK",
+      "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+      "android.permission.POST_NOTIFICATIONS",
+      "android.permission.CAMERA"
+    ]
+  }
+}

@@ -1,6 +1,8 @@
-import { cn } from "@/lib/utils";
+import { memo } from "react";
+import { cn, resolveDriverAvatar } from "@/lib/utils";
 import { fmtDist, fmtDuration } from "@/lib/geo";
 import { timeAgo } from "@/lib/time";
+import { semaforoServiciosStyle } from "@/lib/taxiIcon";
 import { Button } from "@/components/Button";
 import { EstadoBadge } from "@/components/StatusBadge";
 import { VehicleImage } from "@/components/VehicleImage";
@@ -11,26 +13,39 @@ import { User, Car, RouteIcon, X, Navigation as NavIcon, ClipboardList } from "@
  * Identidad de la unidad, métricas GPS, recorrido en vivo y ruta del servicio.
  * El contenedor DraggablePanel lo provee el consumidor.
  */
-export function MissionCard({
-  op, trackStats, showTrack, onToggleTrack,
+export const MissionCard = memo(function MissionCard({
+  op, serviciosHoy = null, trackStats, showTrack, onToggleTrack,
   servicioActivo, servicioDestino, rutaServicio, verRutaServicio, onToggleRuta,
   follow, onToggleFollow, onVerServicio, onVerExpediente, onClose,
 }) {
   if (!op) return null;
+  const svCount = serviciosHoy != null ? serviciosHoy : (op.serviciosHoy ?? op.servicios_hoy ?? 0);
+  const sem = semaforoServiciosStyle(svCount);
   return (
     <div data-testid="taxi-detail-panel" className="bezel-shell animate-slide-up">
-      <div className="max-h-[calc(100vh-118px)] overflow-y-auto rounded-[var(--radius)] p-4">
+      <div className="max-h-[calc(100vh-118px)] overflow-y-auto rounded-[var(--radius)] p-3.5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2.5">
             {op.vehiculo && (
-              <VehicleImage vehiculo={op.vehiculo} className="h-12 w-16 shrink-0 rounded-lg border border-border bg-surface-3" imgClassName="p-1" />
+              <VehicleImage vehiculo={op.vehiculo} className="h-11 w-15 shrink-0 rounded-lg border border-border bg-surface-3" imgClassName="p-1" />
             )}
             <div className="min-w-0">
-              <div className="truncate font-mono text-lg font-extrabold tracking-tight text-foreground">
+              <div className="truncate font-mono text-base font-extrabold tracking-tight text-foreground">
                 {op.vehiculo?.numero_economico ? `UNIDAD ${op.vehiculo.numero_economico}` : op.placa}
               </div>
-              <div className="mt-1.5">
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 <EstadoBadge estado={op.estado} pulse />
+                <span
+                  data-testid="taxi-selected-servicios-hoy"
+                  style={{ background: sem.bg, color: sem.text, borderColor: sem.border }}
+                  className="inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-0.5 font-mono text-xs font-black tracking-tight shadow-md"
+                  title={sem.nivel}
+                >
+                  <span>{sem.count}</span>
+                  <span className="font-sans text-[10px] font-bold uppercase tracking-wider opacity-95">
+                    {sem.count === 1 ? "servicio hoy" : "servicios hoy"}
+                  </span>
+                </span>
               </div>
             </div>
           </div>
@@ -41,7 +56,16 @@ export function MissionCard({
 
         <div className="mt-3 space-y-1.5 text-sm">
           <div className="flex items-center gap-2 text-foreground/90">
-            <User className="h-4 w-4 shrink-0 text-muted-foreground" /> <span className="font-medium">{op.nombre}</span>
+            <img
+              src={resolveDriverAvatar(op.foto_url, op.id)}
+              alt={op.nombre}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/assets/drivers/driver-01.jpg";
+              }}
+              className="h-6 w-6 shrink-0 rounded-full border border-white/15 object-cover"
+            />
+            <span className="font-medium">{op.nombre}</span>
           </div>
           {op.vehiculo && (
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -58,7 +82,13 @@ export function MissionCard({
           )}
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-border bg-card/60 p-2.5 text-center">
+        <div className="mt-3 grid grid-cols-4 gap-1.5 rounded-xl border border-border bg-card/60 p-2.5 text-center">
+          <div className="data-cell">
+            <span className="data-cell-label">Hoy</span>
+            <span className="data-cell-value font-mono font-black" style={{ color: sem.count === 0 ? "#E2E8F0" : sem.bg }}>
+              {sem.count} sv
+            </span>
+          </div>
           <div className="data-cell">
             <span className="data-cell-label">Precisión</span>
             <span className="data-cell-value">{op.gps_accuracy != null ? `${Math.round(op.gps_accuracy)} m` : "—"}</span>
@@ -149,6 +179,6 @@ export function MissionCard({
       </div>
     </div>
   );
-}
+});
 
 export default MissionCard;

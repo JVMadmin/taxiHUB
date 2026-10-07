@@ -4,8 +4,7 @@ import { X, ZoomIn } from "lucide-react";
 import { Marker, Popup, useMap } from "react-leaflet";
 import { taxiStateAssetIcon } from "@/lib/taxiIcon";
 import { ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
-import { timeAgo } from "@/lib/time";
-import { resolveVehicleImage } from "@/lib/utils";
+import { resolveVehicleImage, resolveDriverAvatar } from "@/lib/utils";
 
 /**
  * SmoothTaxiMarker — Marcador con interpolación continua a 60 FPS.
@@ -22,7 +21,7 @@ function SmoothTaxiMarkerComponent({
   selected = false,
   destinoHeading,
   onSelect,
-  nombreRuta,
+  serviciosHoy = 0,
 }) {
   const map = useMap();
   const markerRef = useRef(null);
@@ -149,11 +148,15 @@ function SmoothTaxiMarkerComponent({
       label: op.placa,
       selected,
       heading: initialHeading,
+      serviciosHoy,
     });
-  }, [op.estado, op.placa, selected]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [op.estado, op.placa, selected, serviciosHoy]);
 
   const [fotoModal, setFotoModal] = useState(false);
   const speedKmh = Math.round((op.gps_speed || 0) * 3.6);
+  const driverFotoUrl = resolveDriverAvatar(op.foto_url, op.id);
+  const vehicleFotoUrl = resolveVehicleImage(op.vehiculo);
 
   return (
     <>
@@ -176,17 +179,15 @@ function SmoothTaxiMarkerComponent({
                 }}
                 title="Clic para ampliar fotografía del chofer"
               >
-                {op.foto_url ? (
-                  <img
-                    src={op.foto_url}
-                    alt={op.nombre}
-                    style={{ height: "40px", width: "40px", borderRadius: "50%", objectFit: "cover", border: "2px solid #4F5DFF", display: "block" }}
-                  />
-                ) : (
-                  <div style={{ height: "40px", width: "40px", borderRadius: "50%", background: "rgba(79,93,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#FFFFFF", fontSize: "16px" }}>
-                    {op.nombre?.[0] || "T"}
-                  </div>
-                )}
+                <img
+                  src={driverFotoUrl}
+                  alt={op.nombre}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/assets/drivers/driver-01.jpg";
+                  }}
+                  style={{ height: "40px", width: "40px", borderRadius: "50%", objectFit: "cover", border: "2px solid #4F5DFF", display: "block" }}
+                />
                 <span
                   style={{
                     position: "absolute",
@@ -218,8 +219,12 @@ function SmoothTaxiMarkerComponent({
             {/* Imagen vehículo */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.06)", borderRadius: "9px", padding: "5px 7px", border: "1px solid rgba(255,255,255,0.06)" }}>
               <img
-                src={resolveVehicleImage(op.vehiculo)}
+                src={vehicleFotoUrl}
                 alt={op.vehiculo?.modelo || "Vehículo"}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/vehicle-types/taxi-estandar.png";
+                }}
                 style={{ height: "30px", width: "50px", objectFit: "contain", flexShrink: 0 }}
               />
               <div style={{ fontSize: "11px", color: "#FFFFFF", fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -236,6 +241,12 @@ function SmoothTaxiMarkerComponent({
               <span style={{ marginLeft: "auto", fontSize: "10px", color: "#94A3B8", fontFamily: "monospace" }}>
                 {speedKmh} km/h
               </span>
+            </div>
+
+            {/* Contador de servicios del día */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(79,93,255,0.14)", border: "1px solid rgba(79,93,255,0.3)", borderRadius: "6px", padding: "3px 7px", fontSize: "11px" }}>
+              <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Servicios hoy:</span>
+              <span style={{ fontFamily: "monospace", fontWeight: 800, color: "#FFFFFF" }}>{serviciosHoy}</span>
             </div>
           </div>
         </Popup>
@@ -306,17 +317,15 @@ function SmoothTaxiMarkerComponent({
                 backgroundColor: "#0B0D10",
               }}
             >
-              {op.foto_url ? (
-                <img
-                  src={op.foto_url}
-                  alt={op.nombre}
-                  style={{ height: "100%", width: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                <div style={{ height: "100%", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "48px", fontWeight: 800, color: "#FFFFFF", background: "rgba(79,93,255,0.3)" }}>
-                  {op.nombre?.[0] || "T"}
-                </div>
-              )}
+              <img
+                src={driverFotoUrl}
+                alt={op.nombre}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/assets/drivers/driver-01.jpg";
+                }}
+                style={{ height: "100%", width: "100%", objectFit: "cover" }}
+              />
             </div>
 
             <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#FFFFFF", margin: "0 0 4px" }}>
@@ -332,8 +341,12 @@ function SmoothTaxiMarkerComponent({
             <div style={{ textAlign: "left", background: "rgba(255, 255, 255, 0.05)", borderRadius: "12px", padding: "12px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                 <img
-                  src={resolveVehicleImage(op.vehiculo)}
+                  src={vehicleFotoUrl}
                   alt="Vehículo"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/vehicle-types/taxi-estandar.png";
+                  }}
                   style={{ height: "36px", width: "60px", objectFit: "contain" }}
                 />
                 <div>
@@ -361,5 +374,19 @@ function SmoothTaxiMarkerComponent({
   );
 }
 
-export const SmoothTaxiMarker = memo(SmoothTaxiMarkerComponent);
+export const SmoothTaxiMarker = memo(
+  SmoothTaxiMarkerComponent,
+  (prev, next) =>
+    prev.selected === next.selected &&
+    prev.serviciosHoy === next.serviciosHoy &&
+    prev.destinoHeading === next.destinoHeading &&
+    prev.op.id === next.op.id &&
+    prev.op.lat === next.op.lat &&
+    prev.op.lng === next.op.lng &&
+    prev.op.estado === next.op.estado &&
+    prev.op.placa === next.op.placa &&
+    prev.op.foto_url === next.op.foto_url &&
+    prev.op.gps_heading === next.op.gps_heading &&
+    prev.op.gps_speed === next.op.gps_speed
+);
 export default SmoothTaxiMarker;

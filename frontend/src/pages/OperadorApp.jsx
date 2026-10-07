@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./OperadorApp.css";
-import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL, SERVICIO_LABEL, BACKEND_URL, WS_BASE } from "@/lib/api";
+import { api, getToken, logoutOperador, ESTADO_COLORS, ESTADO_LABEL, SERVICIO_LABEL, BACKEND_URL, WS_BASE, subirEvidenciaTurno } from "@/lib/api";
 import { elapsed, timeAgo } from "@/lib/time";
 import { cn, iniciales, fileUrl } from "@/lib/utils";
 import { distM, fmtDist, fmtDuration, bearing } from "@/lib/geo";
@@ -29,7 +29,10 @@ import {
   PlayCircle, StopCircle, Check, LocateFixed, Navigation as NavIcon, Wallet,
   Clock, Flag, User, AlertTriangle, Gauge, Fuel, Mic, Settings,
 } from "lucide-react";
+import { Camera, ShieldCheck, Banknote } from "lucide-react";
 import { applyMode } from "@/lib/theme";
+import { activarKeepAliveAudio } from "@/lib/voz";
+import { iniciarGpsSegundoPlano, detenerGpsSegundoPlano } from "@/lib/backgroundGps";
 import {
   hablarVoz, detenerVoz, reconocimientoDisponible, crearReconocimiento,
   clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar,
@@ -273,13 +276,47 @@ export default function OperadorApp() {
     );
   }, []);
 
-  // Envío automático de ubicación mientras está en operación
+  // Envío automático de ubicación + Servicio en 2º plano (Android Foreground Service + Audio KeepAlive)
   useEffect(() => {
     if (enOperacion && op) {
+      activarKeepAliveAudio(true);
       sendLocation(op.id);
       timerRef.current = setInterval(() => sendLocation(op.id), LOC_INTERVAL);
+      iniciarGpsSegundoPlano({
+        onLocation: async (loc) => {
+          const c = {
+            lat: loc.lat,
+            lng: loc.lng,
+            accuracy: loc.accuracy,
+            speed: loc.speed,
+            heading: loc.heading,
+            ts: Date.now(),
+          };
+          if (lastPosRef.current && c.heading == null) {
+            c.heading = bearing(lastPosRef.current.lat, lastPosRef.current.lng, loc.lat, loc.lng);
+          }
+          lastPosRef.current = c;
+          setCoords(c);
+          setGpsStale(false);
+          try {
+            await api.post(`/operadores/${op.id}/ubicacion`, {
+              lat: loc.lat,
+              lng: loc.lng,
+              accuracy: loc.accuracy ?? null,
+              speed: loc.speed ?? null,
+              heading: c.heading ?? null,
+            });
+          } catch (_) {}
+        },
+      });
+    } else {
+      activarKeepAliveAudio(false);
+      detenerGpsSegundoPlano();
     }
-    return () => clearInterval(timerRef.current);
+    return () => {
+      clearInterval(timerRef.current);
+      detenerGpsSegundoPlano();
+    };
   }, [enOperacion, op, sendLocation]);
 
   // Vigila que el GPS se esté actualizando (stale si no llega)
@@ -305,7 +342,6 @@ export default function OperadorApp() {
       ws.onopen = () => setWsState(navigator.onLine ? "online" : "reconnecting");
       ws.onclose = (ev) => {
         setWsState((s) => (navigator.onLine ? "reconnecting" : "offline"));
-        // Token inválido: reintentar es inútil â€” forzar re-login.
         if (ev.code === 1008) {
           logoutOperador();
           navigate("/login");
@@ -318,10 +354,9 @@ export default function OperadorApp() {
         if (msg.type === "nuevo_servicio") {
           setServicio(msg.servicio);
           setServicioPropio(null);
-          toast.info("ðŸš• Nuevo servicio asignado");
+          toast.info("🚕 Nuevo servicio asignado");
           notificarServicio(msg.servicio);
         } else if (msg.type === "destino_alcanzado") {
-          // Auto-finalización por geofence (F5): sin acción del taxista.
           toast.success("Servicio completado", { description: "Destino alcanzado. Quedas disponible." });
           if (vozOnRef.current) hablarVoz("Destino alcanzado. Servicio completado, quedas disponible.");
           if (notifOnRef.current) mostrarNotificacion({ titulo: "Servicio completado", cuerpo: "Destino alcanzado. Quedas disponible.", tag: "taxihub-destino" });
@@ -330,8 +365,8 @@ export default function OperadorApp() {
             setChatMsgs((m) => (m.some((x) => x.id === msg.mensaje.id) ? m : [...m, msg.mensaje]));
           }
           if (msg.mensaje.remitente === "terminal") {
-            toast.info("ðŸ’¬ Mensaje de la central");
-            if (vozOnRef.current) hablarVoz(`Mensaje de la central: ${msg.mensaje.texto || ""}`);
+            toast.info("💬 Mensaje de la central");
+            if (vozOnRef.current) hablarVoz(`Mensaje de la central: ${msg.mensaje.texto || ""}`, { alertaPrevia: true });
             if (notifOnRef.current) mostrarNotificacion({ titulo: "Mensaje de la central", cuerpo: msg.mensaje.texto || "", tag: "taxihub-chat" });
           }
         }
@@ -356,12 +391,21 @@ export default function OperadorApp() {
     }
   };
 
-  // ---- Turno (F6): iniciar/finalizar con kilometraje ----
+  // ---- Turno (F6 + Evidencias de Combustible, Entrega de Unidad y Liquidación de Cuota) ----
   const [turno, setTurno] = useState(null);
   const [kmModalOpen, setKmModalOpen] = useState(false);
   const [kmInput, setKmInput] = useState("");
   const [kmMode, setKmMode] = useState("iniciar"); // iniciar | finalizar
   const [turnoHist, setTurnoHist] = useState([]);
+  const [turnoCombustible, setTurnoCombustible] = useState("1/2");
+  const [turnoEvidenciaUrl, setTurnoEvidenciaUrl] = useState(null);
+  const [turnoEvidenciaUploading, setTurnoEvidenciaUploading] = useState(false);
+  const [entregaUnidadConfirmada, setEntregaUnidadConfirmada] = useState(true);
+  const [entregaA, setEntregaA] = useState("Dueño / Socio");
+  const [cuotaEntregada, setCuotaEntregada] = useState("");
+  const [metodoPagoCuota, setMetodoPagoCuota] = useState("efectivo");
+  const [notasEntrega, setNotasEntrega] = useState("");
+  const turnoEvidenciaRef = useRef(null);
 
   const cargarTurno = useCallback(async () => {
     try {
@@ -372,32 +416,62 @@ export default function OperadorApp() {
 
   useEffect(() => { if (op) cargarTurno(); }, [op, cargarTurno]);
 
+  const handleSubirEvidenciaTurno = async (file) => {
+    if (!file) return;
+    setTurnoEvidenciaUploading(true);
+    try {
+      const data = await subirEvidenciaTurno(file, kmMode === "iniciar" ? "inicio_turno" : "fin_turno");
+      setTurnoEvidenciaUrl(data.evidencia_url);
+      toast.success("Evidencia fotográfica subida");
+    } catch {
+      toast.error("No se pudo subir la foto de evidencia");
+    } finally {
+      setTurnoEvidenciaUploading(false);
+    }
+  };
+
   const confirmarKm = async () => {
     const km = parseFloat(kmInput);
     if (!Number.isFinite(km) || km < 0) { toast.error("Escribe un kilometraje válido"); return; }
     try {
       if (kmMode === "iniciar") {
-        const { data } = await api.post("/turnos/iniciar", { odometro_km: km });
+        const { data } = await api.post("/turnos/iniciar", {
+          odometro_km: km,
+          combustible_inicio: turnoCombustible,
+          foto_evidencia_inicio_url: turnoEvidenciaUrl || null,
+        });
         setTurno(data.turno);
         await cambiarEstado("libre");
         const me = await api.get("/auth/me");
         setOp(me.data); setInicio(me.data.inicio_operacion || null);
-        toast.success("Turno iniciado", { description: `Km iniciales: ${km}` });
+        toast.success("Turno iniciado", {
+          description: `Km iniciales: ${km} · Combustible: ${turnoCombustible}`,
+        });
       } else {
-        const { data } = await api.post("/turnos/finalizar", { odometro_km: km });
+        const montoCuota = cuotaEntregada !== "" ? parseFloat(cuotaEntregada) : (turno?.cuota_diaria || op?.vehiculo?.cuota_diaria || 0);
+        const { data } = await api.post("/turnos/finalizar", {
+          odometro_km: km,
+          combustible_fin: turnoCombustible,
+          foto_evidencia_fin_url: turnoEvidenciaUrl || null,
+          entrega_unidad_confirmada: entregaUnidadConfirmada,
+          entrega_a: entregaA,
+          cuota_entregada: Number.isFinite(montoCuota) ? montoCuota : 0,
+          metodo_pago_cuota: metodoPagoCuota,
+          notas_entrega: notasEntrega || null,
+        });
         setTurno(null);
         setTurnoHist((h) => [data.turno, ...h]);
         setOp((p) => ({ ...p, estado: "fuera_de_servicio" }));
         setInicio(null);
-        toast.success("Turno finalizado", {
-          description: `Recorriste ${data.turno.km_recorridos} km`,
+        toast.success("Turno cerrado y entrega registrada", {
+          description: `Recorriste ${data.turno.km_recorridos} km · Cuota reportada: $${Number.isFinite(montoCuota) ? montoCuota : 0}`,
           duration: 6000,
         });
       }
       setKmModalOpen(false);
       setKmInput("");
+      setTurnoEvidenciaUrl(null);
     } catch (e) {
-      // Carrera: el turno dejó de existir â†’ salida directa sin km.
       const detalle = e.response?.data?.detail || "";
       if (e.response?.status === 409 && kmMode === "finalizar" && /turno activo/i.test(detalle)) {
         setTurno(null);
@@ -414,6 +488,14 @@ export default function OperadorApp() {
   const pedirKm = (mode) => {
     setKmMode(mode);
     setKmInput("");
+    setTurnoCombustible("1/2");
+    setTurnoEvidenciaUrl(null);
+    setEntregaUnidadConfirmada(true);
+    setEntregaA("Dueño / Socio");
+    const cuotaRef = turno?.cuota_diaria || op?.vehiculo?.cuota_diaria || 350;
+    setCuotaEntregada(String(cuotaRef));
+    setMetodoPagoCuota("efectivo");
+    setNotasEntrega("");
     setKmModalOpen(true);
   };
 
@@ -602,7 +684,7 @@ export default function OperadorApp() {
     detenerEscucha();
     const s = servicioRef.current;
     if (!s) return;
-    if (accion === "aceptar") {
+    if (accion === "aceptar" || accion === "confirmar") {
       api.post(`/servicios/${s.id}/aceptar`)
         .then(() => api.get(`/servicios/${s.id}`))
         .then(({ data }) => { setServicio(data); setOp((p) => ({ ...p, estado: "ocupado" })); })
@@ -632,11 +714,6 @@ export default function OperadorApp() {
     if (!micRef.current) setMicEscuchando(false);
   }, []);
 
-  // Anuncia el servicio con voz IA + notificación del sistema (+ auto-escucha).
-  // Anuncia el servicio con voz IA + notificación del sistema (+ auto-escucha).
-  // Formato pedido (bot): "Unidad {placa}, servicio disponible para pasajero
-  // en {calle esquina calle}, destino {calle}, costo ${n} pesos. Confirma para
-  // aceptar." → tras el anuncio se abre la escucha automática de comandos.
   const getUnidadTxt = () => opRef.current?.placa || opRef.current?.vehiculo?.numero_economico;
 
   // Responde por voz a la pregunta del conductor sobre la distancia.
@@ -656,7 +733,6 @@ export default function OperadorApp() {
   const manejarComandoOferta = (texto) => {
     if (clasificarComandoOferta(texto) === "distancia") {
       decirDistancia();
-      // Sigue escuchando para aceptar/rechazar después de informar distancia.
       micRef.current = null;
       setMicEscuchando(true);
       micRef.current = crearReconocimiento({
@@ -676,7 +752,7 @@ export default function OperadorApp() {
     const costoTxt = s?.costo != null ? `, costo ${s.costo} pesos` : "";
     const frase = `${unidadTxt}, servicio disponible para pasajero en ${origen}${destinoTxt}${costoTxt}. Confirma para aceptar.`;
     if (vozOnRef.current) {
-      hablarVoz(frase);
+      hablarVoz(frase, { alertaPrevia: true });
       vibrar();
       // Tras terminar el anuncio (~4.3s), auto-escuchar el comando si está activo.
       if (comandosVozOnRef.current) setTimeout(() => {
@@ -1276,14 +1352,14 @@ export default function OperadorApp() {
 
             <div className="grid gap-2">
               <div className="grid grid-cols-2 gap-2">
-                <Input data-testid="comb-fecha" type="date" value={combForm.fecha} onChange={(e) => setCombForm((f) => ({ ...f, fecha: e.target.value }))} className={`${input-inset} border-border`} />
-                <Input data-testid="comb-litros" type="number" step="0.1" value={combForm.litros} onChange={(e) => setCombForm((f) => ({ ...f, litros: e.target.value }))} placeholder="Litros" className={`${input-inset} mono-num border-border`} />
+                <Input data-testid="comb-fecha" type="date" value={combForm.fecha} onChange={(e) => setCombForm((f) => ({ ...f, fecha: e.target.value }))} className="input-inset border-border" />
+                <Input data-testid="comb-litros" type="number" step="0.1" value={combForm.litros} onChange={(e) => setCombForm((f) => ({ ...f, litros: e.target.value }))} placeholder="Litros" className="input-inset mono-num border-border" />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Input data-testid="comb-costo" type="number" value={combForm.costo} onChange={(e) => setCombForm((f) => ({ ...f, costo: e.target.value }))} placeholder="Importe $" className={`${input-inset} mono-num border-border`} />
-                <Input data-testid="comb-odometro" type="number" value={combForm.odometro_km} onChange={(e) => setCombForm((f) => ({ ...f, odometro_km: e.target.value }))} placeholder="Kilometraje" className={`${input-inset} mono-num border-border`} />
+                <Input data-testid="comb-costo" type="number" value={combForm.costo} onChange={(e) => setCombForm((f) => ({ ...f, costo: e.target.value }))} placeholder="Importe $" className="input-inset mono-num border-border" />
+                <Input data-testid="comb-odometro" type="number" value={combForm.odometro_km} onChange={(e) => setCombForm((f) => ({ ...f, odometro_km: e.target.value }))} placeholder="Kilometraje" className="input-inset mono-num border-border" />
               </div>
-              <Input data-testid="comb-estacion" value={combForm.estacion} onChange={(e) => setCombForm((f) => ({ ...f, estacion: e.target.value }))} placeholder="Estación (opcional)" className={`${input-inset} border-border`} />
+              <Input data-testid="comb-estacion" value={combForm.estacion} onChange={(e) => setCombForm((f) => ({ ...f, estacion: e.target.value }))} placeholder="Estación (opcional)" className="input-inset border-border" />
               <input ref={combFileRef} type="file" accept="image/*" capture="environment" className="hidden"
                      onChange={(e) => setCombTicket(e.target.files?.[0] || null)} />
               <button
@@ -1357,41 +1433,194 @@ export default function OperadorApp() {
         </div>
       )}
 
-      {/* Overlay: kilometraje de turno (F6) */}
+      {/* Overlay: kilometraje, evidencia de combustible, entrega de unidad y liquidación de cuota */}
       {kmModalOpen && (
-        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="km-overlay">
-          <div className="w-full max-w-sm animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3">
-            <div className="mb-1 flex items-center gap-2">
-              <Gauge className="h-5 w-5 text-brand-bright" />
-              <h3 className="text-base font-bold text-foreground">
-                {kmMode === "iniciar" ? "Iniciar turno" : "Finalizar turno"}
-              </h3>
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/75 backdrop-blur-sm p-3 sm:items-center" data-testid="km-overlay">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Gauge className="h-5 w-5 text-brand-bright" />
+                <h3 className="text-base font-bold text-foreground">
+                  {kmMode === "iniciar" ? "Iniciar turno y recibir unidad" : "Cerrar / Entregar turno y liquidar"}
+                </h3>
+              </div>
+              <button type="button" onClick={() => setKmModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <p className="mb-3 text-xs text-muted-foreground">
+
+            <p className="text-xs text-muted-foreground">
               {kmMode === "iniciar"
-                ? "Captura los kilómetros del tablero al iniciar."
-                : "Captura los kilómetros del tablero al terminar. Se calcularán los km recorridos."}
+                ? "Registra kilometraje, nivel de combustible y foto de evidencia al recibir la unidad."
+                : "Registra kilometraje final, evidencia de combustible, entrega de unidad y efectivo/cuota del turno."}
             </p>
-            <Input
-              data-testid="km-input"
-              type="number"
-              inputMode="decimal"
-              autoFocus
-              value={kmInput}
-              onChange={(e) => setKmInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") confirmarKm(); }}
-              placeholder={kmMode === "iniciar" ? "Km actuales del tablero" : "Km finales del tablero"}
-              className="input-inset mono-num border-border text-lg text-foreground"
-            />
-            {kmMode === "finalizar" && turno && (
-              <div className="mt-2 text-[11px] text-muted-foreground">
-                Km iniciales del turno: <b className="mono-num text-foreground">{turno.odometro_inicio}</b>
+
+            {/* 1. Odómetro */}
+            <div>
+              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                1. Kilometraje del tablero (Odómetro) *
+              </label>
+              <Input
+                data-testid="km-input"
+                type="number"
+                inputMode="decimal"
+                autoFocus
+                value={kmInput}
+                onChange={(e) => setKmInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") confirmarKm(); }}
+                placeholder={kmMode === "iniciar" ? "Km actuales del tablero" : "Km finales del tablero"}
+                className="input-inset mono-num border-border text-lg text-foreground"
+              />
+              {kmMode === "finalizar" && turno && (
+                <div className="mt-1 text-[11px] text-muted-foreground">
+                  Km iniciales del turno: <b className="mono-num text-foreground">{turno.odometro_inicio} km</b>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Nivel de Combustible + Evidencia Fotográfica */}
+            <div className="rounded-xl border border-border bg-surface-2/60 p-3 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-foreground">
+                  <Fuel className="h-3.5 w-3.5 text-amber-400" />
+                  2. Nivel de combustible ({kmMode === "iniciar" ? "Recepción" : "Entrega"})
+                </span>
+                <span className="mono-num text-xs font-bold text-amber-400">{turnoCombustible}</span>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5" data-testid="turno-combustible-selector">
+                {["1/4", "1/2", "3/4", "Lleno"].map((niv) => (
+                  <button
+                    key={niv}
+                    type="button"
+                    data-testid={`turno-comb-${niv}`}
+                    onClick={() => setTurnoCombustible(niv)}
+                    className={cn(
+                      "rounded-lg border py-1.5 text-xs font-bold transition-all",
+                      turnoCombustible === niv
+                        ? "border-amber-400 bg-amber-500/20 text-amber-300 shadow-sm"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {niv}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                ref={turnoEvidenciaRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => handleSubirEvidenciaTurno(e.target.files?.[0])}
+              />
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <button
+                  type="button"
+                  data-testid="turno-subir-evidencia-btn"
+                  disabled={turnoEvidenciaUploading}
+                  onClick={() => turnoEvidenciaRef.current?.click()}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand/50 bg-brand/10 px-3 py-2 text-xs font-semibold text-brand-bright hover:bg-brand/20 transition-colors"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  {turnoEvidenciaUploading
+                    ? "Subiendo evidencia…"
+                    : turnoEvidenciaUrl
+                    ? "✓ Foto de tablero/combustible lista (Cambiar)"
+                    : "Subir foto de tablero / combustible"}
+                </button>
+              </div>
+            </div>
+
+            {/* 3. Al cerrar turno: Confirmar entrega de unidad + Efectivo / Cuota */}
+            {kmMode === "finalizar" && (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] p-3 space-y-3" data-testid="turno-liquidacion-section">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-300">
+                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                    3. Entrega de Unidad y Efectivo / Cuota
+                  </span>
+                  {(turno?.cuota_diaria || op?.vehiculo?.cuota_diaria) && (
+                    <span className="mono-num text-[11px] font-bold text-emerald-400">
+                      Cuota fijada: ${turno?.cuota_diaria || op?.vehiculo?.cuota_diaria}
+                    </span>
+                  )}
+                </div>
+
+                <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    data-testid="turno-confirmar-entrega-check"
+                    checked={entregaUnidadConfirmada}
+                    onChange={(e) => setEntregaUnidadConfirmada(e.target.checked)}
+                    className="h-4 w-4 rounded accent-emerald-500"
+                  />
+                  <span>Confirmo entrega física de la unidad sin novedades</span>
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase text-muted-foreground">
+                      Se entrega unidad a:
+                    </label>
+                    <select
+                      data-testid="turno-entrega-a-select"
+                      value={entregaA}
+                      onChange={(e) => setEntregaA(e.target.value)}
+                      className="h-9 w-full rounded-lg border border-border bg-card px-2 text-xs text-foreground"
+                    >
+                      <option value="Dueño / Socio">Dueño / Socio</option>
+                      <option value="Relevo (Siguiente turno)">Relevo (Siguiente turno)</option>
+                      <option value="Base Central">Base Central</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase text-muted-foreground">
+                      Método de entrega:
+                    </label>
+                    <select
+                      data-testid="turno-metodo-cuota-select"
+                      value={metodoPagoCuota}
+                      onChange={(e) => setMetodoPagoCuota(e.target.value)}
+                      className="h-9 w-full rounded-lg border border-border bg-card px-2 text-xs text-foreground"
+                    >
+                      <option value="efectivo">Efectivo en mano</option>
+                      <option value="transferencia">Transferencia / Depósito</option>
+                      <option value="pendiente">Pendiente de liquidar</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase text-muted-foreground">
+                    <Banknote className="h-3.5 w-3.5 text-emerald-400" />
+                    Efectivo / Cuota entregada ($ MXN):
+                  </label>
+                  <Input
+                    data-testid="turno-cuota-input"
+                    type="number"
+                    inputMode="decimal"
+                    value={cuotaEntregada}
+                    onChange={(e) => setCuotaEntregada(e.target.value)}
+                    placeholder="Monto entregado ($)"
+                    className="input-inset mono-num border-border text-sm font-bold text-emerald-300"
+                  />
+                </div>
+
+                <Input
+                  data-testid="turno-notas-entrega-input"
+                  value={notasEntrega}
+                  onChange={(e) => setNotasEntrega(e.target.value)}
+                  placeholder="Observaciones de la unidad o turno (opcional)"
+                  className="input-inset border-border text-xs text-foreground"
+                />
               </div>
             )}
-            <div className="mt-3 grid grid-cols-2 gap-2">
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
               <Button data-testid="km-cancelar" variant="secondary" onClick={() => setKmModalOpen(false)}>Cancelar</Button>
               <Button data-testid="km-confirmar" onClick={confirmarKm}>
-                {kmMode === "iniciar" ? "Iniciar turno" : "Finalizar turno"}
+                {kmMode === "iniciar" ? "Iniciar turno" : "Confirmar y Cerrar"}
               </Button>
             </div>
           </div>

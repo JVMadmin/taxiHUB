@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { duenoApi } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, resolveDriverAvatar } from "@/lib/utils";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
@@ -127,7 +127,19 @@ export function Asignaciones({ liveSignal }) {
               {items.map((a) => (
                 <tr key={a.id}>
                   <td className="font-mono font-bold text-foreground">{a.vehiculo}</td>
-                  <td className="text-foreground/90">{a.conductor}</td>
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={resolveDriverAvatar(a.conductor_foto_url, a.conductor_id || a.conductor)}
+                        alt={a.conductor || "Conductor"}
+                        className="h-6 w-6 rounded-full object-cover ring-1 ring-border/50 shrink-0"
+                        onError={(e) => {
+                          e.currentTarget.src = resolveDriverAvatar(null, a.conductor_id || a.conductor);
+                        }}
+                      />
+                      <span className="text-foreground/90 font-medium">{a.conductor}</span>
+                    </div>
+                  </td>
                   <td className="text-xs text-muted-foreground">{a.inicio?.slice(0, 16).replace("T", " ")}</td>
                   <td className="text-xs text-muted-foreground">{a.fin ? a.fin.slice(0, 16).replace("T", " ") : "—"}</td>
                   <td>

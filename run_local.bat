@@ -10,8 +10,10 @@ cd /d "%~dp0"
 :: 1. Backend Python FastAPI en puerto 8080
 echo [1/2] Iniciando Backend en http://127.0.0.1:8080 ...
 set MONGO_URL=memory
-set DB_NAME=taxihub_test
+set DB_NAME=taxihub_demo
 set JWT_SECRET=dev-jwt-secret-taxihub
+set DEV_USER=admin
+set DEV_PASSWORD=admin123
 start "TaxiHUB Backend (8080)" /min "%~dp0venv\Scripts\uvicorn.exe" server:app --host 127.0.0.1 --port 8080 --app-dir "%~dp0backend"
 
 :: 2. Frontend SPA Server en puerto 3005

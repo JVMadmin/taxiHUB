@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { duenoApi, SERVICIO_LABEL } from "@/lib/api";
 import { fmtDist, fmtDuration, straightLine } from "@/lib/geo";
+import { resolveDriverAvatar, resolveVehicleImage } from "@/lib/utils";
 import { useMode } from "@/hooks/useMode";
 import { DataTable } from "@/components/DataTable";
 import { FilterBar } from "@/components/FilterBar";
@@ -76,7 +77,20 @@ function ServiceDetail({ servicioId, onBack }) {
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Información</div>
           <div className="flex items-center gap-2 text-foreground"><User className="h-3.5 w-3.5 text-muted-foreground" /> {s.cliente_nombre || "Sin nombre registrado"}</div>
           {s.operador && (
-            <div className="mt-1 flex items-center gap-2 text-foreground"><Car className="h-3.5 w-3.5 text-muted-foreground" /> {s.operador.nombre}{s.vehiculo?.numero_economico ? ` · ${s.vehiculo.numero_economico}` : ""}</div>
+            <div className="mt-2 flex items-center gap-2 text-foreground">
+              <img
+                src={resolveDriverAvatar(s.operador.foto_url, s.operador.id || s.operador.nombre)}
+                alt={s.operador.nombre}
+                className="h-6 w-6 rounded-full object-cover ring-1 ring-border"
+                onError={(e) => {
+                  e.currentTarget.src = resolveDriverAvatar(null, s.operador.id || s.operador.nombre);
+                }}
+              />
+              <span className="font-semibold">{s.operador.nombre}</span>
+              {s.vehiculo?.numero_economico && (
+                <span className="font-mono text-xs text-muted-foreground">· Unidad #{s.vehiculo.numero_economico}</span>
+              )}
+            </div>
           )}
           {s.costo != null && <div className="mt-1 flex items-center gap-2 text-foreground"><Wallet className="h-3.5 w-3.5 text-muted-foreground" /> ${s.costo} ({s.metodo_pago === "card" ? "tarjeta" : "efectivo"})</div>}
         </div>
@@ -183,8 +197,38 @@ export function Servicios() {
           { key: "folio", label: "Folio", render: (s) => <span className="mono-num font-mono text-xs">#{String(s.id).slice(-6).toUpperCase()}</span> },
           { key: "fecha", label: "Fecha", render: (s) => <span className="mono-num text-xs">{fila(s.timestamp_creacion)}</span> },
           { key: "cliente_nombre", label: "Pasajero", render: (s) => s.cliente_nombre || "—" },
-          { key: "operador_nombre", label: "Conductor" },
-          { key: "vehiculo_numero_economico", label: "Vehículo" },
+          {
+            key: "operador_nombre",
+            label: "Conductor",
+            render: (s) => s.operador_nombre ? (
+              <div className="flex items-center gap-2">
+                <img
+                  src={resolveDriverAvatar(s.operador_foto_url, s.operador_id || s.operador_nombre)}
+                  alt={s.operador_nombre}
+                  className="h-6 w-6 rounded-full object-cover ring-1 ring-border/50 shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.src = resolveDriverAvatar(null, s.operador_id || s.operador_nombre);
+                  }}
+                />
+                <span className="truncate">{s.operador_nombre}</span>
+              </div>
+            ) : <span className="text-muted-foreground">—</span>
+          },
+          {
+            key: "vehiculo_numero_economico",
+            label: "Vehículo",
+            render: (s) => s.vehiculo_numero_economico ? (
+              <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-foreground">
+                <img
+                  src={resolveVehicleImage({ marca: s.vehiculo_marca, modelo: s.vehiculo_modelo, foto_url: s.vehiculo_foto_url })}
+                  alt="Vehículo"
+                  className="h-5 w-8 object-contain drop-shadow-sm"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+                <span>{s.vehiculo_numero_economico}</span>
+              </div>
+            ) : <span className="text-muted-foreground">—</span>
+          },
           { key: "origen", label: "Origen", render: (s) => s.origen?.texto || s.origen_texto || "—" },
           { key: "destino", label: "Destino", render: (s) => s.destino?.texto || s.destino_texto || "—" },
           { key: "estado", label: "Estado", render: (s) => <ServicioBadge estado={s.estado} /> },

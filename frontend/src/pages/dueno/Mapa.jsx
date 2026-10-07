@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { duenoApi } from "@/lib/api";
-import { cn, resolveVehicleImage } from "@/lib/utils";
+import { cn, resolveVehicleImage, resolveDriverAvatar } from "@/lib/utils";
 import { timeAgo } from "@/lib/time";
 import { SmoothTaxiMarker } from "@/components/maps/SmoothTaxiMarker";
 import { precargarTilesPalenque } from "@/lib/PalenqueTileCache";
@@ -276,17 +276,11 @@ export function Mapa({ liveSignal }) {
           {/* Header */}
           <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2.5 mb-2.5">
             <div className="flex items-center gap-2.5">
-              {selected.conductor?.foto_url ? (
-                <img
-                  src={selected.conductor.foto_url}
-                  alt={selected.conductor.nombre}
-                  className="h-10 w-10 rounded-full object-cover border-2 border-brand shadow"
-                />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/20 font-bold text-brand-bright text-sm">
-                  {selected.conductor?.nombre?.[0] || "T"}
-                </div>
-              )}
+              <img
+                src={resolveDriverAvatar(selected.conductor?.foto_url, selected.conductor?.id || selected.id)}
+                alt={selected.conductor?.nombre || "Chofer"}
+                className="h-11 w-11 rounded-2xl object-cover border-2 border-brand shadow-lg"
+              />
               <div>
                 <div className="text-xs font-bold text-white">
                   {selected.conductor?.nombre || "Sin chofer asignado"}

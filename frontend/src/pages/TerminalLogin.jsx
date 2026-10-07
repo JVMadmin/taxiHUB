@@ -103,10 +103,12 @@ export default function TerminalLogin() {
             </button>
             <a href="/dev" data-testid="dev-link" className="text-center text-[11px] text-[#9CA0AA]/70 hover:text-[#9CA0AA] transition-colors">Panel de desarrollador</a>
           </div>
-          <div className="mt-5 flex justify-center gap-3 text-xs text-[#9CA0AA]">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5 text-xs text-[#9CA0AA]">
             <a href="/login" className="hover:text-[#F5F5F7] transition-colors">App del operador</a>
             <span>·</span>
-            <a href="/pasajero" className="hover:text-[#F5F5F7] transition-colors">App del pasajero</a>
+            <a href="/dueno/login" className="hover:text-[#F5F5F7] transition-colors">Panel Dueño</a>
+            <span>·</span>
+            <a href="/web" data-testid="web-landing-link" className="text-[#10B981] hover:underline transition-colors">taxihub.cloud</a>
           </div>
           </div>
         </form>

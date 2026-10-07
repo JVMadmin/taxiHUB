@@ -1,17 +1,22 @@
 import axios from "axios";
 
-export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL !== undefined
+const storedBackendUrl =
+  typeof window !== "undefined" ? (localStorage.getItem("th_backend_url") || "").trim().replace(/\/+$/, "") : "";
+
+export const BACKEND_URL = storedBackendUrl
+  ? storedBackendUrl
+  : process.env.REACT_APP_BACKEND_URL !== undefined && process.env.REACT_APP_BACKEND_URL !== ""
   ? process.env.REACT_APP_BACKEND_URL
-  : (typeof window !== "undefined" && window.location.port !== "8080"
-      ? `http://${window.location.hostname}:8080`
-      : "");
+  : typeof window !== "undefined" && window.location.port !== "8080"
+  ? `http://${window.location.hostname || "127.0.0.1"}:8080`
+  : "";
 export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
 
 export const WS_BASE = BACKEND_URL
   ? BACKEND_URL.replace(/^http/, "ws") + "/api"
-  : (typeof window !== "undefined"
-      ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/api`
-      : "/api");
+  : typeof window !== "undefined"
+  ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/api`
+  : "/api";
 
 // Cinco superficies autenticadas (cada una con su propio JWT):
 //  - api      -> operador (op_token)
@@ -115,3 +120,22 @@ export const SERVICIO_COLORS = Object.fromEntries(
 export const SERVICIO_LABEL = Object.fromEntries(
   Object.entries(ESTADOS_SERVICIO).map(([k, v]) => [k, v.label])
 );
+
+// ---- Configuración multi-sitio, WhatsApp Anti-Ban y Liquidación de Turnos ----
+export const fetchSitioConfig = async (sitioId = null) => {
+  const params = sitioId ? { sitio_id: sitioId } : {};
+  const client = termToken() ? termApi : opToken() ? api : duenoToken() ? duenoApi : api;
+  const { data } = await client.get("/config/sitio", { params });
+  return data;
+};
+
+export const subirEvidenciaTurno = async (file, etapa = "inicio") => {
+  const fd = new FormData();
+  fd.append("foto", file);
+  fd.append("etapa", etapa);
+  const { data } = await api.post("/turnos/evidencia", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.evidencia_url;
+};
+

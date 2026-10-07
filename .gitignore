@@ -90,6 +90,7 @@ android-sdk/
 .env
 .env.*
 *.env
+!.env.example
 credentials.json
 *.key
 .credentials
@@ -97,3 +98,10 @@ credentials.json
 test_reports/
 *.log
 *.pid
+
+# Binarios locales grandes y scratch
+*.exe
+*.apk
+frontend/build-operador/
+whatsapp-bridge/
+motion-taxihub/

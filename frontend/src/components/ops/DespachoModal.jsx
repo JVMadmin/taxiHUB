@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { termApi } from "@/lib/api";
 import { distM } from "@/lib/geo";
+import { semaforoServiciosStyle } from "@/lib/taxiIcon";
 import { cn } from "@/lib/utils";
 import { Search, MapPin, Flag, X, Navigation, Check, Phone, User } from "@/design/icons";
 import { Button } from "@/components/Button";
@@ -68,11 +69,20 @@ function GeoInput({ placeholder, onPick }) {
  *   4 TAXIS LIBRES más cercanos con [ASIGNAR] — la operadora decide.
  * `picking`/onMapClick los maneja Terminal (banner + clic en mapa).
  */
-export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, operadoresLibres, onCreated }) {
+export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, operadoresLibres, serviciosHoyPorOperador = {}, onCreated, initialCliente }) {
   const [cliente, setCliente] = useState({ nombre: "", telefono: "" });
   const [asignando, setAsignando] = useState(null);
   const [clienteOpen, setClienteOpen] = useState(false);
-  const [confirmDestinoModal, setConfirmDestinoModal] = useState(null);
+
+  useEffect(() => {
+    if (open && initialCliente && (initialCliente.cliente_nombre || initialCliente.cliente_telefono)) {
+      setCliente({
+        nombre: initialCliente.cliente_nombre || "",
+        telefono: initialCliente.cliente_telefono || "",
+      });
+      setClienteOpen(true);
+    }
+  }, [open, initialCliente]);
 
   const cercanos = useMemo(() => {
     if (!coords.origen) return [];
@@ -81,40 +91,35 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
       .sort((a, b) => (a.dist ?? Infinity) - (b.dist ?? Infinity));
   }, [coords.origen, operadoresLibres]);
 
-  if (!open) return null;
-
-  const handleIntentarAsignar = (op) => {
-    if (coords.destino && coords.destino.lat) {
-      asignar(op);
-      return;
-    }
-    setConfirmDestinoModal(op);
-  };
-
   const asignar = async (op, options = {}) => {
+    if (!op || asignando !== null) return;
     setAsignando(op.id);
     try {
-      const destData = coords.destino && coords.destino.lat
+      const tieneDestCoords = coords.destino && coords.destino.lat != null;
+      const sinDestExplicito = options.sinDestino || (!tieneDestCoords && !coords.destinoTexto);
+      const destData = tieneDestCoords
         ? { texto: coords.destinoTexto || "Destino marcado en mapa", lat: coords.destino.lat, lng: coords.destino.lng }
-        : options.sinDestino
-        ? { texto: "A indicaciones del cliente (Sin destino fijo)" }
         : coords.destinoTexto
         ? { texto: coords.destinoTexto }
-        : {};
+        : { texto: "A indicaciones del cliente (Sin destino fijo)" };
 
-      const { data: created } = await termApi.post("/servicios", {
+      const payload = {
         cliente_nombre: cliente.nombre || "Servicio de llamada",
         cliente_telefono: cliente.telefono || "",
         origen: { texto: coords.origenTexto || "Origen marcado en mapa", lat: coords.origen.lat, lng: coords.origen.lng },
         destino: destData,
-      });
+      };
+      if (coords.tarifaSugerida) {
+        payload.costo = Number(coords.tarifaSugerida);
+      }
+
+      const { data: created } = await termApi.post("/servicios", payload);
       await termApi.post(`/servicios/${created.servicio.id}/asignar`, { operador_id: op.id });
       toast.success(`Servicio asignado a ${op.placa || op.nombre}`, {
-        description: options.sinDestino ? "Destino: A indicaciones directas del cliente" : undefined,
+        description: sinDestExplicito ? "Destino: A indicaciones directas del cliente" : destData.texto,
       });
       setCliente({ nombre: "", telefono: "" });
       setCoords?.({ origen: null, destino: null, origenTexto: null, destinoTexto: null });
-      setConfirmDestinoModal(null);
       onCreated?.();
       onClose();
     } catch (e) {
@@ -124,16 +129,54 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
     }
   };
 
-  const inputCls = "input-inset border-border text-foreground";
+  // Eliminado el modal bloqueante: si no hay destino fijo, despacha directo "A indicaciones del cliente"
+  const handleIntentarAsignar = (op) => {
+    const tieneDest = (coords.destino && coords.destino.lat != null) || !!coords.destinoTexto;
+    asignar(op, { sinDestino: !tieneDest });
+  };
+
+  // Atajos de teclado dentro del modal: 1-6 asigna taxi #1-#6, Enter asigna el #1, Esc cierra
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      const tag = (e.target?.tagName || "").toUpperCase();
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (!coords.origen || cercanos.length === 0 || asignando !== null) return;
+      if (e.key >= "1" && e.key <= "6") {
+        const idx = parseInt(e.key, 10) - 1;
+        if (cercanos[idx]) {
+          e.preventDefault();
+          handleIntentarAsignar(cercanos[idx]);
+        }
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        handleIntentarAsignar(cercanos[0]);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, coords.origen, cercanos, asignando]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[880] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" data-testid="despacho-overlay">
       <div className="flex max-h-[90vh] w-full max-w-xl animate-scale-in flex-col rounded-2xl border border-white/[0.06] bg-[#17191E] shadow-2xl">
         {/* Encabezado */}
         <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
-          <h3 className="flex items-center gap-2 text-base font-bold text-[#F5F5F7]">
-            <Phone className="h-4 w-4 text-[#4F5DFF]" /> Nueva llamada
-          </h3>
+          <div className="flex items-center gap-2.5">
+            <h3 className="flex items-center gap-2 text-base font-bold text-[#F5F5F7]">
+              <Phone className="h-4 w-4 text-[#4F5DFF]" /> Nueva llamada
+            </h3>
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-mono text-[#9CA0AA]">
+              Teclas 1-6 / Enter = Despacho directo
+            </span>
+          </div>
           <button type="button" onClick={onClose} aria-label="Cerrar" className="text-[#9CA0AA] hover:text-[#F5F5F7] transition-colors"><X className="h-5 w-5" /></button>
         </div>
 
@@ -145,35 +188,42 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
               <span className="text-xs font-bold uppercase tracking-wide text-[#F5F5F7]">¿Dónde está el servicio?</span>
               {coords.origen && (
                 <span className="mono-num ml-auto text-[10px] text-[#7CFC3C]">
-                  {coords.origen.lat.toFixed(5)}, {coords.origen.lng.toFixed(5)}
+                  {coords.origenTexto ? `${coords.origenTexto} · ` : ""}{coords.origen.lat.toFixed(4)}, {coords.origen.lng.toFixed(4)}
                 </span>
               )}
             </div>
             <GeoInput placeholder="Buscar calle, colonia, hotel o referencia…" onPick={(r) => setCoords((c) => ({ ...c, origen: { lat: r.lat, lng: r.lng }, origenTexto: `${r.label}${r.sublabel ? `, ${r.sublabel}` : ""}` }))} />
-            <button
-              type="button"
-              data-testid="despacho-marcar-origen"
-              onClick={() => pedirPunto("origen")}
-              className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#4F5DFF] hover:text-[#3D49D6] transition-colors"
-            >
-              <MapPin className="h-3.5 w-3.5" /> Marcar en mapa
-            </button>
+            <div className="mt-1.5 flex items-center justify-between">
+              <button
+                type="button"
+                data-testid="despacho-marcar-origen"
+                onClick={() => pedirPunto("origen")}
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#4F5DFF] hover:text-[#3D49D6] transition-colors"
+              >
+                <MapPin className="h-3.5 w-3.5" /> Marcar en mapa
+              </button>
+              {coords.tarifaSugerida && (
+                <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                  Tarifa base sugerida: ${coords.tarifaSugerida}
+                </span>
+              )}
+            </div>
           </section>
 
-          {/* PASO 2 — Destino (opcional) */}
+          {/* PASO 2 — Destino (opcional, sin modal bloqueante) */}
           <section data-testid="despacho-destino">
             <div className="mb-1.5 flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1B1E24] border border-white/[0.08] text-[10px] font-extrabold text-[#9CA0AA]">2</span>
               <span className="text-xs font-bold uppercase tracking-wide text-[#9CA0AA]">Destino (opcional)</span>
-              {coords.destino && (
+              {(coords.destino || coords.destinoTexto) && (
                 <button type="button" onClick={() => setCoords((c) => ({ ...c, destino: null, destinoTexto: null }))} className="ml-auto text-[10px] text-[#9CA0AA] underline hover:text-[#F5F5F7]">
                   quitar
                 </button>
               )}
             </div>
-            {!coords.destino ? (
+            {!coords.destino && !coords.destinoTexto ? (
               <>
-                <GeoInput placeholder="Buscar destino…" onPick={(r) => setCoords((c) => ({ ...c, destino: { lat: r.lat, lng: r.lng }, destinoTexto: `${r.label}${r.sublabel ? `, ${r.sublabel}` : ""}` }))} />
+                <GeoInput placeholder="Buscar destino (o deja vacío para indicaciones del cliente)…" onPick={(r) => setCoords((c) => ({ ...c, destino: { lat: r.lat, lng: r.lng }, destinoTexto: `${r.label}${r.sublabel ? `, ${r.sublabel}` : ""}` }))} />
                 <div className="mt-1.5 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
@@ -185,10 +235,11 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                   </button>
                   <button
                     type="button"
+                    data-testid="despacho-sin-destino-btn"
                     onClick={() => setCoords((c) => ({ ...c, destino: null, destinoTexto: "A indicaciones del cliente (Sin destino fijo)" }))}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/20 transition-colors"
                   >
-                    ⚡ Sin destino fijo (A indicaciones)
+                    ⚡ Sin destino fijo (A indicaciones — activo por defecto al asignar)
                   </button>
                 </div>
               </>
@@ -238,7 +289,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
             </div>
             {!coords.origen ? (
               <div className="rounded-xl border border-dashed border-white/[0.08] p-3 text-center text-xs text-[#9CA0AA]">
-                Marca el origen para ver los taxis libres cercanos.
+                Marca el origen o elige un Punto Caliente para ver los taxis libres cercanos.
               </div>
             ) : cercanos.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/[0.08] p-3 text-center text-xs text-[#9CA0AA]">
@@ -246,102 +297,51 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
               </div>
             ) : (
               <div className="space-y-1.5">
-                {cercanos.slice(0, 6).map((t, i) => (
-                  <div key={t.id} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#1B1E24] px-3 py-2">
-                    <span className="w-4 text-center text-[10px] font-bold text-[#9CA0AA]">{i + 1}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-bold text-[#F5F5F7]">{t.placa || t.nombre}</div>
-                      <div className="truncate text-[10px] text-[#9CA0AA]">{t.nombre} · {t.vehiculo ? [t.vehiculo.marca, t.vehiculo.modelo].filter(Boolean).join(" ") : "—"}</div>
+                {cercanos.slice(0, 6).map((t, i) => {
+                  const svHoy = serviciosHoyPorOperador[t.id] ?? t.servicios_hoy ?? 0;
+                  const sem = semaforoServiciosStyle(svHoy);
+                  return (
+                    <div key={t.id} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#1B1E24] px-3 py-2">
+                      <span
+                        title={`Atajo de teclado: presiona ${i + 1}`}
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/[0.06] font-mono text-[10px] font-bold text-[#7CFC3C]"
+                      >
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="truncate text-xs font-bold text-[#F5F5F7]">{t.placa || t.nombre}</span>
+                          <span
+                            data-testid={`despacho-taxi-servicios-${t.id}`}
+                            style={{ background: sem.bg, color: sem.text, borderColor: sem.border }}
+                            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] font-black leading-none shadow-sm"
+                            title={`Servicios hoy: ${sem.count} (${sem.nivel})`}
+                          >
+                            {sem.count} hoy
+                          </span>
+                        </div>
+                        <div className="truncate text-[10px] text-[#9CA0AA]">{t.nombre} · {t.vehiculo ? [t.vehiculo.marca, t.vehiculo.modelo].filter(Boolean).join(" ") : "—"}</div>
+                      </div>
+                      <span className="mono-num shrink-0 text-xs font-bold text-[#7CFC3C]">
+                        {t.dist != null ? (t.dist >= 1000 ? `${(t.dist / 1000).toFixed(1)} km` : `${Math.round(t.dist)} m`) : "—"}
+                      </span>
+                      <Button
+                        data-testid={`despacho-asignar-${t.id}`}
+                        size="sm"
+                        className="shrink-0 !px-3"
+                        disabled={asignando !== null}
+                        onClick={() => handleIntentarAsignar(t)}
+                      >
+                        {asignando === t.id ? "…" : <><Check className="h-3.5 w-3.5" /> Asignar</>}
+                      </Button>
                     </div>
-                    <span className="mono-num shrink-0 text-xs font-bold text-[#7CFC3C]">
-                      {t.dist != null ? (t.dist >= 1000 ? `${(t.dist / 1000).toFixed(1)} km` : `${Math.round(t.dist)} m`) : "—"}
-                    </span>
-                    <Button
-                      data-testid={`despacho-asignar-${t.id}`}
-                      size="sm"
-                      className="shrink-0 !px-3"
-                      disabled={asignando !== null}
-                      onClick={() => handleIntentarAsignar(t)}
-                    >
-                      {asignando === t.id ? "…" : <><Check className="h-3.5 w-3.5" /> Asignar</>}
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
         </div>
       </div>
-
-      {/* Ventana de confirmación: Seleccionar Destino o Crear Sin Destino */}
-      {confirmDestinoModal && (
-        <div className="fixed inset-0 z-[950] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95 duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[#17191E] p-6 shadow-2xl text-foreground">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-              <h4 className="text-base font-bold text-white flex items-center gap-2">
-                <Flag className="h-4 w-4 text-amber-400" />
-                Destino del servicio
-              </h4>
-              <button
-                type="button"
-                onClick={() => setConfirmDestinoModal(null)}
-                className="rounded-lg p-1 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <p className="text-sm text-slate-200 mb-2">
-              Asignando a <strong className="text-white">{confirmDestinoModal.nombre}</strong> (Unidad <span className="font-mono text-amber-400 font-bold">#{confirmDestinoModal.vehiculo?.numero_economico || confirmDestinoModal.placa}</span>).
-            </p>
-            <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
-              No se ha seleccionado un destino fijo en el mapa. Puedes crear el servicio de inmediato para que el cliente le dé indicaciones al taxista directamente en el camino, o puedes elegir el destino en el mapa ahora.
-            </p>
-
-            <div className="space-y-2.5">
-              <button
-                type="button"
-                disabled={asignando !== null}
-                onClick={() => {
-                  const op = confirmDestinoModal;
-                  setConfirmDestinoModal(null);
-                  asignar(op, { sinDestino: true });
-                }}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold py-3 px-4 text-sm transition-all shadow-lg shadow-emerald-950/40"
-              >
-                <Check className="h-4 w-4" />
-                <span>Crear servicio sin destino fijado</span>
-              </button>
-              <div className="text-[11px] text-center text-emerald-400/90 -mt-1 font-medium">
-                (El cliente da indicaciones directas al taxista)
-              </div>
-
-              <button
-                type="button"
-                disabled={asignando !== null}
-                onClick={() => {
-                  setConfirmDestinoModal(null);
-                  onClose();
-                  pedirPunto("destino");
-                  toast.info("Haz clic en el mapa para marcar el destino");
-                }}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-semibold py-2.5 px-4 text-xs transition-colors"
-              >
-                <MapPin className="h-3.5 w-3.5 text-sky-400" />
-                <span>Seleccionar destino en el mapa</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setConfirmDestinoModal(null)}
-                className="w-full py-1.5 text-xs text-muted-foreground hover:text-white transition-colors"
-              >
-                Regresar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

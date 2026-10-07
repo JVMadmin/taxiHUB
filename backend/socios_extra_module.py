@@ -21,27 +21,48 @@ def build_router(*, db, serialize, to_oid, now_iso, require_dueno,
     class TurnoConfig(BaseModel):
         vehiculo_id: str
         modo: Literal["normal", "turnos"]
+        cuota_diaria: Optional[float] = None
         # modo "normal": un solo turno con operador_id y sin horario fijo
-        # modo "turnos": dos turnos (dia/noche) con horario y renta
-        turnos: List[dict]  # [{tipo, operador_id, horario_inicio?, horario_fin?, renta_semanal?}]
+        # modo "turnos": dos turnos (dia/noche) con horario, cuota_diaria y renta_semanal
+        turnos: List[dict]  # [{tipo, operador_id, horario_inicio?, horario_fin?, renta_semanal?, cuota_diaria?}]
+
+    class CuotaVehiculoBody(BaseModel):
+        cuota_diaria: float = Field(ge=0, le=50000)
+        renta_semanal: Optional[float] = None
+
+    class ConfirmarLiquidacionBody(BaseModel):
+        monto_recibido: Optional[float] = None
+        observaciones: Optional[str] = None
+        unidad_recibida_ok: bool = True
 
     @router.get("/turnos/resumen")
     async def turnos_resumen(current: dict = Depends(require_dueno)):
         vehiculos = await _vehiculos_de_dueno(current["id"])
         out = []
         renta_semana_total = 0
+        cuota_diaria_total = 0.0
         for v in vehiculos:
             vid = str(v["_id"])
             config = await db.turnos_config.find_one({"vehiculo_id": vid})
             turnos = config.get("turnos", []) if config else []
+            cuota_v = v.get("cuota_diaria") or (config.get("cuota_diaria") if config else None) or 350.0
             for t in turnos:
                 renta_semana_total += t.get("renta_semanal", 0) or 0
+                if t.get("cuota_diaria"):
+                    cuota_diaria_total += float(t["cuota_diaria"])
+            if not turnos:
+                cuota_diaria_total += float(cuota_v)
             out.append({
-                "vehiculo": serialize(v),
+                "vehiculo": {**serialize(v), "cuota_diaria": float(cuota_v)},
                 "modo": config.get("modo", "normal") if config else "normal",
+                "cuota_diaria": float(cuota_v),
                 "turnos": turnos,
             })
-        return {"vehiculos": out, "renta_semana_total": renta_semana_total}
+        return {
+            "vehiculos": out,
+            "renta_semana_total": renta_semana_total,
+            "cuota_diaria_total": round(cuota_diaria_total, 2),
+        }
 
     @router.post("/turnos/config")
     async def guardar_turnos(body: TurnoConfig, current: dict = Depends(require_dueno)):
@@ -50,13 +71,115 @@ def build_router(*, db, serialize, to_oid, now_iso, require_dueno,
             raise HTTPException(400, "El modo normal admite un solo conductor, sin relevo")
         if body.modo == "turnos" and len(body.turnos) > 2:
             raise HTTPException(400, "El modo turnos admite máximo 2 (día/noche)")
+        updates = {
+            "vehiculo_id": body.vehiculo_id,
+            "modo": body.modo,
+            "turnos": body.turnos,
+            "actualizado": now_iso(),
+        }
+        if body.cuota_diaria is not None:
+            updates["cuota_diaria"] = body.cuota_diaria
+            await db.vehiculos.update_one(
+                {"_id": to_oid(body.vehiculo_id)},
+                {"$set": {"cuota_diaria": body.cuota_diaria}},
+            )
         await db.turnos_config.update_one(
             {"vehiculo_id": body.vehiculo_id},
-            {"$set": {"vehiculo_id": body.vehiculo_id, "modo": body.modo,
-                      "turnos": body.turnos, "actualizado": now_iso()}},
+            {"$set": updates},
             upsert=True,
         )
         return {"guardado": True}
+
+    @router.put("/vehiculos/{vehiculo_id}/cuota")
+    async def fijar_cuota_vehiculo(vehiculo_id: str, body: CuotaVehiculoBody, current: dict = Depends(require_dueno)):
+        await _vehiculo_de_dueno_o_404(vehiculo_id, current["id"])
+        await db.vehiculos.update_one(
+            {"_id": to_oid(vehiculo_id)},
+            {"$set": {"cuota_diaria": body.cuota_diaria}},
+        )
+        tcfg_set = {"cuota_diaria": body.cuota_diaria, "actualizado": now_iso()}
+        await db.turnos_config.update_one(
+            {"vehiculo_id": vehiculo_id},
+            {"$set": tcfg_set},
+            upsert=True,
+        )
+        return {"ok": True, "vehiculo_id": vehiculo_id, "cuota_diaria": body.cuota_diaria}
+
+    @router.get("/turnos/liquidaciones")
+    async def listar_liquidaciones_turnos(current: dict = Depends(require_dueno)):
+        vehiculos = await _vehiculos_de_dueno(current["id"])
+        v_map = {str(v["_id"]): v for v in vehiculos}
+        op_ids = [v.get("operador_conductor_id") for v in vehiculos if v.get("operador_conductor_id")]
+        v_ids = list(v_map.keys())
+        if not v_ids and not op_ids:
+            return {"turnos": [], "pendientes_count": 0, "recaudado_confirmado": 0.0}
+        query_or = []
+        if v_ids:
+            query_or.append({"vehiculo_id": {"$in": v_ids}})
+        if op_ids:
+            query_or.append({"operador_id": {"$in": op_ids}})
+        docs = await db.turnos.find({"$or": query_or}).sort("inicio", -1).to_list(100)
+        ops_all = {}
+        if op_ids:
+            for o in await db.operadores.find({"_id": {"$in": [to_oid(i) for i in op_ids]}}).to_list(100):
+                ops_all[str(o["_id"])] = o
+        out = []
+        pendientes = 0
+        recaudado = 0.0
+        for d in docs:
+            t = serialize(d)
+            op = ops_all.get(t.get("operador_id"))
+            veh = v_map.get(t.get("vehiculo_id"))
+            t["operador_nombre"] = t.get("operador_nombre") or (op.get("nombre") if op else "Operador")
+            t["numero_economico"] = (veh.get("numero_economico") if veh else None) or t.get("placa") or "—"
+            if t.get("odometro_fin") is not None and t.get("odometro_inicio") is not None:
+                t["km_recorridos"] = round(t["odometro_fin"] - t["odometro_inicio"], 1)
+            if t.get("fin") and not t.get("confirmado_por_dueno"):
+                pendientes += 1
+            if t.get("confirmado_por_dueno"):
+                recaudado += float(t.get("monto_confirmado_dueno") or t.get("cuota_entregada") or 0.0)
+            out.append(t)
+        return {
+            "turnos": out,
+            "pendientes_count": pendientes,
+            "recaudado_confirmado": round(recaudado, 2),
+        }
+
+    @router.post("/turnos/{turno_id}/confirmar-liquidacion")
+    async def confirmar_liquidacion_turno(
+        turno_id: str,
+        body: ConfirmarLiquidacionBody,
+        current: dict = Depends(require_dueno),
+    ):
+        turno = await db.turnos.find_one({"_id": to_oid(turno_id)})
+        if not turno:
+            raise HTTPException(404, "Turno no encontrado")
+        vehiculos = await _vehiculos_de_dueno(current["id"])
+        v_ids = {str(v["_id"]) for v in vehiculos}
+        op_ids = {v.get("operador_conductor_id") for v in vehiculos if v.get("operador_conductor_id")}
+        if turno.get("vehiculo_id") not in v_ids and turno.get("operador_id") not in op_ids:
+            raise HTTPException(403, "Este turno no pertenece a tu flota")
+        monto = body.monto_recibido if body.monto_recibido is not None else (turno.get("cuota_entregada") or turno.get("cuota_meta") or 0.0)
+        ts = now_iso()
+        await db.turnos.update_one(
+            {"_id": turno["_id"]},
+            {"$set": {
+                "confirmado_por_dueno": True,
+                "estado_liquidacion": "liquidado",
+                "monto_confirmado_dueno": monto,
+                "unidad_recibida_dueno_ok": body.unidad_recibida_ok,
+                "observaciones_dueno": body.observaciones,
+                "timestamp_confirmacion_dueno": ts,
+            }},
+        )
+        updated = await db.turnos.find_one({"_id": turno["_id"]})
+        t_out = serialize(updated)
+        return {
+            "ok": True,
+            "estado_liquidacion": "liquidado",
+            "liquidacion_estado": "confirmada",
+            "turno": t_out,
+        }
 
     # =================================================================
     # COMBUSTIBLE
@@ -338,7 +461,7 @@ def build_router(*, db, serialize, to_oid, now_iso, require_dueno,
                 estados_flota["offline"] += 1
 
         return {
-            "socio": {"id": dueno_id, "nombre": current.get("usuario") or dueno_id},
+            "socio": {"id": dueno_id, "nombre": current.get("usuario") or dueno_id, "foto_url": current.get("foto_url")},
             "flota": {
                 "total": len(vehiculos),
                 "estados": estados_flota,
@@ -346,9 +469,10 @@ def build_router(*, db, serialize, to_oid, now_iso, require_dueno,
                     "id": str(v["_id"]),
                     "numero_economico": v.get("numero_economico"),
                     "marca": v.get("marca"), "modelo": v.get("modelo"),
+                    "foto_url": v.get("foto_url"),
                     "estado": (next((o.get("estado") for o in operadores
                                      if str(o["_id"]) == v.get("operador_conductor_id")), "fuera_de_servicio")),
-                    "conductor": next(({"id": str(o["_id"]), "nombre": o["nombre"]}
+                    "conductor": next(({"id": str(o["_id"]), "nombre": o["nombre"], "foto_url": o.get("foto_url")}
                                        for o in operadores
                                        if str(o["_id"]) == v.get("operador_conductor_id")), None),
                     "ultimo_mantenimiento": (
@@ -448,6 +572,55 @@ def build_router(*, db, serialize, to_oid, now_iso, require_dueno,
                 "estado": _estado_vigencia(d.get("vence_en", ""), hoy)}
                for d in docs]
         return {"documentos": out}
+
+    @router.get("/conductores")
+    async def listar_conductores_dueno(current: dict = Depends(require_dueno)):
+        dueno_id = current["id"]
+        vehiculos = await _vehiculos_de_dueno(dueno_id)
+        operador_ids = [v["operador_conductor_id"] for v in vehiculos if v.get("operador_conductor_id")]
+        if not operador_ids:
+            return []
+        ops = await db.operadores.find({"_id": {"$in": [to_oid(x) for x in operador_ids]}}).to_list(1000)
+        vehs_by_op = {v["operador_conductor_id"]: v for v in vehiculos if v.get("operador_conductor_id")}
+
+        # Servicios completados y cancelados
+        conteo_sv = {}
+        cancelados_sv = {}
+        docs = await db.servicios.find(
+            {"operador_asignado_id": {"$in": operador_ids}},
+            {"operador_asignado_id": 1, "estado": 1, "timestamp_creacion": 1}
+        ).to_list(20000)
+        for d in docs:
+            oid = d.get("operador_asignado_id")
+            if d.get("estado") == "completado":
+                conteo_sv[oid] = conteo_sv.get(oid, 0) + 1
+            elif d.get("estado") == "cancelado":
+                cancelados_sv[oid] = cancelados_sv.get(oid, 0) + 1
+
+        out = []
+        for o in ops:
+            oid = str(o["_id"])
+            veh = vehs_by_op.get(oid) or {}
+            out.append({
+                "id": oid,
+                "nombre": o.get("nombre"),
+                "telefono": o.get("telefono"),
+                "foto_url": o.get("foto_url"),
+                "estado": o.get("estado", "libre"),
+                "usuario": o.get("usuario"),
+                "placa": veh.get("numero_economico") or veh.get("placa") or o.get("placa"),
+                "vehiculo": veh.get("numero_economico"),
+                "vehiculo_info": {
+                    "marca": veh.get("marca"),
+                    "modelo": veh.get("modelo"),
+                    "numero_economico": veh.get("numero_economico"),
+                    "foto_url": veh.get("foto_url"),
+                },
+                "servicios_completados": conteo_sv.get(oid, 0),
+                "cancelados": cancelados_sv.get(oid, 0),
+            })
+        out.sort(key=lambda x: -x["servicios_completados"])
+        return out
 
     @router.get("/conductores/{operador_id}")
     async def expediente_conductor(operador_id: str, current: dict = Depends(require_dueno)):

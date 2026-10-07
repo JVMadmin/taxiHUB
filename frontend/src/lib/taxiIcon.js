@@ -138,8 +138,59 @@ function carBodySvg(color) {
     </svg>`;
 }
 
+// Semáforo de cantidad de servicios realizados en el día:
+// 0 = Gris oscuro (#334155) con 0 blanco legible
+// 1-2 = Verde semáforo (#16A34A)
+// 3-4 = Ámbar semáforo (#D97706)
+// 5+ = Rojo semáforo (#DC2626)
+export function semaforoServiciosStyle(count) {
+  const n = Math.max(0, Number(count) || 0);
+  if (n === 0) {
+    return {
+      count: 0,
+      bg: "#334155",
+      text: "#FFFFFF",
+      border: "rgba(255,255,255,0.88)",
+      glow: "rgba(15,23,42,0.85)",
+      nivel: "Sin servicios hoy",
+      pillClass: "bg-[#334155] text-white border-white/60",
+    };
+  }
+  if (n <= 2) {
+    return {
+      count: n,
+      bg: "#16A34A",
+      text: "#FFFFFF",
+      border: "#BBF7D0",
+      glow: "rgba(22,163,74,0.55)",
+      nivel: "Carga baja",
+      pillClass: "bg-[#16A34A] text-white border-emerald-200/80",
+    };
+  }
+  if (n <= 4) {
+    return {
+      count: n,
+      bg: "#D97706",
+      text: "#FFFFFF",
+      border: "#FDE68A",
+      glow: "rgba(217,119,6,0.55)",
+      nivel: "Carga media",
+      pillClass: "bg-[#D97706] text-white border-amber-200/80",
+    };
+  }
+  return {
+    count: n,
+    bg: "#DC2626",
+    text: "#FFFFFF",
+    border: "#FECACA",
+    glow: "rgba(220,38,38,0.6)",
+    nivel: "Carga alta",
+    pillClass: "bg-[#DC2626] text-white border-red-200/80",
+  };
+}
+
 // Coche 3D (iso/3/4) usado en los tres mapas. `heading` orienta el coche.
-export function car3dIcon(color, { heading = 0, label = "", selected = false, following = false, size = "md", testId = "" } = {}) {
+export function car3dIcon(color, { heading = 0, label = "", selected = false, following = false, size = "md", testId = "", serviciosHoy = null } = {}) {
   const deg = Number(heading) || 0;
   const dim = size === "lg" ? 56 : size === "xs" ? 34 : 46;
   const ring = selected
@@ -147,13 +198,19 @@ export function car3dIcon(color, { heading = 0, label = "", selected = false, fo
     : following
       ? "box-shadow:0 0 0 3px var(--brand, #10b981),0 0 0 6px rgba(16,185,129,.25)"
       : "";
+  const countVal = serviciosHoy != null ? Number(serviciosHoy) || 0 : 0;
+  const sem = semaforoServiciosStyle(countVal);
+  const badgeHtml = serviciosHoy !== false
+    ? `<span data-testid="taxi-servicios-hoy-badge" title="Servicios hoy: ${sem.count} (${sem.nivel})" style="position:absolute;top:-4px;right:1px;z-index:6;display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:${sem.bg};color:${sem.text};border:2px solid ${sem.border};font-size:11.5px;font-weight:900;line-height:1;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 8px ${sem.glow},0 1px 3px rgba(0,0,0,0.85);letter-spacing:-0.02em">${sem.count}</span>`
+    : "";
   const labelHtml = label
     ? `<div style="margin-top:2px;background:#0b0b0d;color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace">${label}</div>`
     : "";
-  const fullW = Math.max(dim + 16, 70);
+  const fullW = Math.max(dim + 22, 76);
   const fullH = dim + (label ? 24 : 0);
   const html = `
-    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none"${testId ? ` data-testid="${testId}"` : ""}>
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;position:relative"${testId ? ` data-testid="${testId}"` : ""}>
+      ${badgeHtml}
       <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 8px 12px rgba(0,0,0,.6));${ring}border-radius:9999px">
         ${carBodySvg(color)}
       </div>
@@ -237,7 +294,7 @@ const TAXI_STATE_ASSETS = {
   averiado: "/assets/vehicles/taxi-rojo.png",
 };
 
-export function taxiStateAssetIcon(estado, { heading = 0, selected = false, label = "", size = "md" } = {}) {
+export function taxiStateAssetIcon(estado, { heading = 0, selected = false, label = "", size = "md", serviciosHoy = null } = {}) {
   const dim = size === "lg" ? 62 : size === "sm" ? 44 : 52;
   // El asset PNG del vehículo viene orientado hacia la derecha (90°).
   // Se resta 90° para que el rumbo compás (0° = Norte) apunte exactamente al sentido de circulación.
@@ -247,16 +304,23 @@ export function taxiStateAssetIcon(estado, { heading = 0, selected = false, labe
   const pulse = selected
     ? `<span class="th-terminal-taxi-pulse" style="position:absolute;inset:-8px;border-color:${color}"></span>`
     : "";
+  const countVal = serviciosHoy != null ? Number(serviciosHoy) || 0 : 0;
+  const sem = semaforoServiciosStyle(countVal);
+  const badgeHtml = `
+    <span data-testid="taxi-servicios-hoy-badge" title="Servicios realizados hoy: ${sem.count} (${sem.nivel})" style="position:absolute;top:-5px;right:2px;z-index:6;display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:${sem.bg};color:${sem.text};border:2px solid ${sem.border};font-size:11.5px;font-weight:900;line-height:1;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 8px ${sem.glow},0 1px 3px rgba(0,0,0,0.9);letter-spacing:-0.02em">
+      ${sem.count}
+    </span>`;
   // Placa premium (§14): identificador + punto del estado en la misma píldora.
   const labelHtml = label
     ? `<span style="margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:#071218;color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:7px;padding:2.5px 7px;font-size:10px;font-weight:800;line-height:1;white-space:nowrap;font-family:Poppins,Inter,sans-serif">
          <span style="width:6px;height:6px;border-radius:999px;background:${color};box-shadow:0 0 4px ${color}"></span>${label}
        </span>`
     : "";
-  const fullW = Math.max(dim + 20, 80);
-  const fullH = dim + (label ? 24 : 0);
+  const fullW = Math.max(dim + 26, 86);
+  const fullH = dim + (label ? 26 : 0);
   const html = `
     <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
+      ${badgeHtml}
       <div class="th-taxi-rotator" style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 7px 9px rgba(8,24,27,.35))">
         ${pulse}<img src="${asset}" alt="" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1" />
       </div>${labelHtml}
@@ -264,16 +328,19 @@ export function taxiStateAssetIcon(estado, { heading = 0, selected = false, labe
   return L.divIcon({ html, className: "th-terminal-state-asset", iconSize: [fullW, fullH], iconAnchor: [fullW / 2, dim / 2] });
 }
 
-// (helper) marcador pequeño de dirección en la ruta (flecha que pulsa).
-export function routeArrowIcon() {
+// (helper) marcador pequeño de dirección en la ruta (flecha orientada sobre el sentido de la calle).
+export function routeArrowIcon(heading = 0, color = "#10b981") {
+  const deg = Number(heading) || 0;
   const html = `
-    <div class="th-route-arrow" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none"
-        stroke="#0b0b0d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2v20M6 9l6-7 6 7" transform="translate(0 1)"/>
-      </svg>
+    <div class="th-route-arrow" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg)">
+      <div style="width:20px;height:20px;border-radius:999px;background:#090d16;border:1.5px solid ${color};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.65)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+      </div>
     </div>`;
-  return L.divIcon({ html, className: "", iconSize: [30, 30], iconAnchor: [15, 15] });
+  return L.divIcon({ html, className: "th-street-sense-arrow", iconSize: [22, 22], iconAnchor: [11, 11] });
 }
 
 export function colorForOperador(op, filtroRutaColor) {

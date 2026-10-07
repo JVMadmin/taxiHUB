@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { duenoApi } from "@/lib/api";
 import { timeAgo } from "@/lib/time";
-import { cn } from "@/lib/utils";
+import { cn, resolveDriverAvatar, resolveVehicleImage } from "@/lib/utils";
 import { PALETA, estiloEstado } from "@/design/status";
 import { EstadoBadge } from "@/components/StatusBadge";
 import { LoadingState } from "@/components/LoadingState";
@@ -83,9 +83,32 @@ export function Socios({ liveSignal }) {
               <tbody>
                 {flota.vehiculos.map((v) => (
                   <tr key={v.id}>
-                    <td className="font-mono font-bold text-foreground">{v.numero_economico}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={resolveVehicleImage(v)}
+                          alt={v.modelo || "Vehículo"}
+                          className="h-7 w-12 object-contain drop-shadow-sm"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                        <span className="font-mono font-bold text-foreground">{v.numero_economico}</span>
+                      </div>
+                    </td>
                     <td className="text-muted-foreground">{[v.marca, v.modelo].filter(Boolean).join(" ") || "—"}</td>
-                    <td>{v.conductor?.nombre || <span className="text-muted-foreground">sin asignar</span>}</td>
+                    <td>
+                      {v.conductor?.nombre ? (
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={resolveDriverAvatar(v.conductor?.foto_url, v.conductor?.id || v.conductor?.nombre)}
+                            alt={v.conductor?.nombre}
+                            className="h-6 w-6 rounded-full object-cover ring-1 ring-border"
+                          />
+                          <span className="text-foreground">{v.conductor.nombre}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">sin asignar</span>
+                      )}
+                    </td>
                     <td><EstadoBadge estado={v.estado} /></td>
                     <td className="text-xs text-muted-foreground">
                       {v.ultimo_mantenimiento ? `${v.ultimo_mantenimiento.tipo} · ${timeAgo(v.ultimo_mantenimiento.realizado_en)}` : "—"}
@@ -110,9 +133,14 @@ export function Socios({ liveSignal }) {
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="socios-conductores">
             {conductores.map((c) => (
               <div key={c.id} className="flex items-center gap-3 rounded-xl border border-border bg-surface-2 p-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/15 text-xs font-bold text-brand-bright">
-                  {(c.nombre || "?").slice(0, 2).toUpperCase()}
-                </div>
+                <img
+                  src={resolveDriverAvatar(c.foto_url, c.id || c.nombre)}
+                  alt={c.nombre}
+                  className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-border/60"
+                  onError={(e) => {
+                    e.currentTarget.src = resolveDriverAvatar(null, c.id || c.nombre);
+                  }}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-foreground">{c.nombre}</div>
                   <div className="truncate text-[11px] text-muted-foreground">

@@ -16,17 +16,45 @@ export const VEHICLE_IMAGE_FALLBACK = "/assets/vehicles/generico.png";
 export function _appendTokenToFileUrl(url) {
   let token = null;
   try {
-    token = localStorage.getItem("term_token") || localStorage.getItem("op_token") || localStorage.getItem("dueno_token") || localStorage.getItem("pas_token");
+    token =
+      localStorage.getItem("term_token") ||
+      localStorage.getItem("op_token") ||
+      localStorage.getItem("dueno_token") ||
+      localStorage.getItem("pas_token") ||
+      localStorage.getItem("dev_token");
   } catch { /* noop */ }
-  if (!token) return url;
+  if (!token || url.includes("token=")) return url;
   const joiner = url.includes("?") ? "&" : "?";
   return `${url}${joiner}token=${encodeURIComponent(token)}`;
 }
 
 export function fileUrl(url) {
   if (!url) return VEHICLE_IMAGE_FALLBACK;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url.includes("/api/files/") ? _appendTokenToFileUrl(url) : url;
+  }
+  if (url.startsWith("/assets/") || url.startsWith("/vehicle-types/")) {
+    return url;
+  }
   const abs = url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
-  return _appendTokenToFileUrl(abs);
+  return abs.includes("/api/files/") ? _appendTokenToFileUrl(abs) : abs;
+}
+
+export function resolveDriverAvatar(fotoUrl, seed = 0) {
+  if (fotoUrl) {
+    if (fotoUrl.startsWith("/assets/") || fotoUrl.startsWith("http://") || fotoUrl.startsWith("https://") || fotoUrl.startsWith("data:")) {
+      return fotoUrl.includes("/api/files/") ? _appendTokenToFileUrl(fotoUrl) : fotoUrl;
+    }
+    if (fotoUrl.startsWith("/api/")) {
+      return _appendTokenToFileUrl(`${BACKEND_URL}${fotoUrl}`);
+    }
+    return fotoUrl.startsWith("/") ? fotoUrl : `/${fotoUrl}`;
+  }
+  const strSeed = String(seed || "0");
+  let hash = 0;
+  for (let i = 0; i < strSeed.length; i++) hash = (hash * 31 + strSeed.charCodeAt(i)) >>> 0;
+  const num = (hash % 15) + 1;
+  return `/assets/drivers/driver-${String(num).padStart(2, "0")}.jpg`;
 }
 
 // Catálogo local de imágenes por modelo/marca/tipo de vehículo — referencia

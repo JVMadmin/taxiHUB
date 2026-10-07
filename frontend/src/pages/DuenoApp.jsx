@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { WS_BASE, getDuenoToken, getDueno, logoutDueno } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { WS_BASE, getDuenoToken, getDueno, logoutDueno, fetchSitioConfig, duenoApi } from "@/lib/api";
+import { cn, resolveDriverAvatar } from "@/lib/utils";
 import { BrandMark, BrandWordmark } from "@/components/Brand";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { ModeToggle } from "@/components/ModeToggle";
@@ -21,7 +21,7 @@ import { Reparto } from "@/pages/dueno/Reparto";
 import { Mapa } from "@/pages/dueno/Mapa";
 import { Servicios } from "@/pages/dueno/Servicios";
 import { Reportes } from "@/pages/dueno/Reportes";
-import { LayoutDashboard, Car, ClipboardList, Map as MapIcon, BarChart3, LogOut, Wrench, Clock, Fuel as FuelIcon, Handshake, Users2, Receipt, Repeat } from "lucide-react";
+import { LayoutDashboard, Car, ClipboardList, Map as MapIcon, BarChart3, LogOut, Wrench, Clock, Fuel as FuelIcon, Handshake, Users2, Repeat, CalendarClock, Megaphone } from "lucide-react";
 
 const SECTIONS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -44,12 +44,21 @@ export default function DuenoApp() {
   const [active, setActive] = useState("dashboard");
   const [connected, setConnected] = useState(false);
   const [liveSignal, setLiveSignal] = useState(0);
+  const [sitioConfig, setSitioConfig] = useState(null);
+  const [avisosActivos, setAvisosActivos] = useState([]);
   const wsRef = useRef(null);
 
   const embedded = new URLSearchParams(window.location.search).get("embed") === "1";
   const [deviceMode, setDeviceMode] = useState(() => (embedded ? "app" : "escritorio"));
 
   useEffect(() => { if (!getDuenoToken()) navigate("/dueno/login"); }, [navigate]);
+
+  useEffect(() => {
+    fetchSitioConfig(dueno?.sitio_id).then((cfg) => {
+      if (cfg) setSitioConfig(cfg);
+    }).catch(() => {});
+    duenoApi.get("/avisos/activos").then((r) => setAvisosActivos(r.data || [])).catch(() => {});
+  }, [dueno?.sitio_id]);
 
   useEffect(() => {
     if (!dueno?.id) return;
@@ -69,11 +78,14 @@ export default function DuenoApp() {
     };
     connect();
     return () => { closed = true; clearTimeout(timer); wsRef.current?.close(); };
-  }, [dueno?.id]);
+  }, [dueno?.id, navigate]);
 
   const salir = () => { logoutDueno(); navigate("/dueno/login"); };
 
   if (!dueno) return null;
+
+  const subRestante = sitioConfig?.suscripcion?.etiqueta_restante || `${sitioConfig?.suscripcion?.dias_restantes ?? 28}d restantes`;
+  const subUrgente = (sitioConfig?.suscripcion?.dias_restantes ?? 28) <= 5;
 
   const renderApp = (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -81,7 +93,7 @@ export default function DuenoApp() {
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-card/60 p-4 lg:flex">
         <div className="mb-6 flex items-center gap-3 px-1">
           <BrandMark size="sm" />
-          <BrandWordmark sub="Panel del dueño" />
+          <BrandWordmark sub="Panel del Socio" />
         </div>
         <nav className="flex flex-1 flex-col gap-1" data-testid="dueno-nav">
           {SECTIONS.map((s) => (
@@ -99,9 +111,35 @@ export default function DuenoApp() {
           ))}
         </nav>
         <div className="mt-auto space-y-2.5 border-t border-border pt-3">
+          <div
+            data-testid="dueno-subscription-badge"
+            className={cn(
+              "flex items-center justify-between rounded-xl border px-3 py-2 text-xs font-semibold",
+              subUrgente
+                ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+            )}
+            title={`Vencimiento: ${sitioConfig?.suscripcion?.fecha_vencimiento ? new Date(sitioConfig.suscripcion.fecha_vencimiento).toLocaleDateString("es-MX") : "Activo"}`}
+          >
+            <span className="flex items-center gap-1.5">
+              <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+              <span>Licencia:</span>
+            </span>
+            <span className="mono-num font-bold">{subRestante}</span>
+          </div>
           <ConnectionBadge state={connected ? "online" : "reconnecting"} />
           <div className="flex items-center justify-between gap-2">
-            <span className="truncate text-sm font-bold text-foreground">{dueno.nombre}</span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img
+                src={resolveDriverAvatar(dueno?.foto_url, dueno?.id || dueno?.nombre)}
+                alt={dueno?.nombre || "Socio"}
+                className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-brand/40"
+                onError={(e) => {
+                  e.currentTarget.src = resolveDriverAvatar(null, dueno?.id || dueno?.nombre);
+                }}
+              />
+              <span className="truncate text-sm font-bold text-foreground">{dueno.nombre}</span>
+            </div>
             <button data-testid="dueno-logout" onClick={salir} title="Salir"
               className="th-3d flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary/60"
               aria-label="Cerrar sesión">
@@ -114,9 +152,20 @@ export default function DuenoApp() {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header móvil */}
         <header className="flex items-center justify-between border-b border-border bg-card/60 px-4 py-3 lg:hidden">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <BrandMark size="sm" />
-            <span className="font-bold text-foreground">{dueno.nombre}</span>
+            <img
+              src={resolveDriverAvatar(dueno?.foto_url, dueno?.id || dueno?.nombre)}
+              alt={dueno?.nombre || "Socio"}
+              className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-brand/40"
+              onError={(e) => {
+                e.currentTarget.src = resolveDriverAvatar(null, dueno?.id || dueno?.nombre);
+              }}
+            />
+            <div>
+              <div className="font-bold text-foreground leading-tight">{dueno.nombre}</div>
+              <div className="mono-num text-[10px] font-semibold text-emerald-400">⏳ {subRestante}</div>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             {!embedded && <DeviceModeToggle mode={deviceMode} onChange={setDeviceMode} />}
@@ -131,11 +180,32 @@ export default function DuenoApp() {
           </div>
         </header>
         {/* Header desktop */}
-        <header className="hidden items-center justify-end gap-2 border-b border-border bg-card/40 px-6 py-3 lg:flex">
-          {!embedded && <DeviceModeToggle mode={deviceMode} onChange={setDeviceMode} />}
-          <NotificationBell liveSignal={liveSignal} />
-          <ModeToggle />
-          <ThemeSwitcher />
+        <header className="hidden items-center justify-between gap-3 border-b border-border bg-card/40 px-6 py-3 lg:flex">
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold",
+                subUrgente
+                  ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+              )}
+            >
+              <CalendarClock className="h-3.5 w-3.5" />
+              <span>Tiempo restante de uso: {subRestante}</span>
+            </span>
+            {avisosActivos.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/40 bg-indigo-500/15 px-3 py-1 text-xs font-semibold text-indigo-200">
+                <Megaphone className="h-3.5 w-3.5 text-indigo-300" />
+                <span>{avisosActivos[0].titulo}: {avisosActivos[0].mensaje}</span>
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {!embedded && <DeviceModeToggle mode={deviceMode} onChange={setDeviceMode} />}
+            <NotificationBell liveSignal={liveSignal} />
+            <ModeToggle />
+            <ThemeSwitcher />
+          </div>
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-6">

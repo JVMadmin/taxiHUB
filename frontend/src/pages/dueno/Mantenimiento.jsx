@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { duenoApi } from "@/lib/api";
+import { resolveVehicleImage } from "@/lib/utils";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
@@ -250,9 +251,17 @@ export function Mantenimiento({ liveSignal }) {
           {vehiculos.map((v) => (
             <div key={v.id} className="rounded-2xl border border-border bg-card p-4" data-testid={`mantenimiento-vehiculo-${v.numero_economico}`}>
               <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <div className="font-extrabold text-foreground">{v.numero_economico}</div>
-                  <div className="text-xs text-muted-foreground">{v.marca || "Sin datos"} {v.modelo || ""}</div>
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={resolveVehicleImage(v)}
+                    alt={v.modelo || "Vehículo"}
+                    className="h-8 w-14 object-contain drop-shadow-sm"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                  <div>
+                    <div className="font-extrabold text-foreground">{v.numero_economico}</div>
+                    <div className="text-xs text-muted-foreground">{v.marca || "Sin datos"} {v.modelo || ""}</div>
+                  </div>
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${ESTADO_TONE[v.salud.estado]}`}>
                   {ESTADO_LABEL[v.salud.estado]}

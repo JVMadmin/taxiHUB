@@ -181,12 +181,14 @@ export const COLONIAS_PALENQUE = [
 
 /**
  * Función geométrica punto-en-polígono (Ray casting algorithm)
- * para identificar en qué colonia se hizo clic en el mapa.
+ * para identificar en qué colonia/cuadrante se hizo clic en el mapa.
  */
-export function getColoniaAt(lat, lng) {
+export function getColoniaAt(lat, lng, customColonias = null) {
   if (lat == null || lng == null) return null;
-  for (const c of COLONIAS_PALENQUE) {
+  const lista = Array.isArray(customColonias) && customColonias.length > 0 ? customColonias : COLONIAS_PALENQUE;
+  for (const c of lista) {
     const poly = c.poligono;
+    if (!Array.isArray(poly) || poly.length < 3) continue;
     let inside = false;
     for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
       const xi = poly[i][0], yi = poly[i][1];
@@ -201,106 +203,168 @@ export function getColoniaAt(lat, lng) {
 }
 
 /**
- * ColoniasLayer — Renderiza las delimitaciones urbanas oficiales de Palenque
- * con estilos semitransparentes, resaltado hover y tarjetas descriptivas calle por calle.
+ * ColoniasLayer — Renderiza las delimitaciones urbanas y cuadrantes tarifarios
+ * con estilos semitransparentes, precios por zona y tarjetas descriptivas.
  */
-export function ColoniasLayer() {
+export function ColoniasLayer({ colonias = null, onSelectColonia = null }) {
+  const lista = useMemoList(colonias);
   return (
     <>
-      {COLONIAS_PALENQUE.map((colonia) => (
-        <Polygon
-          key={colonia.id}
-          positions={colonia.poligono}
-          pathOptions={{
-            color: colonia.color,
-            weight: 2,
-            opacity: 0.85,
-            fillColor: colonia.color,
-            fillOpacity: 0.16,
-            dashArray: "4, 6",
-          }}
-          eventHandlers={{
-            mouseover: (e) => {
-              e.target.setStyle({
-                fillOpacity: 0.32,
-                weight: 3,
-                opacity: 1,
-                dashArray: null,
-              });
-            },
-            mouseout: (e) => {
-              e.target.setStyle({
-                fillOpacity: 0.16,
-                weight: 2,
-                opacity: 0.85,
-                dashArray: "4, 6",
-              });
-            },
-          }}
-        >
-          {/* Tooltip visible al pasar el cursor */}
-          <Tooltip sticky direction="center" className="th-colonia-tooltip">
-            <div className="rounded-lg bg-surface/95 px-2.5 py-1.5 text-xs text-foreground shadow-xl backdrop-blur-md border border-white/10">
-              <div className="flex items-center gap-1.5 font-bold">
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colonia.color }} />
-                <span>{colonia.nombre}</span>
-              </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">{colonia.subtitulo}</div>
-              <div className="mt-1 text-[10px] text-emerald-400 font-semibold">Clic para ver límites de calles</div>
-            </div>
-          </Tooltip>
-
-          {/* Popup completo con la ficha de límites calle por calle */}
-          <Popup className="th-colonia-popup">
-            <div className="w-72 p-1 text-xs text-foreground">
-              <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: colonia.color }} />
-                <div>
-                  <div className="font-bold text-sm text-foreground">{colonia.nombre}</div>
-                  <div className="text-[11px] text-muted-foreground">{colonia.subtitulo}</div>
+      {lista.map((colonia) => {
+        const poly = colonia.poligono;
+        if (!Array.isArray(poly) || poly.length < 3) return null;
+        const tarifaBase = colonia.tarifa_base ?? 40;
+        const tarifaNocturna = colonia.tarifa_nocturna ?? 55;
+        const tarifaSalida = colonia.tarifa_salida ?? 45;
+        const lim = colonia.limites || {};
+        return (
+          <Polygon
+            key={colonia.id || colonia.nombre}
+            positions={poly}
+            pathOptions={{
+              color: colonia.color || "#10b981",
+              weight: 2.5,
+              opacity: 0.9,
+              fillColor: colonia.color || "#10b981",
+              fillOpacity: 0.18,
+              dashArray: "5, 6",
+            }}
+            eventHandlers={{
+              click: () => onSelectColonia?.(colonia),
+              mouseover: (e) => {
+                e.target.setStyle({
+                  fillOpacity: 0.34,
+                  weight: 3.5,
+                  opacity: 1,
+                  dashArray: null,
+                });
+              },
+              mouseout: (e) => {
+                e.target.setStyle({
+                  fillOpacity: 0.18,
+                  weight: 2.5,
+                  opacity: 0.9,
+                  dashArray: "5, 6",
+                });
+              },
+            }}
+          >
+            {/* Tooltip visible al pasar el cursor con tarifa delimitante */}
+            <Tooltip sticky direction="center" className="th-colonia-tooltip">
+              <div className="rounded-lg bg-surface/95 px-2.5 py-1.5 text-xs text-foreground shadow-xl backdrop-blur-md border border-white/10">
+                <div className="flex items-center justify-between gap-3 font-bold">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colonia.color || "#10b981" }} />
+                    <span>{colonia.nombre}</span>
+                  </span>
+                  <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 font-mono text-[11px] font-extrabold text-emerald-300 border border-emerald-400/30">
+                    ${tarifaBase} MXN
+                  </span>
+                </div>
+                {colonia.subtitulo && (
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{colonia.subtitulo}</div>
+                )}
+                <div className="mt-1 flex items-center gap-2 text-[10px] text-amber-300 font-semibold">
+                  <span>Nocturna: ${tarifaNocturna}</span>
+                  <span>·</span>
+                  <span>Salida: ${tarifaSalida}</span>
                 </div>
               </div>
+            </Tooltip>
 
-              {/* Ficha de límites viales */}
-              <div className="mt-2.5 space-y-1.5 text-[11px]">
-                <div className="font-bold uppercase tracking-wider text-muted-foreground text-[10px]">
-                  Límites viales oficiales:
-                </div>
-                <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-white/[0.04] p-2 border border-white/5">
-                  <div>
-                    <span className="font-semibold text-brand-bright">Norte: </span>
-                    <span className="text-muted-foreground">{colonia.limites.norte}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-brand-bright">Sur: </span>
-                    <span className="text-muted-foreground">{colonia.limites.sur}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-brand-bright">Este: </span>
-                    <span className="text-muted-foreground">{colonia.limites.este}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-brand-bright">Oeste: </span>
-                    <span className="text-muted-foreground">{colonia.limites.oeste}</span>
+            {/* Popup completo con precios por cuadrante y límites */}
+            <Popup className="th-colonia-popup">
+              <div className="w-72 p-1 text-xs text-foreground">
+                <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: colonia.color || "#10b981" }} />
+                    <div>
+                      <div className="font-bold text-sm text-foreground">{colonia.nombre}</div>
+                      <div className="text-[11px] text-muted-foreground">{colonia.subtitulo || colonia.cuadrante || "Cuadrante Tarifario"}</div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-1">
-                  <span className="font-semibold text-foreground">Calles principales: </span>
-                  <span className="text-muted-foreground">{colonia.calles_principales}</span>
+                {/* Tarifas delimitadas por zona */}
+                <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 p-2 text-center">
+                  <div>
+                    <div className="text-[9px] uppercase text-muted-foreground">Base Día</div>
+                    <div className="font-mono text-xs font-black text-emerald-400">${tarifaBase}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] uppercase text-muted-foreground">Nocturna</div>
+                    <div className="font-mono text-xs font-black text-amber-300">${tarifaNocturna}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] uppercase text-muted-foreground">Salida Zona</div>
+                    <div className="font-mono text-xs font-black text-sky-300">${tarifaSalida}</div>
+                  </div>
                 </div>
 
-                <div className="pt-0.5">
-                  <span className="font-semibold text-foreground">Puntos de referencia: </span>
-                  <span className="text-muted-foreground">{colonia.puntos_clave}</span>
+                {/* Ficha de límites viales */}
+                <div className="mt-2.5 space-y-1.5 text-[11px]">
+                  {(lim.norte || lim.sur || lim.este || lim.oeste) && (
+                    <>
+                      <div className="font-bold uppercase tracking-wider text-muted-foreground text-[10px]">
+                        Límites viales del cuadrante:
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-white/[0.04] p-2 border border-white/5">
+                        {lim.norte && (
+                          <div>
+                            <span className="font-semibold text-brand-bright">Norte: </span>
+                            <span className="text-muted-foreground">{lim.norte}</span>
+                          </div>
+                        )}
+                        {lim.sur && (
+                          <div>
+                            <span className="font-semibold text-brand-bright">Sur: </span>
+                            <span className="text-muted-foreground">{lim.sur}</span>
+                          </div>
+                        )}
+                        {lim.este && (
+                          <div>
+                            <span className="font-semibold text-brand-bright">Este: </span>
+                            <span className="text-muted-foreground">{lim.este}</span>
+                          </div>
+                        )}
+                        {lim.oeste && (
+                          <div>
+                            <span className="font-semibold text-brand-bright">Oeste: </span>
+                            <span className="text-muted-foreground">{lim.oeste}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {colonia.calles_principales && (
+                    <div className="pt-1">
+                      <span className="font-semibold text-foreground">Calles principales: </span>
+                      <span className="text-muted-foreground">{colonia.calles_principales}</span>
+                    </div>
+                  )}
+
+                  {colonia.puntos_clave && (
+                    <div className="pt-0.5">
+                      <span className="font-semibold text-foreground">Puntos clave: </span>
+                      <span className="text-muted-foreground">{colonia.puntos_clave}</span>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          </Popup>
-        </Polygon>
-      ))}
+            </Popup>
+          </Polygon>
+        );
+      })}
     </>
   );
+}
+
+function useMemoList(colonias) {
+  if (Array.isArray(colonias) && colonias.length > 0) {
+    return colonias;
+  }
+  return COLONIAS_PALENQUE;
 }
 
 export default ColoniasLayer;

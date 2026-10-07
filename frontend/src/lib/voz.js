@@ -14,6 +14,70 @@
 // ---------------------------------------------------------------------------
 
 let vozElegida = null;
+let audioCtx = null;
+let keepAliveTimer = null;
+
+/**
+ * Mantiene vivo el canal de audio en Android/WebView aun con la pantalla apagada
+ * emitiendo un pulso inaudible cada 20s mientras el operador está en turno.
+ */
+export function activarKeepAliveAudio(activo = true) {
+  if (typeof window === "undefined") return;
+  if (!activo) {
+    if (keepAliveTimer) {
+      clearInterval(keepAliveTimer);
+      keepAliveTimer = null;
+    }
+    return;
+  }
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+    if (!keepAliveTimer) {
+      keepAliveTimer = setInterval(() => {
+        try {
+          if (!audioCtx) return;
+          if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          gain.gain.value = 0.0001; // inaudible keepalive
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.05);
+        } catch {}
+      }, 20000);
+    }
+  } catch {}
+}
+
+/**
+ * Emite un tono doble de despacho antes del anuncio por voz para despertar
+ * la atención del operador incluso con pantalla bloqueada.
+ */
+export function sonarAlertaOferta() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+    const now = audioCtx.currentTime;
+    [880, 1174.66].forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+      gain.gain.setValueAtTime(0.18, now + idx * 0.14);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.12);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + idx * 0.14);
+      osc.stop(now + idx * 0.14 + 0.13);
+    });
+  } catch {}
+}
 
 function elegirVoz() {
   try {
@@ -31,11 +95,15 @@ function elegirVoz() {
 }
 
 export function vozDisponible() {
-  return typeof window !== "undefined" && "speechSynthesis" in window;
+  return (
+    typeof window !== "undefined" &&
+    ("speechSynthesis" in window || !!window.Capacitor?.Plugins?.TextToSpeech)
+  );
 }
 
 export function detenerVoz() {
   try {
+    window.Capacitor?.Plugins?.TextToSpeech?.stop?.();
     window.speechSynthesis?.cancel();
   } catch {
     /* noop */
@@ -43,17 +111,31 @@ export function detenerVoz() {
 }
 
 /**
- * Habla un texto con la voz IA. Cancela el anterior (las notificaciones
- * nuevas tienen prioridad). No lanza si el navegador lo bloquea (requiere
- * gesto de usuario previo en Chrome) — falla en silencio.
+ * Habla un texto con la voz IA. En Android nativo (Capacitor) utiliza el motor
+ * nativo del sistema si está disponible para garantizar reproducción con pantalla
+ * apagada; en navegador usa `speechSynthesis` + keep-alive de AudioContext.
  */
-export function hablarVoz(texto, { rate = 1.02, pitch = 1 } = {}) {
+export function hablarVoz(texto, { rate = 1.02, pitch = 1, alertaPrevia = false } = {}) {
   if (!texto || !vozDisponible()) return false;
   try {
+    if (alertaPrevia) sonarAlertaOferta();
+    const capTts = window.Capacitor?.Plugins?.TextToSpeech;
+    if (capTts?.speak) {
+      capTts.speak({
+        text: texto,
+        lang: "es-MX",
+        rate,
+        pitch,
+        volume: 1.0,
+        category: "ambient",
+      }).catch(() => {});
+      return true;
+    }
     const synth = window.speechSynthesis;
-    // Refresca la lista de voces (en Chrome llegan async vía onvoiceschanged).
+    if (!synth) return false;
     if (!vozElegida) vozElegida = elegirVoz();
     synth.cancel();
+    if (synth.paused) synth.resume();
     const utt = new SpeechSynthesisUtterance(texto);
     utt.lang = "es-MX";
     utt.rate = rate;

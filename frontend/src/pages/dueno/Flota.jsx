@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Polyline, ZoomControl, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { duenoApi } from "@/lib/api";
-import { cn, resolveVehicleImage } from "@/lib/utils";
+import { cn, resolveVehicleImage, resolveDriverAvatar } from "@/lib/utils";
 import { timeAgo } from "@/lib/time";
 import { SmoothTaxiMarker } from "@/components/maps/SmoothTaxiMarker";
 import { precargarTilesPalenque } from "@/lib/PalenqueTileCache";
@@ -240,9 +240,13 @@ export function Flota({ liveSignal }) {
                     <div className="truncate text-xs font-bold text-foreground">
                       {v.marca || ""} {v.modelo || "Taxi"}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground truncate">
-                      <User className="h-3 w-3 shrink-0 text-brand-bright" />
-                      <span className="truncate font-medium text-slate-200">
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate">
+                      <img
+                        src={resolveDriverAvatar(v.conductor?.foto_url, v.conductor?.id || v.id)}
+                        alt={v.conductor?.nombre || "Chofer"}
+                        className="h-4 w-4 rounded-full object-cover border border-white/20 shrink-0"
+                      />
+                      <span className="truncate font-semibold text-slate-200">
                         {v.conductor?.nombre || "Sin chofer"}
                       </span>
                     </div>
@@ -380,17 +384,11 @@ export function Flota({ liveSignal }) {
             {/* Header del HUD */}
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2.5 mb-2.5">
               <div className="flex items-center gap-2.5">
-                {selectedVehiculo.conductor?.foto_url ? (
-                  <img
-                    src={selectedVehiculo.conductor.foto_url}
-                    alt={selectedVehiculo.conductor.nombre}
-                    className="h-10 w-10 rounded-full object-cover border-2 border-brand shadow"
-                  />
-                ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/20 font-bold text-brand-bright text-sm">
-                    {selectedVehiculo.conductor?.nombre?.[0] || "T"}
-                  </div>
-                )}
+                <img
+                  src={resolveDriverAvatar(selectedVehiculo.conductor?.foto_url, selectedVehiculo.conductor?.id || selectedVehiculo.id)}
+                  alt={selectedVehiculo.conductor?.nombre || "Chofer"}
+                  className="h-11 w-11 rounded-2xl object-cover border-2 border-brand shadow-lg"
+                />
                 <div>
                   <div className="text-xs font-bold text-white">
                     {selectedVehiculo.conductor?.nombre || "Sin chofer asignado"}

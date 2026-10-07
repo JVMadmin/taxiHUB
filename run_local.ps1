@@ -9,8 +9,10 @@ Set-Location $scriptDir
 # 1. Iniciar Backend FastAPI en puerto 8080
 Write-Host "[1/2] Levantando Backend en http://127.0.0.1:8080..." -ForegroundColor Green
 $env:MONGO_URL = "memory"
-$env:DB_NAME = "taxihub_test"
+$env:DB_NAME = "taxihub_demo"
 $env:JWT_SECRET = "dev-jwt-secret-taxihub"
+$env:DEV_USER = "admin"
+$env:DEV_PASSWORD = "admin123"
 
 $backendProcess = Start-Process -FilePath "$scriptDir\venv\Scripts\uvicorn.exe" `
     -ArgumentList "server:app --host 127.0.0.1 --port 8080 --app-dir `"$scriptDir\backend`"" `

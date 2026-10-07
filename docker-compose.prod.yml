@@ -1,0 +1,85 @@
+name: taxihub
+
+services:
+  taxihub-mongo:
+    image: mongo:7
+    container_name: taxihub-mongo
+    restart: unless-stopped
+    volumes:
+      - taxihub_mongo_data:/data/db
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  taxihub-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taxihub-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MONGO_URL: mongodb://taxihub-mongo:27017
+      DB_NAME: taxihub_prod
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@nexium-postgres:5432/${POSTGRES_DB}
+      ENV: production
+      CORS_ORIGINS: https://taxihub.cloud,https://www.taxihub.cloud
+    volumes:
+      - taxihub_uploads:/app/uploads
+    networks:
+      - backend
+      - proxy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/config/sitio || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      taxihub-mongo:
+        condition: service_healthy
+
+  taxihub-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: taxihub-frontend
+    restart: unless-stopped
+    networks:
+      - proxy
+    depends_on:
+      taxihub-backend:
+        condition: service_healthy
+
+  taxihub-seed:
+    image: curlimages/curl:8.6.0
+    container_name: taxihub-seed
+    restart: "no"
+    networks:
+      - backend
+    depends_on:
+      taxihub-backend:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Verificando y asegurando estado inicial de TaxiHUB...';
+        curl -sf -X POST http://taxihub-backend:8000/api/seed || true;
+        echo;
+        echo 'TaxiHUB Seed Verificado';
+      "
+
+volumes:
+  taxihub_mongo_data:
+  taxihub_uploads:
+
+networks:
+  backend:
+    external: true
+  proxy:
+    external: true

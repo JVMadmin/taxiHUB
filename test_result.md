@@ -383,16 +383,26 @@ frontend:
       - working: true
         agent: "main"
         comment: "E2E Playwright verde (verify_driver_hud.py + verify_driver_flow.py): (1) Noche por defecto (`driver_mode` ausente => oscuro; toggle primero => claro guardando); (2) HUD compacto `zoom 0.65` en recuadro acciones home + header controls (-35%); (3) Ajustes abre con 5 toggles toggleables + Cerrar sesión (logout => /login); (4) Oferta real: card + botón micrófono + anuncio; (5) clasificación comandos aceptar/rechazar 8/8 verde; (6) flujo completo aceptar/iniciar/terminar OK; 0 errores JS. Nota: GPS con pantalla apagada 100% requiere la APK (documentado en toggle); en web se mantiene WakeLock + notificación."
+  - task: "Producción & Multi-Sitio: aislamiento estricto por sitio_id, simulación 25 taxis + 2do tenant, despacho 1-clic (POIs + atajos + sin modal bloqueante), puente WhatsApp QR Anti-Ban con auto-respuesta, evidencias fotográficas y liquidación de cuota de turnos (Operador y Dueño), GPS/Voz 24/7 en segundo plano, Electron Windows (.exe) y landing informativa taxihub.cloud"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/terminal_consulta_module.py, backend/socios_extra_module.py, tests/test_production_upgrades.py, frontend/src/pages/DevPanel.jsx, frontend/src/pages/Terminal.jsx, frontend/src/components/ops/DespachoModal.jsx, frontend/src/components/WhatsAppPanel.jsx, frontend/src/pages/OperadorApp.jsx, frontend/src/pages/dueno/Turnos.jsx, frontend/src/pages/LandingPage.jsx, whatsapp-bridge/index.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Suite pytest 90/90 verde (86 existentes + 4 nuevos en test_production_upgrades.py). Compilación frontend craco build exitosa."
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 10
+  test_sequence: 11
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Fix marcadores congelados ya validado E2E; pendiente decisión del usuario sobre el testid duplicado `terminal-sidebar` (FleetPanel.jsx:18 + Terminal.jsx:383) que rompe la aserción count==1 de e2e_fase10.py, y sobre `markerZoomAnimation={false}` aún presente en OperadorApp.jsx:629 y PassengerApp.jsx:361/399/529 (usan TileLayer raster, no MapLibre GL; sin el bug de sincronización, pero candidates a unificar)."
-    - "Backend: probar calificación única del pasajero en servicio completado y chat de viaje con scopes/estados/WS."
+    - "Validación integral de multi-tenant, despacho 1-clic con botonera de Puntos Calientes, puente WhatsApp QR Anti-Ban, liquidación de turnos y landing taxihub.cloud."
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -414,3 +424,6 @@ agent_communication:
     message: "Fase 12: Terminal responsive (web escritorio + celular) y catálogo de imágenes de vehículo por modelo. `craco build` compila; Playwright verde en móvil (390x844) y escritorio (1400x900) sin errores de consola. Las tres apps (pasajero, operador, terminal) muestran /assets/vehicles/march.png para el Nissan March de Carlos (TX-101)."
   - agent: "main"
     message: "Documento de presentación para clientes creado en docs/FUNCIONES-APPS.md con las funciones de las tres apps (Terminal, Operador, Pasajero), seguridad y resumen técnico (FastAPI + MongoDB + React + Leaflet/OSRM + WebSockets + JWT)."
+  - agent: "main"
+    message: "Completadas Fases 1 a 5 de preparación para producción y entorno expandido de pruebas: (1) Aislamiento multi-tenant estricto por sitio_id en DB, índices compuestos y ConnectionManager WS + cierre de fugas de seguridad; (2) Configuración de Sitios y Diseño (logo, colores, mapa, cuota diaria, POIs) desde /dev; (3) Simulación realista de 25 taxis en Palenque + 5 en segundo tenant (Pakal-Ná); (4) Despacho ultrarrápido sin modal bloqueante de destino, despacho 1-clic en menú contextual, botonera de Puntos Calientes (POIs) y atajos de teclado + Puente WhatsApp QR (Opción A con 6 reglas Anti-Ban y auto-respuesta al despachar); (5) Evidencia fotográfica de combustible/odómetro al iniciar y cerrar turno, confirmación de entrega de unidad y liquidación de cuota diaria fijada por el dueño; (6) GPS y Voz IA en segundo plano con pantalla apagada (Capacitor Foreground Service + AudioContext keepalive), empaquetado Windows nativo Electron (.exe) y landing informativa taxihub.cloud (/web). 90/90 tests pytest verdes."
+

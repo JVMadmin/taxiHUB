@@ -1,0 +1,29 @@
+{
+  "appId": "com.taxihub.dueno",
+  "appName": "TaxiHub Socio Dueño",
+  "webDir": "build",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true,
+    "appStartPath": "/dueno"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_taxihub",
+      "iconColor": "#F59E0B"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0B0D10"
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

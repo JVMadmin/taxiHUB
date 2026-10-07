@@ -82,6 +82,54 @@ export function Dashboard({ liveSignal }) {
         </div>
       </div>
 
+      {/* Focos de Servicios por Colores por Zona */}
+      {Array.isArray(data.focos_por_zona) && data.focos_por_zona.length > 0 && (
+        <div className="rounded-2xl border border-border bg-card p-5" data-testid="dueno-focos-zona">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h2 className="text-sm font-bold text-foreground">Focos de Servicios por Zona (Mapa de Calor por Colonia)</h2>
+              <p className="text-xs text-muted-foreground">
+                Concentración de viajes e ingresos por zona codificada por colores de demanda
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1 text-rose-400"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Alta</span>
+              <span className="inline-flex items-center gap-1 text-amber-400"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Media</span>
+              <span className="inline-flex items-center gap-1 text-emerald-400"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Normal</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {data.focos_por_zona.map((f, idx) => (
+              <div
+                key={f.zona || idx}
+                className="rounded-xl border border-border/80 bg-secondary/30 p-3"
+                style={{ borderLeftWidth: 4, borderLeftColor: f.color || "#10b981" }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-xs font-bold text-foreground">{f.zona}</span>
+                  <span
+                    className="rounded-md px-2 py-0.5 font-mono text-[11px] font-extrabold text-white"
+                    style={{ backgroundColor: f.color || "#10b981" }}
+                  >
+                    {f.servicios} serv.
+                  </span>
+                </div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-background/70">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${Math.max(8, f.intensidad_pct || 10)}%`, backgroundColor: f.color || "#10b981" }}
+                  />
+                </div>
+                <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>Demanda: <strong className="uppercase text-foreground/90">{f.nivel}</strong></span>
+                  <span className="mono-num font-semibold text-emerald-400">{fmtMXN(f.ingresos)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {data.taxis_fuera_de_servicio > 0 && (
         <a
           href="#mantenimiento"

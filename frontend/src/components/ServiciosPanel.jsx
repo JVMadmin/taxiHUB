@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { termApi } from "@/lib/api";
 import { timeAgo } from "@/lib/time";
+import { semaforoServiciosStyle } from "@/lib/taxiIcon";
 import { cn, metodoPago } from "@/lib/utils";
 import { Button } from "@/components/Button";
 import { toast } from "sonner";
 import {
   MapPin, Flag, User, Wallet, Navigation as NavIcon, ClipboardList,
-  Clock, Ban, Loader2, Check, Car, Layers,
+  Clock, Ban, Loader2, Check, Car, Layers, Phone, DollarSign,
 } from "lucide-react";
 import { ServicioBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
@@ -23,66 +24,129 @@ const TAB_LABEL = {
   vencido: "Vencido",
 };
 
-// Tarjeta de servicio profesional del dispatcher (Fase 9B/10).
-function ServicioCard({ s, onDespachar, onAsignar, onCancelar, despachando, asignando, tiposVehiculo }) {
+function fmtHora(iso) {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false });
+  } catch {
+    return "—";
+  }
+}
+
+// Tarjeta de servicio profesional del dispatcher con hora en esquina e información ampliada.
+function ServicioCard({ s, onDespachar, onAsignar, onCancelar, despachando, asignando, tiposVehiculo, operadoresMap = {} }) {
   const tipoPreferido = s.tipo_vehiculo_preferido_id ? tiposVehiculo?.[s.tipo_vehiculo_preferido_id] : null;
+  const tsCreacion = s.timestamp_creacion || s.creado_en;
+  const horaCreacion = fmtHora(tsCreacion);
+  const horaFin = s.timestamp_fin || s.completado_en ? fmtHora(s.timestamp_fin || s.completado_en) : null;
+  const opInfo = s.operador_asignado_id ? operadoresMap[s.operador_asignado_id] : null;
+  const nombreChofer = s.operador_nombre || opInfo?.nombre || null;
+  const unidadEcon = s.operador_placa || opInfo?.vehiculo?.numero_economico || opInfo?.placa || null;
+
   return (
     <div
       data-testid={`servicio-card-${s.id}`}
-      className="animate-slide-up rounded-xl border border-border bg-card/70 p-3 transition-colors hover:border-border"
+      className="animate-slide-up rounded-xl border border-border bg-card/80 p-3.5 transition-colors hover:border-brand/40 shadow-sm"
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 font-mono mono-num text-[11px] font-bold text-muted-foreground">
-          <ClipboardList className="h-3.5 w-3.5" />
-          #{String(s.numero || s.id).slice(-6).toUpperCase()}
+      {/* Cabecera: Folio + Estado a la izquierda | Hora del servicio en la esquina derecha */}
+      <div className="flex items-start justify-between gap-2 border-b border-border/60 pb-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 font-mono mono-num text-[11px] font-extrabold text-foreground/90">
+            <ClipboardList className="h-3.5 w-3.5 text-brand-bright" />
+            #{String(s.numero || s.id).slice(-6).toUpperCase()}
+          </span>
+          <ServicioBadge estado={s.estado} />
         </div>
-        <ServicioBadge estado={s.estado} />
+
+        {/* Hora de servicio destacada en la esquina superior derecha */}
+        <div
+          data-testid={`servicio-hora-${s.id}`}
+          className="flex flex-col items-end shrink-0"
+          title={`Creado: ${tsCreacion || ""}`}
+        >
+          <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-2 py-0.5 font-mono mono-num text-xs font-extrabold text-white">
+            <Clock className="h-3 w-3 text-brand-bright" />
+            {horaCreacion}
+          </span>
+          <span className="mt-0.5 text-[10px] text-muted-foreground">
+            {timeAgo(tsCreacion)}
+            {horaFin ? ` · Fin ${horaFin}` : ""}
+          </span>
+        </div>
       </div>
 
-      <div className="mt-2.5 space-y-1.5 text-sm">
+      {/* Origen y Destino */}
+      <div className="mt-2.5 space-y-1.5 text-xs sm:text-sm">
         <div className="flex items-start gap-2">
-          <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-400">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-400">
             <MapPin className="h-3 w-3" />
           </span>
-          <span className="font-medium text-foreground">{s.origen?.texto || s.origen_texto || "—"}</span>
+          <div className="min-w-0 flex-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/80 block leading-none mb-0.5">Origen</span>
+            <span className="font-semibold text-foreground break-words">{s.origen?.texto || s.origen_texto || "—"}</span>
+          </div>
         </div>
         <div className="flex items-start gap-2">
-          <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-red-500/15 text-red-400">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-rose-500/15 text-rose-400">
             <Flag className="h-3 w-3" />
           </span>
-          <span className="text-foreground/85">{s.destino?.texto || s.destino_texto || "—"}</span>
+          <div className="min-w-0 flex-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400/80 block leading-none mb-0.5">Destino</span>
+            <span className="text-foreground/90 break-words">{s.destino?.texto || s.destino_texto || "A indicaciones del pasajero"}</span>
+          </div>
         </div>
       </div>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-        {(s.cliente_nombre || s.cliente_telefono) && (
-          <span className="inline-flex items-center gap-1">
-            <User className="h-3 w-3" />
-            {s.cliente_nombre || s.cliente_telefono}
+      {/* Bloque de información enriquecida: Cliente, Teléfono, Unidad/Chofer y Pago */}
+      <div className="mt-3 grid grid-cols-2 gap-1.5 rounded-lg border border-white/[0.06] bg-black/25 p-2 text-[11px]">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <User className="h-3.5 w-3.5 shrink-0 text-sky-400" />
+          <span className="truncate font-semibold text-foreground" title={s.cliente_nombre || "Cliente general"}>
+            {s.cliente_nombre || "Cliente general"}
           </span>
-        )}
-        {s.metodo_pago && (
-          <span className="inline-flex items-center gap-1">
-            <Wallet className="h-3 w-3" />
-            {metodoPago(s.metodo_pago)}
+        </div>
+        <div className="flex items-center gap-1.5 min-w-0 justify-end">
+          <Phone className="h-3 w-3 shrink-0 text-muted-foreground" />
+          <span className="font-mono mono-num truncate text-muted-foreground">
+            {s.cliente_telefono || "Sin tel."}
           </span>
-        )}
-        {s.operador_nombre && (
+        </div>
+
+        <div className="flex items-center gap-1.5 min-w-0 pt-1 border-t border-white/[0.05]">
+          <Car className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+          {nombreChofer || unidadEcon ? (
+            <span className="truncate text-foreground/90 font-medium">
+              {unidadEcon ? <strong className="font-mono text-amber-300">#{unidadEcon}</strong> : null}{" "}
+              {nombreChofer || ""}
+            </span>
+          ) : (
+            <span className="italic text-muted-foreground">Sin unidad asignada</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 justify-end pt-1 border-t border-white/[0.05]">
+          {s.costo != null && Number(s.costo) > 0 ? (
+            <span className="inline-flex items-center gap-0.5 font-mono mono-num font-bold text-emerald-400">
+              <DollarSign className="h-3 w-3" />
+              {Number(s.costo).toFixed(0)}
+            </span>
+          ) : null}
           <span className="inline-flex items-center gap-1 text-muted-foreground">
-            <Car className="h-3 w-3" />
-            {s.operador_nombre}
+            <Wallet className="h-3 w-3" />
+            {metodoPago(s.metodo_pago || "efectivo")}
           </span>
-        )}
-        <span className="inline-flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {timeAgo(s.timestamp_creacion)}
-        </span>
-        {tipoPreferido && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-1.5 py-0.5 text-[10px] font-semibold text-foreground/80">
+        </div>
+      </div>
+
+      {tipoPreferido && (
+        <div className="mt-2 flex items-center gap-1 text-[10px]">
+          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-2 py-0.5 font-semibold text-foreground/80">
             <Layers className="h-3 w-3" /> Prefiere {tipoPreferido}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {(s.estado === "pendiente" || s.estado === "ofrecido") && (
         <div className="mt-3 flex items-center gap-2 border-t border-border/80 pt-2.5">
@@ -106,20 +170,13 @@ function ServicioCard({ s, onDespachar, onAsignar, onCancelar, despachando, asig
           </Button>
         </div>
       )}
-
-      {s.estado === "asignado" && s.operador_nombre && (
-        <div className="mt-3 rounded-lg border border-border bg-card/70 px-2.5 py-1.5 text-xs text-muted-foreground">
-          Asignado a <span className="font-semibold text-foreground/90">{s.operador_nombre}</span>
-          {s.operador_placa ? ` · ${s.operador_placa}` : ""}
-        </div>
-      )}
     </div>
   );
 }
 
 // Panel de servicios del dispatcher: pestañas + contadores + despacho.
 // Reutilizado por el Dispatcher (tray) y por el menú de Terminal.
-export function ServiciosPanel({ reloadSignal, variant = "panel", filterOperadorId = null }) {
+export function ServiciosPanel({ reloadSignal, variant = "panel", filterOperadorId = null, operadoresMap = {} }) {
   const [servicios, setServicios] = useState(null); // null = cargando
   const [tab, setTab] = useState("todos");
   const [candidatos, setCandidatos] = useState({});
@@ -141,8 +198,12 @@ export function ServiciosPanel({ reloadSignal, variant = "panel", filterOperador
   useEffect(() => { setTab("todos"); }, [filterOperadorId]);
 
   const contadores = {};
+  const conteoPorOp = {};
   (servicios || []).forEach((s) => {
     contadores[s.estado] = (contadores[s.estado] || 0) + 1;
+    if (s.operador_asignado_id && s.estado !== "cancelado") {
+      conteoPorOp[s.operador_asignado_id] = (conteoPorOp[s.operador_asignado_id] || 0) + 1;
+    }
   });
 
   const filtradosPorTaxi = filterOperadorId
@@ -194,7 +255,7 @@ export function ServiciosPanel({ reloadSignal, variant = "panel", filterOperador
           onClick={() => setTab("todos")}
           className={cn("chip", tab === "todos" && "chip-active")}
         >
-          Todos
+          Todos ({(servicios || []).length})
         </button>
         {TABS.map((e) => (
           <button
@@ -237,6 +298,7 @@ export function ServiciosPanel({ reloadSignal, variant = "panel", filterOperador
           onAsignar={asignar}
           onCancelar={cancelar}
           tiposVehiculo={tiposVehiculo}
+          operadoresMap={operadoresMap}
         />
       ))}
 
@@ -248,26 +310,37 @@ export function ServiciosPanel({ reloadSignal, variant = "panel", filterOperador
                 <Check className="h-3.5 w-3.5" /> Taxis más cercanos
               </div>
               <div className="space-y-1.5">
-                {cands.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between rounded-lg bg-card/80 px-2.5 py-2 text-xs text-foreground/90">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Car className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span className="truncate font-medium">{c.nombre}</span>
-                      <span className="shrink-0 text-muted-foreground">· {c.vehiculo?.numero_economico || c.placa}</span>
-                      <span className="shrink-0 font-mono mono-num text-[11px] text-brand-bright">
-                        {c.distancia_km < 1 ? `${Math.round(c.distancia_km * 1000)} m` : `${c.distancia_km.toFixed(1)} km`}
-                      </span>
+                {cands.map((c) => {
+                  const svHoy = conteoPorOp[c.id] ?? c.servicios_hoy ?? 0;
+                  const sem = semaforoServiciosStyle(svHoy);
+                  return (
+                    <div key={c.id} className="flex items-center justify-between rounded-lg bg-card/80 px-2.5 py-2 text-xs text-foreground/90">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <Car className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate font-medium">{c.nombre}</span>
+                        <span className="shrink-0 text-muted-foreground">· {c.vehiculo?.numero_economico || c.placa}</span>
+                        <span
+                          style={{ background: sem.bg, color: sem.text, borderColor: sem.border }}
+                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] font-black leading-none shadow-sm"
+                          title={`Servicios realizados hoy: ${sem.count}`}
+                        >
+                          {sem.count} hoy
+                        </span>
+                        <span className="shrink-0 font-mono mono-num text-[11px] text-brand-bright">
+                          {c.distancia_km < 1 ? `${Math.round(c.distancia_km * 1000)} m` : `${c.distancia_km.toFixed(1)} km`}
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        loading={asignando === c.id}
+                        onClick={() => asignar(sid, c.id)}
+                        className="px-2.5 text-[11px]"
+                      >
+                        {asignando === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Asignar"}
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      loading={asignando === c.id}
-                      onClick={() => asignar(sid, c.id)}
-                      className="px-2.5 text-[11px]"
-                    >
-                      {asignando === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Asignar"}
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

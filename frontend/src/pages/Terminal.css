@@ -6,6 +6,29 @@
   --terminal-green: #7CFC3C;
   --terminal-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  position: relative;
+  overflow: hidden !important;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+html[data-mode="claro"] .taxi-terminal-shell {
+  --terminal-ink: #0F172A;
+  --terminal-muted: #475569;
+  --terminal-line: #CBD5E1;
+  --terminal-panel: rgba(255, 255, 255, 0.96);
+  --terminal-green: #059669;
+  --terminal-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .taxi-terminal-shell .leaflet-container {
@@ -116,4 +139,31 @@
 
 .th-taxi-popup a.leaflet-popup-close-button:hover {
   color: #FFFFFF !important;
+}
+
+html[data-mode="claro"] .th-taxi-popup .leaflet-popup-content-wrapper {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16) !important;
+}
+
+html[data-mode="claro"] .th-taxi-popup .leaflet-popup-tip {
+  background: #FFFFFF !important;
+}
+
+html[data-mode="claro"] .th-taxi-popup .leaflet-popup-content {
+  color: #0F172A !important;
+}
+
+html[data-mode="claro"] .th-taxi-popup .leaflet-popup-content .text-white {
+  color: #0F172A !important;
+}
+
+html[data-mode="claro"] .th-taxi-popup a.leaflet-popup-close-button {
+  color: #64748B !important;
+}
+
+html[data-mode="claro"] .th-taxi-popup a.leaflet-popup-close-button:hover {
+  color: #0F172A !important;
 }

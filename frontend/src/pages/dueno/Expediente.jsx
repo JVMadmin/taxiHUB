@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { duenoApi, BACKEND_URL } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, resolveDriverAvatar, resolveVehicleImage } from "@/lib/utils";
 import { PALETA, ESTADOS_DOCUMENTO } from "@/design/status";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
@@ -51,22 +51,20 @@ export function Expediente({ conductorId, onBack, liveSignal, api = duenoApi, ba
       </button>
 
       {/* Cabecera: foto + identidad */}
-      <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
-        {conductor.foto_url ? (
-          <img src={`${BACKEND_URL}${conductor.foto_url}`} alt={conductor.nombre}
-               className="h-16 w-16 shrink-0 rounded-2xl border border-border object-cover" />
-        ) : (
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand/15">
-            <User className="h-7 w-7 text-brand-bright" />
-          </div>
-        )}
+      <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <img
+          src={resolveDriverAvatar(conductor.foto_url, conductor.id)}
+          alt={conductor.nombre}
+          className="h-16 w-16 shrink-0 rounded-2xl border-2 border-brand/70 object-cover shadow-md"
+        />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-extrabold text-foreground" data-testid="expediente-nombre">{conductor.nombre}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {conductor.telefono || "—"}</span>
+            <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3 text-brand-bright" /> {conductor.telefono || "—"}</span>
             {unidad && (
-              <span className="inline-flex items-center gap-1">
-                <Car className="h-3 w-3" /> Unidad {unidad.numero_economico}
+              <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
+                <img src={resolveVehicleImage(unidad)} alt="" className="h-4 w-7 object-contain" />
+                Unidad #{unidad.numero_economico}
                 {unidad.marca && ` · ${[unidad.marca, unidad.modelo].filter(Boolean).join(" ")}`}
               </span>
             )}
