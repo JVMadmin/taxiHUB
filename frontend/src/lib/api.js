@@ -14,8 +14,15 @@ const storedBackendUrl =
     ? ""
     : rawStoredBackend;
 
+const isNativePlatform =
+  typeof window !== "undefined" &&
+  (Boolean(window.Capacitor?.isNativePlatform?.()) ||
+    window.location.protocol === "capacitor:" ||
+    (window.location.protocol === "https:" && window.location.hostname === "localhost"));
+
 const isLocalDevHost =
   typeof window !== "undefined" &&
+  !isNativePlatform &&
   (window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1" ||
     window.location.hostname === "0.0.0.0");
@@ -24,6 +31,8 @@ export const BACKEND_URL = storedBackendUrl
   ? storedBackendUrl
   : process.env.REACT_APP_BACKEND_URL !== undefined && process.env.REACT_APP_BACKEND_URL !== ""
   ? process.env.REACT_APP_BACKEND_URL
+  : isNativePlatform
+  ? "https://taxihub.cloud"
   : isLocalDevHost && window.location.port !== "8080"
   ? `http://${window.location.hostname || "127.0.0.1"}:8080`
   : "";

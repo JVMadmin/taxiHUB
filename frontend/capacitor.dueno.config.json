@@ -1,6 +1,6 @@
 {
-  "appId": "com.taxihub.dueno",
-  "appName": "TaxiHub Socio Dueño",
+  "appId": "com.taxihub.socio",
+  "appName": "TaxiHUB Socios",
   "webDir": "build",
   "bundledWebRuntime": false,
   "server": {

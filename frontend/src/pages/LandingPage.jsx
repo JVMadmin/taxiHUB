@@ -442,6 +442,17 @@ export default function LandingPage() {
                   <div className="mt-0.5 text-[10px] text-[#9CA0AA]">Lectura de viajes</div>
                 </div>
               </div>
+
+              <div className="mt-5 flex flex-wrap gap-2.5">
+                <a
+                  href="/downloads/taxiHUB-operador-debug.apk"
+                  download
+                  data-testid="download-apk-operador"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-400 transition-colors hover:bg-emerald-500/25"
+                >
+                  📥 Descargar APK Operador (14.9 MB)
+                </a>
+              </div>
             </div>
           </motion.div>
 
@@ -482,6 +493,17 @@ export default function LandingPage() {
                   Panel Dev →
                 </button>
               </div>
+
+              <div className="mt-5 flex flex-wrap gap-2.5">
+                <a
+                  href="/downloads/taxiHUB-socio-debug.apk"
+                  download
+                  data-testid="download-apk-socio"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-2 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/25"
+                >
+                  📥 Descargar APK Socios (12.3 MB)
+                </a>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -503,6 +525,14 @@ export default function LandingPage() {
           </div>
 
           <div className="flex flex-wrap gap-3 text-xs font-semibold">
+            <a
+              href="/downloads/TaxiHub-Setup-Instalador.exe"
+              download
+              data-testid="download-windows-central"
+              className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/40 bg-cyan-500/15 px-4 py-2 text-cyan-300 transition-colors hover:bg-cyan-500/25"
+            >
+              🖥️ App Windows Central (Instalador)
+            </a>
             <button
               type="button"
               onClick={() => navigate("/terminal/login")}

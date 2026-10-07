@@ -10,67 +10,68 @@ namespace TaxiHub.Central
 {
     public class TaxiHubCentralApp : ApplicationContext
     {
+        private const string CentralLoginUrl = "https://taxihub.cloud/terminal/login?app=central";
+        private const string CloudHealthUrl = "https://taxihub.cloud/api/config/sitio";
         private NotifyIcon trayIcon;
-        private string projectRoot;
 
         public TaxiHubCentralApp()
         {
-            projectRoot = AppDomain.CurrentDomain.BaseDirectory;
-            if (!File.Exists(Path.Combine(projectRoot, "backend", "server.py")))
+            try
             {
-                DirectoryInfo pInfo = Directory.GetParent(projectRoot);
-                string parent = pInfo != null ? pInfo.FullName : null;
-                if (parent != null && File.Exists(Path.Combine(parent, "backend", "server.py")))
-                {
-                    projectRoot = parent;
-                }
+                // Habilitar TLS 1.2 / TLS 1.3 para comunicaciones seguras HTTPS
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | (SecurityProtocolType)12288 | SecurityProtocolType.Tls12;
             }
+            catch { }
 
             InitTray();
-            EnsureServicesRunning();
+            VerificarConexionCloud();
             OpenTerminal();
         }
 
         private void InitTray()
         {
             ContextMenu menu = new ContextMenu();
-            menu.MenuItems.Add(new MenuItem("🖥️ Abrir Terminal de Despacho", (s, e) => OpenTerminal()));
-            menu.MenuItems.Add(new MenuItem("🚖 Abrir App de Operador (3006)", (s, e) => OpenOperador()));
-            menu.MenuItems.Add(new MenuItem("⚙️ Abrir Configurador de Central", (s, e) => OpenConfigurador()));
+            menu.MenuItems.Add(new MenuItem("🖥️ Abrir Terminal de Central", (s, e) => OpenTerminal()));
+            menu.MenuItems.Add(new MenuItem("🌐 Probar Conexión Cloud (taxihub.cloud)", (s, e) => ProbarConexionManualmente()));
             menu.MenuItems.Add("-");
-            menu.MenuItems.Add(new MenuItem("🔄 Reiniciar Servicios", (s, e) => RestartServices()));
-            menu.MenuItems.Add(new MenuItem("❌ Salir de TaxiHUB", (s, e) => ExitApp()));
+            menu.MenuItems.Add(new MenuItem("❌ Salir de TaxiHUB Central", (s, e) => ExitApp()));
 
             trayIcon = new NotifyIcon
             {
                 Icon = SystemIcons.Application,
                 ContextMenu = menu,
-                Text = "TaxiHUB Central Satelital (En ejecución)",
+                Text = "TaxiHUB Central — Conectado a taxihub.cloud",
                 Visible = true
             };
             trayIcon.DoubleClick += (s, e) => OpenTerminal();
         }
 
-        private void EnsureServicesRunning()
+        private void VerificarConexionCloud()
         {
-            bool backendOk = CheckUrl("http://localhost:8080/api/");
-            bool terminalOk = CheckUrl("http://localhost:3005");
-
-            if (!backendOk || !terminalOk)
+            ThreadPool.QueueUserWorkItem((state) =>
             {
-                trayIcon.ShowBalloonTip(3000, "TaxiHUB Central", "Iniciando servicios en segundo plano...", ToolTipIcon.Info);
-                string launcherBat = Path.Combine(projectRoot, "windows-native", "run_services.bat");
-                if (File.Exists(launcherBat))
+                bool ok = CheckUrl(CloudHealthUrl);
+                if (ok)
                 {
-                    ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", "/c \"" + launcherBat + "\"")
-                    {
-                        WorkingDirectory = projectRoot,
-                        CreateNoWindow = true,
-                        UseShellExecute = false
-                    };
-                    Process.Start(psi);
-                    Thread.Sleep(2500);
+                    trayIcon.ShowBalloonTip(3000, "TaxiHUB Central", "Conectado a taxihub.cloud. Acceso exclusivo para cuentas de Central.", ToolTipIcon.Info);
                 }
+                else
+                {
+                    trayIcon.ShowBalloonTip(4000, "TaxiHUB Central", "Aviso: No se pudo verificar la conexión con taxihub.cloud. Revisa tu conexión a Internet.", ToolTipIcon.Warning);
+                }
+            });
+        }
+
+        private void ProbarConexionManualmente()
+        {
+            bool ok = CheckUrl(CloudHealthUrl);
+            if (ok)
+            {
+                MessageBox.Show("Conexión exitosa con el servidor en la nube (https://taxihub.cloud).\nServicios de Central y WebSocket operativos.", "TaxiHUB Central — Estado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("No se pudo contactar a https://taxihub.cloud.\nPor favor verifica tu conexión a Internet.", "TaxiHUB Central — Error de Red", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -79,7 +80,9 @@ namespace TaxiHub.Central
             try
             {
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-                req.Timeout = 1000;
+                req.Timeout = 4000;
+                req.Method = "GET";
+                req.UserAgent = "TaxiHubCentralWindows/1.0";
                 using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                 {
                     return resp.StatusCode == HttpStatusCode.OK;
@@ -90,26 +93,7 @@ namespace TaxiHub.Central
 
         private void OpenTerminal()
         {
-            LaunchAppMode("http://localhost:3005/terminal/login");
-        }
-
-        private void OpenOperador()
-        {
-            LaunchAppMode("http://localhost:3006/login");
-        }
-
-        private void OpenConfigurador()
-        {
-            string cfgExe = Path.Combine(projectRoot, "TaxiHub-Configurador.exe");
-            if (File.Exists(cfgExe))
-            {
-                Process.Start(cfgExe);
-            }
-            else
-            {
-                string innerExe = Path.Combine(projectRoot, "windows-native", "TaxiHub-Configurador.exe");
-                if (File.Exists(innerExe)) Process.Start(innerExe);
-            }
+            LaunchAppMode(CentralLoginUrl);
         }
 
         private void LaunchAppMode(string url)
@@ -129,21 +113,6 @@ namespace TaxiHub.Central
                     Process.Start(url);
                 }
             }
-        }
-
-        private void RestartServices()
-        {
-            trayIcon.ShowBalloonTip(2000, "TaxiHUB", "Reiniciando servicios...", ToolTipIcon.Info);
-            try
-            {
-                Process.Start(new ProcessStartInfo("cmd.exe", "/c for /f \"tokens=5\" %a in ('netstat -aon ^| find \":8080\" ^| find \"LISTENING\"') do taskkill /f /pid %a") { CreateNoWindow = true, UseShellExecute = false });
-                Process.Start(new ProcessStartInfo("cmd.exe", "/c for /f \"tokens=5\" %a in ('netstat -aon ^| find \":3005\" ^| find \"LISTENING\"') do taskkill /f /pid %a") { CreateNoWindow = true, UseShellExecute = false });
-                Process.Start(new ProcessStartInfo("cmd.exe", "/c for /f \"tokens=5\" %a in ('netstat -aon ^| find \":3006\" ^| find \"LISTENING\"') do taskkill /f /pid %a") { CreateNoWindow = true, UseShellExecute = false });
-            }
-            catch { }
-            Thread.Sleep(1000);
-            EnsureServicesRunning();
-            trayIcon.ShowBalloonTip(2000, "TaxiHUB", "Servicios reiniciados correctamente.", ToolTipIcon.Info);
         }
 
         private void ExitApp()

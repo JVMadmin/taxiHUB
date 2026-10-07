@@ -22,7 +22,13 @@ export const logoutTerminal = () => {
   localStorage.removeItem("term_data");
 };
 
-export default function TerminalLogin() {
+export default function TerminalLogin({ isCentralOnly = false }) {
+  const isCentralMode =
+    isCentralOnly ||
+    (typeof window !== "undefined" &&
+      (window.__TAXIHUB_APP_MODE__ === "central" ||
+        new URLSearchParams(window.location.search).get("app") === "central"));
+
   const [modo, setModo] = useState("login"); // login | registro
   const [nombre, setNombre] = useState("");
   const [usuario, setUsuario] = useState("");
@@ -43,7 +49,7 @@ export default function TerminalLogin() {
         const { data } = await api.post("/terminal/login", { usuario, contrasena });
         saveTerminalAuth(data.token, data.usuario);
         toast.success(`Bienvenida, ${data.usuario.nombre}`);
-        navigate("/");
+        navigate("/terminal");
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "No se pudo continuar");
@@ -64,14 +70,18 @@ export default function TerminalLogin() {
           <div>
           <div className="mb-6 flex flex-col items-center gap-2 text-center">
             <BrandMark size="lg" />
-            <BrandWordmark sub="Centro de operaciones" className="mt-1" />
+            <BrandWordmark sub={isCentralMode ? "Terminal de Central Satelital" : "Centro de operaciones"} className="mt-1" />
             <p className="text-sm text-[#9CA0AA]">
-              {modo === "login" ? "Acceso de operadora" : "Nueva cuenta de operadora"}
+              {isCentralMode
+                ? "Acceso exclusivo para operadoras de Central"
+                : modo === "login"
+                ? "Acceso de operadora"
+                : "Nueva cuenta de operadora"}
             </p>
           </div>
 
           <div className="grid gap-4">
-            {modo === "registro" && (
+            {!isCentralMode && modo === "registro" && (
               <div className="grid gap-1.5">
                 <Label className="text-[#F5F5F7]/90 text-xs font-semibold">Nombre</Label>
                 <Input data-testid="term-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)}
@@ -80,7 +90,7 @@ export default function TerminalLogin() {
               </div>
             )}
             <div className="grid gap-1.5">
-              <Label className="text-[#F5F5F7]/90 text-xs font-semibold">Usuario</Label>
+              <Label className="text-[#F5F5F7]/90 text-xs font-semibold">Usuario de Central</Label>
               <Input data-testid="term-usuario" value={usuario} onChange={(e) => setUsuario(e.target.value)}
                 placeholder="central" autoCapitalize="none"
                 className="input-inset border-white/[0.08] bg-[#1B1E24] text-[#F5F5F7]" />
@@ -94,22 +104,28 @@ export default function TerminalLogin() {
             <Button data-testid="term-submit" type="submit" loading={loading}
               className="mt-2 h-12 text-base font-semibold bg-[#4F5DFF] hover:bg-[#3D49D6] text-white shadow-[0_4px_16px_rgba(79,93,255,0.35)]">
               {modo === "login" ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-              {loading ? "..." : modo === "login" ? "Entrar" : "Crear cuenta"}
+              {loading ? "..." : modo === "login" ? "Entrar a Central" : "Crear cuenta"}
             </Button>
-            <button type="button" onClick={() => setModo(modo === "login" ? "registro" : "login")}
-              data-testid="term-toggle-modo"
-              className="text-center text-xs text-[#9CA0AA] hover:text-[#F5F5F7] transition-colors">
-              {modo === "login" ? "Crear una nueva cuenta de operadora" : "Ya tengo cuenta, iniciar sesión"}
-            </button>
-            <a href="/dev" data-testid="dev-link" className="text-center text-[11px] text-[#9CA0AA]/70 hover:text-[#9CA0AA] transition-colors">Panel de desarrollador</a>
+            {!isCentralMode && (
+              <>
+                <button type="button" onClick={() => setModo(modo === "login" ? "registro" : "login")}
+                  data-testid="term-toggle-modo"
+                  className="text-center text-xs text-[#9CA0AA] hover:text-[#F5F5F7] transition-colors">
+                  {modo === "login" ? "Crear una nueva cuenta de operadora" : "Ya tengo cuenta, iniciar sesión"}
+                </button>
+                <a href="/dev" data-testid="dev-link" className="text-center text-[11px] text-[#9CA0AA]/70 hover:text-[#9CA0AA] transition-colors">Panel de desarrollador</a>
+              </>
+            )}
           </div>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5 text-xs text-[#9CA0AA]">
-            <a href="/login" className="hover:text-[#F5F5F7] transition-colors">App del operador</a>
-            <span>·</span>
-            <a href="/dueno/login" className="hover:text-[#F5F5F7] transition-colors">Panel Dueño</a>
-            <span>·</span>
-            <a href="/web" data-testid="web-landing-link" className="text-[#10B981] hover:underline transition-colors">taxihub.cloud</a>
-          </div>
+          {!isCentralMode && (
+            <div className="mt-5 flex flex-wrap justify-center gap-2.5 text-xs text-[#9CA0AA]">
+              <a href="/login" className="hover:text-[#F5F5F7] transition-colors">App del operador</a>
+              <span>·</span>
+              <a href="/dueno/login" className="hover:text-[#F5F5F7] transition-colors">Panel Dueño</a>
+              <span>·</span>
+              <a href="/web" data-testid="web-landing-link" className="text-[#10B981] hover:underline transition-colors">taxihub.cloud</a>
+            </div>
+          )}
           </div>
         </form>
       </div>

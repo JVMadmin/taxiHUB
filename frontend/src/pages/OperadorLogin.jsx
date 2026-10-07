@@ -20,7 +20,7 @@ export default function OperadorLogin() {
   const [loading, setLoading] = useState(false);
   const [showServerCfg, setShowServerCfg] = useState(false);
   const [serverUrl, setServerUrl] = useState(
-    () => (typeof window !== "undefined" && localStorage.getItem("th_backend_url")) || BACKEND_URL || "http://127.0.0.1:8080"
+    () => (typeof window !== "undefined" && localStorage.getItem("th_backend_url")) || BACKEND_URL || "https://taxihub.cloud"
   );
   const navigate = useNavigate();
 
@@ -139,7 +139,7 @@ export default function OperadorLogin() {
                     <input
                       value={serverUrl}
                       onChange={(e) => setServerUrl(e.target.value)}
-                      placeholder="http://192.168.1.X:8080"
+                      placeholder="https://taxihub.cloud"
                       className="h-8 flex-1 rounded-lg border border-white/10 bg-[#121417] px-2 font-mono text-xs text-white"
                     />
                     <button

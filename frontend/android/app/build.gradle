@@ -4,7 +4,7 @@ android {
     namespace = "com.taxihub.operador"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.taxihub.operador"
+        applicationId project.hasProperty('appId') ? project.property('appId') : "com.taxihub.operador"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

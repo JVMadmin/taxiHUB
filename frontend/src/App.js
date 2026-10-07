@@ -21,12 +21,28 @@ function App() {
     (window.location.hostname === "taxihub.cloud" ||
       window.location.hostname === "www.taxihub.cloud");
 
+  const searchParams =
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const queryApp = searchParams ? searchParams.get("app") : null;
+  const windowAppMode =
+    typeof window !== "undefined" ? window.__TAXIHUB_APP_MODE__ : null;
+  const appMode =
+    process.env.REACT_APP_APP_MODE || windowAppMode || queryApp || "";
+
   const isOnlyOperadorApp =
+    appMode === "operador" ||
     process.env.REACT_APP_ONLY_OPERADOR === "true" ||
-    (typeof window !== "undefined" &&
-      (window.__TAXIHUB_APP_MODE__ === "operador" ||
-        window.location.port === "3006" ||
-        Boolean(window.Capacitor?.isNativePlatform?.())));
+    (typeof window !== "undefined" && window.location.port === "3006");
+
+  const isOnlySocioApp =
+    appMode === "socio" ||
+    appMode === "dueno" ||
+    process.env.REACT_APP_APP_MODE === "socio" ||
+    process.env.REACT_APP_APP_MODE === "dueno";
+
+  const isOnlyCentralApp =
+    appMode === "central" ||
+    process.env.REACT_APP_APP_MODE === "central";
 
   useEffect(() => {
     applyTheme(getTheme());
@@ -46,6 +62,22 @@ function App() {
               <Route path="/operador" element={<OperadorApp />} />
               <Route path="/" element={<OperadorApp />} />
               <Route path="*" element={<Navigate to="/operador" replace />} />
+            </Routes>
+          ) : isOnlySocioApp ? (
+            <Routes>
+              <Route path="/login" element={<DuenoLogin />} />
+              <Route path="/dueno/login" element={<DuenoLogin />} />
+              <Route path="/dueno" element={<DuenoApp />} />
+              <Route path="/" element={<DuenoApp />} />
+              <Route path="*" element={<Navigate to="/dueno" replace />} />
+            </Routes>
+          ) : isOnlyCentralApp ? (
+            <Routes>
+              <Route path="/login" element={<TerminalLogin isCentralOnly={true} />} />
+              <Route path="/terminal/login" element={<TerminalLogin isCentralOnly={true} />} />
+              <Route path="/terminal" element={<Terminal />} />
+              <Route path="/" element={<Terminal />} />
+              <Route path="*" element={<Navigate to="/terminal" replace />} />
             </Routes>
           ) : (
             <Routes>

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">taxiHUB Operador</string>
-    <string name="title_activity_main">taxiHUB Operador</string>
-    <string name="package_name">com.taxihub.operador</string>
-    <string name="custom_url_scheme">com.taxihub.operador</string>
+    <string name="app_name">TaxiHUB Socios</string>
+    <string name="title_activity_main">TaxiHUB Socios</string>
+    <string name="package_name">com.taxihub.socio</string>
+    <string name="custom_url_scheme">com.taxihub.socio</string>
 </resources>
