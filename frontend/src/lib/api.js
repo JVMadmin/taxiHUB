@@ -1,7 +1,18 @@
 import axios from "axios";
 
-const storedBackendUrl =
+const rawStoredBackend =
   typeof window !== "undefined" ? (localStorage.getItem("th_backend_url") || "").trim().replace(/\/+$/, "") : "";
+
+if (typeof window !== "undefined" && window.location.protocol === "https:" && rawStoredBackend.startsWith("http://")) {
+  try {
+    localStorage.removeItem("th_backend_url");
+  } catch (_) {}
+}
+
+const storedBackendUrl =
+  typeof window !== "undefined" && window.location.protocol === "https:" && rawStoredBackend.startsWith("http://")
+    ? ""
+    : rawStoredBackend;
 
 const isLocalDevHost =
   typeof window !== "undefined" &&
