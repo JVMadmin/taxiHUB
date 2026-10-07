@@ -3,11 +3,17 @@ import axios from "axios";
 const storedBackendUrl =
   typeof window !== "undefined" ? (localStorage.getItem("th_backend_url") || "").trim().replace(/\/+$/, "") : "";
 
+const isLocalDevHost =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "0.0.0.0");
+
 export const BACKEND_URL = storedBackendUrl
   ? storedBackendUrl
   : process.env.REACT_APP_BACKEND_URL !== undefined && process.env.REACT_APP_BACKEND_URL !== ""
   ? process.env.REACT_APP_BACKEND_URL
-  : typeof window !== "undefined" && window.location.port !== "8080"
+  : isLocalDevHost && window.location.port !== "8080"
   ? `http://${window.location.hostname || "127.0.0.1"}:8080`
   : "";
 export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
