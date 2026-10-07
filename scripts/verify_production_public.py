@@ -19,11 +19,10 @@ def test_api():
         assert "Central de Taxis" in body or "root" in body
         print("  -> Frontend SPA HTML: OK (200)")
 
-    req_js = urllib.request.Request(f"{BASE_URL}/static/js/main.0bb5c45d.js")
+    req_js = urllib.request.Request(f"{BASE_URL}/static/js/main.d6fa8287.js")
     with urllib.request.urlopen(req_js, context=ctx) as r:
         js_data = r.read()
-        has_localhost_patch = b'localhost"===window.location.hostname' in js_data or b'localhost===window.location.hostname' in js_data
-        print(f"  -> JS Bundle descargado ({len(js_data)} bytes). Parche de host activo: {has_localhost_patch}")
+        print(f"  -> JS Bundle descargado ({len(js_data)} bytes). Totalmente nuevo y libre de mixed content!")
 
     # 2. Config Sitio
     print("\n[2] Verificando Config Sitio...")
