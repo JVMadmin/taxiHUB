@@ -1,9 +1,9 @@
 # Etapa 1: Compilación de la aplicación React SPA
-FROM node:20-slim AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
 
 COPY package.json yarn.lock* ./
-RUN yarn install --network-timeout 100000
+RUN yarn install --ignore-engines --network-timeout 100000
 
 COPY . .
 ENV GENERATE_SOURCEMAP=false
