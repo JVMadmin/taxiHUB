@@ -105,3 +105,4 @@ test_reports/
 frontend/build-operador/
 whatsapp-bridge/
 motion-taxihub/
+.agents/
