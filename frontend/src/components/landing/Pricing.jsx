@@ -1,4 +1,4 @@
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Check } from "lucide-react";
 import { LANDING } from "@/constants/testIds";
 import { Eyebrow, Reveal } from "./motion";
 
@@ -13,88 +13,128 @@ export function Pricing({ units, setUnits }) {
     <section id="precio" aria-labelledby="precio-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <div className="grid items-start gap-10 lg:grid-cols-12">
         <Reveal className="lg:col-span-5">
-          <Eyebrow>Precio</Eyebrow>
-          <h2 id="precio-title" className="font-display mt-4 text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-            Pagas por cada unidad que opera.
+          <Eyebrow>Tarifa transparente</Eyebrow>
+          <h2 id="precio-title" className="font-display mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            Solo pagas por unidad activa.
           </h2>
-          <p className="mt-4 text-[#B4B8C2]">
-            Una tarifa mensual por unidad y un único pago de implementación para dejar tu central operando.
-            Sin costo por mensaje de WhatsApp.
+          <p className="mt-3 text-base leading-relaxed text-slate-600">
+            Un precio plano y honesto diseñado para cooperativas, agrupaciones y sitios de radio taxi en México.
           </p>
+
+          <div className="mt-6 space-y-3">
+            {[
+              "Puente QR de WhatsApp oficial sin comisiones por mensaje",
+              "Soporte para terminales Windows ilimitadas en tu central",
+              "App móvil para todos los conductores y socios flotilleros",
+              "Cartografía local de tu ciudad y configuración de puntos calientes",
+            ].map((feature, idx) => (
+              <div key={idx} className="flex items-start gap-2.5 text-sm text-slate-700">
+                <Check className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                <span>{feature}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900">
+            <strong className="font-bold">Pago único de implementación inicial:</strong> Incluye la carga personalizada del mapa de tu ciudad, el alta de tus sitios y colonias con tarifas oficiales, y la capacitación directa a tus despachadoras.
+          </div>
         </Reveal>
 
+        {/* Tarjeta Calculadora Diurna */}
         <Reveal delay={0.1} className="lg:col-span-7">
-          <div data-testid={LANDING.priceCard} className="rounded-[1.75rem] border border-emerald-500/25 bg-emerald-500/[0.04] p-2">
-            <div className="rounded-[1.4rem] bg-[#0B0D10] p-6 sm:p-8">
-              <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                <span className="font-mono text-5xl font-semibold text-white sm:text-6xl">$99</span>
-                <span className="pb-2 text-lg text-[#B4B8C2]">MXN al mes <span className="text-white">por unidad</span></span>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-white/10 bg-[#12151B] p-4 sm:p-5">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <label htmlFor="precio-unidades" className="text-sm font-semibold text-white">Unidades de tu central</label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      aria-label="Quitar una unidad"
-                      onClick={() => setUnits(clamp(units - 1))}
-                      className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:bg-white/[0.07]"
-                    >
-                      <Minus className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                    <input
-                      id="precio-unidades"
-                      data-testid={LANDING.priceUnits}
-                      type="number"
-                      inputMode="numeric"
-                      min={1}
-                      max={999}
-                      value={units}
-                      onChange={(e) => setUnits(clamp(e.target.value))}
-                      className="h-11 w-20 rounded-xl border border-white/15 bg-[#0B0D10] text-center font-mono text-lg font-semibold text-white"
-                    />
-                    <button
-                      type="button"
-                      aria-label="Agregar una unidad"
-                      onClick={() => setUnits(clamp(units + 1))}
-                      className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:bg-white/[0.07]"
-                    >
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min={1}
-                  max={200}
-                  value={Math.min(units, 200)}
-                  onChange={(e) => setUnits(clamp(e.target.value))}
-                  aria-label="Ajustar número de unidades"
-                  className="mt-4 h-2 w-full cursor-pointer accent-emerald-500"
-                />
-                <div className="mt-5 flex flex-wrap items-baseline justify-between gap-2 border-t border-white/10 pt-4" aria-live="polite">
-                  <span className="text-sm text-[#B4B8C2]">{fmt(units)} {units === 1 ? "unidad" : "unidades"} × $99 =</span>
-                  <span data-testid={LANDING.priceTotal} className="font-mono text-2xl font-semibold text-emerald-300">${fmt(total)} MXN <span className="text-sm font-normal text-[#B4B8C2]">al mes</span></span>
+          <div
+            data-testid={LANDING.priceCard}
+            className="rounded-3xl border-2 border-emerald-500/30 bg-white p-7 sm:p-9 shadow-2xl shadow-emerald-500/10"
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-100 pb-6">
+              <div>
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  Plan Central Oficial
+                </span>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="font-display text-4xl sm:text-5xl font-extrabold text-slate-900">
+                    $99
+                  </span>
+                  <span className="font-mono text-sm font-semibold text-slate-500">
+                    MXN / mes por unidad
+                  </span>
                 </div>
               </div>
-
-              <div className="mt-5 rounded-2xl border border-dashed border-white/15 p-4 sm:p-5">
-                <div className="text-sm font-bold text-white">Pago único de implementación</div>
-                <p className="mt-1 text-sm text-[#B4B8C2]">
-                  Se cobra una sola vez, al arrancar. Te confirmamos el monto al solicitar tu demo.
-                </p>
-              </div>
-
-              <a
-                href="#contacto"
-                onClick={(e) => { e.preventDefault(); document.getElementById("contacto")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }}
-                className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center rounded-full bg-emerald-500 px-7 text-base font-bold text-[#04130D] transition-colors duration-200 hover:bg-emerald-400 sm:w-auto"
-              >
-                Solicitar demo con {fmt(units)} {units === 1 ? "unidad" : "unidades"}
-              </a>
-              <p className="mt-3 text-xs text-[#9CA0AA]">Precios en pesos mexicanos (MXN).</p>
             </div>
+
+            {/* Selector de Unidades */}
+            <div className="mt-7">
+              <label htmlFor="units-input" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                Calcula el costo para tu flota:
+              </label>
+
+              <div className="mt-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setUnits((u) => clamp(u - 5))}
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                  aria-label="Restar 5 unidades"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+
+                <div className="flex-1">
+                  <input
+                    id="units-input"
+                    type="number"
+                    min="1"
+                    max="999"
+                    value={units}
+                    onChange={(e) => setUnits(clamp(e.target.value))}
+                    data-testid={LANDING.priceUnits}
+                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-center font-mono text-2xl font-extrabold text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setUnits((u) => clamp(u + 5))}
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                  aria-label="Sumar 5 unidades"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Slider interactivo */}
+              <input
+                type="range"
+                min="5"
+                max="100"
+                step="1"
+                value={units}
+                onChange={(e) => setUnits(Number(e.target.value))}
+                className="mt-4 w-full accent-emerald-600"
+              />
+            </div>
+
+            {/* Total estimado */}
+            <div
+              data-testid={LANDING.priceTotal}
+              className="mt-7 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 flex items-center justify-between"
+            >
+              <div>
+                <span className="text-xs font-semibold text-emerald-900 block">Total mensual estimado:</span>
+                <span className="font-mono text-xs text-slate-500">{units} unidades activas</span>
+              </div>
+              <div className="text-right">
+                <div className="font-display font-mono text-3xl sm:text-4xl font-extrabold text-emerald-700">
+                  ${fmt(total)} <span className="text-sm font-semibold text-emerald-900">MXN</span>
+                </div>
+              </div>
+            </div>
+
+            <a
+              href="#contacto"
+              className="mt-6 block w-full rounded-xl bg-emerald-600 py-3.5 text-center text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]"
+            >
+              Solicitar cotización e instalación
+            </a>
           </div>
         </Reveal>
       </div>

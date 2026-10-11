@@ -1,88 +1,93 @@
-import { useNavigate } from "react-router-dom";
-import { Download, Monitor, Smartphone, Building2, ExternalLink } from "lucide-react";
+import { Download, Monitor, Smartphone, ShieldCheck } from "lucide-react";
 import { LANDING } from "@/constants/testIds";
 import { Eyebrow, Reveal } from "./motion";
 
 const APPS = [
   {
     icon: Monitor,
-    title: "Central para Windows",
-    note: "Acceso exclusivo de operadoras; reconoce el sitio al iniciar sesión.",
-    size: "TaxiHub-Central.exe · < 1 MB",
+    title: "Terminal Central Windows",
+    sub: "Para operadoras y despachadoras",
+    tag: "Instalador nativo (.exe)",
+    ver: "v4.2.0 · 64-bit",
     href: "/downloads/TaxiHub-Central.exe",
-    testid: LANDING.downloadWindows,
-    cta: "Descargar para Windows",
+    tid: LANDING.downloadWindows,
+    color: "emerald",
   },
   {
     icon: Smartphone,
-    title: "App del Operador",
-    note: "Para choferes. Android (APK de instalación directa).",
-    size: "APK · ≈ 14 MB",
+    title: "App Operador Android",
+    sub: "GPS continuo y Voz IA",
+    tag: "Paquete APK (14.9 MB)",
+    ver: "Android 8.0+",
     href: "/downloads/taxiHUB-operador-debug.apk",
-    testid: LANDING.downloadApkOperador,
-    cta: "Descargar APK Operador",
+    tid: LANDING.downloadApkOperador,
+    color: "sky",
   },
   {
-    icon: Building2,
-    title: "App de Socios",
-    note: "Para dueños de flota. Android (APK de instalación directa).",
-    size: "APK · ≈ 12 MB",
+    icon: ShieldCheck,
+    title: "App Socio & Concesionario",
+    sub: "Liquidación de cuotas diarias",
+    tag: "Paquete APK (12.3 MB)",
+    ver: "Android 8.0+",
     href: "/downloads/taxiHUB-socio-debug.apk",
-    testid: LANDING.downloadApkSocio,
-    cta: "Descargar APK Socios",
+    tid: LANDING.downloadApkSocio,
+    color: "amber",
   },
 ];
 
 export function Apps() {
-  const navigate = useNavigate();
   return (
-    <section id="apps" aria-labelledby="apps-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <Reveal className="max-w-2xl">
-        <Eyebrow>Apps</Eyebrow>
-        <h2 id="apps-title" className="font-display mt-4 text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-          Instala la app que le toca a cada quien.
-        </h2>
-        <p className="mt-4 text-[#B4B8C2]">
-          Cada aplicación muestra únicamente el inicio de sesión de su rol y apunta a taxihub.cloud.
-        </p>
-      </Reveal>
+    <section id="apps" aria-labelledby="apps-title" className="border-t border-slate-200/80 bg-slate-50/60 py-20 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <Reveal className="max-w-2xl">
+          <Eyebrow>Descargas directas</Eyebrow>
+          <h2 id="apps-title" className="font-display mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            Instala las aplicaciones oficiales en tu equipo.
+          </h2>
+          <p className="mt-3 text-base text-slate-600">
+            Binarios oficiales listos para producción. Sin intermediarios ni tiendas de aplicaciones requeridas.
+          </p>
+        </Reveal>
 
-      <div className="mt-10 grid gap-5 md:grid-cols-3">
-        {APPS.map((a, i) => {
-          const Icon = a.icon;
-          return (
-            <Reveal key={a.title} delay={i * 0.06} className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-2">
-              <div className="flex h-full flex-col rounded-[1.4rem] bg-[#0B0D10] p-6">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <h3 className="font-display mt-5 text-xl font-bold text-white">{a.title}</h3>
-                <p className="mt-2 flex-1 text-[15px] text-[#B4B8C2]">{a.note}</p>
-                <p className="mt-4 font-mono text-xs text-[#9CA0AA]">{a.size}</p>
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {APPS.map((app, i) => {
+            const Icon = app.icon;
+            return (
+              <Reveal
+                key={app.title}
+                delay={i * 0.08}
+                className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-7 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+                      <Icon className="h-6 w-6 text-emerald-600" aria-hidden="true" />
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-600">
+                      {app.ver}
+                    </span>
+                  </div>
+                  <h3 className="font-display mt-5 text-xl font-bold text-slate-900">{app.title}</h3>
+                  <p className="mt-1 text-sm text-slate-500">{app.sub}</p>
+                  <div className="mt-4 inline-block rounded-md bg-emerald-50 px-2.5 py-1 font-mono text-xs font-semibold text-emerald-800 border border-emerald-200">
+                    {app.tag}
+                  </div>
+                </div>
+
                 <a
-                  href={a.href}
+                  href={app.href}
                   download
-                  data-testid={a.testid}
-                  className="mt-4 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-emerald-500 px-5 text-sm font-bold text-[#04130D] transition-colors duration-200 hover:bg-emerald-400"
+                  data-testid={app.tid}
+                  className="mt-8 flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-xs font-bold text-white shadow-xs transition-colors hover:bg-slate-800 active:scale-[0.98]"
                 >
                   <Download className="h-4 w-4" aria-hidden="true" />
-                  {a.cta}
+                  <span>Descargar archivo</span>
                 </a>
-              </div>
-            </Reveal>
-          );
-        })}
+              </Reveal>
+            );
+          })}
+        </div>
       </div>
-
-      <Reveal className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#B4B8C2]">
-        <span>¿Prefieres el navegador?</span>
-        {[["Terminal de Central", "/terminal"], ["App del Operador", "/login"], ["Panel de Socio", "/dueno/login"]].map(([label, to]) => (
-          <button key={to} type="button" onClick={() => navigate(to)} className="inline-flex min-h-[44px] items-center gap-1.5 font-semibold text-white underline decoration-white/25 underline-offset-4 hover:decoration-emerald-400">
-            {label}
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-        ))}
-      </Reveal>
     </section>
   );
 }

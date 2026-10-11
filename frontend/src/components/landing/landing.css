@@ -1,46 +1,84 @@
 @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
-/* Web pública taxihub.cloud — ver design-system/taxihub/MASTER.md */
+/* Web pública taxihub.cloud — Modo Claro de Día */
 .th-landing {
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.55;
+  background-color: #FFFFFF;
+  color: #0F172A;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-.th-landing .font-display { font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.025em; }
-.th-landing .font-mono { font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-.th-landing h1, .th-landing h2, .th-landing h3 { text-wrap: balance; }
-.th-landing p { text-wrap: pretty; }
+
+.th-landing .font-display {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.025em;
+}
+
+.th-landing .font-mono {
+  font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.th-landing h1, .th-landing h2, .th-landing h3 {
+  text-wrap: balance;
+  color: #0F172A;
+}
+
+.th-landing p {
+  text-wrap: pretty;
+}
 
 .th-landing :focus-visible {
-  outline: 2px solid #34d399;
+  outline: 2px solid #059669;
   outline-offset: 3px;
   border-radius: 8px;
 }
-.th-landing a, .th-landing button { cursor: pointer; }
 
+.th-landing a, .th-landing button {
+  cursor: pointer;
+}
+
+/* Cuadrícula sutil diurna */
 .th-landing .l-grid-bg {
   background-image:
-    linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
 }
-.th-landing .l-skip {
-  position: fixed; left: 12px; top: -64px; z-index: 100;
-  background: #10b981; color: #04130d; font-weight: 700;
-  padding: 10px 16px; border-radius: 999px; transition: top .2s;
-}
-.th-landing .l-skip:focus { top: 12px; }
 
-@keyframes l-ping { 0% { transform: scale(1); opacity: .5; } 80%, 100% { transform: scale(2.4); opacity: 0; } }
-.th-landing .l-ping { animation: l-ping 2.2s cubic-bezier(0,0,.2,1) infinite; }
+.th-landing .l-skip {
+  position: fixed;
+  left: 12px;
+  top: -64px;
+  z-index: 100;
+  background: #059669;
+  color: #FFFFFF;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  transition: top 0.2s;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.th-landing .l-skip:focus {
+  top: 12px;
+}
+
+@keyframes l-ping {
+  0% { transform: scale(1); opacity: 0.6; }
+  80%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+.th-landing .l-ping {
+  animation: l-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .th-landing *, .th-landing *::before, .th-landing *::after {
-    animation-duration: .01ms !important;
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }
