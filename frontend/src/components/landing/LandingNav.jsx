@@ -9,7 +9,6 @@ import { scrollToId } from "./motion";
 export const SECTIONS = [
   { id: "producto", label: "Producto" },
   { id: "funciones", label: "Funciones" },
-  { id: "apps", label: "Apps" },
   { id: "precio", label: "Precio" },
   { id: "contacto", label: "Contacto" },
 ];
@@ -62,14 +61,6 @@ export function LandingNav() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            data-testid={LANDING.goOperador}
-            onClick={() => navigate("/login")}
-            className="hidden min-h-[40px] items-center rounded-full px-3.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:inline-flex"
-          >
-            App Operador
-          </button>
-          <button
-            type="button"
             data-testid={LANDING.goTerminal}
             onClick={() => navigate("/terminal/login")}
             className="group flex min-h-[40px] items-center gap-2 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]"
@@ -109,10 +100,10 @@ export function LandingNav() {
             <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-3">
               <button
                 type="button"
-                onClick={() => { setOpen(false); navigate("/login"); }}
-                className="w-full rounded-lg bg-slate-100 py-2.5 text-center text-xs font-bold text-slate-800"
+                onClick={() => { setOpen(false); navigate("/terminal/login"); }}
+                className="w-full rounded-lg bg-emerald-600 py-2.5 text-center text-xs font-bold text-white"
               >
-                App Operador
+                Abrir Terminal de Despacho
               </button>
               <button
                 type="button"

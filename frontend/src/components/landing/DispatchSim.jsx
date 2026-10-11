@@ -50,10 +50,10 @@ export function DispatchSim() {
           <Reveal>
             <Eyebrow>Simulador interactivo</Eyebrow>
             <h2 id="sim-title" className="font-display mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Pruébalo ahora: despacho en 1 clic.
+              Asignación satelital en tiempo real.
             </h2>
             <p className="mt-3 max-w-xl text-slate-600">
-              Presiona cualquier punto caliente para asignar automáticamente la unidad más cercana y disparar el aviso por WhatsApp.
+              Simula una solicitud entrante: selecciona un punto clave para ubicar la unidad libre más próxima y trazar su ruta sin demoras ni saturación de radio.
             </p>
           </Reveal>
 

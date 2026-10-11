@@ -9,7 +9,7 @@ const STEPS = [
     id: "terminal",
     icon: Monitor,
     tag: "Terminal Central · Windows y Web",
-    title: "Todas las unidades en un mapa, un clic para despachar.",
+    title: "Todas las unidades en un mapa con despacho directo.",
     body: "La operadora ve la flota en tiempo real sobre el mapa de Palenque, despacha desde el menú contextual o con atajos de teclado (F2, 1–6) y asigna la unidad libre más cercana automáticamente.",
     img: "terminal",
     alt: "Terminal real de despacho con mapa y unidades en vivo",
@@ -18,7 +18,7 @@ const STEPS = [
     aspect: "landscape",
     highlights: [
       "Mapa interactivo de Palenque con capas de satélite y calles",
-      "Asignación automática por cercanía GPS o 1-clic manual",
+      "Asignación automática por cercanía GPS o selección manual directa",
       "Atajos de teclado instantáneos (F2 nueva llamada, 1-6 asignar)",
       "WhatsApp integrado por código QR sin costo por mensaje",
     ],

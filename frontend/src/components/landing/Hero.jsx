@@ -35,7 +35,7 @@ export function Hero() {
           <motion.div {...fade(0)} className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
             <span className="h-2 w-2 rounded-full bg-emerald-500 l-ping" aria-hidden="true" />
             <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-              Despacho en 1 clic
+              Radiodespacho Satelital en Tiempo Real
             </span>
           </motion.div>
 

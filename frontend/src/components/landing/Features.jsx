@@ -28,7 +28,7 @@ export function Features() {
               Terminal ultrarrápida con atajos de teclado
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Sin ventanas emergentes que frenen a la operadora. Despacha en 1 clic desde el menú contextual del mapa o usando atajos rápidos con asignación automática de la unidad más cercana.
+              Sin ventanas emergentes que frenen a la operadora. Despacho directo desde el menú contextual del mapa o usando atajos rápidos de teclado con asignación automática de la unidad más cercana.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4 font-mono text-xs">
               {[

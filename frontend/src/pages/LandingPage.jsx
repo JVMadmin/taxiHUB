@@ -6,7 +6,6 @@ import { DispatchSim } from "@/components/landing/DispatchSim";
 import { ProductStory } from "@/components/landing/ProductStory";
 import { Features } from "@/components/landing/Features";
 import { VideoSection } from "@/components/landing/VideoSection";
-import { Apps } from "@/components/landing/Apps";
 import { Pricing } from "@/components/landing/Pricing";
 import { Contact } from "@/components/landing/Contact";
 import { Footer } from "@/components/landing/Footer";
@@ -39,7 +38,6 @@ export default function LandingPage() {
         <ProductStory />
         <Features />
         <VideoSection />
-        <Apps />
         <Pricing units={units} setUnits={setUnits} />
         <Contact />
       </main>

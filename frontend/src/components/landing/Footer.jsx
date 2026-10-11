@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Radio, Shield, Code, ChevronRight, Download } from "lucide-react";
+import { Radio, Shield, Code, MapPin, Phone } from "lucide-react";
 import { BrandMark, BrandWordmark } from "@/components/Brand";
 import { LANDING } from "@/constants/testIds";
 
@@ -10,17 +10,16 @@ export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-slate-50 py-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Marca */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="space-y-4">
             <div className="flex items-center gap-2.5">
               <BrandMark className="w-8 h-8 rounded-lg shadow-sm" />
               <BrandWordmark className="text-xl" />
             </div>
             <p className="text-sm text-slate-600 max-w-sm leading-relaxed">
-              Plataforma de radiodespacho y control de flotas para sitios y cooperativas de taxi.
-              Despacho en 1 clic, bridge de WhatsApp QR con $0 costo por mensaje y aplicaciones
-              nativas para Windows y Android.
+              Plataforma de radiodespacho y control satelital para sitios y cooperativas de radio taxi.
+              Asignación automatizada por GPS, integración de WhatsApp por QR con $0 costo por mensaje y supervisión de flota.
             </p>
             <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -46,16 +45,6 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  to="/login"
-                  data-testid={LANDING.footerOperador}
-                  className="text-slate-600 hover:text-emerald-700 transition flex items-center gap-1.5"
-                >
-                  <ChevronRight className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>App Operador Web</span>
-                </Link>
-              </li>
-              <li>
-                <Link
                   to="/dueno/login"
                   data-testid={LANDING.footerDueno}
                   className="text-slate-600 hover:text-emerald-700 transition flex items-center gap-1.5"
@@ -77,45 +66,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Descargas Nativas */}
-          <div>
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 font-mono">
-              Descargas Nativas
-            </h4>
-            <ul className="space-y-2.5 text-sm">
-              <li>
-                <a
-                  href="/downloads/TaxiHub-Central.exe"
-                  className="text-slate-600 hover:text-emerald-700 transition flex items-center gap-1.5"
-                  download
-                >
-                  <Download className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Terminal Windows (.exe)</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/downloads/taxiHUB-operador-debug.apk"
-                  className="text-slate-600 hover:text-emerald-700 transition flex items-center gap-1.5"
-                  download
-                >
-                  <Download className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Operador Android (.apk)</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/downloads/taxiHUB-socio-debug.apk"
-                  className="text-slate-600 hover:text-emerald-700 transition flex items-center gap-1.5"
-                  download
-                >
-                  <Download className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Socio Android (.apk)</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-
           {/* Modelo Comercial */}
           <div>
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 font-mono">
@@ -130,6 +80,26 @@ export function Footer() {
               </p>
               <p className="text-emerald-700 font-bold">
                 Cero comisiones por viaje &bull; WhatsApp QR directo.
+              </p>
+            </div>
+          </div>
+
+          {/* Cobertura y Contacto */}
+          <div>
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 font-mono">
+              Contacto y Cobertura
+            </h4>
+            <div className="space-y-2.5 text-xs text-slate-600">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Palenque, Chiapas, México</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Atención a Sitios y Cooperativas</span>
+              </div>
+              <p className="pt-1">
+                Implementación e inducción presencial o remota para su equipo operativo.
               </p>
             </div>
           </div>
