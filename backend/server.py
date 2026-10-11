@@ -2444,7 +2444,7 @@ async def routing_route(body: RoutingBody, _=Depends(_any_autenticado_o_pasajero
 # Proveedor configurable; Photon (komoot) es abierto y sin API key. El backend
 # actúa como proxy: mantiene la política de tiles/geocoding con User-Agent
 # propio y evita exponer el proveedor al frontend.
-GEOCODING_PROVIDER_URL = os.environ.get("GEOCODING_PROVIDER_URL", "https://photon.komoot.io").rstrip("/")
+GEOCODING_PROVIDER_URL = os.environ.get("GEOCODING_PROVIDER_URL", "https://nominatim.openstreetmap.org").rstrip("/")
 GEOCODING_TIMEOUT_SECONDS = float(os.environ.get("GEOCODING_TIMEOUT_SECONDS", "6"))
 # Reverse-geocoding (nombres de calle para la voz del operador). Cache en la
 # colección `geo_cache` redondeada a ~110 m para no volver a consultar.
@@ -2576,7 +2576,7 @@ async def geo_search(
                 r = await hc.get(
                     endpoint,
                     params={
-                        "q": query_geocoder,
+                        "q": query,
                         "format": "jsonv2",
                         "bounded": "1",
                         "viewbox": f"{min_lon:.4f},{max_lat:.4f},{max_lon:.4f},{min_lat:.4f}",
