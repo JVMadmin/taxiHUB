@@ -2500,7 +2500,7 @@ async def _etiqueta_lugar(lat: float, lng: float) -> Optional[str]:
     return texto
 
 
-_GEO_SEARCH_CACHE: Dict[str, Tuple[float, List[dict]]] = {}
+_GEO_SEARCH_CACHE: dict = {}
 
 
 @api_router.get("/geo/search")
