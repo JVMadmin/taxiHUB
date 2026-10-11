@@ -243,6 +243,13 @@ function SmoothTaxiMarkerComponent({
               </span>
             </div>
 
+            {/* Indicador de viaje foráneo */}
+            {(op.es_foraneo || op.destino_foraneo) && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(14,165,233,0.18)", border: "1px solid rgba(14,165,233,0.4)", borderRadius: "6px", padding: "4px 7px", fontSize: "11px", color: "#38BDF8", fontWeight: 700 }}>
+                <span>🚗 {op.destino_foraneo || "Servicio Foráneo Regional"}</span>
+              </div>
+            )}
+
             {/* Contador de servicios del día */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(79,93,255,0.14)", border: "1px solid rgba(79,93,255,0.3)", borderRadius: "6px", padding: "3px 7px", fontSize: "11px" }}>
               <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Servicios hoy:</span>

@@ -94,7 +94,7 @@ export const TerminalMenu = memo(function TerminalMenu({
       {/* Rail de iconos agrupado por responsabilidad (derecha, escritorio, posicionado debajo de la barra superior) */}
       <div
         data-testid="terminal-menu-rail"
-        className="surface-ui no-scrollbar absolute top-[118px] right-3 z-[600] hidden max-h-[calc(100vh-140px)] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#17191E]/95 shadow-2xl backdrop-blur-md transition-all duration-300 ease-motion lg:block sm:right-3.5"
+        className="surface-ui no-scrollbar absolute top-[152px] right-3 z-[600] hidden max-h-[calc(100vh-175px)] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#17191E]/95 shadow-2xl backdrop-blur-md transition-all duration-300 ease-motion lg:block sm:right-3.5"
         style={{ right: active ? `calc(min(92vw, ${panelWidth}px) + 0.75rem)` : undefined }}
       >
         <div className="flex flex-col gap-1 p-1.5">

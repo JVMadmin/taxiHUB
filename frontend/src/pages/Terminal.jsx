@@ -94,12 +94,13 @@ function FollowController({ target, follow }) {
   return null;
 }
 
-// Vuela a una ubicación (resultado del MapSearch).
+// Vuela a una ubicación (resultado del MapSearch o botón de foráneos).
 function GotoController({ target }) {
   const map = useMap();
   useEffect(() => {
     if (!target) return;
-    map.flyTo([target.lat, target.lng], Math.max(map.getZoom(), 16), { duration: 1.0 });
+    const targetZoom = target.zoom != null ? target.zoom : Math.max(map.getZoom(), 16);
+    map.flyTo([target.lat, target.lng], targetZoom, { duration: 1.1 });
   }, [target, map]);
   return null;
 }
@@ -1158,6 +1159,20 @@ export default function Terminal() {
                 </button>
               </div>
             ))}
+            <div className="ml-1 pl-1.5 border-l border-white/10 shrink-0">
+              <button
+                type="button"
+                data-testid="btn-ver-foraneos"
+                onClick={() => {
+                  setGotoTarget({ lat: 17.80, lng: -92.42, zoom: 9, label: "Flota Regional Foránea" });
+                  toast.info("Mostrando unidades foráneas: Villahermosa, Carretera 186 y Playas de Catazajá");
+                }}
+                className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-lg border border-sky-400/40 bg-sky-500/15 text-sky-300 hover:bg-sky-500/25 transition-all"
+                title="Ver taxis en viajes foráneos (Villahermosa, Catazajá y Carretera)"
+              >
+                <span>🚗 4 Foráneos</span>
+              </button>
+            </div>
           </div>
 
           <div className="pointer-events-none flex justify-center xl:w-[360px] xl:shrink-0">

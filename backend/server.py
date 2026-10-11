@@ -2500,36 +2500,63 @@ async def _etiqueta_lugar(lat: float, lng: float) -> Optional[str]:
     return texto
 
 
+_GEO_SEARCH_CACHE: Dict[str, Tuple[float, List[dict]]] = {}
+
+
 @api_router.get("/geo/search")
 async def geo_search(
     q: str,
     limit: int = 8,
     _=Depends(_any_autenticado),
 ):
-    """Búsqueda global de ubicaciones (calle, colonia, POI, referencia).
+    """Búsqueda optimizada de calles, colonias y referencias de Palenque, Chiapas.
 
-    Soporta Nominatim auto-alojado (con bounded=1 y viewbox duro) y Photon.
-    Incluye filtro de respaldo estricto en Python que garantiza que ningún
-    resultado fuera de la zona de operación de Palenque y alrededores sea devuelto.
+    Garantiza que únicamente se muestren calles y lugares dentro del municipio
+    de Palenque, Chiapas, con caché en memoria y priorización de colonias locales.
     """
     query = (q or "").strip()
-    if len(query) < 3:
+    if len(query) < 2:
         return {"resultados": []}
-    # Centro de operación para sesgar y acotar resultados.
-    try:
-        center_lat = float(await get_config("map_center_lat") or 17.5099)
-        center_lng = float(await get_config("map_center_lng") or -91.9847)
-    except (TypeError, ValueError):
-        center_lat, center_lng = 17.5099, -91.9847
 
-    # Bounding box estricto alrededor del centro de operaciones (~35-40 km)
-    min_lon, max_lon = center_lng - 0.45, center_lng + 0.45
-    min_lat, max_lat = center_lat - 0.30, center_lat + 0.30
+    cache_key = f"{query.lower()}:{limit}"
+    ahora_ts = time.time()
+    if cache_key in _GEO_SEARCH_CACHE:
+        exp, cached_res = _GEO_SEARCH_CACHE[cache_key]
+        if ahora_ts - exp < 1800:
+            return {"resultados": cached_res, "provider": "cache"}
+
+    resultados = []
+    # 1. Búsqueda instantánea en colonias/cuadrantes locales de Palenque
+    try:
+        col_regex = {"$regex": re.escape(query), "$options": "i"}
+        colonias_locales = await db.colonias.find({"nombre": col_regex}).to_list(limit)
+        for c in colonias_locales:
+            poligono = c.get("poligono") or []
+            lat_col, lng_col = 17.5099, -91.9847
+            if poligono and len(poligono) > 0:
+                lat_col = sum(p[0] for p in poligono) / len(poligono)
+                lng_col = sum(p[1] for p in poligono) / len(poligono)
+            resultados.append({
+                "id": f"col_{c.get('_id')}",
+                "label": c.get("nombre"),
+                "sublabel": "Colonia / Cuadrante · Palenque, Chiapas",
+                "lat": round(lat_col, 6),
+                "lng": round(lng_col, 6),
+                "tipo": "colonia",
+            })
+    except Exception as e:
+        logger.warning("Error buscando colonias locales: %s", e)
+
+    # 2. Búsqueda en proveedor geográfico restringida estrictamente a Palenque, Chiapas
+    # Coordenadas exactas que acotan Palenque y su área conurbada (Pakal-Ná, La Cañada, Ruinas)
+    min_lat, max_lat = 17.4300, 17.5800
+    min_lon, max_lon = -92.0500, -91.9000
     limit = max(1, min(limit or 8, 20))
     headers = {"User-Agent": "TaxiHUB/2.0 (central de taxis de Palenque, contacto@taxihub.mx)"}
 
+    # Sesgar la búsqueda adjuntando Palenque Chiapas si el operador no lo escribió
+    query_geocoder = query if ("palenque" in query.lower() or "chiapas" in query.lower()) else f"{query}, Palenque, Chiapas"
     is_photon = "photon" in GEOCODING_PROVIDER_URL.lower()
-    resultados = []
     provider_name = "nominatim" if not is_photon else "photon"
 
     try:
@@ -2538,19 +2565,18 @@ async def geo_search(
                 r = await hc.get(
                     f"{GEOCODING_PROVIDER_URL}/api/",
                     params={
-                        "q": query,
-                        "limit": limit * 2, # solicitar margen para el filtro duro
+                        "q": query_geocoder,
+                        "limit": limit * 2,
                         "bbox": f"{min_lon:.4f},{min_lat:.4f},{max_lon:.4f},{max_lat:.4f}",
                     },
                     headers=headers,
                 )
             else:
-                # Nominatim propio / estándar: bounded=1 con viewbox=minLon,maxLat,maxLon,minLat
                 endpoint = f"{GEOCODING_PROVIDER_URL}/search" if not GEOCODING_PROVIDER_URL.endswith("/search") else GEOCODING_PROVIDER_URL
                 r = await hc.get(
                     endpoint,
                     params={
-                        "q": query,
+                        "q": query_geocoder,
                         "format": "jsonv2",
                         "bounded": "1",
                         "viewbox": f"{min_lon:.4f},{max_lat:.4f},{max_lon:.4f},{min_lat:.4f}",
@@ -2564,41 +2590,42 @@ async def geo_search(
             data = r.json()
     except Exception as exc:
         logger.warning("geocoding fallo proveedor %s: %s", GEOCODING_PROVIDER_URL, exc)
-        return {"resultados": [], "error": "proveedor_no_disponible"}
+        data = []
 
-    # Parseo según formato (Nominatim = lista de dicts; Photon = GeoJSON)
+    # Parseo y filtrado estricto
     if isinstance(data, list):
-        # Formato Nominatim
         for item in data:
             try:
                 lat = float(item.get("lat"))
                 lng = float(item.get("lon"))
             except (TypeError, ValueError):
                 continue
-            # FILTRO DURO EN PYTHON: descarta inmediatamente puntos fuera de la región
+            # Descartar cualquier resultado fuera del perímetro estricto de Palenque
             if not (min_lat <= lat <= max_lat and min_lon <= lng <= max_lon):
                 continue
             addr = item.get("address") or {}
+            # Validar que pertenezca a Chiapas
+            estado = addr.get("state") or ""
+            if estado and "chiapas" not in estado.lower():
+                continue
             nombre = item.get("name") or addr.get("road") or addr.get("suburb") or item.get("display_name", "").split(",")[0]
-            partes_sub = [
-                addr.get("suburb") if addr.get("suburb") != nombre else None,
-                addr.get("neighbourhood"),
-                addr.get("city") or addr.get("town") or addr.get("municipality") or addr.get("state"),
-            ]
-            sublabel = ", ".join([p for p in partes_sub if p]) or item.get("display_name", "")
-            tipo = item.get("type") or item.get("category") or "lugar"
-            resultados.append({
-                "id": f"{item.get('osm_type', 'n')}{item.get('osm_id', '')}",
-                "label": nombre.strip(),
-                "sublabel": sublabel.strip(),
-                "lat": round(lat, 6),
-                "lng": round(lng, 6),
-                "tipo": tipo,
-            })
+            colonia_sub = addr.get("suburb") or addr.get("neighbourhood") or "Palenque"
+            sublabel = f"{colonia_sub}, Palenque, Chiapas"
+            tipo = item.get("type") or item.get("category") or "calle"
+            
+            # Evitar duplicados
+            if not any(r["label"].lower() == nombre.strip().lower() for r in resultados):
+                resultados.append({
+                    "id": f"{item.get('osm_type', 'n')}{item.get('osm_id', '')}",
+                    "label": nombre.strip(),
+                    "sublabel": sublabel.strip(),
+                    "lat": round(lat, 6),
+                    "lng": round(lng, 6),
+                    "tipo": tipo,
+                })
             if len(resultados) >= limit:
                 break
     elif isinstance(data, dict) and "features" in data:
-        # Formato Photon GeoJSON
         for f in data.get("features") or []:
             props = f.get("properties") or {}
             geom = (f.get("geometry") or {}).get("coordinates") or [None, None]
@@ -2606,34 +2633,36 @@ async def geo_search(
             if lat is None or lng is None:
                 continue
             lat, lng = float(lat), float(lng)
-            # FILTRO DURO EN PYTHON
             if not (min_lat <= lat <= max_lat and min_lon <= lng <= max_lon):
                 continue
+            estado = props.get("state") or ""
+            if estado and "chiapas" not in estado.lower():
+                continue
             nombre = props.get("name") or props.get("street") or props.get("district") or ""
-            partes_sub = [
-                props.get("district") if props.get("district") != nombre else None,
-                props.get("city") or props.get("county") or props.get("state"),
-            ]
-            sublabel = ", ".join([p for p in partes_sub if p]) or props.get("country", "")
+            distrito = props.get("district") or props.get("city") or "Palenque"
+            sublabel = f"{distrito}, Palenque, Chiapas"
             if not nombre:
-                nombre = props.get("street") or sublabel or query
-            tipo = props.get("osm_key") or props.get("osm_value") or "lugar"
-            resultados.append({
-                "id": f"{props.get('osm_type', 'n')}{props.get('osm_id', '')}",
-                "label": nombre.strip(),
-                "sublabel": sublabel.strip(),
-                "lat": round(lat, 6),
-                "lng": round(lng, 6),
-                "tipo": tipo,
-            })
+                nombre = props.get("street") or query
+            tipo = props.get("osm_key") or props.get("osm_value") or "calle"
+            if not any(r["label"].lower() == nombre.strip().lower() for r in resultados):
+                resultados.append({
+                    "id": f"{props.get('osm_type', 'n')}{props.get('osm_id', '')}",
+                    "label": nombre.strip(),
+                    "sublabel": sublabel.strip(),
+                    "lat": round(lat, 6),
+                    "lng": round(lng, 6),
+                    "tipo": tipo,
+                })
             if len(resultados) >= limit:
                 break
 
-    # Filtro de seguridad redundante
+    # Filtro redundante final
     resultados = [
         r for r in resultados
         if (min_lat <= r["lat"] <= max_lat) and (min_lon <= r["lng"] <= max_lon)
-    ]
+    ][:limit]
+
+    _GEO_SEARCH_CACHE[cache_key] = (ahora_ts, resultados)
     return {"resultados": resultados, "provider": provider_name}
 
 
@@ -6766,6 +6795,68 @@ PALENQUE_PISTAS_VIALES = {
             299.7,
             299.7
         ]
+    },
+    "pista_foraneo_villahermosa": {
+        "id": "pista_foraneo_villahermosa",
+        "nombre": "Foráneo Villahermosa - Paseo Tabasco y Centro",
+        "sentido": "Circuito urbano Villahermosa",
+        "doble_sentido": True,
+        "distancia_m": 1850,
+        "duracion_s": 240,
+        "puntos": [
+            [17.9892, -92.9285],
+            [17.9898, -92.9270],
+            [17.9905, -92.9255],
+            [17.9915, -92.9268],
+            [17.9910, -92.9282],
+            [17.9895, -92.9280]
+        ]
+    },
+    "pista_foraneo_retorno_vhsa": {
+        "id": "pista_foraneo_retorno_vhsa",
+        "nombre": "Carretera Fed 186 - Retorno Villahermosa hacia Catazajá",
+        "sentido": "Carretera federal dirección este hacia Chiapas",
+        "doble_sentido": True,
+        "distancia_m": 6200,
+        "duracion_s": 320,
+        "puntos": [
+            [17.8520, -92.4500],
+            [17.8480, -92.4350],
+            [17.8450, -92.4200],
+            [17.8410, -92.4050],
+            [17.8380, -92.3900]
+        ]
+    },
+    "pista_foraneo_catazaja_palenque": {
+        "id": "pista_foraneo_catazaja_palenque",
+        "nombre": "Carretera Fed 199 - Catazajá rumbo a Palenque",
+        "sentido": "Carretera federal sur rumbo a Palenque",
+        "doble_sentido": True,
+        "distancia_m": 7100,
+        "duracion_s": 360,
+        "puntos": [
+            [17.6500, -92.0020],
+            [17.6350, -91.9980],
+            [17.6200, -91.9950],
+            [17.6050, -91.9910],
+            [17.5900, -91.9880]
+        ]
+    },
+    "pista_foraneo_playas_catazaja": {
+        "id": "pista_foraneo_playas_catazaja",
+        "nombre": "Playas de Catazajá - Centro y Malecón de la Laguna",
+        "sentido": "Circuito local Playas de Catazajá",
+        "doble_sentido": True,
+        "distancia_m": 1600,
+        "duracion_s": 220,
+        "puntos": [
+            [17.7285, -92.0165],
+            [17.7295, -92.0150],
+            [17.7275, -92.0135],
+            [17.7260, -92.0155],
+            [17.7270, -92.0175],
+            [17.7285, -92.0165]
+        ]
     }
 }
 
@@ -7320,6 +7411,93 @@ DEMO_TAXIS_PAKALNA = [
     },
 ]
 
+DEMO_TAXIS_FORANEOS = [
+    {
+        "usuario": "for1",
+        "nombre": "Roberto Méndez (Foráneo Vhsa)",
+        "telefono": "993-200-0401",
+        "placa": "TX-401",
+        "marca": "Nissan",
+        "modelo": "Versa",
+        "color": "Blanco",
+        "estado": "ocupado",
+        "sitio_id": DEFAULT_SITIO,
+        "pista_id": "pista_foraneo_villahermosa",
+        "idx": 0,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Servicio Foráneo · Base Villahermosa, Tabasco",
+        "lat": 17.9892,
+        "lng": -92.9285,
+        "gps_heading": 65.0,
+        "es_foraneo": True,
+        "destino_foraneo": "Villahermosa, Tabasco"
+    },
+    {
+        "usuario": "for2",
+        "nombre": "Mateo Morales (Retorno Vhsa-Catazajá)",
+        "telefono": "993-200-0402",
+        "placa": "TX-402",
+        "marca": "Chevrolet",
+        "modelo": "Aveo",
+        "color": "Blanco",
+        "estado": "ocupado",
+        "sitio_id": DEFAULT_SITIO,
+        "pista_id": "pista_foraneo_retorno_vhsa",
+        "idx": 2,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Servicio Foráneo · Carretera Fed. 186 en retorno a Chiapas",
+        "lat": 17.8450,
+        "lng": -92.4200,
+        "gps_heading": 115.0,
+        "es_foraneo": True,
+        "destino_foraneo": "En retorno hacia Catazajá"
+    },
+    {
+        "usuario": "for3",
+        "nombre": "Javier Hernández (Catazajá a Palenque)",
+        "telefono": "916-200-0403",
+        "placa": "TX-403",
+        "marca": "Nissan",
+        "modelo": "Tsuru",
+        "color": "Blanco",
+        "estado": "ocupado",
+        "sitio_id": DEFAULT_SITIO,
+        "pista_id": "pista_foraneo_catazaja_palenque",
+        "idx": 2,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Servicio Foráneo · Carretera Fed. 199 rumbo a Palenque",
+        "lat": 17.6200,
+        "lng": -91.9950,
+        "gps_heading": 175.0,
+        "es_foraneo": True,
+        "destino_foraneo": "Catazajá rumbo a Palenque"
+    },
+    {
+        "usuario": "for4",
+        "nombre": "Daniel Cruz (Base Catazajá)",
+        "telefono": "916-200-0404",
+        "placa": "TX-404",
+        "marca": "Volkswagen",
+        "modelo": "Vento",
+        "color": "Blanco",
+        "estado": "libre",
+        "sitio_id": DEFAULT_SITIO,
+        "pista_id": "pista_foraneo_playas_catazaja",
+        "idx": 0,
+        "sentido_direccion": "adelante",
+        "sentido_calle": "doble",
+        "descripcion_sentido": "Servicio Foráneo · Base Playas de Catazajá, Chiapas",
+        "lat": 17.7285,
+        "lng": -92.0165,
+        "gps_heading": 50.0,
+        "es_foraneo": True,
+        "destino_foraneo": "Playas de Catazajá, Chiapas"
+    },
+]
+
 _HASH_TAXI123 = hash_password("taxi123")
 _HASH_SOCIO123 = hash_password("socio123")
 _HASH_CENTRAL123 = hash_password("central123")
@@ -7635,11 +7813,11 @@ async def sembrar_datos_simulacion():
             socio_por_placa[placa] = socio_id
             cuota_por_placa[placa] = s["cuota"]
 
-    # 3. 25 Taxis de Palenque + 5 Taxis de Pakal-Ná (con expediente completo SCT/SEMOVI)
+    # 3. 25 Taxis de Palenque + 5 Taxis de Pakal-Ná + 4 Taxis Foráneos (con expediente completo SCT/SEMOVI)
     tipos_sangre = ["O+", "A+", "O+", "B+", "O-", "A+"]
     op_ids = {}
     await db.documentos_conductor.delete_many({})
-    for i, t in enumerate(DEMO_TAXIS + DEMO_TAXIS_PAKALNA):
+    for i, t in enumerate(DEMO_TAXIS + DEMO_TAXIS_PAKALNA + DEMO_TAXIS_FORANEOS):
         t_sitio = t.get("sitio_id") or DEFAULT_SITIO
         lat, lng = t["lat"], t["lng"]
         pista = PALENQUE_PISTAS_VIALES.get(t["pista_id"], {})
@@ -7659,6 +7837,8 @@ async def sembrar_datos_simulacion():
             "estado": t["estado"],
             "lat": lat,
             "lng": lng,
+            "es_foraneo": t.get("es_foraneo", False),
+            "destino_foraneo": t.get("destino_foraneo", ""),
             "gps_speed": 7.5 if t["estado"] != "fuera_de_servicio" else 0.0,
             "gps_heading": t.get("gps_heading", 0),
             "sentido_calle": t.get("sentido_calle", "doble"),
@@ -8462,6 +8642,7 @@ async def sembrar_datos_simulacion():
         "message": "Datos de simulación sembrados con éxito",
         "taxis": len(DEMO_TAXIS),
         "taxis_pakalna": len(DEMO_TAXIS_PAKALNA),
+        "taxis_foraneos": len(DEMO_TAXIS_FORANEOS),
         "servicios": len(servicios),
         "conversaciones_wa": len(wa_conversaciones),
         "operadores": [t["usuario"] for t in DEMO_TAXIS],
@@ -8542,7 +8723,7 @@ async def _bucle_patrullaje():
     logger.info("Iniciando bucle de patrullaje continuo a velocidad realista (< 40 km/h) sobre pistas viales de Palenque...")
     while _simulacion_activa:
         ts = now_iso()
-        for taxi in DEMO_TAXIS + DEMO_TAXIS_PAKALNA:
+        for taxi in DEMO_TAXIS + DEMO_TAXIS_PAKALNA + DEMO_TAXIS_FORANEOS:
             u = taxi["usuario"]
             op = await db.operadores.find_one({"usuario": u})
             if not op:
@@ -8634,6 +8815,8 @@ async def _bucle_patrullaje():
                 "gps_speed": speed_ms,
                 "gps_heading": heading,
                 "sentido_direccion": sentido_dir,
+                "es_foraneo": op.get("es_foraneo", False),
+                "destino_foraneo": op.get("destino_foraneo", ""),
                 "ts": ts
             }
             await manager.broadcast_terminal(ubi_msg, sitio_id=op_sitio)

@@ -92,7 +92,7 @@ export function MapSearch({ onGoto, onPickOrigen, onPickDestino, className }) {
             value={q}
             onChange={(e) => { setQ(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
-            placeholder="Buscar calle, colonia, hotel, referencia…"
+            placeholder="Buscar calle de Palenque, Chis. (ej. Juárez, Reforma, Pakal-Ná)..."
             className="h-8 w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
             aria-label="Buscar ubicación en el mapa"
           />

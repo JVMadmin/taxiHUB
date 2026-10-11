@@ -73,6 +73,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
   const [cliente, setCliente] = useState({ nombre: "", telefono: "" });
   const [asignando, setAsignando] = useState(null);
   const [clienteOpen, setClienteOpen] = useState(false);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
 
   useEffect(() => {
     if (open && initialCliente && (initialCliente.cliente_nombre || initialCliente.cliente_telefono)) {
@@ -85,7 +86,9 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
   }, [open, initialCliente]);
 
   const cercanos = useMemo(() => {
-    if (!coords.origen) return [];
+    if (!coords.origen) {
+      return operadoresLibres.map((t) => ({ ...t, dist: null }));
+    }
     return operadoresLibres
       .map((t) => ({ ...t, dist: distM({ lat: coords.origen.lat, lng: coords.origen.lng }, { lat: t.lat, lng: t.lng }) }))
       .sort((a, b) => (a.dist ?? Infinity) - (b.dist ?? Infinity));
@@ -280,30 +283,28 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
             )}
           </section>
 
-          {/* PASO 4 — Taxis libres más cercanos */}
+          {/* PASO 4 — Taxis libres más cercanos y opción de expandir todos los disponibles */}
           <section data-testid="despacho-taxis">
             <div className="mb-1.5 flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1B1E24] border border-white/[0.08] text-[10px] font-extrabold text-[#9CA0AA]">4</span>
-              <span className="text-xs font-bold uppercase tracking-wide text-[#F5F5F7]">Taxis libres más cercanos</span>
-              <span className="mono-num ml-auto text-[10px] text-[#9CA0AA]">{coords.origen ? cercanos.length : "—"}</span>
+              <span className="text-xs font-bold uppercase tracking-wide text-[#F5F5F7]">
+                {mostrarTodos ? "Todos los taxis disponibles" : "Taxis libres más cercanos"}
+              </span>
+              <span className="mono-num ml-auto text-[10px] text-[#9CA0AA]">{cercanos.length} libres</span>
             </div>
-            {!coords.origen ? (
-              <div className="rounded-xl border border-dashed border-white/[0.08] p-3 text-center text-xs text-[#9CA0AA]">
-                Marca el origen o elige un Punto Caliente para ver los taxis libres cercanos.
-              </div>
-            ) : cercanos.length === 0 ? (
+            {cercanos.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/[0.08] p-3 text-center text-xs text-[#9CA0AA]">
                 No hay taxis libres en este momento.
               </div>
             ) : (
               <div className="space-y-1.5">
-                {cercanos.slice(0, 6).map((t, i) => {
+                {(mostrarTodos ? cercanos : cercanos.slice(0, 5)).map((t, i) => {
                   const svHoy = serviciosHoyPorOperador[t.id] ?? t.servicios_hoy ?? 0;
                   const sem = semaforoServiciosStyle(svHoy);
                   return (
                     <div key={t.id} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#1B1E24] px-3 py-2">
                       <span
-                        title={`Atajo de teclado: presiona ${i + 1}`}
+                        title={i < 6 ? `Atajo de teclado: presiona ${i + 1}` : undefined}
                         className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/[0.06] font-mono text-[10px] font-bold text-[#7CFC3C]"
                       >
                         {i + 1}
@@ -320,10 +321,12 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                             {sem.count} hoy
                           </span>
                         </div>
-                        <div className="truncate text-[10px] text-[#9CA0AA]">{t.nombre} · {t.vehiculo ? [t.vehiculo.marca, t.vehiculo.modelo].filter(Boolean).join(" ") : "—"}</div>
+                        <div className="truncate text-[10px] text-[#9CA0AA]">
+                          {t.nombre} · {t.vehiculo ? [t.vehiculo.marca, t.vehiculo.modelo].filter(Boolean).join(" ") : (t.marca && t.modelo ? `${t.marca} ${t.modelo}` : "—")}
+                        </div>
                       </div>
                       <span className="mono-num shrink-0 text-xs font-bold text-[#7CFC3C]">
-                        {t.dist != null ? (t.dist >= 1000 ? `${(t.dist / 1000).toFixed(1)} km` : `${Math.round(t.dist)} m`) : "—"}
+                        {t.dist != null ? (t.dist >= 1000 ? `${(t.dist / 1000).toFixed(1)} km` : `${Math.round(t.dist)} m`) : (coords.origen ? "—" : "Libre")}
                       </span>
                       <Button
                         data-testid={`despacho-asignar-${t.id}`}
@@ -337,6 +340,19 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                     </div>
                   );
                 })}
+
+                {cercanos.length > 5 && (
+                  <button
+                    type="button"
+                    data-testid="despacho-toggle-todos-taxis"
+                    onClick={() => setMostrarTodos((v) => !v)}
+                    className="w-full mt-2 py-2 px-3 rounded-xl border border-white/[0.08] bg-[#1B1E24]/80 hover:bg-[#1B1E24] text-xs font-semibold text-[#4F5DFF] hover:text-[#3D49D6] transition-all flex items-center justify-center gap-1.5"
+                  >
+                    {mostrarTodos
+                      ? "▲ Mostrar solo los más cercanos (Top 5)"
+                      : `▼ Ver todos los taxis disponibles (${cercanos.length} unidades)`}
+                  </button>
+                )}
               </div>
             )}
           </section>

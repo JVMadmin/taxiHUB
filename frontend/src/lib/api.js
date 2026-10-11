@@ -44,6 +44,29 @@ export const WS_BASE = BACKEND_URL
   ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/api`
   : "/api";
 
+// Memoria caché para optimización de queries y deduplicación en la Terminal de escritorio
+const queryCache = new Map();
+const inFlightRequests = new Map();
+
+const CACHE_TTL = {
+  "/rutas": 45000,
+  "/colonias": 60000,
+  "/config/logo": 300000,
+  "/avisos/activos": 20000,
+  "/tarifas-predefinidas": 60000,
+  "/geo/search": 30000,
+};
+
+export const clearApiCache = (prefix = "") => {
+  if (!prefix) {
+    queryCache.clear();
+    return;
+  }
+  for (const k of queryCache.keys()) {
+    if (k.includes(prefix)) queryCache.delete(k);
+  }
+};
+
 // Cinco superficies autenticadas (cada una con su propio JWT):
 //  - api      -> operador (op_token)
 //  - termApi  -> terminal  (term_token)
@@ -66,6 +89,50 @@ const mk = (getToken, on401) => {
       }
     );
   }
+
+  // Envoltura optimizada de GET con caché en memoria y deduplicación de consultas simultáneas
+  const originalGet = c.get.bind(c);
+  c.get = async (url, config = {}) => {
+    const cleanUrl = (url || "").split("?")[0];
+    const ttl = CACHE_TTL[cleanUrl];
+    if (!ttl || config?.noCache) {
+      return originalGet(url, config);
+    }
+    const cacheKey = `${url}:${JSON.stringify(config?.params || {})}`;
+    const now = Date.now();
+    const cached = queryCache.get(cacheKey);
+    if (cached && now - cached.ts < ttl) {
+      return Promise.resolve(cached.res);
+    }
+    if (inFlightRequests.has(cacheKey)) {
+      return inFlightRequests.get(cacheKey);
+    }
+    const req = originalGet(url, config)
+      .then((res) => {
+        queryCache.set(cacheKey, { ts: Date.now(), res });
+        inFlightRequests.delete(cacheKey);
+        return res;
+      })
+      .catch((err) => {
+        inFlightRequests.delete(cacheKey);
+        throw err;
+      });
+    inFlightRequests.set(cacheKey, req);
+    return req;
+  };
+
+  // Invalidación inteligente en mutaciones
+  const wrapMutation = (fn) => async (url, data, config) => {
+    const res = await fn(url, data, config);
+    if ((url || "").includes("/rutas")) clearApiCache("/rutas");
+    if ((url || "").includes("/colonias")) clearApiCache("/colonias");
+    if ((url || "").includes("/servicios")) clearApiCache("/servicios");
+    return res;
+  };
+  c.post = wrapMutation(c.post.bind(c));
+  c.put = wrapMutation(c.put.bind(c));
+  c.delete = wrapMutation(c.delete.bind(c));
+
   return c;
 };
 
