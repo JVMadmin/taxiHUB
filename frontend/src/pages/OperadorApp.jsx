@@ -950,7 +950,7 @@ export default function OperadorApp() {
       </div>
 
       {/* HEADER */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3">
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-2 sm:p-3 pt-[max(0.75rem,env(safe-area-inset-top,0.75rem))] pl-[max(0.75rem,env(safe-area-inset-left,0.75rem))] pr-[max(0.75rem,env(safe-area-inset-right,0.75rem))]">
         <div className="flex items-start justify-between gap-2">
           <div className="taxi-driver-header-card pointer-events-auto">
             <div className="taxi-driver-header-inner">
@@ -975,8 +975,7 @@ export default function OperadorApp() {
           </div>
 
           <div className="pointer-events-auto flex flex-col items-end gap-2">
-            {/* Recuadro de acciones compacto (-35%): ajustes + tema + modo.
-                Cerrar sesión vive dentro de Ajustes. */}
+            {/* Recuadro de acciones compacto: ajustes + tema + modo */}
             <div className="taxi-driver-controls-card taxi-driver-controls-compact">
               <div className="taxi-driver-controls-inner">
                 <button
@@ -1010,13 +1009,13 @@ export default function OperadorApp() {
 
       {/* Estado del conductor SIEMPRE visible */}
       {enOperacion && (
-        <div className="pointer-events-none absolute left-1/2 top-[76px] z-[500] -translate-x-1/2">
+        <div className="pointer-events-none absolute left-1/2 top-[calc(max(0.75rem,env(safe-area-inset-top,0.75rem))+3.8rem)] z-[500] -translate-x-1/2">
           <DriverStatusPill estado={op.estado} />
         </div>
       )}
 
       {/* Botón recentrar + badge de ruta activa */}
-      <div className="pointer-events-auto absolute right-3 top-[118px] z-[500] flex flex-col gap-2 items-end">
+      <div className="pointer-events-auto absolute right-[max(0.75rem,env(safe-area-inset-right,0.75rem))] top-[calc(max(0.75rem,env(safe-area-inset-top,0.75rem))+6.2rem)] z-[500] flex flex-col gap-2 items-end">
         <button
           data-testid="recentrar-mapa-btn"
           onClick={() => setRecenterN((n) => n + 1)}
@@ -1414,8 +1413,8 @@ export default function OperadorApp() {
 
       {/* Overlay: combustible del taxista (F12 premium) */}
       {combOpen && (
-        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="comb-overlay">
-          <div className="max-h-[92vh] w-full max-w-md animate-slide-up overflow-y-auto rounded-2xl border border-border bg-card p-4 elev-3">
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-2 sm:p-4 sm:items-center" data-testid="comb-overlay">
+          <div className="max-h-[92vh] max-h-[92dvh] w-full max-w-lg sm:max-w-xl md:max-w-2xl animate-slide-up overflow-y-auto rounded-2xl border border-border bg-card p-4 elev-3 pb-[max(1rem,env(safe-area-inset-bottom,1rem))]">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
                 <Fuel className="h-5 w-5 text-brand-bright" /> Combustible
@@ -1445,7 +1444,7 @@ export default function OperadorApp() {
                 <Fuel className="h-4 w-4" /> {combTicket ? `Ticket: ${combTicket.name.slice(0, 24)}` : "Subir fotografía del ticket"}
               </button>
               <Button data-testid="comb-guardar" onClick={guardarCarga} disabled={combSaving} size="lg" className="w-full">
-                {combSaving ? "Guardandoâ€¦" : "Guardar carga"}
+                {combSaving ? "Guardando…" : "Guardar carga"}
               </Button>
             </div>
 
@@ -1475,8 +1474,8 @@ export default function OperadorApp() {
 
       {/* Overlay: iniciar servicio */}
       {iniciarOpen && (
-        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="iniciar-overlay">
-          <div className="w-full max-w-md animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3">
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-2 sm:p-4 sm:items-center" data-testid="iniciar-overlay">
+          <div className="max-h-[90vh] max-h-[90dvh] w-full max-w-lg sm:max-w-xl md:max-w-2xl animate-slide-up overflow-y-auto rounded-2xl border border-border bg-card p-4 elev-3 pb-[max(1rem,env(safe-area-inset-bottom,1rem))]">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-base font-bold text-foreground"><PlayCircle className="h-5 w-5 text-brand-bright" /> Iniciar servicio</h3>
               <button onClick={() => setIniciarOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
@@ -1508,8 +1507,8 @@ export default function OperadorApp() {
 
       {/* Overlay: kilometraje, evidencia de combustible, entrega de unidad y liquidación de cuota */}
       {kmModalOpen && (
-        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/75 backdrop-blur-sm p-3 sm:items-center" data-testid="km-overlay">
-          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3 space-y-3.5">
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 sm:items-center" data-testid="km-overlay">
+          <div className="w-full max-w-lg sm:max-w-xl md:max-w-2xl max-h-[90vh] max-h-[90dvh] overflow-y-auto animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3 space-y-3.5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Gauge className="h-5 w-5 text-brand-bright" />
@@ -1702,8 +1701,8 @@ export default function OperadorApp() {
 
       {/* Overlay: confirmar reporte */}
       {pendingFile && (
-        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="reporte-overlay">
-          <div className="w-full max-w-md animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3">
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-2 sm:p-4 sm:items-center" data-testid="reporte-overlay">
+          <div className="max-h-[90vh] max-h-[90dvh] w-full max-w-lg sm:max-w-xl md:max-w-2xl animate-slide-up overflow-y-auto rounded-2xl border border-border bg-card p-4 elev-3 pb-[max(1rem,env(safe-area-inset-bottom,1rem))]">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-base font-bold text-foreground">Reportar objeto olvidado</h3>
               <button onClick={() => setPendingFile(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
@@ -1717,7 +1716,7 @@ export default function OperadorApp() {
               className="input-inset mb-3 border-border text-foreground"
             />
             <Button data-testid="reporte-enviar" onClick={enviarReporte} loading={uploading} className="w-full">
-              {uploading ? "Enviandoâ€¦" : "Enviar reporte"}
+              {uploading ? "Enviando…" : "Enviar reporte"}
             </Button>
           </div>
         </div>
@@ -1726,7 +1725,7 @@ export default function OperadorApp() {
       {/* Overlay: chat */}
       {chatOpen && (
         <div className="fixed inset-0 z-[900] flex flex-col bg-background" data-testid="chat-overlay">
-          <div className="mx-auto flex h-full w-full max-w-md flex-col p-4">
+          <div className="mx-auto flex h-full w-full max-w-lg sm:max-w-xl md:max-w-2xl flex-col p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top,0.75rem))] pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))]">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-base font-bold text-foreground">{chatServicioId ? "Chat con el pasajero" : "Chat con la central"}</h3>
               <button data-testid="chat-cerrar" onClick={() => setChatOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
@@ -1747,7 +1746,7 @@ export default function OperadorApp() {
                 value={chatText}
                 onChange={(e) => setChatText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && enviarChat()}
-                placeholder="Escribe un mensajeâ€¦"
+                placeholder="Escribe un mensaje…"
                 className="input-inset border-border text-foreground"
               />
               <Button data-testid="chat-op-enviar" onClick={enviarChat} size="icon" aria-label="Enviar mensaje">
@@ -1760,8 +1759,8 @@ export default function OperadorApp() {
 
       {/* Overlay: Ajustes del operador (voz IA, comandos, notificaciones, GPS, sesión) */}
       {ajustesOpen && (
-        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-4 sm:items-center" data-testid="driver-ajustes">
-          <div className="w-full max-w-md animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3">
+        <div className="fixed inset-0 z-[900] flex items-end justify-center bg-black/60 p-2 sm:p-4 sm:items-center" data-testid="driver-ajustes">
+          <div className="max-h-[90vh] max-h-[90dvh] w-full max-w-lg sm:max-w-xl md:max-w-2xl animate-slide-up overflow-y-auto rounded-2xl border border-border bg-card p-4 elev-3 pb-[max(1rem,env(safe-area-inset-bottom,1rem))]">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
                 <Settings className="h-5 w-5 text-brand-bright" /> Ajustes
@@ -1873,8 +1872,8 @@ export default function OperadorApp() {
 
       {/* Overlay: Diagnóstico GPS en vivo */}
       {diagnosticoOpen && (
-        <div className="fixed inset-0 z-[950] flex items-end justify-center bg-black/75 backdrop-blur-sm p-3 sm:items-center" data-testid="diagnostico-gps-overlay">
-          <div className="w-full max-w-md animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3 space-y-3.5">
+        <div className="fixed inset-0 z-[950] flex items-end justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 sm:items-center" data-testid="diagnostico-gps-overlay">
+          <div className="max-h-[90vh] max-h-[90dvh] w-full max-w-lg sm:max-w-xl md:max-w-2xl animate-slide-up overflow-y-auto rounded-2xl border border-border bg-card p-4 elev-3 space-y-3.5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Satellite className="h-5 w-5 text-brand-bright" />

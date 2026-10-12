@@ -100,7 +100,8 @@
 
 .taxi-passenger-content {
   position: relative;
-  width: min(100%, 430px);
+  width: 100%;
+  max-width: min(100vw, 680px);
   margin: 0 auto;
 }
 
@@ -120,7 +121,8 @@
   display: grid;
   grid-template-columns: 44px 1fr 88px;
   align-items: center;
-  width: min(100%, 430px);
+  width: 100%;
+  max-width: min(100vw, 680px);
   margin: 0 auto;
   padding: 18px 18px 10px;
 }
@@ -1317,7 +1319,7 @@
 
 .taxi-passenger-auth-card {
   position: relative;
-  width: min(100%, 382px);
+  width: min(100%, 460px);
 }
 
 .taxi-passenger-auth-form {
