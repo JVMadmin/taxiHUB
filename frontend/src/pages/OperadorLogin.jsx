@@ -8,10 +8,10 @@ import { toast } from "sonner";
 import { Car, LogIn, Settings } from "lucide-react";
 
 const DEMO_OPERADORES = [
-  { usuario: "op1", pass: "taxi123", label: "TX-101 · Juan Pérez (Libre)" },
-  { usuario: "op2", pass: "taxi123", label: "TX-102 · Miguel López (Libre)" },
-  { usuario: "op4", pass: "taxi123", label: "TX-104 · Pedro Gómez (Libre)" },
-  { usuario: "op3", pass: "taxi123", label: "TX-103 · Carlos Ruiz (En viaje)" },
+  { usuario: "op1", pass: "taxi123", label: "TX-101 · Carlos Ramírez (Libre)" },
+  { usuario: "op2", pass: "taxi123", label: "TX-102 · Ana Torres (Libre)" },
+  { usuario: "op4", pass: "taxi123", label: "TX-104 · José Hernández (Libre)" },
+  { usuario: "op3", pass: "taxi123", label: "TX-103 · Luis Méndez (En viaje)" },
 ];
 
 export default function OperadorLogin() {

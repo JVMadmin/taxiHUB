@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
+import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
 import Terminal from "@/pages/Terminal";
 import OperadorLogin from "@/pages/OperadorLogin";
 import OperadorApp from "@/pages/OperadorApp";
@@ -13,6 +15,11 @@ import DuenoApp from "@/pages/DuenoApp";
 import LandingPage from "@/pages/LandingPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { applyTheme, getTheme, applyMode, getMode } from "@/lib/theme";
+
+function OperadorRootRedirect() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("op_token") : null;
+  return <Navigate to={token ? "/operador" : "/login"} replace />;
+}
 
 function App() {
   const [mode, setMode] = useState(() => getMode());
@@ -29,9 +36,22 @@ function App() {
   const appMode =
     process.env.REACT_APP_APP_MODE || windowAppMode || queryApp || "";
 
+  const isNativeApp =
+    typeof window !== "undefined" &&
+    (Boolean(window.Capacitor?.isNativePlatform?.()) ||
+      Capacitor.isNativePlatform() ||
+      window.location.protocol === "capacitor:" ||
+      (window.location.protocol === "https:" && window.location.hostname === "localhost") ||
+      (window.location.protocol === "http:" &&
+        window.location.hostname === "localhost" &&
+        window.location.port !== "3000" &&
+        window.location.port !== "8080"));
+
   const isOnlyOperadorApp =
+    isNativeApp ||
     appMode === "operador" ||
     process.env.REACT_APP_ONLY_OPERADOR === "true" ||
+    process.env.REACT_APP_APP_MODE === "operador" ||
     (typeof window !== "undefined" && window.location.port === "3006");
 
   const isOnlySocioApp =
@@ -52,6 +72,33 @@ function App() {
     return () => window.removeEventListener("app:mode", onMode);
   }, []);
 
+  // Bloqueo de navegación nativa en Android: minimizar app en lugar de salir a webs externas
+  useEffect(() => {
+    if (!isNativeApp) return;
+
+    let subPromise = null;
+    try {
+      subPromise = CapApp.addListener("backButton", ({ canGoBack }) => {
+        const path = typeof window !== "undefined" ? window.location.pathname : "";
+        if (!canGoBack || path === "/login" || path === "/operador" || path === "/" || path === "") {
+          CapApp.minimizeApp();
+        } else {
+          window.history.back();
+        }
+      });
+    } catch (err) {
+      console.warn("No se pudo registrar listener de botón atrás nativo:", err);
+    }
+
+    return () => {
+      if (subPromise && typeof subPromise.then === "function") {
+        subPromise.then((h) => h?.remove?.()).catch(() => {});
+      } else if (subPromise && typeof subPromise.remove === "function") {
+        subPromise.remove();
+      }
+    };
+  }, [isNativeApp]);
+
   return (
     <div className={mode === "claro" ? "App" : "App dark"}>
       <ErrorBoundary>
@@ -60,8 +107,8 @@ function App() {
             <Routes>
               <Route path="/login" element={<OperadorLogin />} />
               <Route path="/operador" element={<OperadorApp />} />
-              <Route path="/" element={<OperadorApp />} />
-              <Route path="*" element={<Navigate to="/operador" replace />} />
+              <Route path="/" element={<OperadorRootRedirect />} />
+              <Route path="*" element={<OperadorRootRedirect />} />
             </Routes>
           ) : isOnlySocioApp ? (
             <Routes>

@@ -1,24 +1,34 @@
 import axios from "axios";
+import { Capacitor } from "@capacitor/core";
+
+export const isNativePlatform =
+  typeof window !== "undefined" &&
+  (Boolean(window.Capacitor?.isNativePlatform?.()) ||
+    (typeof Capacitor !== "undefined" && Capacitor.isNativePlatform?.()) ||
+    window.location.protocol === "capacitor:" ||
+    (window.location.protocol === "https:" && window.location.hostname === "localhost") ||
+    (window.location.protocol === "http:" && window.location.hostname === "localhost" && window.location.port !== "3000" && window.location.port !== "8080"));
 
 const rawStoredBackend =
   typeof window !== "undefined" ? (localStorage.getItem("th_backend_url") || "").trim().replace(/\/+$/, "") : "";
 
-if (typeof window !== "undefined" && window.location.protocol === "https:" && rawStoredBackend.startsWith("http://")) {
-  try {
-    localStorage.removeItem("th_backend_url");
-  } catch (_) {}
+if (typeof window !== "undefined") {
+  if (window.location.protocol === "https:" && rawStoredBackend.startsWith("http://")) {
+    try {
+      localStorage.removeItem("th_backend_url");
+    } catch (_) {}
+  }
+  if (isNativePlatform && (rawStoredBackend.includes("localhost") || rawStoredBackend.includes("127.0.0.1"))) {
+    try {
+      localStorage.removeItem("th_backend_url");
+    } catch (_) {}
+  }
 }
 
 const storedBackendUrl =
   typeof window !== "undefined" && window.location.protocol === "https:" && rawStoredBackend.startsWith("http://")
     ? ""
     : rawStoredBackend;
-
-const isNativePlatform =
-  typeof window !== "undefined" &&
-  (Boolean(window.Capacitor?.isNativePlatform?.()) ||
-    window.location.protocol === "capacitor:" ||
-    (window.location.protocol === "https:" && window.location.hostname === "localhost"));
 
 const isLocalDevHost =
   typeof window !== "undefined" &&
