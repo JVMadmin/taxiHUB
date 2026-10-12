@@ -28,15 +28,11 @@ import {
   Car, Power, LogOut, MapPin, Bell, Package, MessageSquare, Send, X,
   PlayCircle, StopCircle, Check, LocateFixed, Navigation as NavIcon, Wallet,
   Clock, Flag, User, AlertTriangle, Gauge, Fuel, Mic, Settings,
+  Camera, ShieldCheck, Banknote, Satellite, RefreshCw, Volume2,
 } from "lucide-react";
-import { Camera, ShieldCheck, Banknote } from "lucide-react";
 import { applyMode } from "@/lib/theme";
-import { activarKeepAliveAudio } from "@/lib/voz";
-import { iniciarGpsSegundoPlano, detenerGpsSegundoPlano } from "@/lib/backgroundGps";
-import {
-  hablarVoz, detenerVoz, reconocimientoDisponible, crearReconocimiento,
-  clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar,
-} from "@/lib/voz";
+import { activarKeepAliveAudio, sonarAlertaOferta, hablarVoz, detenerVoz, anunciarServicioEntrante, probarAudioVoz, reconocimientoDisponible, crearReconocimiento, clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar } from "@/lib/voz";
+import { iniciarGpsSegundoPlano, detenerGpsSegundoPlano, enviarUbicacionRobusta, obtenerEstadoGps, vaciarColaOffline, obtenerColaOffline } from "@/lib/backgroundGps";
 
 const fmtMoney2 = (n) => `$${Number(n || 0).toLocaleString("es-MX")}`;
 
@@ -156,6 +152,36 @@ export default function OperadorApp() {
 
   // ---- Ajustes del operador (voz IA, comandos de voz, notificaciones, GPS) ----
   const [ajustesOpen, setAjustesOpen] = useState(false);
+  const [diagnosticoOpen, setDiagnosticoOpen] = useState(false);
+  const [diagnosticoData, setDiagnosticoData] = useState(null);
+  const [diagnosticoLoading, setDiagnosticoLoading] = useState(false);
+
+  const abrirDiagnostico = async () => {
+    setDiagnosticoOpen(true);
+    setDiagnosticoLoading(true);
+    try {
+      const { data } = await api.get("/operadores/diagnostico-gps");
+      setDiagnosticoData(data);
+    } catch {
+      setDiagnosticoData(null);
+    } finally {
+      setDiagnosticoLoading(false);
+    }
+  };
+
+  const forzarSyncCola = async () => {
+    const res = await vaciarColaOffline({
+      operadorId: op?.id,
+      apiFetch: async (url, opts) => (await api({ url, ...opts }))?.data,
+    });
+    if (res?.ok) {
+      toast.success(`Cola sincronizada (${res.procesados} puntos enviados)`);
+      abrirDiagnostico();
+    } else {
+      toast.info("No hay puntos pendientes o sin conexión.");
+    }
+  };
+
   const [vozOn, setVozOn] = useState(() => localStorage.getItem("driver_voz") !== "off");
   const [comandosVozOn, setComandosVozOn] = useState(() => localStorage.getItem("driver_comandos_voz") !== "off");
   const [notifOn, setNotifOn] = useState(() => localStorage.getItem("driver_notif") !== "off");
@@ -251,30 +277,45 @@ export default function OperadorApp() {
     return () => { document.removeEventListener("visibilitychange", onVis); try { lock?.release(); } catch (_) {} };
   }, [enOperacion]);
 
+  const transmitirUbicacion = useCallback(async (punto, id) => {
+    const opId = id || op?.id;
+    if (!opId) return;
+    try {
+      await enviarUbicacionRobusta(punto, {
+        operadorId: opId,
+        apiFetch: async (url, opts) => {
+          const resp = await api({ url, ...opts });
+          return resp?.data || resp;
+        },
+      });
+    } catch (_) {}
+  }, [op]);
+
   const sendLocation = useCallback((id) => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude, lng = pos.coords.longitude;
-        const c = { lat, lng, accuracy: pos.coords.accuracy, speed: pos.coords.speed, heading: pos.coords.heading };
-        setCoords(c);
-        setGpsStale(false);
+        const c = {
+          lat, lng,
+          accuracy: pos.coords.accuracy,
+          speed: pos.coords.speed,
+          heading: pos.coords.heading,
+          client_ts: new Date().toISOString(),
+        };
         // Rumbo estimado si el dispositivo no lo da
-        if (lastPosRef.current) {
-          c.heading = c.heading ?? bearing(lastPosRef.current.lat, lastPosRef.current.lng, lat, lng);
+        if (lastPosRef.current && c.heading == null) {
+          c.heading = bearing(lastPosRef.current.lat, lastPosRef.current.lng, lat, lng);
         }
         lastPosRef.current = c;
-        try {
-          await api.post(`/operadores/${id}/ubicacion`, {
-            lat, lng, accuracy: pos.coords.accuracy ?? null,
-            speed: pos.coords.speed ?? null, heading: pos.coords.heading ?? null,
-          });
-        } catch (_) {}
+        setCoords(c);
+        setGpsStale(false);
+        await transmitirUbicacion(c, id);
       },
-      (err) => { setGpsStale(true); toast.error("No se pudo obtener tu ubicación: " + err.message); },
+      (err) => { setGpsStale(true); },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 8000 }
     );
-  }, []);
+  }, [transmitirUbicacion]);
 
   // Envío automático de ubicación + Servicio en 2º plano (Android Foreground Service + Audio KeepAlive)
   useEffect(() => {
@@ -290,7 +331,8 @@ export default function OperadorApp() {
             accuracy: loc.accuracy,
             speed: loc.speed,
             heading: loc.heading,
-            ts: Date.now(),
+            client_ts: loc.client_ts || new Date().toISOString(),
+            fromBackgroundService: true,
           };
           if (lastPosRef.current && c.heading == null) {
             c.heading = bearing(lastPosRef.current.lat, lastPosRef.current.lng, loc.lat, loc.lng);
@@ -298,15 +340,7 @@ export default function OperadorApp() {
           lastPosRef.current = c;
           setCoords(c);
           setGpsStale(false);
-          try {
-            await api.post(`/operadores/${op.id}/ubicacion`, {
-              lat: loc.lat,
-              lng: loc.lng,
-              accuracy: loc.accuracy ?? null,
-              speed: loc.speed ?? null,
-              heading: c.heading ?? null,
-            });
-          } catch (_) {}
+          await transmitirUbicacion(c, op.id);
         },
       });
     } else {
@@ -317,7 +351,7 @@ export default function OperadorApp() {
       clearInterval(timerRef.current);
       detenerGpsSegundoPlano();
     };
-  }, [enOperacion, op, sendLocation]);
+  }, [enOperacion, op, sendLocation, transmitirUbicacion]);
 
   // Vigila que el GPS se esté actualizando (stale si no llega)
   useEffect(() => {
@@ -431,8 +465,25 @@ export default function OperadorApp() {
   };
 
   const confirmarKm = async () => {
-    const km = parseFloat(kmInput);
-    if (!Number.isFinite(km) || km < 0) { toast.error("Escribe un kilometraje válido"); return; }
+    const km = kmInput.trim() !== "" ? parseFloat(kmInput) : null;
+    if (kmInput.trim() !== "" && (!Number.isFinite(km) || km < 0)) {
+      toast.error("Escribe un kilometraje válido o déjalo vacío");
+      return;
+    }
+
+    if (kmMode === "finalizar") {
+      if (servicio && ["asignado", "en_curso"].includes(servicio.estado)) {
+        toast.error("No puedes finalizar turno con un servicio en curso", {
+          description: "Completa o cancela el viaje activo antes de cerrar la jornada.",
+        });
+        return;
+      }
+      if (km !== null && turno?.odometro_inicio != null && km < turno.odometro_inicio) {
+        toast.error("El kilometraje final no puede ser menor al inicial");
+        return;
+      }
+    }
+
     try {
       if (kmMode === "iniciar") {
         const { data } = await api.post("/turnos/iniciar", {
@@ -443,9 +494,10 @@ export default function OperadorApp() {
         setTurno(data.turno);
         await cambiarEstado("libre");
         const me = await api.get("/auth/me");
-        setOp(me.data); setInicio(me.data.inicio_operacion || null);
+        setOp(me.data);
+        setInicio(me.data.inicio_operacion || null);
         toast.success("Turno iniciado", {
-          description: `Km iniciales: ${km} · Combustible: ${turnoCombustible}`,
+          description: `Km iniciales: ${km ?? "N/R"} · Combustible: ${turnoCombustible}`,
         });
       } else {
         const montoCuota = cuotaEntregada !== "" ? parseFloat(cuotaEntregada) : (turno?.cuota_diaria || op?.vehiculo?.cuota_diaria || 0);
@@ -535,12 +587,18 @@ export default function OperadorApp() {
       fd.append("odometro_km", String(km));
       if (combForm.estacion) fd.append("estacion", combForm.estacion);
       if (combTicket) fd.append("ticket", combTicket);
-      await api.post("/combustible", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      toast.success("Carga registrada", { description: `${litros} L · ${fmtMoney2(costo)}` });
+      const idempotencyKey = `comb_${op?.id || "op"}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      fd.append("idempotency_key", idempotencyKey);
+      const { data } = await api.post("/combustible", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      if (data?.duplicado) {
+        toast.info("Carga previa detectada (sin duplicado)");
+      } else {
+        toast.success("Carga registrada con éxito", { description: `${litros} L · ${fmtMoney2(costo)}` });
+      }
       setCombForm((f) => ({ ...f, litros: "", costo: "", estacion: "" }));
       setCombTicket(null);
-      const { data } = await api.get("/combustible/mis-cargas");
-      setCombHist(data.cargas || []);
+      const res = await api.get("/combustible/mis-cargas");
+      setCombHist(res.data.cargas || []);
     } catch (e) {
       toast.error(e.response?.data?.detail || "No se pudo registrar la carga");
     } finally {
@@ -748,23 +806,30 @@ export default function OperadorApp() {
   const notificarServicio = (s) => {
     const unidadTxt = getUnidadTxt() ? `Unidad ${getUnidadTxt()}` : "Taxi libre";
     const origen = s?.origen?.texto || "ubicación marcada en mapa";
-    const destinoTxt = s?.destino?.texto ? `, destino ${s.destino.texto}` : "";
-    const costoTxt = s?.costo != null ? `, costo ${s.costo} pesos` : "";
-    const frase = `${unidadTxt}, servicio disponible para pasajero en ${origen}${destinoTxt}${costoTxt}. Confirma para aceptar.`;
+    const destinoTxt = s?.destino?.texto || "";
+    const tarifa = s?.costo;
+    const distKm = ofertaDist ? (ofertaDist.m / 1000) : null;
+
     if (vozOnRef.current) {
-      hablarVoz(frase, { alertaPrevia: true });
-      vibrar();
-      // Tras terminar el anuncio (~4.3s), auto-escuchar el comando si está activo.
+      anunciarServicioEntrante({
+        origen,
+        destino: destinoTxt,
+        tarifa,
+        distanciaKm: distKm,
+      });
+      vibrar([200, 100, 200, 100, 300]);
+      // Tras terminar el anuncio (~4.5s), auto-escuchar el comando si está activo.
       if (comandosVozOnRef.current) setTimeout(() => {
         if (servicioRef.current?.estado === "ofrecido") escucharComandoOferta(true);
-      }, 4300);
+      }, 4500);
     } else {
-      vibrar();
+      sonarAlertaOferta();
+      vibrar([200, 100, 200]);
     }
     if (notifOnRef.current) {
       mostrarNotificacion({
-        titulo: `${unidadTxt}: servicio disponible`,
-        cuerpo: `Cliente en ${origen}${destinoTxt}${costoTxt} — Confirma para aceptar.`,
+        titulo: `${unidadTxt}: nuevo servicio`,
+        cuerpo: `Pasajero en ${origen}${destinoTxt ? ` → ${destinoTxt}` : ""}${tarifa ? ` · $${tarifa}` : ""}`,
         tag: "taxihub-oferta",
       });
     }
@@ -929,7 +994,15 @@ export default function OperadorApp() {
             </div>
             <div className="flex items-center gap-1.5">
               <ConnectionBadge state={wsState} />
-              <GpsBadge active={enOperacion && !!coords} stale={gpsStale} accuracy={coords?.accuracy} />
+              <button
+                type="button"
+                onClick={abrirDiagnostico}
+                title="Diagnóstico GPS en vivo"
+                aria-label="Diagnóstico GPS en vivo"
+                className="transition-transform active:scale-95 cursor-pointer"
+              >
+                <GpsBadge active={enOperacion && !!coords} stale={gpsStale} accuracy={coords?.accuracy} />
+              </button>
             </div>
           </div>
         </div>
@@ -1747,6 +1820,42 @@ export default function OperadorApp() {
                 activo={gpsFondoOn}
                 onToggle={() => { const v = !gpsFondoOn; setGpsFondoOn(v); localStorage.setItem("driver_gps_fondo", v ? "on" : "off"); }}
               />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAjustesOpen(false);
+                  abrirDiagnostico();
+                }}
+                className="flex w-full items-center justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-left transition-colors hover:border-brand/40"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Satellite className="h-4 w-4 text-brand-bright" />
+                  <div>
+                    <span className="block text-sm font-bold text-foreground">Diagnóstico GPS y Satélites</span>
+                    <span className="block text-xs text-muted-foreground">Ver señal, precisión y cola offline</span>
+                  </div>
+                </span>
+                <span className="text-xs font-bold text-brand-bright">Ver</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  probarAudioVoz();
+                  toast.success("Emitiendo tono de despacho y prueba de voz...");
+                }}
+                className="flex w-full items-center justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-left transition-colors hover:border-brand/40"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Volume2 className="h-4 w-4 text-emerald-400" />
+                  <div>
+                    <span className="block text-sm font-bold text-foreground">Probar Audio y Chime de Alerta</span>
+                    <span className="block text-xs text-muted-foreground">Verificar altavoz y volumen de despacho</span>
+                  </div>
+                </span>
+                <span className="text-xs font-bold text-emerald-400">Probar</span>
+              </button>
             </div>
 
             <Button
@@ -1757,6 +1866,103 @@ export default function OperadorApp() {
               className="mt-4 w-full"
             >
               <LogOut className="h-5 w-5" /> Cerrar sesión
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay: Diagnóstico GPS en vivo */}
+      {diagnosticoOpen && (
+        <div className="fixed inset-0 z-[950] flex items-end justify-center bg-black/75 backdrop-blur-sm p-3 sm:items-center" data-testid="diagnostico-gps-overlay">
+          <div className="w-full max-w-md animate-slide-up rounded-2xl border border-border bg-card p-4 elev-3 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Satellite className="h-5 w-5 text-brand-bright" />
+                <h3 className="text-base font-bold text-foreground">Diagnóstico de Telemetría GPS</h3>
+              </div>
+              <button onClick={() => setDiagnosticoOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {diagnosticoLoading ? (
+              <div className="py-8 text-center text-sm text-muted-foreground animate-pulse">
+                Consultando telemetría del satélite y servidor…
+              </div>
+            ) : diagnosticoData ? (
+              <div className="space-y-3 text-xs">
+                {/* Tarjeta de estado de señal */}
+                <div className="flex items-center justify-between rounded-xl border border-border bg-surface-2 p-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className={cn(
+                      "h-3 w-3 rounded-full animate-ping-soft",
+                      diagnosticoData.gps.calidad_senal === "excelente" ? "bg-emerald-400" :
+                      diagnosticoData.gps.calidad_senal === "buena" ? "bg-emerald-500" :
+                      diagnosticoData.gps.calidad_senal === "degradada" ? "bg-amber-400" : "bg-destructive"
+                    )} />
+                    <div>
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Calidad de Enlace GPS</div>
+                      <div className="text-sm font-extrabold capitalize text-foreground">
+                        {diagnosticoData.gps.calidad_senal}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase text-muted-foreground">Último reporte</div>
+                    <div className="mono-num font-bold text-foreground">
+                      {diagnosticoData.gps.segundos_desde_reporte != null
+                        ? `hace ${diagnosticoData.gps.segundos_desde_reporte}s`
+                        : "Sin datos"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid de telemetría */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-border bg-surface-2/60 p-2.5 text-center">
+                    <div className="text-[10px] uppercase text-muted-foreground">Precisión estimada</div>
+                    <div className="mono-num text-sm font-bold text-brand-bright">
+                      {diagnosticoData.gps.accuracy != null ? `±${Math.round(diagnosticoData.gps.accuracy)} m` : "N/D"}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border bg-surface-2/60 p-2.5 text-center">
+                    <div className="text-[10px] uppercase text-muted-foreground">Velocidad en ruta</div>
+                    <div className="mono-num text-sm font-bold text-foreground">
+                      {diagnosticoData.gps.speed != null ? `${Math.round(diagnosticoData.gps.speed * 3.6)} km/h` : "0 km/h"}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border bg-surface-2/60 p-2.5 text-center">
+                    <div className="text-[10px] uppercase text-muted-foreground">Cola local offline</div>
+                    <div className="mono-num text-sm font-bold text-foreground">
+                      {obtenerColaOffline().length} puntos en cola
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border bg-surface-2/60 p-2.5 text-center">
+                    <div className="text-[10px] uppercase text-muted-foreground">Batería dispositivo</div>
+                    <div className="mono-num text-sm font-bold text-foreground">
+                      {diagnosticoData.gps.battery != null ? `${Math.round(diagnosticoData.gps.battery * 100)}%` : "100%"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botones de acción técnica */}
+                <div className="flex gap-2 pt-1">
+                  <Button variant="secondary" onClick={probarAudioVoz} className="flex-1 text-xs">
+                    <Mic className="h-3.5 w-3.5 mr-1" /> Probar Voz y Chime
+                  </Button>
+                  <Button variant="secondary" onClick={forzarSyncCola} className="flex-1 text-xs">
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" /> Sincronizar Cola
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="py-4 text-center text-sm text-destructive">
+                No se pudo conectar con el servicio de telemetría.
+              </div>
+            )}
+
+            <Button onClick={() => setDiagnosticoOpen(false)} size="lg" className="w-full">
+              Cerrar Diagnóstico
             </Button>
           </div>
         </div>

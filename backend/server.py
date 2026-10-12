@@ -551,7 +551,7 @@ class UbicacionUpdate(BaseModel):
 
 
 class UbicacionGPS(BaseModel):
-    """Payload GPS completo (aceptado desde web o futura app Android)."""
+    """Payload GPS completo (aceptado desde web o app Android)."""
     lat: float
     lng: float
     driver_id: Optional[str] = None
@@ -562,6 +562,21 @@ class UbicacionGPS(BaseModel):
     timestamp: Optional[str] = None
     status: Optional[str] = None
     battery_level: Optional[float] = None
+
+
+class PuntoBatch(BaseModel):
+    lat: float
+    lng: float
+    accuracy: Optional[float] = None
+    speed: Optional[float] = None
+    heading: Optional[float] = None
+    battery_level: Optional[float] = None
+    client_ts: Optional[str] = None
+    timestamp: Optional[str] = None
+
+
+class BatchLocationsRequest(BaseModel):
+    puntos: List[PuntoBatch] = Field(default_factory=list)
 
 
 class LoginBody(BaseModel):
@@ -852,8 +867,51 @@ async def _notificar_dueno_de_operador(operador_id: Optional[str], message: dict
     if not operador_id:
         return
     v = await db.vehiculos.find_one({"operador_conductor_id": operador_id}, {"propietario_id": 1})
+    if not v:
+        op = await db.operadores.find_one({"_id": to_oid(operador_id)}, {"vehiculo_id": 1})
+        if op and op.get("vehiculo_id"):
+            v = await db.vehiculos.find_one({"_id": to_oid(op["vehiculo_id"])}, {"propietario_id": 1})
     if v and v.get("propietario_id"):
         await manager.send_dueno(v["propietario_id"], message)
+
+
+async def registrar_notificacion_responsable(
+    tipo: str,
+    operador_id: str,
+    titulo: str,
+    mensaje: str,
+    metadata: Optional[dict] = None
+) -> None:
+    """Registra y despacha notificaciones para socios/dueños y supervisores de central."""
+    try:
+        op = await db.operadores.find_one({"_id": to_oid(operador_id)}) or {}
+        vid = op.get("vehiculo_id")
+        v = await db.vehiculos.find_one({"_id": to_oid(vid)}) if vid else None
+        prop_id = v.get("propietario_id") if v else None
+        sitio_id = op.get("sitio_id") or DEFAULT_SITIO
+        doc = {
+            "id": str(uuid.uuid4()),
+            "tipo": tipo,
+            "operador_id": operador_id,
+            "operador_nombre": op.get("nombre", "Conductor"),
+            "placa": op.get("placa") or (v.get("placa") if v else "N/A"),
+            "vehiculo_id": vid,
+            "propietario_id": prop_id,
+            "sitio_id": sitio_id,
+            "titulo": titulo,
+            "mensaje": mensaje,
+            "metadata": metadata or {},
+            "creado": now_iso(),
+            "leido": False,
+        }
+        await db.notificaciones_responsables.insert_one(doc)
+        payload = {"type": "notificacion_operativa", "notificacion": serialize(doc)}
+        if prop_id:
+            await manager.send_dueno(prop_id, payload)
+        await manager.broadcast_terminal(payload, sitio_id=sitio_id)
+    except Exception as exc:
+        logger.warning("Fallo registrando notificacion responsable: %s", exc)
+
 
 
 # ---------------------------------------------------------------------------
@@ -1237,6 +1295,97 @@ async def get_operador_me(current: dict = Depends(require_operador)):
     return serialize(op)
 
 
+async def _generar_diagnostico_gps(operador_id: str) -> dict:
+    """Genera diagnóstico detallado de telemetría GPS, señal, batería y turno."""
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)})
+    if not op:
+        raise HTTPException(status_code=404, detail="Operador no encontrado")
+
+    ahora = datetime.now(timezone.utc)
+    ultima_act = op.get("ultima_actualizacion")
+    segundos_desde = None
+    if ultima_act:
+        try:
+            dt = _parse_iso(ultima_act)
+            if dt:
+                segundos_desde = max(0, int((ahora - dt).total_seconds()))
+        except Exception:
+            pass
+
+    accuracy = op.get("gps_accuracy")
+    calidad = "sin_senal"
+    if segundos_desde is not None and segundos_desde <= 30:
+        if accuracy is not None and accuracy <= 15:
+            calidad = "excelente"
+        elif accuracy is not None and accuracy <= 35:
+            calidad = "buena"
+        else:
+            calidad = "degradada"
+    elif segundos_desde is not None and segundos_desde <= 90:
+        calidad = "intermitente"
+    else:
+        calidad = "desconectado"
+
+    turno = await _turno_activo(operador_id)
+    servicios_activos = await db.servicios.count_documents({
+        "operador_asignado_id": operador_id,
+        "estado": {"$in": ["asignado", "en_curso"]},
+    })
+    vehiculo = None
+    if op.get("vehiculo_id"):
+        v = await db.vehiculos.find_one({"_id": to_oid(op["vehiculo_id"])})
+        if v:
+            vehiculo = {
+                "id": str(v["_id"]),
+                "placa": v.get("placa"),
+                "numero_economico": v.get("numero_economico"),
+                "marca": v.get("marca"),
+                "modelo": v.get("modelo"),
+                "odometro_km": v.get("odometro_km"),
+            }
+
+    return {
+        "ok": True,
+        "operador": {
+            "id": operador_id,
+            "nombre": op.get("nombre"),
+            "placa": op.get("placa"),
+            "estado": op.get("estado"),
+            "sitio_id": op.get("sitio_id") or DEFAULT_SITIO,
+        },
+        "gps": {
+            "lat": op.get("lat"),
+            "lng": op.get("lng"),
+            "accuracy": accuracy,
+            "speed": op.get("gps_speed"),
+            "heading": op.get("gps_heading"),
+            "battery": op.get("gps_battery"),
+            "ultima_actualizacion": ultima_act,
+            "gps_ts_cliente": op.get("gps_ts_cliente"),
+            "segundos_desde_reporte": segundos_desde,
+            "calidad_senal": calidad,
+            "track_buffer_puntos": len(op.get("track") or []),
+        },
+        "vehiculo": vehiculo,
+        "turno_activo": bool(turno),
+        "turno_id": str(turno["_id"]) if turno else None,
+        "servicios_activos_count": servicios_activos,
+        "servidor_ts": now_iso(),
+    }
+
+
+@api_router.get("/operadores/diagnostico-gps")
+async def get_diagnostico_gps_me(current: dict = Depends(require_operador_estricto)):
+    """Diagnóstico GPS directo para el operador autenticado."""
+    return await _generar_diagnostico_gps(current["id"])
+
+
+@api_router.get("/operadores/me/diagnostico-gps")
+async def get_diagnostico_gps_me_alias(current: dict = Depends(require_operador_estricto)):
+    """Alias para diagnóstico GPS directo del operador autenticado."""
+    return await _generar_diagnostico_gps(current["id"])
+
+
 @api_router.get("/operadores/{operador_id}")
 async def get_operador(operador_id: str, request: Request):
     await _mismo_o_terminal(request, operador_id)
@@ -1323,7 +1472,7 @@ async def update_estado(operador_id: str, body: EstadoUpdate, request: Request):
 # combustible, entrega de unidad y liquidación de cuota fijada por el dueño
 # ---------------------------------------------------------------------------
 class TurnoIniciar(BaseModel):
-    odometro_km: float = Field(ge=0, description="Kilómetros del tablero al iniciar")
+    odometro_km: Optional[float] = Field(default=None, ge=0, description="Kilómetros del tablero al iniciar (opcional)")
     nivel_combustible: Optional[str] = "3/4"
     evidencia_inicio_url: Optional[str] = None
     unidad_limpia: bool = True
@@ -1331,7 +1480,7 @@ class TurnoIniciar(BaseModel):
 
 
 class TurnoFinalizar(BaseModel):
-    odometro_km: float = Field(ge=0, description="Kilómetros del tablero al finalizar")
+    odometro_km: Optional[float] = Field(default=None, ge=0, description="Kilómetros del tablero al finalizar (opcional)")
     nivel_combustible_fin: Optional[str] = None
     evidencia_fin_url: Optional[str] = None
     entrega_unidad_confirmada: bool = True
@@ -1390,25 +1539,25 @@ async def subir_evidencia_turno(
     current: dict = Depends(require_operador_estricto),
 ):
     """Sube foto de evidencia del tablero/combustible al iniciar turno, cargar
-    combustible o entregar unidad/cuota al cierre del turno."""
+    combustible o entregar unidad/cuota al cierre del turno. Convierte a WebP seguro."""
     operador_id = current["id"]
-    ext = (foto.filename or "").split(".")[-1].lower() if "." in (foto.filename or "") else "jpg"
-    path = f"{APP_NAME}/combustible/{operador_id}/{tipo}_{uuid.uuid4().hex}.{ext}"
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)}) or {}
+    op_sitio = op.get("sitio_id") or DEFAULT_SITIO
     data = await foto.read()
-    import mimetypes
-    ct = foto.content_type
-    if not ct or ct == "application/octet-stream":
-        guessed, _ = mimetypes.guess_type(foto.filename or "")
-        ct = guessed or {
-            "jpg": "image/jpeg",
-            "jpeg": "image/jpeg",
-            "png": "image/png",
-            "webp": "image/webp",
-        }.get(ext, "image/jpeg")
-    result = put_object(path, data, ct)
-    await db.archivos.insert_one({"storage_path": result["path"], "content_type": ct})
+    comp = analizar_y_comprimir_imagen_webp(data, filename=foto.filename or "evidencia.jpg", max_dim=1600)
+    path = f"{APP_NAME}/evidencias/{operador_id}/{tipo}_{uuid.uuid4().hex}.webp"
+    result = put_object(path, comp["data"], "image/webp", sitio_id=op_sitio)
+    await db.archivos.insert_one({
+        "storage_path": result["path"],
+        "content_type": "image/webp",
+        "tipo": tipo,
+        "operador_id": operador_id,
+        "dimensiones": comp.get("dimensiones"),
+        "ahorro_pct": comp.get("ahorro_pct"),
+        "ts": now_iso(),
+    })
     url = f"/api/files/{result['path']}"
-    return {"ok": True, "evidencia_url": url}
+    return {"ok": True, "evidencia_url": url, "ahorro_pct": comp.get("ahorro_pct")}
 
 
 @api_router.post("/turnos/iniciar")
@@ -1452,6 +1601,13 @@ async def turno_iniciar(body: TurnoIniciar, current: dict = Depends(require_oper
         await _notificar_dueno_de_operador(operador_id, msg)
     out = _turno_out({**doc, "_id": res.inserted_id})
     await _notificar_dueno_de_operador(operador_id, {"type": "turno", "evento": "iniciado", "turno": out})
+    await registrar_notificacion_responsable(
+        "turno_inicio",
+        operador_id,
+        f"Inicio de Turno — Unidad {op.get('placa') or 'Taxi'}",
+        f"El conductor {op.get('nombre')} inició su turno. Odómetro inicial: {body.odometro_km or 'N/R'} km.",
+        metadata={"turno_id": str(res.inserted_id), "odometro": body.odometro_km, "combustible": body.nivel_combustible}
+    )
     return {"ok": True, "turno": out, "operador": {"estado": nuevo_estado}}
 
 
@@ -1461,9 +1617,22 @@ async def turno_finalizar(body: TurnoFinalizar, current: dict = Depends(require_
     turno = await _turno_activo(operador_id)
     if not turno:
         raise HTTPException(status_code=409, detail="No tienes un turno activo")
-    if body.odometro_km < turno.get("odometro_inicio", 0):
-        raise HTTPException(status_code=400,
-                            detail="El kilometraje final no puede ser menor al inicial")
+
+    # Validación crítica: evitar cerrar jornada con servicios activos en curso
+    servicios_activos = await db.servicios.count_documents({
+        "operador_asignado_id": operador_id,
+        "estado": {"$in": ["asignado", "en_curso"]},
+    })
+    if servicios_activos > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No puedes finalizar el turno mientras tengas {servicios_activos} servicio(s) en curso. Completa o cancela los viajes activos primero."
+        )
+
+    if body.odometro_km is not None and turno.get("odometro_inicio") is not None:
+        if body.odometro_km < turno["odometro_inicio"]:
+            raise HTTPException(status_code=400,
+                                detail="El kilometraje final no puede ser menor al inicial")
     ts = now_iso()
     inicio_ts = turno.get("inicio") or ""
     # Calcular ingresos y viajes completados durante este turno
@@ -1505,24 +1674,26 @@ async def turno_finalizar(body: TurnoFinalizar, current: dict = Depends(require_
         {"$set": updates},
     )
     doc = await db.turnos.find_one({"_id": turno["_id"]})
-    # Cerrar turno == salir de operación (fuera_de_servicio). Bypass de la
-    # validación de turno abierto: acabamos de cerrarlo.
-    servicios_activos = await db.servicios.count_documents({
-        "operador_asignado_id": operador_id,
-        "estado": {"$in": ESTADOS_ACTIVOS_SERVICIO},
-    })
-    if servicios_activos == 0:
-        await db.operadores.update_one(
-            {"_id": to_oid(operador_id)},
-            {"$set": {"estado": EstadoOperador.fuera_de_servicio.value,
-                      "inicio_operacion": None, "ultima_actualizacion": ts}})
-        op_sitio = turno.get("sitio_id") or current.get("sitio_id") or DEFAULT_SITIO
-        msg = {"type": "estado", "operador_id": operador_id,
-               "estado": EstadoOperador.fuera_de_servicio.value, "sitio_id": op_sitio, "ts": ts}
-        await manager.broadcast_terminal(msg, sitio_id=op_sitio)
-        await _notificar_dueno_de_operador(operador_id, msg)
+    # Cerrar turno == salir de operación (fuera_de_servicio)
+    await db.operadores.update_one(
+        {"_id": to_oid(operador_id)},
+        {"$set": {"estado": EstadoOperador.fuera_de_servicio.value,
+                  "inicio_operacion": None, "ultima_actualizacion": ts}})
+    op_sitio = turno.get("sitio_id") or current.get("sitio_id") or DEFAULT_SITIO
+    msg = {"type": "estado", "operador_id": operador_id,
+           "estado": EstadoOperador.fuera_de_servicio.value, "sitio_id": op_sitio, "ts": ts}
+    await manager.broadcast_terminal(msg, sitio_id=op_sitio)
+    await _notificar_dueno_de_operador(operador_id, msg)
     out = _turno_out(doc)
     await _notificar_dueno_de_operador(operador_id, {"type": "turno", "evento": "finalizado", "turno": out})
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)}) or {}
+    await registrar_notificacion_responsable(
+        "turno_fin",
+        operador_id,
+        f"Fin de Turno — Unidad {op.get('placa') or 'Taxi'}",
+        f"El conductor {op.get('nombre')} finalizó jornada. {len(servicios_turno)} viajes, ${ingresos_turno} brutos.",
+        metadata={"turno_id": str(turno["_id"]), "odometro_fin": body.odometro_km, "ingresos": ingresos_turno, "viajes": len(servicios_turno)}
+    )
     return {"ok": True, "turno": out}
 
 
@@ -1589,29 +1760,42 @@ async def registrar_carga_taxista(
     costo: float = Form(...),
     odometro_km: float = Form(...),
     estacion: Optional[str] = Form(None),
+    idempotency_key: Optional[str] = Form(None),
     ticket: Optional[UploadFile] = File(None),
     current: dict = Depends(require_operador_estricto),
 ):
     operador_id = current["id"]
+
+    # Prevención estricta de duplicados por reintento de red
+    if idempotency_key:
+        existente = await db.combustible_cargas.find_one({"idempotency_key": idempotency_key})
+        if existente:
+            return {
+                "ok": True,
+                "id": str(existente["_id"]),
+                "ticket_url": existente.get("ticket_url"),
+                "rendimiento_km_l": existente.get("rendimiento_km_l"),
+                "duplicado": True,
+            }
+
     op = await db.operadores.find_one({"_id": to_oid(operador_id)}, {"vehiculo_id": 1, "nombre": 1, "placa": 1, "sitio_id": 1})
     vid = op.get("vehiculo_id") if op else None
     ticket_url = None
     if ticket and ticket.filename:
-        ext = (ticket.filename or "").split(".")[-1].lower() if "." in (ticket.filename or "") else "jpg"
-        path = f"{APP_NAME}/combustible/{operador_id}/{uuid.uuid4().hex}.{ext}"
         data = await ticket.read()
-        import mimetypes
-        ct = ticket.content_type
-        if not ct or ct == "application/octet-stream":
-            guessed, _ = mimetypes.guess_type(ticket.filename or "")
-            ct = guessed or {
-                "jpg": "image/jpeg",
-                "jpeg": "image/jpeg",
-                "png": "image/png",
-                "webp": "image/webp",
-            }.get(ext, "image/jpeg")
-        result = put_object(path, data, ct)
-        await db.archivos.insert_one({"storage_path": result["path"], "content_type": ct})
+        comp = analizar_y_comprimir_imagen_webp(data, filename=ticket.filename or "ticket.jpg", max_dim=1600)
+        path = f"{APP_NAME}/combustible/{operador_id}/{uuid.uuid4().hex}.webp"
+        op_sitio = (op.get("sitio_id") if op else None) or DEFAULT_SITIO
+        result = put_object(path, comp["data"], "image/webp", sitio_id=op_sitio)
+        await db.archivos.insert_one({
+            "storage_path": result["path"],
+            "content_type": "image/webp",
+            "tipo": "ticket_combustible",
+            "operador_id": operador_id,
+            "dimensiones": comp.get("dimensiones"),
+            "ahorro_pct": comp.get("ahorro_pct"),
+            "ts": now_iso(),
+        })
         ticket_url = f"/api/files/{result['path']}"
 
     rendimiento = None
@@ -1631,6 +1815,7 @@ async def registrar_carga_taxista(
         "vehiculo_id": vid,
         "fecha": fecha, "litros": litros, "costo": costo,
         "odometro_km": odometro_km, "estacion": estacion,
+        "idempotency_key": idempotency_key,
         "ticket_url": ticket_url, "evidencia_url": ticket_url,
         "rendimiento_km_l": rendimiento,
         "creado": now_iso(),
@@ -1646,6 +1831,13 @@ async def registrar_carga_taxista(
         except HTTPException:
             pass
     await _notificar_dueno_de_operador(operador_id, {"type": "combustible", "carga": serialize({**doc, "_id": res.inserted_id})})
+    await registrar_notificacion_responsable(
+        "combustible_carga",
+        operador_id,
+        f"Carga de Combustible — Unidad {op.get('placa') or 'Taxi'}",
+        f"Conductor {op.get('nombre') if op else 'Operador'}: {litros} L por ${costo} MXN ({estacion or 'Gasolinera'}). Odómetro: {odometro_km} km.",
+        metadata={"litros": litros, "costo": costo, "odometro": odometro_km, "estacion": estacion}
+    )
     return {"ok": True, "id": str(res.inserted_id), "ticket_url": ticket_url, "rendimiento_km_l": rendimiento}
 
 
@@ -1726,6 +1918,57 @@ async def _actualizar_ubicacion(operador_id: str, lat: float, lng: float,
         # El geofence nunca debe romper la ingesta de GPS.
         logger.warning("geofence eval fallo: %s", exc)
     return result
+
+
+async def _procesar_ubicaciones_batch(operador_id: str, puntos: List[PuntoBatch]) -> dict:
+    """Procesa una lista de puntos GPS provenientes de almacenamiento offline (Fase Android)."""
+    if not puntos:
+        return {"ok": True, "procesados": 0}
+
+    def _ts_key(p: PuntoBatch):
+        return p.client_ts or p.timestamp or ""
+
+    puntos_ordenados = sorted(puntos, key=_ts_key)
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)})
+    if not op:
+        raise HTTPException(status_code=404, detail="Operador no encontrado")
+
+    # Ingestar puntos intermedios al historial (track)
+    for p in puntos_ordenados[:-1]:
+        ts = p.client_ts or p.timestamp or now_iso()
+        set_fields = {}
+        if p.accuracy is not None:
+            set_fields["gps_accuracy"] = p.accuracy
+        if p.speed is not None:
+            set_fields["gps_speed"] = p.speed
+        if p.heading is not None:
+            set_fields["gps_heading"] = p.heading
+        if p.battery_level is not None:
+            set_fields["gps_battery"] = p.battery_level
+        await _track_puntual(operador_id, p.lat, p.lng, ts, set_fields)
+
+    # El último punto actualiza la posición viva y dispara geofence + websocket
+    ultimo = puntos_ordenados[-1]
+    res_ultimo = await _actualizar_ubicacion(
+        operador_id=operador_id,
+        lat=ultimo.lat,
+        lng=ultimo.lng,
+        accuracy=ultimo.accuracy,
+        speed=ultimo.speed,
+        heading=ultimo.heading,
+        battery=ultimo.battery_level,
+        client_ts=ultimo.client_ts or ultimo.timestamp,
+    )
+    return {
+        "ok": True,
+        "procesados": len(puntos_ordenados),
+        "ultimo_punto": {
+            "lat": ultimo.lat,
+            "lng": ultimo.lng,
+            "ts": ultimo.client_ts or ultimo.timestamp,
+        },
+        **res_ultimo,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -1845,6 +2088,26 @@ async def update_ubicacion(operador_id: str, body: UbicacionUpdate, request: Req
     return await _actualizar_ubicacion(operador_id, body.lat, body.lng,
                                        body.accuracy, body.speed, body.heading,
                                        body.battery_level, body.timestamp)
+
+
+@api_router.post("/operadores/{operador_id}/ubicaciones-batch")
+async def update_ubicaciones_batch(operador_id: str, body: BatchLocationsRequest, request: Request):
+    """Ingesta masiva de puntos GPS almacenados en cola offline (Fase Android)."""
+    await _mismo_o_terminal(request, operador_id)
+    return await _procesar_ubicaciones_batch(operador_id, body.puntos)
+
+
+@api_router.post("/locations/batch")
+async def update_locations_batch_driver(body: BatchLocationsRequest, current: dict = Depends(require_operador_estricto)):
+    """Ingesta masiva de puntos GPS offline autenticada con token de operador."""
+    return await _procesar_ubicaciones_batch(current["id"], body.puntos)
+
+
+@api_router.get("/operadores/{operador_id}/diagnostico-gps")
+async def get_diagnostico_gps(operador_id: str, request: Request):
+    """Diagnóstico detallado de telemetría GPS, calidad de señal y batería."""
+    await _mismo_o_terminal(request, operador_id)
+    return await _generar_diagnostico_gps(operador_id)
 
 
 @api_router.get("/operadores/{operador_id}/track")
@@ -4689,6 +4952,33 @@ async def dueno_reportes(
         "cancelados": cancelados,
         "ingresos_por_dia": [{"fecha": b["fecha"], "ingresos": b["ingresos"]} for b in dias_ordenados],
     }
+
+
+@api_router.get("/dueno/notificaciones")
+async def dueno_notificaciones(
+    limite: int = Query(50, ge=1, le=200),
+    current: dict = Depends(require_dueno),
+):
+    """Bandeja de eventos operativos para socios/dueños (turnos, cargas combustible, incidencias)."""
+    dueno_id = current["id"]
+    vehiculos = await _vehiculos_de_dueno(dueno_id)
+    op_ids = [v["operador_conductor_id"] for v in vehiculos if v.get("operador_conductor_id")]
+    query_or: List[dict] = [{"propietario_id": dueno_id}]
+    if op_ids:
+        query_or.append({"operador_id": {"$in": op_ids}})
+    docs = await db.notificaciones_responsables.find({"$or": query_or}).sort("creado", -1).to_list(limite)
+    return {"notificaciones": [serialize(d) for d in docs]}
+
+
+@api_router.get("/terminal/notificaciones-responsables")
+async def terminal_notificaciones_responsables(
+    limite: int = Query(50, ge=1, le=200),
+    current: dict = Depends(require_terminal),
+):
+    """Bandeja de eventos operativos para la central de despacho."""
+    sitio_id = current.get("sitio_id") or DEFAULT_SITIO
+    docs = await db.notificaciones_responsables.find({"sitio_id": sitio_id}).sort("creado", -1).to_list(limite)
+    return {"notificaciones": [serialize(d) for d in docs]}
 
 
 # ---------------------------------------------------------------------------

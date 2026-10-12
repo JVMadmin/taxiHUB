@@ -148,6 +148,36 @@ export function hablarVoz(texto, { rate = 1.02, pitch = 1, alertaPrevia = false 
   }
 }
 
+/**
+ * Anuncio vocal estructurado y profesional del despacho para el conductor:
+ * "Nuevo servicio en [origen]. Tarifa estimada [tarifa] pesos. Destino [destino]. Toca para aceptar."
+ */
+export function anunciarServicioEntrante({ origen, destino, tarifa, distanciaKm } = {}) {
+  const partes = ["Nuevo servicio disponible."];
+  if (origen) {
+    partes.push(`Pasajero en ${origen}.`);
+  }
+  if (distanciaKm) {
+    const dist = typeof distanciaKm === "number" ? distanciaKm.toFixed(1) : distanciaKm;
+    partes.push(`A ${dist} kilómetros.`);
+  }
+  if (tarifa) {
+    partes.push(`Tarifa estimada ${Math.round(tarifa)} pesos.`);
+  }
+  if (destino) {
+    partes.push(`Destino ${destino}.`);
+  }
+  partes.push("Toca la pantalla para aceptar.");
+  return hablarVoz(partes.join(" "), { alertaPrevia: true, rate: 1.05 });
+}
+
+export function probarAudioVoz() {
+  sonarAlertaOferta();
+  setTimeout(() => {
+    hablarVoz("Audio y alertas de TaxiHUB Driver funcionando correctamente.", { rate: 1.02 });
+  }, 350);
+}
+
 // Precarga voces cuando el navegador las publica tarde (Chrome desktop).
 if (typeof window !== "undefined" && "speechSynthesis" in window) {
   try {
