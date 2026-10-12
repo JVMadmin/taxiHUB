@@ -270,6 +270,13 @@ export function notificacionesDisponibles() {
 }
 
 export async function pedirPermisoNotificaciones() {
+  try {
+    const localNotif = window.Capacitor?.Plugins?.LocalNotifications;
+    if (localNotif && typeof localNotif.requestPermissions === "function") {
+      const res = await localNotif.requestPermissions();
+      if (res?.display === "granted") return "granted";
+    }
+  } catch {}
   if (!notificacionesDisponibles()) return "denied";
   try {
     if (Notification.permission === "granted") return "granted";
@@ -289,9 +296,29 @@ export function vibrar(patron = [200, 100, 200]) {
 
 /**
  * Muestra notificación del sistema (funciona con la app en segundo plano
- * dentro del navegador). Requiere permiso concedido.
+ * dentro del navegador y en Android nativo). Requiere permiso concedido.
  */
 export function mostrarNotificacion({ titulo, cuerpo, tag = "taxihub-oferta" }) {
+  try {
+    const localNotif = window.Capacitor?.Plugins?.LocalNotifications;
+    if (localNotif && typeof localNotif.schedule === "function") {
+      localNotif.schedule({
+        notifications: [
+          {
+            title: titulo,
+            body: cuerpo,
+            id: Math.floor((Date.now() + Math.random() * 1000) % 100000),
+            sound: "dispatch_alert.wav",
+            smallIcon: "ic_stat_taxihub",
+            actionTypeId: "",
+            extra: { tag },
+          },
+        ],
+      }).catch(() => {});
+      return true;
+    }
+  } catch {}
+
   if (!notificacionesDisponibles() || Notification.permission !== "granted") return false;
   try {
     const n = new Notification(titulo, {

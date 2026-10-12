@@ -52,7 +52,7 @@ export default function OperadorLogin() {
   };
 
   return (
-    <div className="taxi-passenger-auth">
+    <div className="taxi-passenger-auth taxi-passenger-dark">
       <div className="taxi-passenger-auth-orb" />
       <div className="taxi-passenger-auth-card">
         <form
@@ -66,7 +66,7 @@ export default function OperadorLogin() {
               <span>Taxi<span>HUB</span></span>
             </div>
             <div className="taxi-passenger-auth-heading">
-              <h1>App exclusiva de Operador</h1>
+              <h1>TaxiHUB Driver</h1>
               <p>Acceso exclusivo para conductores autorizados por la central.</p>
             </div>
 
@@ -78,6 +78,8 @@ export default function OperadorLogin() {
                   onChange={(e) => setUsuario(e.target.value)}
                   placeholder="op1"
                   autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </label>
               <label className="taxi-passenger-field"><span>Contraseña</span>
@@ -87,13 +89,16 @@ export default function OperadorLogin() {
                   value={contrasena}
                   onChange={(e) => setContrasena(e.target.value)}
                   placeholder="••••••"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </label>
               <Button
                 data-testid="login-submit"
                 type="submit"
                 disabled={loading}
-                className="taxi-passenger-primary-button"
+                className="taxi-passenger-primary-button h-12 text-sm font-bold shadow-lg"
               >
                 <LogIn className="h-4 w-4" />
                 {loading ? "Entrando a turno..." : "Iniciar sesión de Operador"}

@@ -79,6 +79,14 @@ function App() {
     let subPromise = null;
     try {
       subPromise = CapApp.addListener("backButton", ({ canGoBack }) => {
+        // Disparar evento para permitir a modales, bottom sheets y chats cerrarse primero
+        const event = new CustomEvent("app:hardwareBack", { cancelable: true });
+        const handled = !window.dispatchEvent(event);
+        if (handled) {
+          // El modal o drawer consumió el botón Atrás
+          return;
+        }
+
         const path = typeof window !== "undefined" ? window.location.pathname : "";
         if (!canGoBack || path === "/login" || path === "/operador" || path === "/" || path === "") {
           CapApp.minimizeApp();

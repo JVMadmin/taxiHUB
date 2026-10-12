@@ -33,6 +33,8 @@ import {
 import { applyMode } from "@/lib/theme";
 import { activarKeepAliveAudio, sonarAlertaOferta, hablarVoz, detenerVoz, anunciarServicioEntrante, probarAudioVoz, reconocimientoDisponible, crearReconocimiento, clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar } from "@/lib/voz";
 import { iniciarGpsSegundoPlano, detenerGpsSegundoPlano, enviarUbicacionRobusta, obtenerEstadoGps, vaciarColaOffline, obtenerColaOffline } from "@/lib/backgroundGps";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
 
 const fmtMoney2 = (n) => `$${Number(n || 0).toLocaleString("es-MX")}`;
 
@@ -214,6 +216,37 @@ export default function OperadorApp() {
     window.addEventListener("app:mode", onMode);
     return () => window.removeEventListener("app:mode", onMode);
   }, []);
+
+  // Adaptación nativa de la barra de estado en Android
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        StatusBar.setStyle({ style: driverLight ? Style.Light : Style.Dark });
+        StatusBar.setBackgroundColor({ color: driverLight ? "#F4F7F6" : "#0B0D10" });
+      } catch {}
+    }
+  }, [driverLight]);
+
+  // Manejo contextual del botón Atrás en Android (cierra modales o drawers antes de minimizar)
+  useEffect(() => {
+    const onHwBack = (e) => {
+      if (chatOpen) {
+        e.preventDefault();
+        setChatOpen(false);
+      } else if (ajustesOpen) {
+        e.preventDefault();
+        setAjustesOpen(false);
+      } else if (diagnosticoOpen) {
+        e.preventDefault();
+        setDiagnosticoOpen(false);
+      } else if (iniciarOpen) {
+        e.preventDefault();
+        setIniciarOpen(false);
+      }
+    };
+    window.addEventListener("app:hardwareBack", onHwBack);
+    return () => window.removeEventListener("app:hardwareBack", onHwBack);
+  }, [chatOpen, ajustesOpen, diagnosticoOpen, iniciarOpen]);
 
   const enOperacion = op && op.estado !== "fuera_de_servicio";
 

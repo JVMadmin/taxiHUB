@@ -24,7 +24,12 @@
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
         <title>Central de Taxis</title>
-        <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
+        <script>
+            if (typeof window !== "undefined" && (window.location.protocol === "capacitor:" || (window.location.hostname === "localhost" && window.location.protocol === "https:"))) {
+                window.__TAXIHUB_APP_MODE__ = "operador";
+            }
+            window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);
+        </script>
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
