@@ -106,8 +106,8 @@ let webpackConfig = {
         webpackConfig.plugins.push(healthPluginInstance);
       }
 
-      // PWA — Workbox GenerateSW (solo en production build)
-      if (GenerateSW && process.env.NODE_ENV === "production") {
+      // PWA — Workbox GenerateSW (solo si ENABLE_PWA_SW === "true")
+      if (GenerateSW && process.env.NODE_ENV === "production" && process.env.ENABLE_PWA_SW === "true") {
         webpackConfig.plugins.push(
           new GenerateSW({
             clientsClaim: true,

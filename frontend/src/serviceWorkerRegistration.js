@@ -86,12 +86,19 @@ function checkValidServiceWorker(swUrl, config) {
 
 export function unregister() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.ready
-      .then((registration) => {
-        registration.unregister();
+    navigator.serviceWorker.getRegistrations()
+      .then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
       })
       .catch((error) => {
         console.error(error.message);
       });
+  }
+  if ("caches" in window) {
+    caches.keys().then((keys) => {
+      keys.forEach((key) => caches.delete(key));
+    });
   }
 }

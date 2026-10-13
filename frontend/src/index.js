@@ -21,4 +21,5 @@ root.render(
   </QueryClientProvider>,
 );
 
-serviceWorkerRegistration.register();
+// Unregister previous service workers to avoid stale bundles in production
+serviceWorkerRegistration.unregister();

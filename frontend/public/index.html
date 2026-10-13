@@ -25,10 +25,61 @@
         -->
         <title>Central de Taxis</title>
         <script>
+            // Limpieza proactiva de Service Workers y cachés antiguos
+            (function() {
+                var BUILD_EPOCH = "20261013_clean_v1";
+                try {
+                    var lastEpoch = localStorage.getItem("__taxihub_build_epoch__");
+                    if (lastEpoch !== BUILD_EPOCH) {
+                        if ('caches' in window) {
+                            caches.keys().then(function(names) {
+                                return Promise.all(names.map(function(n) { return caches.delete(n); }));
+                            });
+                        }
+                        if ('serviceWorker' in navigator) {
+                            navigator.serviceWorker.getRegistrations().then(function(regs) {
+                                for (var i = 0; i < regs.length; i++) regs[i].unregister();
+                            });
+                        }
+                        localStorage.setItem("__taxihub_build_epoch__", BUILD_EPOCH);
+                    }
+                } catch(e) {}
+            })();
+
+            // Recuperación automática si el navegador ejecuta un bundle desfasado
+            window.addEventListener("error", function(e) {
+                var msg = (e && (e.message || (e.error && e.error.message))) || "";
+                if (typeof msg === "string" && (/LOC_INTERVAL/i.test(msg) || /ChunkLoadError/i.test(msg) || /Loading chunk/i.test(msg))) {
+                    console.warn("[taxiHUB] Recuperando de bundle desfasado:", msg);
+                    try {
+                        if ('caches' in window) {
+                            caches.keys().then(function(names) {
+                                return Promise.all(names.map(function(n) { return caches.delete(n); }));
+                            }).then(function() {
+                                if ('serviceWorker' in navigator) {
+                                    navigator.serviceWorker.getRegistrations().then(function(regs) {
+                                        return Promise.all(regs.map(function(r) { return r.unregister(); }));
+                                    }).then(function() {
+                                        window.location.reload(true);
+                                    });
+                                } else {
+                                    window.location.reload(true);
+                                }
+                            });
+                            return;
+                        }
+                    } catch(err) {}
+                    window.location.reload(true);
+                }
+                if (e.error instanceof DOMException && e.error.name === "DataCloneError" && e.message && e.message.includes("PerformanceServerTiming")) {
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                }
+            }, true);
+
             if (typeof window !== "undefined" && (window.location.protocol === "capacitor:" || (window.location.hostname === "localhost" && window.location.protocol === "https:"))) {
                 window.__TAXIHUB_APP_MODE__ = "operador";
             }
-            window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);
         </script>
     </head>
     <body>
