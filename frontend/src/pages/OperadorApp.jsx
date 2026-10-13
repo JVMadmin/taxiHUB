@@ -37,6 +37,7 @@ import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
 const fmtMoney2 = (n) => `$${Number(n || 0).toLocaleString("es-MX")}`;
+const LOC_INTERVAL = 8000; // 8s intervalo de reporte GPS en primer plano
 
 const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const SATELLITE_REF = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
