@@ -12,9 +12,9 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/EmptyState";
 import { ServicioBadge } from "@/components/StatusBadge";
 import { ModeToggle } from "@/components/ModeToggle";
-import { pointIcon, taxiRoleAssetIcon } from "@/lib/taxiIcon";
+import { pointIcon, taxiRoleAssetIcon, taxiOrdinarioAssetIcon } from "@/lib/taxiIcon";
 import { useRouting } from "@/hooks/useRouting";
-import { fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
+import { distM, fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
 import { RoutePolyline } from "@/components/RoutePolyline";
 import { VehicleImage } from "@/components/VehicleImage";
 import { toast } from "sonner";
@@ -134,6 +134,34 @@ function MapViewportController({ points, focusPoint }) {
       }
     }
   }, [map, points, focusPoint]);
+
+  return null;
+}
+
+function ActiveTripMapController({ taxiPoint, siguiendoTaxi, onUserPan }) {
+  const map = useMap();
+  const prevTaxiPosRef = useRef(null);
+
+  useMapEvents({
+    dragstart: () => {
+      if (onUserPan) onUserPan();
+    },
+  });
+
+  useEffect(() => {
+    if (!map) return;
+    if (siguiendoTaxi && taxiPoint?.lat != null && taxiPoint?.lng != null) {
+      const lat = taxiPoint.lat;
+      const lng = taxiPoint.lng;
+      const prev = prevTaxiPosRef.current;
+      if (!prev || Math.abs(prev.lat - lat) > 0.00003 || Math.abs(prev.lng - lng) > 0.00003) {
+        prevTaxiPosRef.current = { lat, lng };
+        try {
+          map.setView([lat, lng], 16, { animate: true });
+        } catch (_) {}
+      }
+    }
+  }, [map, taxiPoint, siguiendoTaxi]);
 
   return null;
 }
@@ -319,6 +347,7 @@ export default function PassengerApp() {
   const [servicio, setServicio] = useState(null); // viaje activo
   const [taxiPos, setTaxiPos] = useState(null); // ubicación WS del taxi
   const [misServicios, setMisServicios] = useState([]);
+  const [siguiendoTaxi, setSiguiendoTaxi] = useState(true); // Cámara centrada en el taxi vs Modo Libre
 
   // Selección de origen y destino
   const [pickup, setPickup] = useState(null);
@@ -482,6 +511,7 @@ export default function PassengerApp() {
 
     if (prevEst && prevEst !== curEst) {
       if (curEst === "asignado" && servicio.taxi) {
+        setSiguiendoTaxi(true);
         const unidad = servicio.taxi.numero_economico || "asignada";
         const chofer = servicio.taxi.nombre_conductor || "Tu conductor";
         toast.success(`¡Unidad ${unidad} confirmada! ${chofer} va en camino.`);
@@ -1157,9 +1187,17 @@ export default function PassengerApp() {
                   className="h-full w-full"
                 >
                   <PassengerTileLayers mapStyle={mapStyle} />
-                  <MapViewportController
-                    points={[servicio.origen, servicio.destino, taxiActual].filter(Boolean)}
-                  />
+                  {taxiActual ? (
+                    <ActiveTripMapController
+                      taxiPoint={taxiActual}
+                      siguiendoTaxi={siguiendoTaxi}
+                      onUserPan={() => setSiguiendoTaxi(false)}
+                    />
+                  ) : (
+                    <MapViewportController
+                      points={[servicio.origen, servicio.destino].filter(Boolean)}
+                    />
+                  )}
                   {/* Ruta plan del viaje (origen → destino) */}
                   {rutaViaje.latlngs?.length > 1 && (
                     <Polyline
@@ -1212,14 +1250,17 @@ export default function PassengerApp() {
                   {(taxiPos || servicio.taxi) && taxiActual && (
                     <Marker
                       position={[taxiActual.lat, taxiActual.lng]}
-                      icon={taxiRoleAssetIcon({ heading: taxiHeading, size: "md" })}
+                      icon={taxiOrdinarioAssetIcon({
+                        heading: taxiHeading,
+                        size: "md",
+                        label: servicio.taxi?.numero_economico || "TX-101",
+                      })}
                     >
                       <Popup>
                         <div className="text-sm font-medium">
-                          Tu taxi
-                          {servicio.taxi?.numero_economico
-                            ? ` · ${servicio.taxi.numero_economico}`
-                            : ""}
+                          Tu taxi · {servicio.taxi?.numero_economico || "TX-101"}
+                          <br />
+                          {servicio.taxi?.nombre_conductor ? `Conductor: ${servicio.taxi.nombre_conductor}` : ""}
                           <br />
                           {timeAgo(taxiPos?.ts || servicio.taxi?.ultima_actualizacion)}
                         </div>
@@ -1227,6 +1268,64 @@ export default function PassengerApp() {
                     </Marker>
                   )}
                 </MapContainer>
+
+                {/* Controles de cámara: Cambiar capa + Seguir Taxi / Modo Libre */}
+                <div className="absolute top-20 right-4 z-[999] flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleMapStyle}
+                    data-testid="pas-mapa-modo-toggle"
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-slate-950/85 text-white shadow-xl backdrop-blur-md transition-transform active:scale-95"
+                    title={mapStyle === "calles" ? "Cambiar a vista satelital" : "Cambiar a vista calles"}
+                  >
+                    <Layers className="h-5 w-5" />
+                  </button>
+
+                  {taxiActual && (
+                    <button
+                      type="button"
+                      onClick={() => setSiguiendoTaxi((prev) => !prev)}
+                      data-testid="pas-toggle-modo-libre"
+                      className={cn(
+                        "flex h-11 items-center gap-2 rounded-2xl border px-3 text-xs font-bold shadow-xl backdrop-blur-md transition-all active:scale-95",
+                        siguiendoTaxi
+                          ? "border-emerald-500/50 bg-emerald-950/85 text-emerald-300 shadow-emerald-950/40"
+                          : "border-sky-500/50 bg-slate-950/90 text-sky-300 shadow-slate-950/50"
+                      )}
+                      title={siguiendoTaxi ? "Activar modo libre" : "Centrar y seguir taxi"}
+                    >
+                      <Navigation className={cn("h-4 w-4", siguiendoTaxi && "animate-pulse text-emerald-400")} />
+                      <span>{siguiendoTaxi ? "Siguiendo" : "Modo libre"}</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Banner flotante en Modo Libre mostrando la distancia en vivo al taxi */}
+                {!siguiendoTaxi && taxiActual && (
+                  <div className="absolute top-20 left-4 right-20 z-[999] animate-fade-in pointer-events-auto">
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-sky-500/40 bg-slate-950/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-md">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="relative flex h-2.5 w-2.5 shrink-0">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-500" />
+                        </span>
+                        <div className="truncate text-xs">
+                          <span className="font-bold text-white">Modo libre: </span>
+                          <span className="font-semibold text-sky-300">
+                            a {fmtDist(distM(servicio.origen || pickup, taxiActual))} de tu ubicación
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSiguiendoTaxi(true)}
+                        className="shrink-0 rounded-xl bg-sky-500 px-3 py-1 text-xs font-extrabold text-slate-950 shadow-md transition-transform active:scale-95"
+                      >
+                        Centrar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <section className="taxi-passenger-trip-summary" aria-label="Resumen del viaje">

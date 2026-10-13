@@ -23,8 +23,8 @@ export default function DuenoLogin() {
     try {
       const { data } = await duenoApi.post("/dueno/login", { usuario, contrasena });
       saveDuenoAuth(data.token, data.usuario);
-      toast.success(`Bienvenido, ${data.usuario.nombre}`);
-      navigate("/dueno");
+      const target = window.location.pathname.includes("/socio") ? "/socio" : "/dueno";
+      navigate(target);
     } catch (err) {
       toast.error(err.response?.data?.detail || "No se pudo iniciar sesión");
     } finally {

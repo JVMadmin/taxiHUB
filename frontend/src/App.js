@@ -56,19 +56,24 @@ function App() {
     process.env.REACT_APP_NATIVE_ROLE === "pasajero" ||
     process.env.REACT_APP_APP_MODE === "pasajero";
 
+  const isOnlySocioApp =
+    !isOnlyPasajeroApp &&
+    (appMode === "socio" ||
+      appMode === "dueno" ||
+      process.env.REACT_APP_NATIVE_ROLE === "socio" ||
+      process.env.REACT_APP_NATIVE_ROLE === "dueno" ||
+      process.env.REACT_APP_APP_MODE === "socio" ||
+      process.env.REACT_APP_APP_MODE === "dueno");
+
   const isOnlyOperadorApp =
     !isOnlyPasajeroApp &&
+    !isOnlySocioApp &&
     (isNativeApp ||
       appMode === "operador" ||
+      process.env.REACT_APP_NATIVE_ROLE === "operador" ||
       process.env.REACT_APP_ONLY_OPERADOR === "true" ||
       process.env.REACT_APP_APP_MODE === "operador" ||
       (typeof window !== "undefined" && window.location.port === "3006"));
-
-  const isOnlySocioApp =
-    appMode === "socio" ||
-    appMode === "dueno" ||
-    process.env.REACT_APP_APP_MODE === "socio" ||
-    process.env.REACT_APP_APP_MODE === "dueno";
 
   const isOnlyCentralApp =
     appMode === "central" ||
@@ -147,9 +152,11 @@ function App() {
             <Routes>
               <Route path="/login" element={<DuenoLogin />} />
               <Route path="/dueno/login" element={<DuenoLogin />} />
+              <Route path="/socio/login" element={<DuenoLogin />} />
               <Route path="/dueno" element={<DuenoApp />} />
+              <Route path="/socio" element={<DuenoApp />} />
               <Route path="/" element={<DuenoApp />} />
-              <Route path="*" element={<Navigate to="/dueno" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           ) : isOnlyCentralApp ? (
             <Routes>
@@ -171,7 +178,9 @@ function App() {
               <Route path="/pasajero" element={<PassengerApp />} />
               <Route path="/mi-taxi" element={<PassengerApp />} />
               <Route path="/dueno/login" element={<DuenoLogin />} />
+              <Route path="/socio/login" element={<DuenoLogin />} />
               <Route path="/dueno" element={<DuenoApp />} />
+              <Route path="/socio" element={<DuenoApp />} />
               <Route path="/dev" element={<DevPanel />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

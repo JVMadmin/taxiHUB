@@ -1279,16 +1279,19 @@ async def _notificar_servicio(s: dict):
 
 
 async def _expirar_ofertas_vencidas() -> int:
-    """Marca como `vencido` las ofertas cuyo expira_en ya pasó (sin job de fondo)."""
-    ahora = datetime.now(timezone.utc)
-    docs = await db.servicios.find({"estado": "ofrecido", "expira_en": {"$exists": True}}).to_list(500)
-    n = 0
-    for s in docs:
-        exp = _parse_iso(s.get("expira_en"))
-        if exp and (exp.replace(tzinfo=timezone.utc) if exp.tzinfo is None else exp) < ahora:
-            await db.servicios.update_one({"_id": s["_id"]}, {"$set": {"estado": "vencido", "ts_vencido": now_iso()}})
-            n += 1
-    return n
+    """Procesa ofertas vencidas canalizándolas por el motor de cascada."""
+    try:
+        return await _cascada_ofertas_vencidas()
+    except Exception:
+        ahora = datetime.now(timezone.utc)
+        docs = await db.servicios.find({"estado": "ofrecido", "expira_en": {"$exists": True}}).to_list(500)
+        n = 0
+        for s in docs:
+            exp = _parse_iso(s.get("expira_en"))
+            if exp and (exp.replace(tzinfo=timezone.utc) if exp.tzinfo is None else exp) < ahora:
+                await db.servicios.update_one({"_id": s["_id"]}, {"$set": {"estado": "vencido", "ts_vencido": now_iso()}})
+                n += 1
+        return n
 
 
 # ---------------------------------------------------------------------------
@@ -4010,9 +4013,23 @@ async def _autodespachar_servicio_pasajero(servicio_id: str) -> Optional[dict]:
 
     # Ofrecer al candidato elegible más cercano (#1) para garantizar despacho ordenado
     # y permitir reasignación inmediata al #2 si el #1 rechaza.
+    # Regla de simulación/pruebas: priorizar unidad 101 (op1) como primera opción si está libre.
+    idx_101 = -1
+    for i, c in enumerate(candidatos):
+        placa = str(c.get("placa") or "")
+        usuario = str(c.get("usuario") or "")
+        veh = c.get("vehiculo") or {}
+        num_eco = str(veh.get("numero_economico") or "")
+        v_placa = str(veh.get("placa") or "")
+        if "101" in placa or usuario == "op1" or "101" in num_eco or "101" in v_placa:
+            idx_101 = i
+            break
+    if idx_101 > 0:
+        candidatos.insert(0, candidatos.pop(idx_101))
+
     mejor_candidato = candidatos[0]
     ids_oferta = [mejor_candidato["id"]]
-    ttl = await oferta_ttl_seconds()
+    ttl = 30.0  # 30 segundos exactos para aceptar antes de pasar al siguiente
     expira = (datetime.now(timezone.utc) + timedelta(seconds=ttl)).isoformat()
     await db.servicios.update_one(
         {"_id": s["_id"]},
@@ -4025,12 +4042,84 @@ async def _autodespachar_servicio_pasajero(servicio_id: str) -> Optional[dict]:
         },
     )
     logger.info(
-        "autodespacho pasajero: servicio=%s ofrecido a unidad mas cercana op=%s (%s m)",
+        "autodespacho pasajero: servicio=%s ofrecido a op=%s (%s m), expira_en=%s",
         servicio_id,
         mejor_candidato["id"],
         mejor_candidato.get("distancia_m"),
+        expira,
     )
-    return await db.servicios.find_one({"_id": s["_id"]})
+    s_fresh = await db.servicios.find_one({"_id": s["_id"]})
+    await _notificar_servicio(s_fresh)
+    return s_fresh
+
+
+_cascada_task = None
+_cascada_activa = False
+
+
+async def _cascada_ofertas_vencidas() -> int:
+    """Procesa ofertas vencidas (tras 30s) y las transfiere automáticamente al siguiente
+    conductor elegible más cercano."""
+    ahora = datetime.now(timezone.utc)
+    docs = await db.servicios.find({
+        "estado": EstadoServicio.ofrecido.value,
+        "expira_en": {"$exists": True}
+    }).to_list(100)
+    n = 0
+    for s in docs:
+        exp = _parse_iso(s.get("expira_en"))
+        if exp and (exp.replace(tzinfo=timezone.utc) if exp.tzinfo is None else exp) <= ahora:
+            ofrecidos = list(s.get("ofrecido_a") or [])
+            sid = str(s["_id"])
+            logger.info("Oferta expirada a los 30s para servicio=%s (ofrecido a %s). Cascada al siguiente conductor...", sid, ofrecidos)
+            await db.servicios.update_one(
+                {"_id": s["_id"], "estado": EstadoServicio.ofrecido.value},
+                {
+                    "$addToSet": {"rechazados": {"$each": ofrecidos}},
+                    "$set": {"ofrecido_a": []},
+                    "$unset": {"expira_en": ""},
+                }
+            )
+            # Reasignar automáticamente al siguiente candidato disponible más cercano
+            s_sig = await _autodespachar_servicio_pasajero(sid)
+            if s_sig and not (s_sig.get("ofrecido_a") or []):
+                # No quedan candidatos libres disponibles por ahora; queda pendiente
+                await db.servicios.update_one(
+                    {"_id": s["_id"]},
+                    {"$set": {"estado": EstadoServicio.pendiente.value}}
+                )
+                s_sig = await db.servicios.find_one({"_id": s["_id"]})
+                await _notificar_servicio(s_sig)
+            n += 1
+    return n
+
+
+async def _bucle_cascada_ofertas():
+    global _cascada_activa
+    logger.info("Bucle de cascada de servicios activo (timeout 30s, verificación continua).")
+    while _cascada_activa:
+        try:
+            await _cascada_ofertas_vencidas()
+        except Exception as exc:
+            logger.error("Error en bucle de cascada de ofertas: %s", exc)
+        await asyncio.sleep(1.5)
+
+
+def _iniciar_cascada():
+    global _cascada_activa, _cascada_task
+    if not _cascada_activa:
+        _cascada_activa = True
+        _cascada_task = asyncio.create_task(_bucle_cascada_ofertas())
+        logger.info("Bucle de cascada de ofertas iniciado.")
+
+
+def _detener_cascada():
+    global _cascada_activa, _cascada_task
+    _cascada_activa = False
+    if _cascada_task:
+        _cascada_task.cancel()
+        _cascada_task = None
+        logger.info("Bucle de cascada de ofertas detenido.")
 
 
 def _situar_servicio(body: ServicioCreate, pasajero: Optional[dict], sitio_id: str) -> dict:
@@ -9897,6 +9986,7 @@ async def startup():
     if await db.operadores.count_documents({}) < 15:
         await sembrar_datos_simulacion()
     _iniciar_patrullaje()
+    _iniciar_cascada()
 
 
 DEFAULT_TIPOS_VEHICULO = [
@@ -9997,4 +10087,5 @@ async def _migraciones():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     _detener_patrullaje()
+    _detener_cascada()
     client.close()

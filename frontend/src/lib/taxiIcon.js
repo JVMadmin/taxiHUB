@@ -286,6 +286,32 @@ export function taxiRoleAssetIcon({ heading = 0, size = "sm" } = {}) {
   return L.divIcon({ html, className: "th-taxi-role-asset", iconSize: [dim + 12, dim + 12], iconAnchor: [(dim + 12) / 2, (dim + 12) / 2] });
 }
 
+export function taxiOrdinarioAssetIcon({ heading = 0, size = "md", label = "", foto = null } = {}) {
+  const dim = size === "lg" ? 76 : size === "sm" ? 50 : 62;
+  const deg = (Number(heading) || 0) - 90;
+  const assetSrc = foto || "/assets/vehicles/taxihub-taxi-azul.png";
+  const labelHtml = label
+    ? `<span style="margin-top:2px;display:inline-flex;align-items:center;gap:3px;background:rgba(9,11,14,0.92);color:#ffffff;border:1.2px solid rgba(255,255,255,0.22);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 6px rgba(0,0,0,0.65)">
+        ${label}
+       </span>`
+    : "";
+  const fullW = Math.max(dim + 24, 76);
+  const fullH = dim + (label ? 24 : 0);
+  const html = `
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;user-select:none;pointer-events:auto">
+      <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 8px 10px rgba(0,0,0,0.55))">
+        <img src="${assetSrc}" alt="" style="width:100%;height:100%;object-fit:contain;display:block" />
+      </div>
+      ${labelHtml}
+    </div>`;
+  return L.divIcon({
+    html,
+    className: "th-taxi-ordinario-asset",
+    iconSize: [fullW, fullH],
+    iconAnchor: [fullW / 2, dim / 2],
+  });
+}
+
 const TAXI_STATE_ASSETS = {
   libre: "/assets/vehicles/taxi-verde.png",
   ocupado: "/assets/vehicles/taxi-rojo.png",

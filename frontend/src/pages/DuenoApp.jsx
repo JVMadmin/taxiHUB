@@ -248,7 +248,8 @@ export default function DuenoApp() {
     </div>
   );
 
-  if (deviceMode === "app" && !embedded) {
+  const isMobileOrNative = typeof window !== "undefined" && (Boolean(window.Capacitor?.isNativePlatform?.()) || window.innerWidth < 1024);
+  if (deviceMode === "app" && !embedded && !isMobileOrNative) {
     const src = `${window.location.pathname}${window.location.search ? window.location.search + "&" : "?"}embed=1`;
     return (
       <div className="flex min-h-screen items-start justify-center gap-4 bg-background p-4">
