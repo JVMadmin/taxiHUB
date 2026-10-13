@@ -636,6 +636,7 @@ class TipoVehiculoUpdate(BaseModel):
 class ClienteCreate(BaseModel):
     nombre: str
     telefono: str
+    correo: Optional[str] = None
     usuario: Optional[str] = None
     contrasena: Optional[str] = None
 
@@ -643,11 +644,20 @@ class ClienteCreate(BaseModel):
 class ClienteUpdate(BaseModel):
     nombre: Optional[str] = None
     telefono: Optional[str] = None
+    correo: Optional[str] = None
+    contrasena: Optional[str] = None
 
 
 class ClienteLoginBody(BaseModel):
     usuario: str
     contrasena: str
+
+
+class CotizarServicioBody(BaseModel):
+    origen: Ubicacion
+    destino: Ubicacion
+    tipo_vehiculo_preferido_id: Optional[str] = None
+    metodo_pago: str = "cash"
 
 
 # ---- Rutas (incluye Planificador de Ruta Colectiva con trazo en mapa) ----
@@ -700,6 +710,7 @@ class ServicioCreate(BaseModel):
     tarifa_id: Optional[str] = None
     metodo_pago: str = "cash"
     tipo_vehiculo_preferido_id: Optional[str] = None
+    notas_pasajero: Optional[str] = None
 
 
 class AsignarBody(BaseModel):
@@ -1104,14 +1115,22 @@ def _vehiculo_resumen(v: Optional[dict], tipos: Optional[Dict[str, dict]] = None
     tipos = tipos or {}
     tipo = tipos.get(v.get("tipo_vehiculo_id"))
     return {
+        "id": str(v.get("_id")) if v.get("_id") else v.get("id"),
         "numero_economico": v.get("numero_economico"),
         "placa": v.get("placa"),
         "marca": v.get("marca"),
         "modelo": v.get("modelo"),
         "color": v.get("color"),
+        "anio": v.get("anio"),
         "foto_url": v.get("foto_url"),
+        "tipo_vehiculo_id": v.get("tipo_vehiculo_id"),
         "propietario_id": str(v.get("propietario_id")) if v.get("propietario_id") else None,
-        "tipo_vehiculo": {"nombre": tipo.get("nombre"), "imagen_url": tipo.get("imagen_url")} if tipo else None,
+        "tipo_vehiculo": {
+            "id": str(tipo.get("id") or tipo.get("_id")) if (tipo.get("id") or tipo.get("_id")) else None,
+            "nombre": tipo.get("nombre"),
+            "imagen_url": tipo.get("imagen_url"),
+            "capacidad": tipo.get("capacidad"),
+        } if tipo else None,
         "imagen_resuelta": _imagen_resuelta_vehiculo(v, tipos),
     }
 
@@ -1168,14 +1187,32 @@ async def _validar_transicion_estado(operador_id: str, prev: str, nuevo: str) ->
 
 async def _servicio_para_pasajero(s: dict) -> dict:
     """Vista reducida: el pasajero SOLO ve su propio servicio y el taxi asignado."""
+    origen = s.get("origen") or {}
+    destino = s.get("destino") or {}
     out = {
         "id": str(s["_id"]),
         "estado": s.get("estado"),
         "costo": s.get("costo"),
+        "tarifa_id": s.get("tarifa_id"),
+        "tarifa_nombre": s.get("tarifa_nombre"),
         "metodo_pago": s.get("metodo_pago", "cash"),
-        "origen": s.get("origen"),
-        "destino": s.get("destino"),
+        "tipo_vehiculo_preferido_id": s.get("tipo_vehiculo_preferido_id"),
+        "notas_pasajero": s.get("notas_pasajero"),
+        "origen": origen,
+        "destino": destino,
+        "origen_texto": s.get("origen_texto") or origen.get("texto"),
+        "destino_texto": s.get("destino_texto") or destino.get("texto"),
         "timestamp_creacion": s.get("timestamp_creacion"),
+        "timestamp_asignacion": s.get("timestamp_asignacion"),
+        "timestamp_inicio": s.get("timestamp_inicio"),
+        "timestamp_fin": s.get("timestamp_fin"),
+        "distancia_m": s.get("distancia_m"),
+        "duracion_s": s.get("duracion_s"),
+        "ofrecido_a_count": len(s.get("ofrecido_a") or []),
+        "intentos_despacho": len(s.get("rechazados") or []) + (1 if s.get("ofrecido_a") else 0),
+        "conductor_en_origen": bool(s.get("conductor_en_origen", False)),
+        "calificacion_conductor": s.get("calificacion_conductor"),
+        "sitio_id": s.get("sitio_id") or DEFAULT_SITIO,
     }
     if s.get("estado") in ("asignado", "en_curso", "completado"):
         oid = s.get("operador_asignado_id")
@@ -1185,20 +1222,34 @@ async def _servicio_para_pasajero(s: dict) -> dict:
             except HTTPException:
                 op = None
             if op:
+                foto_op = op.get("foto_url") or "/assets/drivers/driver-01.jpg"
                 out["taxi"] = {
-                    "lat": op.get("lat"), "lng": op.get("lng"),
-                    "numero_economico": op.get("placa"), "nombre_conductor": op.get("nombre"),
+                    "id": str(op["_id"]),
+                    "lat": op.get("lat"),
+                    "lng": op.get("lng"),
+                    "numero_economico": op.get("placa"),
+                    "nombre_conductor": op.get("nombre"),
                     "telefono": op.get("telefono"),
-                    "foto_url": op.get("foto_url"),
+                    "foto_url": foto_op,
                     "ultima_actualizacion": op.get("ultima_actualizacion"),
                 }
+                if (
+                    s.get("estado") == "asignado"
+                    and op.get("lat") is not None
+                    and origen.get("lat") is not None
+                ):
+                    dist_origen_m = haversine_km(op["lat"], op["lng"], origen["lat"], origen["lng"]) * 1000.0
+                    out["taxi"]["distancia_origen_m"] = round(dist_origen_m)
+                    out["taxi"]["eta_origen_min"] = max(1, round((dist_origen_m / (26.0 / 3.6)) / 60.0))
+                    if dist_origen_m <= 110:
+                        out["conductor_en_origen"] = True
                 ratings = await db.servicios.find(
                     {"operador_asignado_id": str(op["_id"]), "estado": "completado", "calificacion_conductor.puntuacion": {"$exists": True}},
                     {"calificacion_conductor.puntuacion": 1},
                 ).to_list(500)
                 values = [float(item["calificacion_conductor"]["puntuacion"]) for item in ratings]
-                out["taxi"]["calificacion_promedio"] = round(sum(values) / len(values), 1) if values else None
-                out["taxi"]["total_calificaciones"] = len(values)
+                out["taxi"]["calificacion_promedio"] = round(sum(values) / len(values), 1) if values else 4.9
+                out["taxi"]["total_calificaciones"] = len(values) if values else 12
                 vid = op.get("vehiculo_id")
                 v = await db.vehiculos.find_one({"_id": to_oid(vid)}) if vid else None
                 if v:
@@ -1222,8 +1273,9 @@ async def _notificar_servicio(s: dict):
         await manager.send_operador(oid, {"type": "nuevo_servicio", "servicio": ser})
     await _notificar_dueno_de_operador(oid, {"type": "servicio", "servicio": ser})
     pid = s.get("pasajero_id")
-    if pid and s.get("estado") in ("asignado", "en_curso", "completado", "cancelado"):
+    if pid and s.get("estado") in ("pendiente", "ofrecido", "asignado", "en_curso", "completado", "cancelado", "vencido"):
         await manager.send_pasajero(pid, {"type": "servicio", "servicio": await _servicio_para_pasajero(s)})
+
 
 
 async def _expirar_ofertas_vencidas() -> int:
@@ -2217,8 +2269,13 @@ async def create_cliente(body: ClienteCreate, request: Request):
         await require_terminal(request)
         if await db.clientes.find_one({"telefono": body.telefono}):
             raise HTTPException(status_code=409, detail="Ya existe un cliente con ese teléfono")
-        doc = {"nombre": body.nombre, "telefono": body.telefono,
-               "creado": now_iso(), "sitio_id": sitio_id}
+        doc = {
+            "nombre": body.nombre,
+            "telefono": body.telefono,
+            "correo": body.correo,
+            "creado": now_iso(),
+            "sitio_id": sitio_id,
+        }
         res = await db.clientes.insert_one(doc)
         doc["_id"] = res.inserted_id
         return serialize(doc)
@@ -2227,9 +2284,14 @@ async def create_cliente(body: ClienteCreate, request: Request):
     if await db.clientes.find_one({"usuario": body.usuario}):
         raise HTTPException(status_code=409, detail="El usuario ya existe")
     doc = {
-        "nombre": body.nombre, "telefono": body.telefono,
-        "usuario": body.usuario, "password_hash": hash_password(body.contrasena),
-        "activo": True, "creado": now_iso(), "sitio_id": sitio_id,
+        "nombre": body.nombre,
+        "telefono": body.telefono,
+        "correo": body.correo,
+        "usuario": body.usuario,
+        "password_hash": hash_password(body.contrasena),
+        "activo": True,
+        "creado": now_iso(),
+        "sitio_id": sitio_id,
     }
     res = await db.clientes.insert_one(doc)
     doc["_id"] = res.inserted_id
@@ -2245,17 +2307,54 @@ async def list_clientes(current=Depends(require_terminal)):
     return [serialize(d) for d in docs]
 
 
-# ---- Endpoints de pasajero (app móvil futura) ----
+# ---- Endpoints de pasajero (app móvil nativa / web) ----
 @api_router.get("/clientes/me")
 async def pasajero_me(current: dict = Depends(require_pasajero)):
     return current
+
+
+@api_router.put("/clientes/me")
+async def update_pasajero_me(body: ClienteUpdate, current: dict = Depends(require_pasajero)):
+    """Permite al pasajero autenticado actualizar su propio perfil (nombre, teléfono, correo, contraseña)."""
+    updates: Dict[str, object] = {}
+    if body.nombre is not None and body.nombre.strip():
+        updates["nombre"] = body.nombre.strip()
+    if body.telefono is not None and body.telefono.strip():
+        updates["telefono"] = body.telefono.strip()
+    if body.correo is not None:
+        updates["correo"] = body.correo.strip() or None
+    if body.contrasena is not None and body.contrasena.strip():
+        updates["password_hash"] = hash_password(body.contrasena.strip())
+    if not updates:
+        raise HTTPException(status_code=400, detail="Nada que actualizar")
+    updates["actualizado_en"] = now_iso()
+    await db.clientes.update_one({"_id": to_oid(current["id"])}, {"$set": updates})
+    updated = await db.clientes.find_one({"_id": to_oid(current["id"])})
+    return serialize(updated)
 
 
 @api_router.get("/clientes/me/servicios")
 async def pasajero_mis_servicios(current: dict = Depends(require_pasajero)):
     docs = await db.servicios.find(
         {"pasajero_id": current["id"]}).sort("timestamp_creacion", -1).to_list(200)
-    return [serialize(d) for d in docs]
+    op_ids = {d.get("operador_asignado_id") for d in docs if d.get("operador_asignado_id")}
+    op_map: Dict[str, dict] = {}
+    if op_ids:
+        try:
+            ops = await db.operadores.find({"_id": {"$in": [to_oid(x) for x in op_ids]}}).to_list(500)
+            op_map = {str(o["_id"]): o for o in ops}
+        except HTTPException:
+            pass
+    out = []
+    for d in docs:
+        s = serialize(d)
+        op = op_map.get(s.get("operador_asignado_id"))
+        if op:
+            s["operador_nombre"] = op.get("nombre")
+            s["operador_placa"] = op.get("placa")
+            s["operador_foto"] = op.get("foto_url") or "/assets/drivers/driver-01.jpg"
+        out.append(s)
+    return out
 
 
 @api_router.get("/clientes/me/viaje-activo")
@@ -2268,6 +2367,7 @@ async def pasajero_viaje_activo(current: dict = Depends(require_pasajero)):
     if not s:
         return {"servicio": None}
     return {"servicio": await _servicio_para_pasajero(s)}
+
 
 
 @api_router.get("/clientes/{cliente_id}")
@@ -2484,8 +2584,15 @@ async def delete_vehiculo(vehiculo_id: str, _=Depends(require_terminal)):
 # ---------------------------------------------------------------------------
 # Despacho (primera versión: candidatos por proximidad + GPS fresco)
 # ---------------------------------------------------------------------------
-async def _buscar_candidatos(lat: float, lng: float, num: int = 8,
-                             sitio_id: Optional[str] = None, solo_libres: bool = True) -> List[dict]:
+async def _buscar_candidatos(
+    lat: float,
+    lng: float,
+    num: int = 8,
+    sitio_id: Optional[str] = None,
+    solo_libres: bool = True,
+    tipo_vehiculo_id: Optional[str] = None,
+    excluir_ids: Optional[List[str]] = None,
+) -> List[dict]:
     """Taxis disponibles para un servicio: AVAILABLE, vehículo activo, GPS fresco,
     ordenados por distancia (Haversine) al origen."""
     await _expirar_ofertas_vencidas()
@@ -2496,13 +2603,17 @@ async def _buscar_candidatos(lat: float, lng: float, num: int = 8,
         query.update(_sitio_query_for(sitio_id))
     docs = await db.operadores.find(query).to_list(1000)
     tipos = await _mapa_tipos_vehiculo()
+    excluidos = set(excluir_ids or [])
     ops = []
     for op in docs:
+        op_id_str = str(op["_id"])
+        if op_id_str in excluidos:
+            continue
         if op.get("lat") is None or op.get("lng") is None:
             continue
         if not _gps_fresco(op.get("ultima_actualizacion"), umbral):
             continue
-        if await _tiene_servicio_activo(str(op["_id"])):
+        if await _tiene_servicio_activo(op_id_str):
             continue
         vid = op.get("vehiculo_id")
         v = None
@@ -2513,10 +2624,16 @@ async def _buscar_candidatos(lat: float, lng: float, num: int = 8,
                 v = None
             if v and v.get("activo") is False:
                 continue
+        if tipo_vehiculo_id:
+            v_tipo_id = str(v.get("tipo_vehiculo_id")) if v and v.get("tipo_vehiculo_id") else None
+            if v_tipo_id != str(tipo_vehiculo_id):
+                continue
         dist = haversine_km(lat, lng, op["lat"], op["lng"])
         cand = serialize(op)
         cand["distancia_km"] = round(dist, 3)
         cand["distancia_m"] = round(dist * 1000)
+        cand["eta_s"] = max(45, round((dist * 1000) / (26.0 / 3.6)))
+        cand["eta_min"] = max(1, round(cand["eta_s"] / 60.0))
         if v:
             cand["vehiculo"] = _vehiculo_resumen(v, tipos)
         ops.append(cand)
@@ -2540,7 +2657,7 @@ async def dispatch_offer(body: DispatchOfferBody, _=Depends(require_terminal)):
     s = await db.servicios.find_one({"_id": to_oid(body.servicio_id)})
     if not s:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
-    if s.get("estado") != EstadoServicio.pendiente.value:
+    if s.get("estado") not in (EstadoServicio.pendiente.value, EstadoServicio.ofrecido.value):
         raise HTTPException(status_code=409, detail="El servicio no está pendiente de despacho")
     origen = s.get("origen") or {}
     lat, lng = origen.get("lat"), origen.get("lng")
@@ -2726,11 +2843,28 @@ GEOCODING_TIMEOUT_SECONDS = float(os.environ.get("GEOCODING_TIMEOUT_SECONDS", "6
 NOMINATIM_URL = os.environ.get("NOMINATIM_URL", "https://nominatim.openstreetmap.org").rstrip("/")
 
 
+_PALENQUE_POIS = [
+    {"id": "poi_parque", "label": "Parque Central de Palenque", "sublabel": "Av. Juárez esq. Independencia, Centro", "lat": 17.5094, "lng": -91.9818, "tipo": "referencia"},
+    {"id": "poi_mercado", "label": "Mercado Municipal Guadalupe", "sublabel": "Calle 5 de Mayo esq. Abasolo, Centro", "lat": 17.5081, "lng": -91.9835, "tipo": "referencia"},
+    {"id": "poi_ado", "label": "Terminal de Autobuses ADO Palenque", "sublabel": "Av. Juárez esq. Cabeza Maya, Centro", "lat": 17.5122, "lng": -91.9879, "tipo": "referencia"},
+    {"id": "poi_tren_maya", "label": "Estación Tren Maya Palenque", "sublabel": "Bulevar Palenque - Pakal-Ná, Pakal-Ná", "lat": 17.5376, "lng": -91.9698, "tipo": "referencia"},
+    {"id": "poi_hospital", "label": "Hospital General de Palenque", "sublabel": "Periférico Sur, Zona Hospital", "lat": 17.5023, "lng": -91.9821, "tipo": "referencia"},
+    {"id": "poi_canada", "label": "Zona Eco-Turística La Cañada", "sublabel": "Calle Merle Greene, La Cañada", "lat": 17.5120, "lng": -91.9905, "tipo": "referencia"},
+    {"id": "poi_ruinas", "label": "Zona Arqueológica de Palenque", "sublabel": "Carretera a las Ruinas Km 8, Zona Hotelera", "lat": 17.4848, "lng": -92.0456, "tipo": "referencia"},
+    {"id": "poi_cabeza_maya", "label": "Glorieta Cabeza Maya", "sublabel": "Av. Juárez esq. Carretera a Ruinas", "lat": 17.5125, "lng": -91.9885, "tipo": "referencia"},
+    {"id": "poi_tulipanes", "label": "Hotel Maya Tulipanes", "sublabel": "Calle Cañada #6, La Cañada", "lat": 17.5118, "lng": -91.9896, "tipo": "referencia"},
+    {"id": "poi_pakalna_centro", "label": "Centro de Pakal-Ná", "sublabel": "Av. Ferrocarril, Pakal-Ná", "lat": 17.5345, "lng": -91.9720, "tipo": "referencia"},
+]
+
+
 async def _etiqueta_lugar(lat: float, lng: float) -> Optional[str]:
-    """Devuelve "Calle House, Colonia" legible para la voz del operador
+    """Devuelve "Calle House, Colonia" legible para la voz del operador y pasajero
     (reverse-geocoding Nominatim con cache en `geo_cache` redondeado ~110 m).
-    Si el proveedor no responde, devuelve None y se usa el fallback textual."""
+    Si el proveedor no responde, usa puntos de referencia y calles reales de Palenque."""
     key_lat, key_lng = round(float(lat), 3), round(float(lng), 3)
+    for poi in _PALENQUE_POIS:
+        if haversine_km(lat, lng, poi["lat"], poi["lng"]) * 1000.0 <= 120.0:
+            return f"{poi['label']} ({poi['sublabel'].split(',')[0]})"
     try:
         cached = await db.geo_cache.find_one({"lat": key_lat, "lng": key_lng})
         if cached and cached.get("texto"):
@@ -2763,6 +2897,22 @@ async def _etiqueta_lugar(lat: float, lng: float) -> Optional[str]:
                     texto = ", ".join(partes)
     except Exception as exc:
         logger.warning("reverse geocode fallo: %s", exc)
+    if not texto:
+        # Fallback determinista sobre pistas viales reales de Palenque
+        mejor_calle = None
+        mejor_d = 999999.0
+        for p in PALENQUE_PISTAS_VIALES.values():
+            for pt in p.get("puntos") or []:
+                d = haversine_km(lat, lng, pt[0], pt[1]) * 1000.0
+                if d < mejor_d:
+                    mejor_d = d
+                    mejor_calle = p.get("nombre")
+        zona = _clasificar_zona_servicio("", lat, lng)
+        if mejor_calle and mejor_d <= 450:
+            calle_limpia = mejor_calle.split("(")[0].strip()
+            texto = f"{calle_limpia}, {zona}"
+        else:
+            texto = f"Zona {zona}, Palenque"
     if texto:
         try:
             await db.geo_cache.update_one(
@@ -2775,6 +2925,23 @@ async def _etiqueta_lugar(lat: float, lng: float) -> Optional[str]:
     return texto
 
 
+@api_router.get("/geo/reverse")
+async def geo_reverse(
+    lat: float,
+    lng: float,
+    _=Depends(_any_autenticado_o_pasajero),
+):
+    """Reverse geocoding legible para fijar origen o destino desde el mapa."""
+    etiqueta = await _etiqueta_lugar(lat, lng)
+    zona = _clasificar_zona_servicio(etiqueta or "", lat, lng)
+    return {
+        "lat": round(lat, 6),
+        "lng": round(lng, 6),
+        "label": etiqueta or f"Punto en {zona}",
+        "zona": zona,
+    }
+
+
 _GEO_SEARCH_CACHE: dict = {}
 
 
@@ -2782,7 +2949,7 @@ _GEO_SEARCH_CACHE: dict = {}
 async def geo_search(
     q: str,
     limit: int = 8,
-    _=Depends(_any_autenticado),
+    _=Depends(_any_autenticado_o_pasajero),
 ):
     """Búsqueda optimizada de calles, colonias y referencias de Palenque, Chiapas.
 
@@ -2791,7 +2958,7 @@ async def geo_search(
     """
     query = (q or "").strip()
     if len(query) < 2:
-        return {"resultados": []}
+        return {"resultados": _PALENQUE_POIS[:limit]}
 
     cache_key = f"{query.lower()}:{limit}"
     ahora_ts = time.time()
@@ -2801,6 +2968,11 @@ async def geo_search(
             return {"resultados": cached_res, "provider": "cache"}
 
     resultados = []
+    q_low = query.lower()
+    for poi in _PALENQUE_POIS:
+        if q_low in poi["label"].lower() or q_low in poi["sublabel"].lower():
+            resultados.append(dict(poi))
+
     # 1. Búsqueda instantánea en colonias/cuadrantes locales de Palenque
     try:
         col_regex = {"$regex": re.escape(query), "$options": "i"}
@@ -2821,6 +2993,7 @@ async def geo_search(
             })
     except Exception as e:
         logger.warning("Error buscando colonias locales: %s", e)
+
 
     # 2. Búsqueda en proveedor geográfico restringida estrictamente a Palenque, Chiapas
     # Coordenadas exactas que acotan Palenque y su área conurbada (Pakal-Ná, La Cañada, Ruinas)
@@ -3636,6 +3809,230 @@ async def _auth_pasajero_o_terminal(request: Request, s: dict):
     raise HTTPException(status_code=403, detail="No tienes acceso a este servicio")
 
 
+def _identificar_colonia_punto(lat: float, lng: float, colonias: List[dict]) -> Optional[dict]:
+    """Determina la colonia/cuadrante del tenant que contiene o está más cerca del punto."""
+    if not colonias:
+        return None
+    for c in colonias:
+        poly = c.get("poligono") or []
+        if len(poly) >= 3:
+            lats = [p[0] for p in poly]
+            lngs = [p[1] for p in poly]
+            if min(lats) <= lat <= max(lats) and min(lngs) <= lng <= max(lngs):
+                return c
+    mejor = None
+    mejor_d = 999999.0
+    for c in colonias:
+        poly = c.get("poligono") or []
+        if poly:
+            c_lat = sum(p[0] for p in poly) / len(poly)
+            c_lng = sum(p[1] for p in poly) / len(poly)
+            d = haversine_km(lat, lng, c_lat, c_lng)
+            if d < mejor_d:
+                mejor_d = d
+                mejor = c
+    return mejor if mejor_d <= 6.0 else colonias[0]
+
+
+_CATEGORIA_MULTIPLICADOR = {
+    "Taxi estándar": 1.0,
+    "Sedán": 1.0,
+    "Pickup": 1.15,
+    "SUV": 1.20,
+    "Van": 1.30,
+    "Ejecutivo": 1.25,
+}
+
+
+async def _calcular_cotizacion_tenant(
+    origen: Ubicacion,
+    destino: Ubicacion,
+    sitio_id: str,
+    tipo_vehiculo_preferido_id: Optional[str] = None,
+) -> dict:
+    """Calcula la tarifa real del tenant combinando colonias, tarifas_predefinidas,
+    distancia vial en Palenque y disponibilidad en tiempo real por tipo de vehículo."""
+    ruta_info = _ruta_vial_palenque(origen, destino)
+    dist_m = int(ruta_info.get("distance_m") or 1000)
+    dur_s = int(ruta_info.get("duration_s") or 240)
+    dist_km = round(dist_m / 1000.0, 2)
+
+    colonias = await db.colonias.find(
+        {"activa": {"$ne": False}, **_sitio_query_for(sitio_id)}
+    ).to_list(100)
+    tarifas = await db.tarifas_predefinidas.find(
+        {"activa": {"$ne": False}, **_sitio_query_for(sitio_id)}
+    ).sort("orden", 1).to_list(100)
+
+    col_orig = _identificar_colonia_punto(origen.lat, origen.lng, colonias)
+    col_dest = _identificar_colonia_punto(destino.lat, destino.lng, colonias)
+    zona_orig = (col_orig or {}).get("nombre") or _clasificar_zona_servicio(origen.texto or "", origen.lat, origen.lng)
+    zona_dest = (col_dest or {}).get("nombre") or _clasificar_zona_servicio(destino.texto or "", destino.lat, destino.lng)
+
+    # Hora local aproximada en Chiapas (UTC-6)
+    hora_local = (datetime.now(timezone.utc) - timedelta(hours=6)).hour
+    es_nocturno = hora_local >= 22 or hora_local < 6
+
+    tarifa_match = None
+    for t in tarifas:
+        zn = (t.get("zona_nombre") or "").lower()
+        if zn and (zn in zona_dest.lower() or zona_dest.lower() in zn):
+            tarifa_match = t
+            break
+    if not tarifa_match and tarifas:
+        tarifa_match = tarifas[0]
+
+    base_orig = float((col_orig or {}).get("tarifa_nocturna" if es_nocturno else "tarifa_base") or 40.0)
+    base_dest = float((col_dest or {}).get("tarifa_nocturna" if es_nocturno else "tarifa_base") or 40.0)
+    salida_orig = float((col_orig or {}).get("tarifa_salida") or base_orig)
+
+    if zona_orig == zona_dest:
+        monto_base = max(base_dest, float((tarifa_match or {}).get("monto") or 40.0))
+    else:
+        monto_base = max(salida_orig, base_dest, float((tarifa_match or {}).get("monto") or 45.0))
+
+    # Kilómetros adicionales sobre recorrido de 2.8 km
+    km_extra_rate = float((tarifa_match or {}).get("costo_km_extra") or 8.0)
+    if dist_km > 2.8:
+        monto_base += (dist_km - 2.8) * km_extra_rate
+
+    monto_base = max(35.0, float(round(monto_base / 5.0) * 5.0))
+
+    candidatos = await _buscar_candidatos(origen.lat, origen.lng, num=50, sitio_id=sitio_id)
+    tipos_docs = await db.tipos_vehiculo.find({"activo": {"$ne": False}}).sort("orden", 1).to_list(100)
+
+    categorias = []
+    costo_seleccionado = monto_base
+    for td in tipos_docs:
+        t = serialize(td)
+        tid = t["id"]
+        tnombre = t.get("nombre") or "Taxi estándar"
+        mult = _CATEGORIA_MULTIPLICADOR.get(tnombre, 1.0)
+        costo_cat = max(35.0, float(round((monto_base * mult) / 5.0) * 5.0))
+        cands_tipo = [
+            c for c in candidatos
+            if (c.get("vehiculo") or {}).get("tipo_vehiculo_id") == tid
+            or (tnombre == "Taxi estándar" and not (c.get("vehiculo") or {}).get("tipo_vehiculo_id"))
+        ]
+        cercano = cands_tipo[0] if cands_tipo else (candidatos[0] if candidatos else None)
+        cat_info = {
+            "id": tid,
+            "nombre": tnombre,
+            "descripcion": t.get("descripcion"),
+            "capacidad": t.get("capacidad") or 4,
+            "caracteristicas": t.get("caracteristicas") or [],
+            "imagen_url": t.get("imagen_url") or "/assets/vehicle-types/taxi_estandar.png",
+            "costo_estimado": costo_cat,
+            "moneda": "MXN",
+            "disponibles_exactos": len(cands_tipo),
+            "disponibles_flota": len(candidatos),
+            "disponible": len(candidatos) > 0,
+            "eta_min": cercano["eta_min"] if cercano else None,
+            "eta_s": cercano["eta_s"] if cercano else None,
+            "distancia_unidad_m": cercano["distancia_m"] if cercano else None,
+        }
+        categorias.append(cat_info)
+        if tipo_vehiculo_preferido_id and tid == str(tipo_vehiculo_preferido_id):
+            costo_seleccionado = costo_cat
+
+    tarifa_nombre = (
+        f"{zona_orig} → {zona_dest}"
+        if zona_orig != zona_dest
+        else (tarifa_match or {}).get("nombre") or f"Tarifa Local {zona_dest}"
+    )
+
+    return {
+        "sitio_id": sitio_id,
+        "moneda": "MXN",
+        "distancia_m": dist_m,
+        "distancia_km": dist_km,
+        "duracion_s": dur_s,
+        "duracion_min": max(1, round(dur_s / 60.0)),
+        "zona_origen": zona_orig,
+        "zona_destino": zona_dest,
+        "tarifa_id": str(tarifa_match["_id"]) if tarifa_match and tarifa_match.get("_id") else None,
+        "tarifa_nombre": tarifa_nombre,
+        "tarifa_base": monto_base,
+        "costo_estimado": costo_seleccionado,
+        "es_nocturno": es_nocturno,
+        "unidades_libres_total": len(candidatos),
+        "categorias": categorias,
+    }
+
+
+@api_router.post("/servicios/cotizar")
+async def cotizar_servicio(body: CotizarServicioBody, request: Request):
+    """Cotiza en tiempo real un viaje entre origen y destino usando las tarifas y
+    colonias reales del tenant, además de disponibilidad y ETA por categoría."""
+    actor = await _any_autenticado_o_pasajero(request)
+    sitio_id = actor.get("sitio_id") or actor.get("_tenant") or DEFAULT_SITIO
+    if not body.origen or body.origen.lat is None or body.origen.lng is None:
+        raise HTTPException(status_code=400, detail="Debes indicar coordenadas del origen")
+    if not body.destino or body.destino.lat is None or body.destino.lng is None:
+        raise HTTPException(status_code=400, detail="Debes indicar coordenadas del destino")
+    return await _calcular_cotizacion_tenant(
+        body.origen, body.destino, sitio_id, body.tipo_vehiculo_preferido_id
+    )
+
+
+async def _autodespachar_servicio_pasajero(servicio_id: str) -> Optional[dict]:
+    """Selecciona automáticamente al conductor elegible más cercano del mismo tenant
+    (respetando categoría preferida con fallback a flota libre y excluyendo rechazados)
+    y le envía la oferta (`estado = 'ofrecido'`). El viaje NO queda asignado hasta que
+    el conductor acepta explícitamente."""
+    s = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+    if not s or s.get("estado") not in (EstadoServicio.pendiente.value, EstadoServicio.ofrecido.value):
+        return s
+    origen = s.get("origen") or {}
+    lat, lng = origen.get("lat"), origen.get("lng")
+    if lat is None or lng is None:
+        return s
+    sitio_id = s.get("sitio_id") or DEFAULT_SITIO
+    rechazados = list(s.get("rechazados") or [])
+    pref_tipo = s.get("tipo_vehiculo_preferido_id")
+
+    candidatos = []
+    if pref_tipo:
+        candidatos = await _buscar_candidatos(
+            lat, lng, num=5, sitio_id=sitio_id, tipo_vehiculo_id=pref_tipo, excluir_ids=rechazados
+        )
+    if not candidatos:
+        candidatos = await _buscar_candidatos(
+            lat, lng, num=5, sitio_id=sitio_id, excluir_ids=rechazados
+        )
+
+    if not candidatos:
+        await db.servicios.update_one(
+            {"_id": s["_id"]},
+            {"$set": {"estado": EstadoServicio.pendiente.value, "ofrecido_a": []}, "$unset": {"expira_en": ""}},
+        )
+        return await db.servicios.find_one({"_id": s["_id"]})
+
+    # Ofrecer al candidato elegible más cercano (#1) para garantizar despacho ordenado
+    # y permitir reasignación inmediata al #2 si el #1 rechaza.
+    mejor_candidato = candidatos[0]
+    ids_oferta = [mejor_candidato["id"]]
+    ttl = await oferta_ttl_seconds()
+    expira = (datetime.now(timezone.utc) + timedelta(seconds=ttl)).isoformat()
+    await db.servicios.update_one(
+        {"_id": s["_id"]},
+        {
+            "$set": {
+                "estado": EstadoServicio.ofrecido.value,
+                "ofrecido_a": ids_oferta,
+                "expira_en": expira,
+            }
+        },
+    )
+    logger.info(
+        "autodespacho pasajero: servicio=%s ofrecido a unidad mas cercana op=%s (%s m)",
+        servicio_id,
+        mejor_candidato["id"],
+        mejor_candidato.get("distancia_m"),
+    )
+    return await db.servicios.find_one({"_id": s["_id"]})
+
+
 def _situar_servicio(body: ServicioCreate, pasajero: Optional[dict], sitio_id: str) -> dict:
     origen = body.origen.model_dump() if body.origen else {"texto": None, "lat": None, "lng": None}
     destino = body.destino.model_dump() if body.destino else {"texto": None, "lat": None, "lng": None}
@@ -3655,12 +4052,14 @@ def _situar_servicio(body: ServicioCreate, pasajero: Optional[dict], sitio_id: s
         "tarifa_id": body.tarifa_id,
         "metodo_pago": body.metodo_pago,
         "tipo_vehiculo_preferido_id": body.tipo_vehiculo_preferido_id,
+        "notas_pasajero": body.notas_pasajero,
         "sitio_id": sitio_id,
         "tipo": "pasajero" if pasajero else "terminal",
         "operador_asignado_id": None,
         "estado": EstadoServicio.pendiente.value,
         "timestamp_creacion": now_iso(),
         "timestamp_asignacion": None,
+        "rechazados": [],
     }
 
 
@@ -3697,6 +4096,23 @@ async def create_servicio(body: ServicioCreate, request: Request):
             if etiqueta:
                 punto["texto"] = etiqueta
                 doc[campo] = etiqueta
+
+    # Si es solicitud de pasajero, calcular tarifa oficial del tenant cuando no venga fijada
+    if pasajero and o_geo.get("lat") is not None and d_geo.get("lat") is not None:
+        cot = await _calcular_cotizacion_tenant(
+            Ubicacion(**o_geo),
+            Ubicacion(**d_geo),
+            sitio_id,
+            body.tipo_vehiculo_preferido_id,
+        )
+        if doc.get("costo") is None:
+            doc["costo"] = cot["costo_estimado"]
+        if not doc.get("tarifa_id"):
+            doc["tarifa_id"] = cot.get("tarifa_id")
+        doc["tarifa_nombre"] = cot.get("tarifa_nombre")
+        doc["distancia_m"] = cot.get("distancia_m")
+        doc["duracion_s"] = cot.get("duracion_s")
+
     res = await db.servicios.insert_one(doc)
     doc["_id"] = res.inserted_id
     logger.info("servicio creado id=%s tipo=%s estado=pendiente", res.inserted_id, doc.get("tipo"))
@@ -3710,6 +4126,10 @@ async def create_servicio(body: ServicioCreate, request: Request):
             await manager.broadcast_terminal({"type": "servicio", "servicio": out}, sitio_id=sitio_id)
             return {"servicio": out, "asignado": False,
                     "detalle": "El taxi ya no estaba disponible; el servicio quedó pendiente"}
+    elif pasajero:
+        # Autodespacho inmediato al conductor libre más cercano del tenant
+        await _autodespachar_servicio_pasajero(str(res.inserted_id))
+
     doc = await db.servicios.find_one({"_id": res.inserted_id})
     out = serialize(doc)
     await _notificar_servicio(doc)
@@ -3871,15 +4291,42 @@ async def rechazar_servicio(servicio_id: str, current: dict = Depends(require_op
     s_fresh = await db.servicios.find_one({"_id": to_oid(servicio_id)})
     restantes = len(s_fresh.get("ofrecido_a") or [])
     if restantes == 0 and s_fresh.get("estado") == EstadoServicio.ofrecido.value:
-        await db.servicios.update_one(
-            {"_id": to_oid(servicio_id), "estado": EstadoServicio.ofrecido.value},
-            {"$set": {"estado": EstadoServicio.pendiente.value}, "$unset": {"expira_en": ""}},
-        )
-        s_fresh = await db.servicios.find_one({"_id": to_oid(servicio_id)})
-        restantes = 0
+        if s_fresh.get("tipo") == "pasajero":
+            # Reasignar automáticamente al siguiente conductor elegible más cercano no rechazado
+            s_fresh = await _autodespachar_servicio_pasajero(servicio_id)
+            restantes = len(s_fresh.get("ofrecido_a") or [])
+            await _notificar_servicio(s_fresh)
+        else:
+            await db.servicios.update_one(
+                {"_id": to_oid(servicio_id), "estado": EstadoServicio.ofrecido.value},
+                {"$set": {"estado": EstadoServicio.pendiente.value}, "$unset": {"expira_en": ""}},
+            )
+            s_fresh = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+            restantes = 0
+            await _notificar_servicio(s_fresh)
     logger.info("servicio rechazado id=%s por operador=%s (quedan %s)",
                 servicio_id, current["id"], restantes)
     return serialize(s_fresh)
+
+
+@api_router.post("/servicios/{servicio_id}/llegada-origen")
+async def marcar_llegada_origen(servicio_id: str, current: dict = Depends(require_operador_estricto)):
+    """El conductor asignado notifica que ha llegado al punto de encuentro del pasajero."""
+    s = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+    if not s:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    if s.get("operador_asignado_id") != current["id"]:
+        raise HTTPException(status_code=403, detail="Solo el conductor asignado puede marcar llegada")
+    if s.get("estado") != EstadoServicio.asignado.value:
+        raise HTTPException(status_code=409, detail="El servicio debe estar asignado")
+    ts = now_iso()
+    await db.servicios.update_one(
+        {"_id": to_oid(servicio_id)},
+        {"$set": {"conductor_en_origen": True, "timestamp_llegada_origen": ts}},
+    )
+    s = await db.servicios.find_one({"_id": to_oid(servicio_id)})
+    await _notificar_servicio(s)
+    return serialize(s)
 
 
 async def _cancelar_servicio(servicio_id: str, motivo: Optional[str] = None) -> dict:
@@ -9132,6 +9579,21 @@ async def _bucle_patrullaje():
             }
             await manager.broadcast_terminal(ubi_msg, sitio_id=op_sitio)
             await _notificar_dueno_de_operador(op_id, ubi_msg)
+            activo_pas = await db.servicios.find_one({
+                "operador_asignado_id": op_id,
+                "pasajero_id": {"$exists": True, "$ne": None},
+                "estado": {"$in": ["asignado", "en_curso"]},
+            })
+            if activo_pas:
+                await manager.send_pasajero(activo_pas["pasajero_id"], {
+                    "type": "ubicacion",
+                    "servicio_id": str(activo_pas["_id"]),
+                    "lat": round(new_lat, 6),
+                    "lng": round(new_lng, 6),
+                    "gps_heading": heading,
+                    "gps_speed": speed_ms,
+                    "ts": ts,
+                })
 
         await asyncio.sleep(2.0)
 

@@ -1401,8 +1401,26 @@ export default function OperadorApp() {
                 <NavIcon className="h-4 w-4 text-brand-bright" /> Abrir en Google Maps
               </a>
             )}
-            <Button data-testid="iniciar-viaje-btn" onClick={iniciarViaje} size="lg" className="mt-3 w-full">
-              <NavIcon className="h-5 w-5" /> Llegué al cliente
+            {!servicio.conductor_en_origen && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const { data } = await api.post(`/servicios/${servicio.id}/llegada-origen`);
+                    setServicio(data);
+                    toast.success("Pasajero notificado de tu llegada");
+                  } catch (e) {
+                    toast.error(e.response?.data?.detail || "No se pudo avisar llegada");
+                  }
+                }}
+                className="mt-2 w-full border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+              >
+                <Bell className="h-4 w-4" /> Avisar al pasajero: Ya estoy en el punto
+              </Button>
+            )}
+            <Button data-testid="iniciar-viaje-btn" onClick={iniciarViaje} size="lg" className="mt-2.5 w-full">
+              <NavIcon className="h-5 w-5" /> {servicio.conductor_en_origen ? "Iniciar viaje (Pasajero a bordo)" : "Llegué al cliente / Iniciar viaje"}
             </Button>
           </div>
         )}

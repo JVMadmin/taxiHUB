@@ -34,7 +34,11 @@ function App() {
   const windowAppMode =
     typeof window !== "undefined" ? window.__TAXIHUB_APP_MODE__ : null;
   const appMode =
-    process.env.REACT_APP_APP_MODE || windowAppMode || queryApp || "";
+    process.env.REACT_APP_NATIVE_ROLE ||
+    process.env.REACT_APP_APP_MODE ||
+    windowAppMode ||
+    queryApp ||
+    "";
 
   const isNativeApp =
     typeof window !== "undefined" &&
@@ -47,12 +51,18 @@ function App() {
         window.location.port !== "3000" &&
         window.location.port !== "8080"));
 
+  const isOnlyPasajeroApp =
+    appMode === "pasajero" ||
+    process.env.REACT_APP_NATIVE_ROLE === "pasajero" ||
+    process.env.REACT_APP_APP_MODE === "pasajero";
+
   const isOnlyOperadorApp =
-    isNativeApp ||
-    appMode === "operador" ||
-    process.env.REACT_APP_ONLY_OPERADOR === "true" ||
-    process.env.REACT_APP_APP_MODE === "operador" ||
-    (typeof window !== "undefined" && window.location.port === "3006");
+    !isOnlyPasajeroApp &&
+    (isNativeApp ||
+      appMode === "operador" ||
+      process.env.REACT_APP_ONLY_OPERADOR === "true" ||
+      process.env.REACT_APP_APP_MODE === "operador" ||
+      (typeof window !== "undefined" && window.location.port === "3006"));
 
   const isOnlySocioApp =
     appMode === "socio" ||
@@ -88,7 +98,15 @@ function App() {
         }
 
         const path = typeof window !== "undefined" ? window.location.pathname : "";
-        if (!canGoBack || path === "/login" || path === "/operador" || path === "/" || path === "") {
+        if (
+          !canGoBack ||
+          path === "/login" ||
+          path === "/operador" ||
+          path === "/pasajero" ||
+          path === "/mi-taxi" ||
+          path === "/" ||
+          path === ""
+        ) {
           CapApp.minimizeApp();
         } else {
           window.history.back();
@@ -111,7 +129,14 @@ function App() {
     <div className={mode === "claro" ? "App" : "App dark"}>
       <ErrorBoundary>
         <BrowserRouter>
-          {isOnlyOperadorApp ? (
+          {isOnlyPasajeroApp ? (
+            <Routes>
+              <Route path="/" element={<PassengerApp />} />
+              <Route path="/pasajero" element={<PassengerApp />} />
+              <Route path="/mi-taxi" element={<PassengerApp />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          ) : isOnlyOperadorApp ? (
             <Routes>
               <Route path="/login" element={<OperadorLogin />} />
               <Route path="/operador" element={<OperadorApp />} />
@@ -144,6 +169,7 @@ function App() {
               <Route path="/login" element={<OperadorLogin />} />
               <Route path="/operador" element={<OperadorApp />} />
               <Route path="/pasajero" element={<PassengerApp />} />
+              <Route path="/mi-taxi" element={<PassengerApp />} />
               <Route path="/dueno/login" element={<DuenoLogin />} />
               <Route path="/dueno" element={<DuenoApp />} />
               <Route path="/dev" element={<DevPanel />} />
