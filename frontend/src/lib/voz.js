@@ -59,6 +59,9 @@ export function activarKeepAliveAudio(activo = true) {
  */
 export function sonarAlertaOferta() {
   try {
+    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.playAlert === "function") {
+      window.TaxiHubNative.playAlert();
+    }
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
     if (!audioCtx) audioCtx = new AudioContextClass();
@@ -97,12 +100,15 @@ function elegirVoz() {
 export function vozDisponible() {
   return (
     typeof window !== "undefined" &&
-    ("speechSynthesis" in window || !!window.Capacitor?.Plugins?.TextToSpeech)
+    (!!window.TaxiHubNative || "speechSynthesis" in window || !!window.Capacitor?.Plugins?.TextToSpeech)
   );
 }
 
 export function detenerVoz() {
   try {
+    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.stop === "function") {
+      window.TaxiHubNative.stop();
+    }
     window.Capacitor?.Plugins?.TextToSpeech?.stop?.();
     window.speechSynthesis?.cancel();
   } catch {
@@ -119,6 +125,13 @@ export function hablarVoz(texto, { rate = 1.02, pitch = 1, alertaPrevia = false 
   if (!texto || !vozDisponible()) return false;
   try {
     if (alertaPrevia) sonarAlertaOferta();
+
+    // 1. Motor nativo de Android (TaxiHubNativeBridge) - Funciona con pantalla apagada y en background
+    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.speak === "function") {
+      window.TaxiHubNative.speak(texto);
+      return true;
+    }
+
     const capTts = window.Capacitor?.Plugins?.TextToSpeech;
     if (capTts?.speak) {
       capTts.speak({
@@ -148,26 +161,148 @@ export function hablarVoz(texto, { rate = 1.02, pitch = 1, alertaPrevia = false 
   }
 }
 
+// ---------------------------------------------------------------------------
+// Resolución de sitios aproximados (sin coordenadas numéricas para el chofer)
+// ---------------------------------------------------------------------------
+
+export const POIS_REFERENCIA_PALENQUE = [
+  { nombre: "Estación del Tren Maya", alias: ["tren maya", "estacion tren", "tren"], lat: 17.5359, lng: -91.9592, radioM: 1500 },
+  { nombre: "Mercado Municipal", alias: ["mercado", "mercado municipal"], lat: 17.5080, lng: -91.9835, radioM: 450 },
+  { nombre: "Parque Central", alias: ["parque central", "parque", "centro"], lat: 17.5096, lng: -91.9818, radioM: 400 },
+  { nombre: "Terminal ADO", alias: ["ado", "terminal ado", "autobuses"], lat: 17.5139, lng: -91.9856, radioM: 400 },
+  { nombre: "Hospital General", alias: ["hospital", "hospital general"], lat: 17.5077, lng: -91.9800, radioM: 500 },
+  { nombre: "Zona Arqueológica de Palenque", alias: ["ruinas", "zona arqueologica"], lat: 17.4840, lng: -92.0458, radioM: 3000 },
+  { nombre: "Crucero a Pakal-Ná", alias: ["crucero", "pakal na", "pakal-na"], lat: 17.5270, lng: -91.9750, radioM: 800 },
+  { nombre: "Colonia Pakal-Ná", alias: ["pakal na", "pakal-na", "pakal"], lat: 17.5350, lng: -91.9680, radioM: 1200 },
+  { nombre: "Aeropuerto de Palenque", alias: ["aeropuerto"], lat: 17.5342, lng: -91.9875, radioM: 1500 },
+  { nombre: "Boulevard Aeropuerto", alias: ["boulevard", "blvd"], lat: 17.5300, lng: -91.9700, radioM: 700 },
+  { nombre: "Avenida Hidalgo esquina con 5 de Mayo", lat: 17.5105, lng: -91.9825, radioM: 350 },
+  { nombre: "Avenida Juárez esquina con 20 de Noviembre", lat: 17.5120, lng: -91.9840, radioM: 350 },
+  { nombre: "Avenida Reforma esquina con Jiménez", lat: 17.5090, lng: -91.9805, radioM: 350 },
+  { nombre: "Periférico Sur", lat: 17.5050, lng: -91.9820, radioM: 600 },
+  { nombre: "Carretera a Catazajá", alias: ["playas de catazaja", "catazaja"], lat: 17.7200, lng: -92.0100, radioM: 8000 },
+  { nombre: "Carretera a Villahermosa", alias: ["villahermosa"], lat: 17.8000, lng: -92.2000, radioM: 15000 },
+];
+
+function haversineMts(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+/**
+ * Traduce un texto o coordenadas geográficas a un nombre de sitio o referencia
+ * de calle/esquina aproximada de Palenque, eliminando completamente números de latitud/longitud.
+ */
+export function resolverSitioAproximado(texto, coords = null) {
+  let raw = typeof texto === "string" ? texto.trim() : (texto?.texto || "");
+  let lat = coords?.lat != null ? Number(coords.lat) : null;
+  let lng = coords?.lng != null ? Number(coords.lng) : null;
+
+  // Si no se pasaron coords separadas pero el texto contiene coordenadas tipo "17.509, -91.982"
+  if ((lat == null || lng == null) && raw) {
+    const match = raw.match(/(-?\d{1,3}\.\d+)[\s,]+(-?\d{1,3}\.\d+)/);
+    if (match) {
+      lat = Number(match[1]);
+      lng = Number(match[2]);
+    }
+  }
+
+  // Detectar si el texto es solo coordenadas o un texto genérico del mapa
+  const esGenericoOCoord =
+    !raw ||
+    /coordenada|marcada en mapa|ubicaci[oó]n (marcada|actual)|punto en mapa/i.test(raw) ||
+    /^-?\d+\.\d+/.test(raw) ||
+    /lat\s*[:=]|lng\s*[:=]/i.test(raw);
+
+  // Si tenemos coordenadas y el texto es genérico o numérico, buscar el POI / esquina más cercana
+  if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
+    let mejor = null;
+    let menorDist = Infinity;
+    for (const p of POIS_REFERENCIA_PALENQUE) {
+      const d = haversineMts(lat, lng, p.lat, p.lng);
+      if (d < menorDist) {
+        menorDist = d;
+        mejor = p;
+      }
+    }
+
+    if (mejor && menorDist <= mejor.radioM) {
+      return menorDist < 80 ? mejor.nombre : `Cerca de ${mejor.nombre}`;
+    }
+
+    if (esGenericoOCoord && mejor && menorDist <= 3500) {
+      return `Rumbo a ${mejor.nombre}`;
+    }
+  }
+
+  // Si el texto ya tiene un nombre legible de calle o comercio, limpiarlo de cualquier número de coordenadas
+  if (raw && !esGenericoOCoord) {
+    const limpio = raw
+      .replace(/\(?-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+\)?/g, "")
+      .replace(/,\s*Chiapas|\bCP\s*\d{5}/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (limpio && limpio.length > 2) {
+      return limpio;
+    }
+  }
+
+  return "Palenque Centro";
+}
+
 /**
  * Anuncio vocal estructurado y profesional del despacho para el conductor:
- * "Nuevo servicio en [origen]. Tarifa estimada [tarifa] pesos. Destino [destino]. Toca para aceptar."
+ * - NO menciona tarifa (instrucción explícita).
+ * - Menciona el sitio aproximado (calle, esquina, POI como Mercado o Estación Tren Maya), NUNCA coordenadas.
+ * - Si el destino fue fijado, SÍ menciona el destino. Si no fue fijado, no lo menciona.
+ * - Despierta pantalla si está apagada.
  */
-export function anunciarServicioEntrante({ origen, destino, tarifa, distanciaKm } = {}) {
-  const partes = ["Nuevo servicio disponible."];
-  if (origen) {
-    partes.push(`Pasajero en ${origen}.`);
+export function anunciarServicioEntrante({
+  origen,
+  destino,
+  coordsOrigen,
+  coordsDestino,
+  distanciaKm,
+} = {}) {
+  // Despertar pantalla si el dispositivo lo soporta
+  if (typeof navigator !== "undefined" && navigator.wakeLock) {
+    navigator.wakeLock.request("screen").catch(() => {});
   }
-  if (distanciaKm) {
-    const dist = typeof distanciaKm === "number" ? distanciaKm.toFixed(1) : distanciaKm;
+
+  const sitioOrigen = resolverSitioAproximado(origen, coordsOrigen);
+  const destinoTxt = typeof destino === "string" ? destino.trim() : (destino?.texto || "");
+  const tieneDestino =
+    destinoTxt &&
+    destinoTxt !== "Sin destino" &&
+    destinoTxt !== "Destino libre" &&
+    !/no fijado|sin destino/i.test(destinoTxt);
+
+  const sitioDestino = tieneDestino
+    ? resolverSitioAproximado(destinoTxt, coordsDestino)
+    : null;
+
+  const partes = ["Nuevo servicio disponible."];
+  if (sitioOrigen) {
+    partes.push(`Pasajero en ${sitioOrigen}.`);
+  }
+  if (distanciaKm && typeof distanciaKm === "number" && distanciaKm > 0) {
+    const dist = distanciaKm.toFixed(1);
     partes.push(`A ${dist} kilómetros.`);
   }
-  if (tarifa) {
-    partes.push(`Tarifa estimada ${Math.round(tarifa)} pesos.`);
+
+  // Si el destino fue fijado, sí debe mencionar el destino
+  if (sitioDestino && sitioDestino !== sitioOrigen) {
+    partes.push(`Destino ${sitioDestino}.`);
   }
-  if (destino) {
-    partes.push(`Destino ${destino}.`);
-  }
+
+  // NO SE MENCIONA TARIFA
   partes.push("Toca la pantalla para aceptar.");
+
   return hablarVoz(partes.join(" "), { alertaPrevia: true, rate: 1.05 });
 }
 
@@ -266,11 +401,18 @@ export function clasificarComandoOferta(texto) {
 // ---------------------------------------------------------------------------
 
 export function notificacionesDisponibles() {
-  return typeof window !== "undefined" && "Notification" in window;
+  return (
+    typeof window !== "undefined" &&
+    (!!window.TaxiHubNative || "Notification" in window || !!window.Capacitor?.Plugins?.LocalNotifications)
+  );
 }
 
 export async function pedirPermisoNotificaciones() {
   try {
+    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.requestAllPermissions === "function") {
+      window.TaxiHubNative.requestAllPermissions();
+      return "granted";
+    }
     const localNotif = window.Capacitor?.Plugins?.LocalNotifications;
     if (localNotif && typeof localNotif.requestPermissions === "function") {
       const res = await localNotif.requestPermissions();
@@ -300,6 +442,10 @@ export function vibrar(patron = [200, 100, 200]) {
  */
 export function mostrarNotificacion({ titulo, cuerpo, tag = "taxihub-oferta" }) {
   try {
+    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.showNotification === "function") {
+      window.TaxiHubNative.showNotification(titulo, cuerpo);
+      return true;
+    }
     const localNotif = window.Capacitor?.Plugins?.LocalNotifications;
     if (localNotif && typeof localNotif.schedule === "function") {
       localNotif.schedule({

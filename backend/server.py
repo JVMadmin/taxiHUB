@@ -924,6 +924,10 @@ async def login(body: LoginBody):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     if op.get("activo") is False:
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
+    # Marcar que el chofer real ha iniciado sesión para excluirlo de la simulación
+    await db.operadores.update_one({"_id": op["_id"]}, {"$set": {"en_linea_real": True, "gps_real": True, "login_ts": now_iso()}})
+    op["en_linea_real"] = True
+    op["gps_real"] = True
     token = create_token(str(op["_id"]), op["usuario"], scope="operador", sitio_id=op.get("sitio_id") or DEFAULT_SITIO)
     return {"token": token, "operador": serialize(op)}
 
@@ -1868,7 +1872,13 @@ async def _actualizar_ubicacion(operador_id: str, lat: float, lng: float,
                                 client_ts: Optional[str] = None) -> dict:
     ts = now_iso()
     result = {"ok": True}
-    set_fields = {"lat": lat, "lng": lng, "ultima_actualizacion": ts}
+    set_fields = {
+        "lat": lat,
+        "lng": lng,
+        "ultima_actualizacion": ts,
+        "gps_real": True,
+        "en_linea_real": True,
+    }
     if accuracy is not None:
         set_fields["gps_accuracy"] = accuracy
     if speed is not None:
@@ -9021,6 +9031,15 @@ async def _bucle_patrullaje():
             if not op:
                 continue
             if op.get("estado") == "fuera_de_servicio":
+                continue
+            # Si el operador tiene un socket activo, está conectado o tiene telemetría GPS real,
+            # excluirlo de la simulación para que el mapa muestre únicamente su ubicación física real.
+            op_id_str = str(op["_id"])
+            if (
+                len(manager.operadores.get(op_id_str, [])) > 0
+                or op.get("gps_real") is True
+                or op.get("en_linea_real") is True
+            ):
                 continue
             pista = PALENQUE_PISTAS_VIALES.get(taxi["pista_id"], {})
             cum_dist = pista.get("cum_dist", [])

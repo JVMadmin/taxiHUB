@@ -28,20 +28,21 @@ import {
   Car, Power, LogOut, MapPin, Bell, Package, MessageSquare, Send, X,
   PlayCircle, StopCircle, Check, LocateFixed, Navigation as NavIcon, Wallet,
   Clock, Flag, User, AlertTriangle, Gauge, Fuel, Mic, Settings,
-  Camera, ShieldCheck, Banknote, Satellite, RefreshCw, Volume2,
+  Camera, ShieldCheck, Banknote, Satellite, RefreshCw, Volume2, Layers,
 } from "lucide-react";
 import { applyMode } from "@/lib/theme";
-import { activarKeepAliveAudio, sonarAlertaOferta, hablarVoz, detenerVoz, anunciarServicioEntrante, probarAudioVoz, reconocimientoDisponible, crearReconocimiento, clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar } from "@/lib/voz";
+import { activarKeepAliveAudio, sonarAlertaOferta, hablarVoz, detenerVoz, anunciarServicioEntrante, probarAudioVoz, reconocimientoDisponible, crearReconocimiento, clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar, resolverSitioAproximado } from "@/lib/voz";
 import { iniciarGpsSegundoPlano, detenerGpsSegundoPlano, enviarUbicacionRobusta, obtenerEstadoGps, vaciarColaOffline, obtenerColaOffline } from "@/lib/backgroundGps";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
 const fmtMoney2 = (n) => `$${Number(n || 0).toLocaleString("es-MX")}`;
 
-const LOC_INTERVAL = 9000; // 8-10s
-const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
-const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
-// Fallback por-tile si Esri falla (evita cuadros negros por rate-limit)
+const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const SATELLITE_REF = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
+const STREET_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const STREET_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+// Fallback por-tile si una capa falla
 const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const TAXI_ASSET = "/assets/vehicles/taxihub-taxi-azul.png";
 const MARCH_LOGO = "/assets/vehicles/march.png";
@@ -148,7 +149,13 @@ export default function OperadorApp() {
   // Modo nocturno prioritario: default oscuro salvo que el usuario elija claro.
   const [driverLight, setDriverLight] = useState(() => localStorage.getItem("driver_mode") === "claro");
   const ignoreInitialModeEvent = useRef(true);
-  const tiles = driverLight ? LIGHT_TILES : DARK_TILES;
+  const [mapLayer, setMapLayer] = useState(() => localStorage.getItem("driver_map_layer") || "calles");
+  const toggleMapLayer = () => {
+    const next = mapLayer === "satelite" ? "calles" : "satelite";
+    setMapLayer(next);
+    localStorage.setItem("driver_map_layer", next);
+    toast.info(next === "satelite" ? "Modo Satelital con calles y lugares activado" : "Modo Calles de Palenque activado");
+  };
   const rutaColor = driverLight ? "#059669" : "#10b981";
   const driverAvatar = op?.foto_url ? fileUrl(op.foto_url) : DEMO_DRIVER_AVATARS[op?.usuario] || "/assets/drivers/default-driver.svg";
 
@@ -215,6 +222,13 @@ export default function OperadorApp() {
     };
     window.addEventListener("app:mode", onMode);
     return () => window.removeEventListener("app:mode", onMode);
+  }, []);
+
+  // Solicitar permisos nativos de notificación y ubicación al abrir la app en Android
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.requestAllPermissions === "function") {
+      window.TaxiHubNative.requestAllPermissions();
+    }
   }, []);
 
   // Adaptación nativa de la barra de estado en Android
@@ -817,7 +831,8 @@ export default function OperadorApp() {
     if (m == null) return;
     const kmTxt = fmtDist(m).replace(" m ", " metros ").replace(" km", " kilómetros");
     const min = Math.max(1, Math.round(m / (25_000 / 3600)));
-    hablarVoz(`Estás a ${kmTxt} de ${o.texto || "la ubicación del cliente"}, unos ${min} minuto${min === 1 ? "" : "s"}. Confirma para aceptar.`);
+    const sitio = resolverSitioAproximado(o.texto, o);
+    hablarVoz(`Estás a ${kmTxt} de ${sitio}, unos ${min} minuto${min === 1 ? "" : "s"}. Confirma para aceptar.`);
   };
 
   // Distancia si el conductor lo pregunta durante la escucha de la oferta.
@@ -838,16 +853,25 @@ export default function OperadorApp() {
 
   const notificarServicio = (s) => {
     const unidadTxt = getUnidadTxt() ? `Unidad ${getUnidadTxt()}` : "Taxi libre";
-    const origen = s?.origen?.texto || "ubicación marcada en mapa";
+    const origenRaw = s?.origen?.texto || (s?.origen?.lat ? `${s.origen.lat}, ${s.origen.lng}` : "Ubicación en mapa");
     const destinoTxt = s?.destino?.texto || "";
-    const tarifa = s?.costo;
     const distKm = ofertaDist ? (ofertaDist.m / 1000) : null;
+
+    // Obtener sitio aproximado de calle/esquina o POI (sin coordenadas numéricas)
+    const origenSitio = resolverSitioAproximado(origenRaw, s?.origen);
+    const destinoSitio = destinoTxt ? resolverSitioAproximado(destinoTxt, s?.destino) : "";
+
+    // Despertar la pantalla para que el chofer vea la oferta de inmediato
+    if (typeof navigator !== "undefined" && navigator.wakeLock) {
+      navigator.wakeLock.request("screen").catch(() => {});
+    }
 
     if (vozOnRef.current) {
       anunciarServicioEntrante({
-        origen,
-        destino: destinoTxt,
-        tarifa,
+        origen: origenSitio,
+        destino: destinoSitio,
+        coordsOrigen: s?.origen,
+        coordsDestino: s?.destino,
         distanciaKm: distKm,
       });
       vibrar([200, 100, 200, 100, 300]);
@@ -862,7 +886,7 @@ export default function OperadorApp() {
     if (notifOnRef.current) {
       mostrarNotificacion({
         titulo: `${unidadTxt}: nuevo servicio`,
-        cuerpo: `Pasajero en ${origen}${destinoTxt ? ` → ${destinoTxt}` : ""}${tarifa ? ` · $${tarifa}` : ""}`,
+        cuerpo: `Pasajero en ${origenSitio}${destinoSitio ? ` → ${destinoSitio}` : ""}`,
         tag: "taxihub-oferta",
       });
     }
@@ -961,7 +985,31 @@ export default function OperadorApp() {
       {/* MAPA de navegación (elemento principal) */}
       <div className="absolute inset-0 z-0" data-testid="driver-map">
         <MapContainer center={mapCenter} zoom={15} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
-          <TileLayer url={tiles} attribution="Tiles &copy; Esri" errorTileUrl={FALLBACK_TILE} maxNativeZoom={16} />
+          {mapLayer === "satelite" ? (
+            <>
+              <TileLayer
+                url={SATELLITE_TILES}
+                attribution="Tiles &copy; Esri World Imagery"
+                errorTileUrl={FALLBACK_TILE}
+                maxNativeZoom={18}
+                keepBuffer={4}
+              />
+              <TileLayer
+                url={SATELLITE_REF}
+                maxNativeZoom={18}
+                keepBuffer={4}
+              />
+            </>
+          ) : (
+            <TileLayer
+              url={STREET_TILES}
+              attribution={STREET_ATTR}
+              errorTileUrl={FALLBACK_TILE}
+              maxZoom={20}
+              maxNativeZoom={19}
+              keepBuffer={4}
+            />
+          )}
           <RouteBounds points={boundsPoints} />
           <RecenterController n={recenterN} target={driverPos || mapCenter} />
           {driverPos && (
@@ -1056,6 +1104,17 @@ export default function OperadorApp() {
           title="Centrar en mi ubicación"
         >
           <LocateFixed className="th-icon-3d h-5 w-5" />
+        </button>
+        <button
+          data-testid="cambiar-capa-mapa-btn"
+          onClick={toggleMapLayer}
+          className="bezel-shell th-3d flex h-11 w-11 items-center justify-center text-foreground relative"
+          title={mapLayer === "satelite" ? "Cambiar a vista Calles" : "Cambiar a vista Satelital"}
+        >
+          <Layers className="th-icon-3d h-5 w-5" />
+          <span className="absolute -bottom-2 px-1 text-[8px] font-black uppercase tracking-wider rounded bg-background/90 text-foreground border border-border shadow-xs">
+            {mapLayer === "satelite" ? "Sat" : "Vía"}
+          </span>
         </button>
         {navegacion && (
           <div data-testid="ruta-info" className="bezel-shell px-3 py-2 text-center">
