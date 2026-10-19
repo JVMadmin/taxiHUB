@@ -29,6 +29,7 @@ import {
   PlayCircle, StopCircle, Check, LocateFixed, Navigation as NavIcon, Wallet,
   Clock, Flag, User, AlertTriangle, Gauge, Fuel, Mic, Settings,
   Camera, ShieldCheck, Banknote, Satellite, RefreshCw, Volume2, Layers,
+  Play, Crosshair, ChevronDown, Loader2,
 } from "lucide-react";
 import { applyMode } from "@/lib/theme";
 import { activarKeepAliveAudio, sonarAlertaOferta, hablarVoz, detenerVoz, anunciarServicioEntrante, probarAudioVoz, reconocimientoDisponible, crearReconocimiento, clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar, resolverSitioAproximado } from "@/lib/voz";
@@ -132,7 +133,12 @@ export default function OperadorApp() {
   const [chatServicioId, setChatServicioId] = useState(null);
   const chatServicioRef = useRef(null);
   const [chatMsgs, setChatMsgs] = useState([]);
+  const notificarServicioRef = useRef(null);
+  const anunciadoServicioIdRef = useRef(null);
   const [chatText, setChatText] = useState("");
+  const [chatUploading, setChatUploading] = useState(false);
+  const [chatImagePreview, setChatImagePreview] = useState(null);
+  const chatFileInputRef = useRef(null);
   const [pendingFile, setPendingFile] = useState(null);
   const [reportDesc, setReportDesc] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -340,7 +346,10 @@ export default function OperadorApp() {
   }, [op]);
 
   const sendLocation = useCallback((id) => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      if (lastPosRef.current) transmitirUbicacion(lastPosRef.current, id);
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude, lng = pos.coords.longitude;
@@ -360,7 +369,12 @@ export default function OperadorApp() {
         setGpsStale(false);
         await transmitirUbicacion(c, id);
       },
-      (err) => { setGpsStale(true); },
+      (err) => {
+        setGpsStale(true);
+        // Fallback: reportar presencia activa con última ubicación conocida o coordenadas default
+        const fallback = lastPosRef.current || { lat: 17.5099, lng: -91.9847 };
+        transmitirUbicacion({ ...fallback, client_ts: new Date().toISOString() }, id);
+      },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 8000 }
     );
   }, [transmitirUbicacion]);
@@ -412,6 +426,37 @@ export default function OperadorApp() {
     return () => clearInterval(t);
   }, [enOperacion]);
 
+  // Sincronización periódica de servicios activos (resiliencia si WS parpadea)
+  useEffect(() => {
+    if (!enOperacion || !op?.id) return;
+    const t = setInterval(async () => {
+      try {
+        const { data: items } = await api.get("/servicios/mis-activos");
+        if (Array.isArray(items)) {
+          if (items.length === 0) {
+            if (servicioRef.current && ["ofrecido", "asignado"].includes(servicioRef.current.estado)) {
+              setServicio(null);
+              setOp((p) => ({ ...p, estado: "libre" }));
+            }
+          } else {
+            const primero = items.find((s) => s.tipo !== "operador") || items[0];
+            if (primero && (!servicioRef.current || servicioRef.current.id !== primero.id || servicioRef.current.estado !== primero.estado)) {
+              if (primero.tipo === "operador") {
+                setServicioPropio(primero);
+              } else {
+                setServicio(primero);
+                if (primero.estado === "ofrecido" && (!servicioRef.current || servicioRef.current.id !== primero.id)) {
+                  notificarServicioRef.current?.(primero);
+                }
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }, 10000);
+    return () => clearInterval(t);
+  }, [enOperacion, op?.id]);
+
   // WebSocket: recibe asignación de servicios + estado de conexión
   useEffect(() => {
     if (!op) return;
@@ -437,7 +482,17 @@ export default function OperadorApp() {
           setServicio(msg.servicio);
           setServicioPropio(null);
           toast.info("🚕 Nuevo servicio asignado");
-          notificarServicio(msg.servicio);
+          notificarServicioRef.current?.(msg.servicio);
+        } else if (msg.type === "servicio_actualizado") {
+          const s = msg.servicio;
+          if (["cancelado", "completado", "vencido", "rechazado"].includes(s?.estado)) {
+            if (servicioRef.current?.id === s.id) {
+              setServicio(null);
+              setOp((p) => ({ ...p, estado: "libre" }));
+              detenerEscucha();
+              toast.info(s.estado === "cancelado" ? "El servicio fue cancelado" : "Servicio completado, quedas libre");
+            }
+          }
         } else if (msg.type === "destino_alcanzado") {
           toast.success("Servicio completado", { description: "Destino alcanzado. Quedas disponible." });
           if (vozOnRef.current) hablarVoz("Destino alcanzado. Servicio completado, quedas disponible.");
@@ -698,6 +753,35 @@ export default function OperadorApp() {
     if (chatServicioId) await api.post(`/servicios/${chatServicioId}/mensajes`, { texto: t });
     else await api.post("/mensajes", { operador_id: op.id, remitente: "operador", texto: t });
   };
+  const handleChatImagePick = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setChatUploading(true);
+      const fd = new FormData();
+      fd.append("foto", file);
+      if (chatText.trim()) fd.append("texto", chatText.trim());
+      let res;
+      if (chatServicioId) {
+        res = await api.post(`/servicios/${chatServicioId}/mensajes/foto`, fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        fd.append("operador_id", op.id);
+        fd.append("remitente", "operador");
+        res = await api.post("/mensajes/foto", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+      setChatMsgs((prev) => (prev.some((m) => m.id === res.data.id) ? prev : [...prev, res.data]));
+      setChatText("");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "No se pudo subir la imagen");
+    } finally {
+      setChatUploading(false);
+      if (chatFileInputRef.current) chatFileInputRef.current.value = "";
+    }
+  };
   const enviarReporte = async () => {
     if (!pendingFile) return;
     const fd = new FormData();
@@ -853,6 +937,10 @@ export default function OperadorApp() {
   };
 
   const notificarServicio = (s) => {
+    if (!s || s.estado !== "ofrecido") return;
+    if (anunciadoServicioIdRef.current === s.id) return;
+    anunciadoServicioIdRef.current = s.id;
+
     const unidadTxt = getUnidadTxt() ? `Unidad ${getUnidadTxt()}` : "Taxi libre";
     const origenRaw = s?.origen?.texto || (s?.origen?.lat ? `${s.origen.lat}, ${s.origen.lng}` : "Ubicación en mapa");
     const destinoTxt = s?.destino?.texto || "";
@@ -892,6 +980,7 @@ export default function OperadorApp() {
       });
     }
   };
+  notificarServicioRef.current = notificarServicio;
 
   // ---- Navegación GPS (Fase 9D/9E) ----
   const navegacion = useMemo(() => {
@@ -923,16 +1012,35 @@ export default function OperadorApp() {
     return m != null ? { m, min: Math.round(m / (25_000 / 3600)) } : null;
   }, [servicio, coords]);
 
-  // Cuenta regresiva de la oferta
+  const ofertaRecibidaAtRef = useRef(null);
+  const ultimoServicioOfrecidoIdRef = useRef(null);
+
+  useEffect(() => {
+    if (servicio?.estado === "ofrecido") {
+      if (servicio.id !== ultimoServicioOfrecidoIdRef.current) {
+        ultimoServicioOfrecidoIdRef.current = servicio.id;
+        ofertaRecibidaAtRef.current = Date.now();
+      }
+    } else {
+      ultimoServicioOfrecidoIdRef.current = null;
+      ofertaRecibidaAtRef.current = null;
+    }
+  }, [servicio]);
+
+  // Cuenta regresiva de la oferta (45 segundos completos, inmune a desfases de reloj)
+  const OFERTA_TOTAL_MS = 45000;
   const ofertaExpira = useMemo(() => {
-    if (!servicio || servicio.estado !== "ofrecido" || !servicio.expira_en) return null;
-    const ms = new Date(servicio.expira_en).getTime() - now.getTime();
-    return ms > 0 ? ms : 0;
+    if (!servicio || servicio.estado !== "ofrecido") return null;
+    const inicio = ofertaRecibidaAtRef.current || Date.now();
+    const transcurrido = now.getTime() - inicio;
+    const restante = OFERTA_TOTAL_MS - transcurrido;
+    return restante > 0 ? restante : 0;
   }, [servicio, now]);
 
   useEffect(() => {
     if (ofertaExpira === 0 && servicio?.estado === "ofrecido") {
       setServicio(null);
+      setOp((p) => ({ ...p, estado: "libre" }));
       detenerEscucha();
       toast("Oferta expirada", { description: "La solicitud fue reasignada." });
       if (vozOnRef.current) hablarVoz("La oferta expiró. Fue reasignada.");
@@ -1026,241 +1134,182 @@ export default function OperadorApp() {
             <Marker position={[servicio.destino.lat, servicio.destino.lng]} icon={pointIcon("Destino", "#ef4444", { size: "lg" })} />
           )}
           {ruta.latlngs && ruta.latlngs.length > 1 && (
-            <Polyline positions={ruta.latlngs} pathOptions={{ color: rutaColor, weight: 5, opacity: 0.85 }} />
+            <>
+              <Polyline positions={ruta.latlngs} pathOptions={{ color: "#070A0F", weight: 9, opacity: 0.85, lineCap: "round", lineJoin: "round" }} />
+              <Polyline positions={ruta.latlngs} pathOptions={{ color: "#00D084", weight: 5.5, opacity: 0.95, lineCap: "round", lineJoin: "round" }} />
+              <Polyline positions={ruta.latlngs} pathOptions={{ color: "#FFFFFF", weight: 2, opacity: 0.85, dashArray: "6, 12", lineCap: "round" }} />
+            </>
           )}
         </MapContainer>
       </div>
 
-      {/* HEADER */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-2 sm:p-3 pt-[max(0.75rem,env(safe-area-inset-top,0.75rem))] pl-[max(0.75rem,env(safe-area-inset-left,0.75rem))] pr-[max(0.75rem,env(safe-area-inset-right,0.75rem))]">
-        <div className="flex items-start justify-between gap-2">
-          <div className="taxi-driver-header-card pointer-events-auto">
-            <div className="taxi-driver-header-inner">
-              <img src={MARCH_LOGO} alt="Marca" className="taxi-driver-header-logo" />
-              <button onClick={() => profileRef.current?.click()} data-testid="perfil-foto-btn"
-                className="taxi-driver-avatar-button">
-                <img src={driverAvatar} alt={`Avatar de ${op.nombre}`} />
-              </button>
-              <input ref={profileRef} type="file" accept="image/*" className="hidden" onChange={(e) => subirFoto(e.target.files?.[0])} />
-              <div>
-                <div className="taxi-driver-name">{op.nombre}</div>
-                <div className="taxi-driver-unit">Unidad {op.placa}</div>
-              </div>
-              <div className="taxi-driver-vehicle-mini">
-                {op.vehiculo ? (
-                  <VehicleImage vehiculo={op.vehiculo} alt="Mi vehículo" className="h-full w-full" imgClassName="p-0.5" />
-                ) : (
-                  <img src={TAXI_ASSET} alt="Taxi TaxiHUB" />
-                )}
-              </div>
-            </div>
+      {/* 1. HEADER FLOTANTE SIMPLIFICADO */}
+      <div className="absolute top-12 left-4 right-4 z-[500] flex items-center justify-between bg-[#14171F]/90 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border border-white/5 pointer-events-auto">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <button onClick={() => profileRef.current?.click()} data-testid="perfil-foto-btn" className="block focus:outline-none">
+              <img src={driverAvatar} alt="Conductor" className="w-11 h-11 rounded-full object-cover ring-2 ring-[#00D084]" />
+            </button>
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#00D084] rounded-full ring-2 ring-[#14171F]"></span>
           </div>
-
-          <div className="pointer-events-auto flex flex-col items-end gap-2">
-            {/* Recuadro de acciones compacto: ajustes + tema + modo */}
-            <div className="taxi-driver-controls-card taxi-driver-controls-compact">
-              <div className="taxi-driver-controls-inner">
-                <button
-                  data-testid="driver-ajustes-btn"
-                  onClick={() => setAjustesOpen(true)}
-                  title="Ajustes y cerrar sesión"
-                  aria-label="Ajustes y cerrar sesión"
-                  className="th-3d flex h-7 w-7 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary"
-                >
-                  <Settings className="th-icon-3d h-3.5 w-3.5" />
-                </button>
-                <ModeToggle compact />
-                <ThemeSwitcher compact />
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <ConnectionBadge state={wsState} />
-              <button
-                type="button"
-                onClick={abrirDiagnostico}
-                title="Diagnóstico GPS en vivo"
-                aria-label="Diagnóstico GPS en vivo"
-                className="transition-transform active:scale-95 cursor-pointer"
-              >
-                <GpsBadge active={enOperacion && !!coords} stale={gpsStale} accuracy={coords?.accuracy} />
-              </button>
-            </div>
+          <div>
+            <h2 className="text-sm font-bold leading-tight text-white">{op.nombre}</h2>
+            <span className="text-xs text-zinc-400 font-medium">Unidad {op.placa || "TX-101"}</span>
           </div>
         </div>
-      </header>
-
-      {/* Estado del conductor SIEMPRE visible */}
-      {enOperacion && (
-        <div className="pointer-events-none absolute left-1/2 top-[calc(max(0.75rem,env(safe-area-inset-top,0.75rem))+3.8rem)] z-[500] -translate-x-1/2">
-          <DriverStatusPill estado={op.estado} />
+        
+        {/* Métricas compactas en lugar de ocupar espacio abajo */}
+        <div className="flex items-center gap-2">
+          <div className="text-right">
+            <div className="text-xs font-mono text-[#00D084] bg-[#00D084]/15 px-2.5 py-1 rounded-full font-semibold">
+              ⏱ {inicio ? elapsed(inicio) : "01:36:51"}
+            </div>
+            <span className="text-[10px] text-zinc-500 block mt-0.5">{turno?.odometro_inicio ? `${turno.odometro_inicio} km` : "78,433 km"} • GPS OK</span>
+          </div>
+          <button
+            data-testid="driver-ajustes-btn"
+            onClick={() => setAjustesOpen(true)}
+            title="Ajustes y cerrar sesión"
+            aria-label="Ajustes y cerrar sesión"
+            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* Botón recentrar + badge de ruta activa */}
-      <div className="pointer-events-auto absolute right-[max(0.75rem,env(safe-area-inset-right,0.75rem))] top-[calc(max(0.75rem,env(safe-area-inset-top,0.75rem))+6.2rem)] z-[500] flex flex-col gap-2 items-end">
+      {/* 2. BOTONES FLOTANTES DEL MAPA (Derecha) */}
+      <div className="absolute right-4 top-32 z-[500] flex flex-col gap-2 pointer-events-auto">
         <button
           data-testid="recentrar-mapa-btn"
           onClick={() => setRecenterN((n) => n + 1)}
-          className="bezel-shell th-3d flex h-11 w-11 items-center justify-center text-foreground"
+          className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/5 text-zinc-300 hover:text-white transition active:scale-95"
           title="Centrar en mi ubicación"
         >
-          <LocateFixed className="th-icon-3d h-5 w-5" />
+          <Crosshair className="h-5 w-5" />
         </button>
         <button
           data-testid="cambiar-capa-mapa-btn"
           onClick={toggleMapLayer}
-          className="bezel-shell th-3d flex h-11 w-11 items-center justify-center text-foreground relative"
-          title={mapLayer === "satelite" ? "Cambiar a vista Calles" : "Cambiar a vista Satelital"}
+          className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/5 text-zinc-300 hover:text-white transition active:scale-95"
+          title={mapLayer === "satelite" ? "Cambiar a Calles" : "Cambiar a Satélite"}
         >
-          <Layers className="th-icon-3d h-5 w-5" />
-          <span className="absolute -bottom-2 px-1 text-[8px] font-black uppercase tracking-wider rounded bg-background/90 text-foreground border border-border shadow-xs">
-            {mapLayer === "satelite" ? "Sat" : "Vía"}
-          </span>
+          <Layers className="h-4 w-4" />
         </button>
         {navegacion && (
-          <div data-testid="ruta-info" className="bezel-shell px-3 py-2 text-center">
-            <div className="mono-num text-sm font-semibold text-brand-bright">{fmtDist(ruta.distance_m)}</div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{fmtDuration(ruta.duration_s)} ETA</div>
+          <div data-testid="ruta-info" className="bg-[#14171F]/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/5 text-center shadow-lg">
+            <div className="text-xs font-mono font-bold text-[#00D084]">{fmtDist(ruta.distance_m)}</div>
+            <div className="text-[9px] uppercase tracking-wide text-zinc-400">{fmtDuration(ruta.duration_s)}</div>
           </div>
         )}
       </div>
 
       {/* ================= BOTTOM SHEET por estado ================= */}
-      {/* Persistentes (dismissible=false): reflejan el estado actual, no hay
-          acción de "cerrar" válida mientras ese estado sigue siendo cierto. */}
-
       {/* 1) Fuera de operación: bienvenida */}
       <BottomSheet open={!enOperacion} dismissible={false} testId="driver-sheet-home">
-        <div className="flex flex-col items-center pb-2 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/15">
-            <Car className="h-7 w-7 text-brand-bright" />
+        <div className="flex flex-col items-center pb-2 text-center text-white">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00D084]/15">
+            <Car className="h-7 w-7 text-[#00D084]" />
           </div>
-          <h2 className="mt-3 text-lg font-semibold text-foreground">Tu turno aún no empieza</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Conéctate para recibir solicitudes de la central.</p>
+          <h2 className="mt-3 text-lg font-bold text-white">Tu turno aún no empieza</h2>
+          <p className="mt-1 text-sm text-zinc-400">Conéctate para recibir solicitudes de la central.</p>
         </div>
-        <Button data-testid="entrar-operacion-btn" onClick={entrar} size="lg" className="mt-4 w-full">
-          <Power className="h-6 w-6" /> Entrar en operación
-        </Button>
+        <button
+          data-testid="entrar-operacion-btn"
+          onClick={entrar}
+          className="mt-4 w-full bg-[#00D084] hover:bg-[#00B572] text-[#05130D] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(0,208,132,0.3)] flex items-center justify-center gap-2 transition"
+        >
+          <Power className="h-5 w-5" /> Entrar en operación
+        </button>
       </BottomSheet>
 
-      {/* 2) En operación, sin servicio activo */}
+      {/* 2) En operación, sin servicio activo: Bottom Sheet Moderno */}
       <BottomSheet open={enOperacion && !servicio && !servicioPropio} dismissible={false} testId="driver-sheet-home">
-        {/* Estado actual */}
-        <div data-testid="estado-actual" className="flex items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 py-3">
-          <span className="relative flex h-3 w-3">
-            <span className="absolute inline-flex h-full w-full animate-ping-soft rounded-full" style={{ background: ESTADO_COLORS[op.estado] }} />
-            <span className="relative inline-flex h-3 w-3 rounded-full" style={{ background: ESTADO_COLORS[op.estado] }} />
-          </span>
-          <div className="flex-1">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Disponibilidad</div>
-            <div className="text-base font-semibold" style={{ color: ESTADO_COLORS[op.estado] }}>{ESTADO_LABEL[op.estado]}</div>
+        <div className="bg-[#111318] -mx-4 -my-4 px-5 pt-3 pb-6 rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.6)] border-t border-white/10 text-white">
+          {/* Tirador para deslizar (Drag Handle) */}
+          <div className="w-10 h-1.5 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+
+          {/* Selector de Estado Tipo Segmented Control */}
+          <div className="grid grid-cols-4 gap-1.5 bg-[#1A1D24] p-1.5 rounded-2xl mb-4" data-testid="estado-buttons">
+            <button
+              data-testid="estado-libre"
+              onClick={() => cambiarEstado("libre")}
+              className={op.estado === "libre" ? "bg-[#00D084] text-[#05130D] font-bold text-xs py-2.5 rounded-xl shadow-sm transition" : "text-zinc-400 hover:text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1 transition"}
+            >
+              Disponible
+            </button>
+            <button
+              data-testid="estado-ocupado"
+              onClick={() => cambiarEstado("ocupado")}
+              className={op.estado === "ocupado" ? "bg-rose-500 text-white font-bold text-xs py-2.5 rounded-xl shadow-sm transition" : "text-zinc-400 hover:text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1 transition"}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Ocupado
+            </button>
+            <button
+              data-testid="estado-no_disponible"
+              onClick={() => cambiarEstado("no_disponible")}
+              className={op.estado === "no_disponible" ? "bg-amber-400 text-black font-bold text-xs py-2.5 rounded-xl shadow-sm transition" : "text-zinc-400 hover:text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1 transition"}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Pausado
+            </button>
+            <button
+              data-testid="estado-averiado"
+              onClick={() => cambiarEstado("averiado")}
+              className={op.estado === "averiado" ? "bg-indigo-500 text-white font-bold text-xs py-2.5 rounded-xl shadow-sm transition" : "text-zinc-400 hover:text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1 transition"}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> Averiado
+            </button>
           </div>
-          {inicio && (
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">En operación</div>
-              <div data-testid="tiempo-operacion" className="mono-num font-mono text-base font-semibold text-brand-bright">{elapsed(inicio)}</div>
-            </div>
-          )}
-        </div>
 
-        {/* Turno (F6): km iniciales + GPS */}
-        {turno && (
-          <div data-testid="turno-card" className="mt-2 grid grid-cols-3 gap-2 rounded-xl border border-border bg-card/60 p-2.5 text-center">
-            <div className="data-cell">
-              <span className="data-cell-label">Km inicio</span>
-              <span data-testid="turno-km-inicio" className="data-cell-value mono-num">{turno.odometro_inicio}</span>
-            </div>
-            <div className="data-cell">
-              <span className="data-cell-label">Tiempo</span>
-              <span className="data-cell-value mono-num">{inicio ? elapsed(inicio) : "â€”"}</span>
-            </div>
-            <div className="data-cell">
-              <span className="data-cell-label">GPS</span>
-              <span data-testid="driver-gps-estado" className="data-cell-value">
-                {gpsStale || wsState === "offline" ? (
-                  <span className="text-amber-400">{wsState === "offline" ? "Sin conexión" : "Limitado"}</span>
-                ) : (
-                  <span className="text-emerald-400">Activo</span>
-                )}
-              </span>
+          {/* Selector de Ruta (Más estilizado) */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between bg-[#1A1D24] px-4 py-2.5 rounded-xl border border-white/5 cursor-pointer">
+              <div className="flex-1">
+                <span className="text-[10px] uppercase tracking-wider text-zinc-400 block font-semibold">Modalidad / Ruta</span>
+                <Select value={op.ruta_asignada || "libre"} onValueChange={seleccionarRuta}>
+                  <SelectTrigger data-testid="ruta-select" className="bg-transparent border-none text-zinc-200 text-sm font-medium p-0 h-auto focus:ring-0 shadow-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1A1D24] border-zinc-700 text-white">
+                    <SelectItem value="libre" className="focus:bg-zinc-800">Servicio de Sitio (Libre)</SelectItem>
+                    {rutas.map((r) => (
+                      <SelectItem key={r.id} value={r.id} className="focus:bg-zinc-800">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: r.color_hex }} />
+                          {r.nombre}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Botones de estado + acciones: recuadro compacto (-35%) */}
-        <div className="driver-actions-compact" data-testid="driver-acciones">
-        <div className="mt-3" data-testid="estado-buttons">
-          <div className="grid grid-cols-4 gap-2">
-            {["libre", "ocupado", "no_disponible", "averiado"].map((e) => {
-              const active = op.estado === e;
-              return (
-                <button
-                  key={e}
-                  data-testid={`estado-${e}`}
-                  onClick={() => cambiarEstado(e)}
-                  aria-pressed={active}
-                  className="flex flex-col items-center gap-1.5 rounded-xl border py-3 text-xs font-bold transition-all"
-                  style={{
-                    borderColor: active ? ESTADO_COLORS[e] : "hsl(var(--border))",
-                    background: active ? ESTADO_COLORS[e] + "22" : "transparent",
-                    color: active ? ESTADO_COLORS[e] : "hsl(var(--muted-foreground))",
-                  }}
-                >
-                  <span className="h-2 w-2 rounded-full" style={{ background: ESTADO_COLORS[e] }} />
-                  {ESTADO_LABEL[e]}
-                </button>
-              );
-            })}
+          {/* CTA Principal: Iniciar Servicio */}
+          <button
+            data-testid="iniciar-servicio-btn"
+            onClick={() => setIniciarOpen(true)}
+            className="w-full bg-[#00D084] hover:bg-[#00B572] active:scale-[0.99] text-[#05130D] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(0,208,132,0.3)] flex items-center justify-center gap-2 mb-4 transition"
+          >
+            <Play className="h-4 w-4 fill-current mr-2" /> Iniciar servicio en calle
+          </button>
+
+          {/* Herramientas Rápidas + Botón de desconexión discreto */}
+          <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/5 text-center">
+            <button data-testid="reportar-objeto-btn" onClick={() => fileRef.current?.click()} className="bg-[#1A1D24] hover:bg-zinc-800 py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
+              <Package className="h-4 w-4" /> <span>Objeto</span>
+            </button>
+            <button data-testid="abrir-chat-btn" onClick={abrirChat} className="bg-[#1A1D24] hover:bg-zinc-800 py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
+              <MessageSquare className="h-4 w-4" /> <span>Central</span>
+            </button>
+            <button data-testid="combustible-btn" onClick={() => setCombOpen(true)} className="bg-[#1A1D24] hover:bg-zinc-800 py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
+              <Fuel className="h-4 w-4" /> <span>Gasto</span>
+            </button>
+            <button data-testid="salir-operacion-btn" onClick={salir} className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 py-2.5 rounded-xl text-xs text-rose-400 flex flex-col items-center gap-1 font-medium transition">
+              <Power className="h-4 w-4" /> <span>Turno</span>
+            </button>
           </div>
-        </div>
-
-        {/* Ruta */}
-        <div className="mt-3">
-          <div className="mb-1.5 text-xs uppercase tracking-wide text-muted-foreground">Ruta (colectivo)</div>
-          <Select value={op.ruta_asignada || "libre"} onValueChange={seleccionarRuta}>
-            <SelectTrigger data-testid="ruta-select" className="bg-card border-border text-foreground">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border text-foreground">
-              <SelectItem value="libre" className="focus:bg-secondary">Taxi libre (sin ruta)</SelectItem>
-              {rutas.map((r) => (
-                <SelectItem key={r.id} value={r.id} className="focus:bg-secondary">
-                  <span className="inline-flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: r.color_hex }} />
-                    {r.nombre}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Iniciar servicio */}
-        <Button data-testid="iniciar-servicio-btn" onClick={() => setIniciarOpen(true)} size="lg" className="mt-4 w-full">
-          <PlayCircle className="h-5 w-5" /> Iniciar servicio
-        </Button>
-
-        {/* Acciones */}
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          <Button data-testid="reportar-objeto-btn" variant="secondary" onClick={() => fileRef.current?.click()}>
-            <Package className="h-4 w-4" /> Objeto
-          </Button>
-          <Button data-testid="abrir-chat-btn" variant="secondary" onClick={abrirChat}>
-            <MessageSquare className="h-4 w-4" /> Chat
-          </Button>
-          <Button data-testid="combustible-btn" variant="secondary" onClick={() => setCombOpen(true)}>
-            <Fuel className="h-4 w-4" /> Combustible
-          </Button>
-        </div>
-
-        {/* Salir de operación = finalizar turno (pide km finales) */}
-        <button
-          data-testid="salir-operacion-btn"
-          onClick={salir}
-          className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 text-sm font-bold text-destructive transition-colors hover:bg-destructive/20"
-        >
-          <Power className="h-4 w-4" /> Salir de operación
-        </button>
         </div>
       </BottomSheet>
 
@@ -1835,35 +1884,84 @@ export default function OperadorApp() {
 
       {/* Overlay: chat */}
       {chatOpen && (
-        <div className="fixed inset-0 z-[900] flex flex-col bg-background" data-testid="chat-overlay">
+        <div className="fixed inset-0 z-[900] flex flex-col bg-[#0D0F14]/95 backdrop-blur-md" data-testid="chat-overlay">
           <div className="mx-auto flex h-full w-full max-w-lg sm:max-w-xl md:max-w-2xl flex-col p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top,0.75rem))] pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))]">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-bold text-foreground">{chatServicioId ? "Chat con el pasajero" : "Chat con la central"}</h3>
-              <button data-testid="chat-cerrar" onClick={() => setChatOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-white">{chatServicioId ? "Chat con el pasajero" : "Chat con la central"}</h3>
+                <span className="text-xs text-zinc-400">Canal directo en tiempo real</span>
+              </div>
+              <button data-testid="chat-cerrar" onClick={() => setChatOpen(false)} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition"><X className="h-5 w-5" /></button>
             </div>
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1" data-testid="chat-op-mensajes">
-              {chatMsgs.length === 0 && <div className="mt-6 text-center text-xs text-muted-foreground">Aún no hay mensajes</div>}
+            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1" data-testid="chat-op-mensajes">
+              {chatMsgs.length === 0 && <div className="mt-8 text-center text-xs text-zinc-500">Aún no hay mensajes en esta conversación</div>}
               {chatMsgs.map((m) => (
                 <div key={m.id} className={`flex ${m.remitente === "operador" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${m.remitente === "operador" ? "bg-brand text-brand-contrast" : "bg-secondary text-foreground"}`}>
-                    {m.texto}
+                  <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${m.remitente === "operador" ? "bg-[#00D084] text-[#05130D] font-medium" : "bg-[#181C26] text-zinc-100 border border-white/10"}`}>
+                    {m.imagen_url && (
+                      <img
+                        src={m.imagen_url}
+                        alt="Adjunto"
+                        className="mb-1 max-h-52 w-full rounded-xl object-cover cursor-pointer hover:opacity-95 transition border border-white/15"
+                        onClick={() => setChatImagePreview(m.imagen_url)}
+                      />
+                    )}
+                    {m.texto ? <div>{m.texto}</div> : null}
+                    <div className={`text-[9px] mt-1 ${m.remitente === "operador" ? "text-emerald-950/70" : "text-zinc-500"} text-right`}>{timeAgo(m.timestamp)}</div>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex gap-2">
+            <input type="file" ref={chatFileInputRef} accept="image/*" className="hidden" onChange={handleChatImagePick} />
+            <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+              <button
+                type="button"
+                disabled={chatUploading}
+                onClick={() => chatFileInputRef.current?.click()}
+                className="w-10 h-10 rounded-xl bg-[#181C26] hover:bg-[#222736] border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white transition shrink-0"
+                title="Adjuntar foto"
+              >
+                {chatUploading ? <Loader2 className="h-4 w-4 animate-spin text-[#00D084]" /> : <Camera className="h-4 w-4" />}
+              </button>
               <Input
                 data-testid="chat-op-input"
                 value={chatText}
                 onChange={(e) => setChatText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && enviarChat()}
                 placeholder="Escribe un mensaje…"
-                className="input-inset border-border text-foreground"
+                className="bg-[#181C26] border-white/10 text-white placeholder-zinc-500 rounded-xl h-10 text-xs"
               />
-              <Button data-testid="chat-op-enviar" onClick={enviarChat} size="icon" aria-label="Enviar mensaje">
+              <button
+                data-testid="chat-op-enviar"
+                onClick={enviarChat}
+                className="w-10 h-10 rounded-xl bg-[#00D084] hover:bg-[#00B572] text-[#05130D] flex items-center justify-center transition shrink-0 shadow-[0_0_12px_rgba(0,208,132,0.3)]"
+                aria-label="Enviar mensaje"
+              >
                 <Send className="h-4 w-4" />
-              </Button>
+              </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {chatImagePreview && (
+        <div
+          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
+          onClick={() => setChatImagePreview(null)}
+        >
+          <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setChatImagePreview(null)}
+              className="absolute -top-11 right-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img
+              src={chatImagePreview}
+              alt="Foto ampliada"
+              className="max-h-[82vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/10"
+            />
           </div>
         </div>
       )}

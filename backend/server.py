@@ -181,7 +181,7 @@ async def get_config(key: str, default):
 
 
 async def gps_stale_seconds() -> float:
-    return float(await get_config("gps_stale_seconds", 120))
+    return float(await get_config("gps_stale_seconds", 600))
 
 
 async def oferta_ttl_seconds() -> float:
@@ -739,7 +739,8 @@ class CalificacionCreate(BaseModel):
 
 
 class MensajeViajeCreate(BaseModel):
-    texto: str
+    texto: Optional[str] = ""
+    imagen_url: Optional[str] = None
 
 
 # ---- Usuarios Terminal (operadoras) ----
@@ -1270,7 +1271,17 @@ async def _notificar_servicio(s: dict):
         for op_id in s.get("ofrecido_a", []) or []:
             await manager.send_operador(op_id, {"type": "nuevo_servicio", "servicio": ser})
     elif oid and estado in ("asignado", "en_curso"):
-        await manager.send_operador(oid, {"type": "nuevo_servicio", "servicio": ser})
+        await manager.send_operador(oid, {"type": "servicio_actualizado", "servicio": ser})
+    elif estado in ("cancelado", "completado", "vencido"):
+        destinatarios = set()
+        if oid:
+            destinatarios.add(oid)
+        for op_id in s.get("ofrecido_a", []) or []:
+            destinatarios.add(op_id)
+        for op_id in s.get("rechazados", []) or []:
+            destinatarios.add(op_id)
+        for op_id in destinatarios:
+            await manager.send_operador(op_id, {"type": "servicio_actualizado", "servicio": ser})
     await _notificar_dueno_de_operador(oid, {"type": "servicio", "servicio": ser})
     pid = s.get("pasajero_id")
     if pid and s.get("estado") in ("pendiente", "ofrecido", "asignado", "en_curso", "completado", "cancelado", "vencido"):
@@ -2614,7 +2625,10 @@ async def _buscar_candidatos(
             continue
         if op.get("lat") is None or op.get("lng") is None:
             continue
-        if not _gps_fresco(op.get("ultima_actualizacion"), umbral):
+        gps_ok = _gps_fresco(op.get("ultima_actualizacion"), umbral)
+        en_turno = bool(op.get("en_operacion") or op.get("activo"))
+        ws_vivo = op_id_str in manager.operadores
+        if not gps_ok and not (en_turno or ws_vivo):
             continue
         if await _tiene_servicio_activo(op_id_str):
             continue
@@ -3997,23 +4011,15 @@ async def _autodespachar_servicio_pasajero(servicio_id: str) -> Optional[dict]:
     candidatos = []
     if pref_tipo:
         candidatos = await _buscar_candidatos(
-            lat, lng, num=5, sitio_id=sitio_id, tipo_vehiculo_id=pref_tipo, excluir_ids=rechazados
+            lat, lng, num=35, sitio_id=sitio_id, tipo_vehiculo_id=pref_tipo, excluir_ids=rechazados
         )
     if not candidatos:
         candidatos = await _buscar_candidatos(
-            lat, lng, num=5, sitio_id=sitio_id, excluir_ids=rechazados
+            lat, lng, num=35, sitio_id=sitio_id, excluir_ids=rechazados
         )
 
-    if not candidatos:
-        await db.servicios.update_one(
-            {"_id": s["_id"]},
-            {"$set": {"estado": EstadoServicio.pendiente.value, "ofrecido_a": []}, "$unset": {"expira_en": ""}},
-        )
-        return await db.servicios.find_one({"_id": s["_id"]})
-
-    # Ofrecer al candidato elegible más cercano (#1) para garantizar despacho ordenado
-    # y permitir reasignación inmediata al #2 si el #1 rechaza.
-    # Regla de simulación/pruebas: priorizar unidad 101 (op1) como primera opción si está libre.
+    # Regla de simulación/pruebas: priorizar unidad 101 (op1) como primera opción si está libre
+    # y no está en la lista de rechazados para este servicio.
     idx_101 = -1
     for i, c in enumerate(candidatos):
         placa = str(c.get("placa") or "")
@@ -4026,10 +4032,37 @@ async def _autodespachar_servicio_pasajero(servicio_id: str) -> Optional[dict]:
             break
     if idx_101 > 0:
         candidatos.insert(0, candidatos.pop(idx_101))
+    elif idx_101 == -1:
+        # Si op1 no quedó en el corte por distancia pero está libre y no ha rechazado, incluirlo primero
+        try:
+            op1_doc = await db.operadores.find_one({"usuario": "op1", "estado": EstadoOperador.libre.value, "activo": {"$ne": False}})
+            if op1_doc and str(op1_doc["_id"]) not in rechazados and not await _tiene_servicio_activo(str(op1_doc["_id"])):
+                op1_ser = serialize(op1_doc)
+                dist = haversine_km(lat, lng, op1_doc.get("lat") or lat, op1_doc.get("lng") or lng)
+                op1_ser["distancia_km"] = round(dist, 3)
+                op1_ser["distancia_m"] = round(dist * 1000)
+                op1_ser["eta_s"] = max(45, round((dist * 1000) / (26.0 / 3.6)))
+                op1_ser["eta_min"] = max(1, round(op1_ser["eta_s"] / 60.0))
+                vid1 = op1_doc.get("vehiculo_id")
+                if vid1:
+                    v1 = await db.vehiculos.find_one({"_id": to_oid(vid1)})
+                    if v1:
+                        tipos = await _mapa_tipos_vehiculo()
+                        op1_ser["vehiculo"] = _vehiculo_resumen(v1, tipos)
+                candidatos.insert(0, op1_ser)
+        except Exception as e_op1:
+            logger.warning("No se pudo evaluar fallback prioritario para op1: %s", e_op1)
+
+    if not candidatos:
+        await db.servicios.update_one(
+            {"_id": s["_id"]},
+            {"$set": {"estado": EstadoServicio.pendiente.value, "ofrecido_a": []}, "$unset": {"expira_en": ""}},
+        )
+        return await db.servicios.find_one({"_id": s["_id"]})
 
     mejor_candidato = candidatos[0]
     ids_oferta = [mejor_candidato["id"]]
-    ttl = 30.0  # 30 segundos exactos para aceptar antes de pasar al siguiente
+    ttl = 45.0  # 45 segundos para aceptar antes de pasar en cascada al siguiente conductor
     expira = (datetime.now(timezone.utc) + timedelta(seconds=ttl)).isoformat()
     await db.servicios.update_one(
         {"_id": s["_id"]},
@@ -4882,7 +4915,8 @@ async def resolver_reporte(reporte_id: str, _=Depends(require_terminal)):
 class MensajeCreate(BaseModel):
     operador_id: str
     remitente: str  # "operador" | "terminal"
-    texto: str
+    texto: Optional[str] = ""
+    imagen_url: Optional[str] = None
 
 
 async def _autor_chat_viaje(request: Request, s: dict):
@@ -4948,7 +4982,45 @@ async def crear_mensaje_viaje(
         "operador_id": s.get("operador_asignado_id"),
         "remitente": remitente,
         "remitente_id": actor["id"],
-        "texto": body.texto,
+        "texto": body.texto or "",
+        "imagen_url": body.imagen_url,
+        "timestamp": now_iso(),
+    }
+    result = await db.mensajes_chat.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    out = serialize(doc)
+    evento = {"type": "mensaje", "servicio_id": servicio_id, "mensaje": out}
+    if s.get("pasajero_id"):
+        await manager.send_pasajero(s["pasajero_id"], evento)
+    if s.get("operador_asignado_id"):
+        await manager.send_operador(s["operador_asignado_id"], evento)
+    return out
+
+
+@api_router.post("/servicios/{servicio_id}/mensajes/foto")
+async def crear_mensaje_viaje_foto(
+    servicio_id: str,
+    request: Request,
+    foto: UploadFile = File(...),
+    texto: Optional[str] = Form(""),
+):
+    s = await _obtener_servicio_para_chat(servicio_id)
+    actor, remitente = await _autor_chat_viaje(request, s)
+    if s.get("estado") not in (EstadoServicio.asignado.value, EstadoServicio.en_curso.value):
+        raise HTTPException(
+            status_code=409,
+            detail="El chat solo está disponible con el servicio asignado o en curso",
+        )
+    sitio_id = s.get("sitio_id") or DEFAULT_SITIO
+    imagen_url = await _guardar_imagen(foto, f"chat/{servicio_id}", sitio_id=sitio_id)
+    doc = {
+        "servicio_id": servicio_id,
+        "pasajero_id": s.get("pasajero_id"),
+        "operador_id": s.get("operador_asignado_id"),
+        "remitente": remitente,
+        "remitente_id": actor["id"],
+        "texto": texto or "",
+        "imagen_url": imagen_url,
         "timestamp": now_iso(),
     }
     result = await db.mensajes_chat.insert_one(doc)
@@ -4972,13 +5044,42 @@ async def crear_mensaje(body: MensajeCreate, request: Request):
         "operador_id": body.operador_id,
         "sitio_id": sitio_op,
         "remitente": body.remitente,
-        "texto": body.texto,
+        "texto": body.texto or "",
+        "imagen_url": body.imagen_url,
         "timestamp": now_iso(),
     }
     res = await db.mensajes_chat.insert_one(doc)
     doc["_id"] = res.inserted_id
     out = serialize(doc)
     await manager.send_operador(body.operador_id, {"type": "mensaje", "mensaje": out})
+    await manager.broadcast_terminal({"type": "mensaje", "mensaje": out, "sitio_id": sitio_op}, sitio_id=sitio_op)
+    return out
+
+
+@api_router.post("/mensajes/foto")
+async def crear_mensaje_central_foto(
+    request: Request,
+    operador_id: str = Form(...),
+    remitente: str = Form("operador"),
+    foto: UploadFile = File(...),
+    texto: Optional[str] = Form(""),
+):
+    await _autor_chat_o_terminal(request, operador_id)
+    op = await db.operadores.find_one({"_id": to_oid(operador_id)}, {"sitio_id": 1})
+    sitio_op = (op or {}).get("sitio_id") or DEFAULT_SITIO
+    imagen_url = await _guardar_imagen(foto, f"chat_central/{operador_id}", sitio_id=sitio_op)
+    doc = {
+        "operador_id": operador_id,
+        "sitio_id": sitio_op,
+        "remitente": remitente,
+        "texto": texto or "",
+        "imagen_url": imagen_url,
+        "timestamp": now_iso(),
+    }
+    res = await db.mensajes_chat.insert_one(doc)
+    doc["_id"] = res.inserted_id
+    out = serialize(doc)
+    await manager.send_operador(operador_id, {"type": "mensaje", "mensaje": out})
     await manager.broadcast_terminal({"type": "mensaje", "mensaje": out, "sitio_id": sitio_op}, sitio_id=sitio_op)
     return out
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Radio, Shield, Code, MapPin, Phone } from "lucide-react";
+import { Radio, Shield, Code, MapPin, Phone, Car, User } from "lucide-react";
 import { BrandMark, BrandWordmark } from "@/components/Brand";
 import { LANDING } from "@/constants/testIds";
 
@@ -33,6 +33,24 @@ export function Footer() {
               Portales Operativos
             </h4>
             <ul className="space-y-2.5 text-sm">
+              <li>
+                <Link
+                  to="/pasajero"
+                  className="text-slate-600 hover:text-emerald-700 transition flex items-center gap-1.5"
+                >
+                  <User className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>App Pasajero / Cliente</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/operador"
+                  className="text-slate-600 hover:text-emerald-700 transition flex items-center gap-1.5"
+                >
+                  <Car className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>App Conductor / Operador</span>
+                </Link>
+              </li>
               <li>
                 <Link
                   to="/terminal/login"

@@ -29,32 +29,32 @@
 .taxi-driver-dark {
   --driver-ink: #F5F5F7;
   --driver-muted: #9CA0AA;
-  --driver-line: rgba(255, 255, 255, 0.06);
-  --driver-surface: #17191E;
-  --driver-canvas: #0B0D10;
-  --driver-green: #7CFC3C;
-  --driver-green-dark: #66DB2E;
-  --driver-red: #F4544C;
+  --driver-line: rgba(255, 255, 255, 0.08);
+  --driver-surface: #12151D;
+  --driver-canvas: #0B0D12;
+  --driver-green: #00D084;
+  --driver-green-dark: #00B572;
+  --driver-red: #F43F5E;
   color: var(--driver-ink);
   background: var(--driver-canvas);
 }
 
 .taxi-driver-dark .leaflet-container {
-  background: #0B0D10 !important;
+  background: #0B0D12 !important;
 }
 
 .taxi-driver-dark .taxi-driver-header-card,
 .taxi-driver-dark .taxi-driver-controls-card,
 .taxi-driver-dark [data-testid="ruta-info"],
 .taxi-driver-dark [data-testid="recentrar-mapa-btn"] {
-  border-color: rgba(255, 255, 255, 0.06) !important;
-  background: rgba(23, 25, 30, 0.96) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(18, 21, 29, 0.96) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55) !important;
 }
 
 .taxi-driver-dark .taxi-driver-avatar-button {
-  border-color: rgba(79, 93, 255, 0.3) !important;
-  background: rgba(79, 93, 255, 0.12) !important;
+  border-color: rgba(0, 208, 132, 0.35) !important;
+  background: rgba(0, 208, 132, 0.12) !important;
 }
 
 .taxi-driver-dark .taxi-driver-vehicle-mini {
@@ -98,18 +98,19 @@
 }
 
 .taxi-driver-dark [data-testid="estado-buttons"] button[aria-pressed="true"] {
-  border-color: #7CFC3C !important;
-  color: #7CFC3C !important;
-  background: rgba(124, 252, 60, 0.12) !important;
-  box-shadow: 0 0 0 2px rgba(124, 252, 60, 0.15) !important;
+  border-color: #00D084 !important;
+  color: #00D084 !important;
+  background: rgba(0, 208, 132, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(0, 208, 132, 0.15) !important;
 }
 
 .taxi-driver-dark [data-testid="iniciar-servicio-btn"],
 .taxi-driver-dark [data-testid="aceptar-servicio-btn"],
 .taxi-driver-dark [data-testid="iniciar-viaje-btn"] {
-  background: #4F5DFF !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 6px 20px rgba(79, 93, 255, 0.35) !important;
+  background: #00D084 !important;
+  color: #05130D !important;
+  font-weight: 800 !important;
+  box-shadow: 0 6px 20px rgba(0, 208, 132, 0.28) !important;
 }
 
 .taxi-driver-dark [data-testid="rechazar-servicio-btn"] {

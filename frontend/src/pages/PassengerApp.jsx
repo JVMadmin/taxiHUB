@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/EmptyState";
 import { ServicioBadge } from "@/components/StatusBadge";
 import { ModeToggle } from "@/components/ModeToggle";
-import { pointIcon, taxiRoleAssetIcon, taxiOrdinarioAssetIcon } from "@/lib/taxiIcon";
+import { pointIcon, taxiRoleAssetIcon, taxiOrdinarioAssetIcon, passengerPulsingIcon } from "@/lib/taxiIcon";
 import { useRouting } from "@/hooks/useRouting";
 import { distM, fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
 import { RoutePolyline } from "@/components/RoutePolyline";
@@ -48,6 +48,12 @@ import {
   CreditCard,
   Banknote,
   Users,
+  Camera,
+  Loader2,
+  ShoppingBag,
+  Bus,
+  Crosshair,
+  Play,
 } from "lucide-react";
 
 const CENTER = [17.5099, -91.9847];
@@ -78,26 +84,15 @@ const QUICK_CHAT_PHRASES = [
   "¿En qué parte te encuentras?",
 ];
 
-function notifyPassengerNative(title, body, speakText = null) {
+function notifyPassengerNative(title, body) {
   try {
     if (typeof window !== "undefined" && window.TaxiHubNative) {
-      if (speakText && typeof window.TaxiHubNative.speakServiceAlert === "function") {
-        window.TaxiHubNative.speakServiceAlert(speakText, title, body);
-        return;
-      }
       if (typeof window.TaxiHubNative.vibrateAlert === "function") {
         window.TaxiHubNative.vibrateAlert();
       }
     }
-    if (speakText && typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(speakText);
-      u.lang = "es-MX";
-      u.rate = 1.02;
-      window.speechSynthesis.speak(u);
-    }
   } catch (_) {
-    /* ignore audio errors */
+    /* ignore vibration errors */
   }
 }
 
@@ -138,15 +133,33 @@ function MapViewportController({ points, focusPoint }) {
   return null;
 }
 
-function ActiveTripMapController({ taxiPoint, siguiendoTaxi, onUserPan }) {
+function ActiveTripMapController({ taxiPoint, pickupPoint, servicioEstado, siguiendoTaxi, onUserPan }) {
   const map = useMap();
   const prevTaxiPosRef = useRef(null);
+  const initialFitDoneRef = useRef(false);
 
   useMapEvents({
     dragstart: () => {
       if (onUserPan) onUserPan();
     },
   });
+
+  // Al asignarse el taxi, auto-centrar la vista en el taxi y en la ubicación del cliente para referencias
+  useEffect(() => {
+    if (!map) return;
+    if (servicioEstado === "asignado" && taxiPoint?.lat != null && pickupPoint?.lat != null) {
+      if (!initialFitDoneRef.current) {
+        initialFitDoneRef.current = true;
+        try {
+          const bounds = [
+            [taxiPoint.lat, taxiPoint.lng],
+            [pickupPoint.lat, pickupPoint.lng],
+          ];
+          map.fitBounds(bounds, { padding: [70, 70], maxZoom: 16 });
+        } catch (_) {}
+      }
+    }
+  }, [map, taxiPoint, pickupPoint, servicioEstado]);
 
   useEffect(() => {
     if (!map) return;
@@ -157,7 +170,7 @@ function ActiveTripMapController({ taxiPoint, siguiendoTaxi, onUserPan }) {
       if (!prev || Math.abs(prev.lat - lat) > 0.00003 || Math.abs(prev.lng - lng) > 0.00003) {
         prevTaxiPosRef.current = { lat, lng };
         try {
-          map.setView([lat, lng], 16, { animate: true });
+          map.setView([lat, lng], map.getZoom() || 16, { animate: true });
         } catch (_) {}
       }
     }
@@ -371,6 +384,9 @@ export default function PassengerApp() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMsgs, setChatMsgs] = useState([]);
   const [chatText, setChatText] = useState("");
+  const [chatUploading, setChatUploading] = useState(false);
+  const [chatImagePreview, setChatImagePreview] = useState(null);
+  const chatFileInputRef = useRef(null);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const chatOpenRef = useRef(false);
 
@@ -722,6 +738,15 @@ export default function PassengerApp() {
     );
   }, [reverseGeocodePunto]);
 
+  // Centrado automático de la ubicación del pasajero al abrir la app
+  const autoUbicacionIniciadaRef = useRef(false);
+  useEffect(() => {
+    if (!autoUbicacionIniciadaRef.current && !servicio) {
+      autoUbicacionIniciadaRef.current = true;
+      usarMiUbicacion();
+    }
+  }, [usarMiUbicacion, servicio]);
+
   const handleMapPick = useCallback(
     (coords) => {
       if (!pickup) {
@@ -850,6 +875,29 @@ export default function PassengerApp() {
     } catch (err) {
       if (typeof textoOverride !== "string") setChatText(texto);
       toast.error(err.response?.data?.detail || "No se pudo enviar el mensaje");
+    }
+  };
+
+  const handleChatImagePick = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !servicio?.id) return;
+    try {
+      setChatUploading(true);
+      const fd = new FormData();
+      fd.append("foto", file);
+      if (chatText.trim()) fd.append("texto", chatText.trim());
+      const { data } = await pasApi.post(`/servicios/${servicio.id}/mensajes/foto`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setChatMsgs((messages) =>
+        messages.some((item) => item.id === data.id) ? messages : [...messages, data]
+      );
+      setChatText("");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "No se pudo subir la imagen");
+    } finally {
+      setChatUploading(false);
+      if (chatFileInputRef.current) chatFileInputRef.current.value = "";
     }
   };
 
@@ -1031,39 +1079,46 @@ export default function PassengerApp() {
           </div>
         </header>
       ) : (
-        <div className="taxi-passenger-floating-header">
+        <div className="taxi-passenger-floating-header absolute top-12 left-4 right-4 z-[500] flex items-center justify-between pointer-events-auto">
+          {/* Menú */}
           <button
             type="button"
             data-testid={PASSENGER.menuOpen}
-            className="taxi-passenger-menu-button taxi-passenger-glass-btn"
+            className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-zinc-200 hover:text-white transition active:scale-95 text-lg"
             onClick={() => setMenuOpen(true)}
             aria-label="Abrir menú"
           >
-            <Menu />
+            <Menu className="h-5 w-5" />
           </button>
-          <div className="taxi-passenger-glass-pill">
-            <BrandLogo className="taxi-passenger-logo-floating" />
+
+          {/* Píldora de Sitio / Ciudad */}
+          <div className="bg-[#14171F]/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-white/10 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#00D084] animate-pulse"></span>
+            <span className="text-xs font-bold tracking-wide text-white">taxiHUB</span>
+            <span className="text-xs text-zinc-400">• Palenque</span>
           </div>
-          <div className="taxi-passenger-header-actions">
+
+          {/* Botón de centrar GPS y estilo mapa */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              data-testid="pas-centrar-gps-top"
+              onClick={usarMiUbicacion}
+              className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-zinc-200 hover:text-white transition active:scale-95"
+              title="Centrar en mi ubicación GPS"
+              aria-label="Centrar en mi ubicación GPS"
+            >
+              <Crosshair className="h-5 w-5" />
+            </button>
             <button
               type="button"
               data-testid={PASSENGER.mapaModoToggle}
               onClick={toggleMapStyle}
-              className="taxi-passenger-icon-button taxi-passenger-glass-btn"
-              title={mapStyle === "calles" ? "Cambiar a vista Satélite" : "Cambiar a vista Calles"}
+              className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition active:scale-95"
+              title={mapStyle === "calles" ? "Cambiar a Satélite" : "Cambiar a Calles"}
               aria-label="Cambiar modo de mapa"
             >
-              <Layers />
-            </button>
-            <ModeToggle />
-            <button
-              data-testid="pas-logout"
-              onClick={salir}
-              className="taxi-passenger-icon-button taxi-passenger-glass-btn"
-              title="Salir"
-              aria-label="Salir"
-            >
-              <LogOut />
+              <Layers className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -1092,7 +1147,7 @@ export default function PassengerApp() {
                   {pickup && (
                     <Marker
                       position={[pickup.lat, pickup.lng]}
-                      icon={pointIcon("Mi ubicación", "#10b981")}
+                      icon={passengerPulsingIcon(origenTexto || "Mi ubicación")}
                     />
                   )}
                 </MapContainer>
@@ -1107,40 +1162,45 @@ export default function PassengerApp() {
                 <Locate />
               </button>
 
-              <div className="taxi-passenger-home-sheet">
-                <div className="taxi-passenger-sheet-handle">
-                  <span aria-hidden="true" />
-                </div>
-                <div className="taxi-passenger-sheet-inner">
-                  <div className="flex items-center justify-between gap-2">
+              {/* 2. PANEL INFERIOR DEL PASAJERO */}
+              <div className="taxi-passenger-home-sheet absolute bottom-0 inset-x-0 z-20 bg-[#111318] rounded-t-3xl pt-3 pb-2 shadow-[0_-10px_30px_rgba(0,0,0,0.6)] border-t border-white/10 text-white">
+                <div className="w-10 h-1.5 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+
+                <div className="px-5">
+                  {/* Encabezado y Sitio Activo */}
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="taxi-passenger-section-heading">
-                        Hola, {auth.nombre?.split(" ")[0] || "Pasajero"} 👋
-                      </div>
-                      <p className="taxi-passenger-section-copy">
-                        ¿A dónde te llevamos hoy en Palenque?
-                      </p>
+                      <h1 className="text-xl font-bold tracking-tight text-white">Hola, {auth.nombre?.split(" ")[0] || "Pasajero"}</h1>
+                      <p className="text-xs text-zinc-400">¿A dónde te llevamos hoy?</p>
                     </div>
-                    <span className="taxi-passenger-tenant-badge">Radio Taxis Palenque</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-[#00D084]/15 text-[#00D084] px-2.5 py-1 rounded-full border border-[#00D084]/30">
+                      Radio Taxis Palenque
+                    </span>
                   </div>
 
+                  {/* BUSCADOR PRINCIPAL (Estilo Uber/DiDi con alto contraste) */}
                   <button
                     data-testid="pas-abrir-solicitar"
                     onClick={() => {
                       if (!pickup) usarMiUbicacion();
                       setView("solicitar");
                     }}
-                    className="taxi-passenger-destination-field"
+                    className="w-full bg-[#181C26] hover:bg-[#202534] border border-white/10 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-inner transition group text-left cursor-pointer"
                   >
-                    <span>
-                      <Search />
-                    </span>
-                    <span className="font-semibold">¿A dónde vas? Buscar calle o destino…</span>
-                    <ChevronRight />
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-[#00D084]/15 text-[#00D084] flex items-center justify-center font-bold">
+                        <Search className="h-5 w-5" />
+                      </div>
+                      <div className="text-left">
+                        <span className="text-sm font-bold text-white block group-hover:text-[#00D084] transition">¿A dónde vas?</span>
+                        <span className="text-xs text-zinc-400">Buscar calle, colonia o elegir en el mapa</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-zinc-500 group-hover:text-white transition" />
                   </button>
 
-                  {/* Destinos frecuentes en Palenque con 1 toque */}
-                  <div className="taxi-passenger-quick-chips">
+                  {/* Destinos Frecuentes (Píldoras limpias sin saturar) */}
+                  <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
                     {PALENQUE_QUICK_POIS.slice(0, 5).map((poi) => (
                       <button
                         key={poi.id}
@@ -1154,25 +1214,41 @@ export default function PassengerApp() {
                           setDestinoTexto(poi.texto);
                           setView("solicitar");
                         }}
-                        className="taxi-passenger-poi-chip"
+                        className="flex items-center gap-2 bg-[#181C26] hover:bg-zinc-800 px-3.5 py-2 rounded-xl border border-white/5 shrink-0 text-xs font-medium text-zinc-200 transition"
                       >
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span>{poi.label}</span>
+                        <span className="text-[#00D084]">
+                          {poi.id.includes("mercado") ? (
+                            <ShoppingBag className="h-3.5 w-3.5" />
+                          ) : poi.id.includes("ado") ? (
+                            <Bus className="h-3.5 w-3.5" />
+                          ) : (
+                            <MapPin className="h-3.5 w-3.5" />
+                          )}
+                        </span>
+                        {poi.label}
                       </button>
                     ))}
                   </div>
+                </div>
 
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      usarMiUbicacion();
-                      setView("solicitar");
-                    }}
-                    className="taxi-passenger-location-button"
-                    data-testid="pas-inicio-mi-ubicacion"
-                  >
-                    <Navigation /> Fijar mi ubicación actual y elegir destino
-                  </Button>
+                {/* Barra de Navegación Inferior */}
+                <div className="grid grid-cols-4 border-t border-white/5 pt-2.5 pb-1 px-2 text-center bg-[#0D0F13]">
+                  <button onClick={() => setView("viaje")} className={`flex flex-col items-center gap-1 ${view === "viaje" && !servicio ? "text-[#00D084]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                    <Home className="h-5 w-5" />
+                    <span className="text-[10px] font-bold">Inicio</span>
+                  </button>
+                  <button onClick={() => setView("solicitar")} className={`flex flex-col items-center gap-1 ${view === "solicitar" ? "text-[#00D084]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                    <Car className="h-5 w-5" />
+                    <span className="text-[10px] font-medium">Viajes</span>
+                  </button>
+                  <button onClick={() => setView("historial")} className={`flex flex-col items-center gap-1 ${view === "historial" ? "text-[#00D084]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                    <History className="h-5 w-5" />
+                    <span className="text-[10px] font-medium">Historial</span>
+                  </button>
+                  <button onClick={() => setView("perfil")} className={`flex flex-col items-center gap-1 ${view === "perfil" ? "text-[#00D084]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                    <User className="h-5 w-5" />
+                    <span className="text-[10px] font-medium">Perfil</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1190,6 +1266,8 @@ export default function PassengerApp() {
                   {taxiActual ? (
                     <ActiveTripMapController
                       taxiPoint={taxiActual}
+                      pickupPoint={servicio.origen}
+                      servicioEstado={servicio.estado}
                       siguiendoTaxi={siguiendoTaxi}
                       onUserPan={() => setSiguiendoTaxi(false)}
                     />
@@ -1269,17 +1347,8 @@ export default function PassengerApp() {
                   )}
                 </MapContainer>
 
-                {/* Controles de cámara: Cambiar capa + Seguir Taxi / Modo Libre */}
-                <div className="absolute top-20 right-4 z-[999] flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={toggleMapStyle}
-                    data-testid="pas-mapa-modo-toggle"
-                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-slate-950/85 text-white shadow-xl backdrop-blur-md transition-transform active:scale-95"
-                    title={mapStyle === "calles" ? "Cambiar a vista satelital" : "Cambiar a vista calles"}
-                  >
-                    <Layers className="h-5 w-5" />
-                  </button>
+                {/* Controles de cámara en viaje: Seguir Taxi / Modo Libre */}
+                <div className="absolute top-28 right-4 z-[500] flex flex-col gap-2">
 
                   {taxiActual && (
                     <button
@@ -1328,88 +1397,61 @@ export default function PassengerApp() {
                 )}
               </div>
 
-              <section className="taxi-passenger-trip-summary" aria-label="Resumen del viaje">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <ServicioBadge estado={servicio.estado} />
-                  {servicio.tarifa_nombre && (
-                    <span className="text-xs font-semibold opacity-75">
-                      {servicio.tarifa_nombre}
-                    </span>
-                  )}
-                </div>
-                <h1>{tituloEstadoViaje}</h1>
-
-                {/* Barra de progreso de 5 etapas */}
-                <div className="taxi-passenger-stepper" data-testid={PASSENGER.stepTracker}>
-                  {[
-                    { step: 1, label: "Solicitud" },
-                    { step: 2, label: "Oferta" },
-                    { step: 3, label: "Asignado" },
-                    { step: 4, label: "En punto" },
-                    { step: 5, label: "En viaje" },
-                  ].map((item) => (
-                    <div
-                      key={item.step}
-                      className={cn(
-                        "taxi-passenger-step",
-                        pasoActualViaje >= item.step && "taxi-passenger-step-active",
-                        pasoActualViaje === item.step && "taxi-passenger-step-current"
-                      )}
-                    >
-                      <span className="taxi-passenger-step-dot" />
-                      <small>{item.label}</small>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="taxi-passenger-route-summary">
-                  <div className="taxi-passenger-route-rail" aria-hidden="true">
-                    <span className="taxi-passenger-route-dot taxi-passenger-route-dot-origin" />
-                    <span />
-                    <span className="taxi-passenger-route-dot taxi-passenger-route-dot-destination" />
-                  </div>
-                  <div className="taxi-passenger-route-copy">
-                    <div>
-                      <small>Punto de recogida</small>
-                      <strong>
-                        {servicio.origen_texto || servicio.origen?.texto || "Mi ubicación"}
-                      </strong>
-                    </div>
-                    <div>
-                      <small>Destino</small>
-                      <strong>
-                        {servicio.destino_texto ||
-                          servicio.destino?.texto ||
-                          "Destino seleccionado"}
-                      </strong>
-                    </div>
-                  </div>
-                </div>
-                <div className="taxi-passenger-eta">
-                  <strong>
-                    {rutaDelTaxi.duration_s != null
-                      ? fmtDuration(rutaDelTaxi.duration_s)
-                      : servicio.taxi?.eta_origen_min != null
-                        ? `${servicio.taxi.eta_origen_min} min`
-                        : servicio.taxi
-                          ? "En ruta"
-                          : "Buscando…"}
-                  </strong>
-                  <span>
-                    {rutaDelTaxi.distance_m != null
-                      ? `${servicio.estado === "asignado" ? "Distancia del taxi a ti" : "Restante a destino"} · ${fmtDist(rutaDelTaxi.distance_m)}`
-                      : servicio.estado === "ofrecido"
-                        ? "Notificando al conductor más cercano para que acepte tu viaje"
-                        : "Localizando unidades libres en tu zona"}
-                  </span>
-                </div>
-              </section>
-
               <div data-testid="pas-viaje-sheet" className="taxi-passenger-driver-sheet">
                 <div className="taxi-passenger-sheet-handle">
                   <span aria-hidden="true" />
                 </div>
                 <div className="taxi-passenger-sheet-inner">
+                  {/* Resumen y Stepper integrados en el panel inferior para no obstruir el mapa */}
+                  <div className="mb-3.5 bg-[#1A1D24] p-3.5 rounded-2xl border border-white/5 shadow-sm text-white">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <ServicioBadge estado={servicio.estado} />
+                      {rutaDelTaxi.duration_s != null && (
+                        <span className="text-xs font-mono font-bold text-[#00D084]">
+                          ETA: {fmtDuration(rutaDelTaxi.duration_s)}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-sm font-bold text-white mb-2.5">{tituloEstadoViaje}</h2>
+
+                    {/* Barra de progreso de 5 etapas */}
+                    <div className="taxi-passenger-stepper" data-testid={PASSENGER.stepTracker}>
+                      {[
+                        { step: 1, label: "Solicitud" },
+                        { step: 2, label: "Oferta" },
+                        { step: 3, label: "Asignado" },
+                        { step: 4, label: "En punto" },
+                        { step: 5, label: "En viaje" },
+                      ].map((item) => (
+                        <div
+                          key={item.step}
+                          className={cn(
+                            "taxi-passenger-step",
+                            pasoActualViaje >= item.step && "taxi-passenger-step-active",
+                            pasoActualViaje === item.step && "taxi-passenger-step-current"
+                          )}
+                        >
+                          <span className="taxi-passenger-step-dot" />
+                          <small>{item.label}</small>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-2.5 pt-2.5 border-t border-white/5 flex flex-col gap-1.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-400 text-xs">📍</span>
+                        <span className="text-zinc-300 truncate font-medium">
+                          {servicio.origen_texto || servicio.origen?.texto || "Mi ubicación"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-400 text-xs">🏁</span>
+                        <span className="text-zinc-300 truncate font-medium">
+                          {servicio.destino_texto || servicio.destino?.texto || "Destino seleccionado"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                   {servicio.taxi ? (
                     <div data-testid="pas-taxi-card">
                       <div className="taxi-passenger-driver-row">
@@ -1582,7 +1624,7 @@ export default function PassengerApp() {
                 {pickup && (
                   <Marker
                     position={[pickup.lat, pickup.lng]}
-                    icon={pointIcon("Origen", "#10b981")}
+                    icon={passengerPulsingIcon(origenTexto || "Mi ubicación")}
                     draggable={true}
                     eventHandlers={{
                       dragend: (e) => {
@@ -2236,7 +2278,7 @@ export default function PassengerApp() {
             <div className="taxi-passenger-chat-messages">
               {chatMsgs.length === 0 && (
                 <p className="taxi-passenger-chat-empty">
-                  Envía un mensaje directo a tu chofer para coordinar tu punto de encuentro.
+                  Envía un mensaje o foto directa a tu chofer para coordinar tu punto de encuentro.
                 </p>
               )}
               {chatMsgs.map((message) => (
@@ -2247,17 +2289,25 @@ export default function PassengerApp() {
                     message.remitente === "pasajero" && "taxi-passenger-chat-bubble-self"
                   )}
                 >
-                  <strong className="text-[10px] opacity-75">
+                  <strong className="text-[10.5px] opacity-75 font-semibold">
                     {message.remitente === "pasajero"
                       ? "Tú"
                       : servicio.taxi?.nombre_conductor || "Conductor"}
                   </strong>
-                  <span>{message.texto}</span>
+                  {message.imagen_url && (
+                    <img
+                      src={message.imagen_url}
+                      alt="Foto adjunta"
+                      className="taxi-passenger-chat-img"
+                      onClick={() => setChatImagePreview(message.imagen_url)}
+                    />
+                  )}
+                  {message.texto ? <span>{message.texto}</span> : null}
                   <small>{timeAgo(message.timestamp)}</small>
                 </div>
               ))}
             </div>
-            <div className="flex gap-1.5 overflow-x-auto pb-2 pt-1">
+            <div className="flex gap-1.5 overflow-x-auto pb-2 pt-1 no-scrollbar">
               {QUICK_CHAT_PHRASES.map((phrase) => (
                 <button
                   key={phrase}
@@ -2269,7 +2319,27 @@ export default function PassengerApp() {
                 </button>
               ))}
             </div>
+            <input
+              type="file"
+              ref={chatFileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleChatImagePick}
+            />
             <div className="taxi-passenger-chat-compose">
+              <button
+                type="button"
+                disabled={chatUploading}
+                onClick={() => chatFileInputRef.current?.click()}
+                className="taxi-passenger-chat-attach-btn"
+                title="Adjuntar o tomar foto"
+              >
+                {chatUploading ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-[#00D084]" />
+                ) : (
+                  <Camera className="w-5 h-5" />
+                )}
+              </button>
               <Input
                 data-testid={PASSENGER.chatInput}
                 value={chatText}
@@ -2287,6 +2357,28 @@ export default function PassengerApp() {
               </button>
             </div>
           </section>
+        </div>
+      )}
+
+      {chatImagePreview && (
+        <div
+          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
+          onClick={() => setChatImagePreview(null)}
+        >
+          <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setChatImagePreview(null)}
+              className="absolute -top-11 right-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img
+              src={chatImagePreview}
+              alt="Foto ampliada"
+              className="max-h-[82vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/10"
+            />
+          </div>
         </div>
       )}
 

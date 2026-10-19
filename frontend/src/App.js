@@ -13,6 +13,7 @@ import PassengerApp from "@/pages/PassengerApp";
 import DuenoLogin from "@/pages/DuenoLogin";
 import DuenoApp from "@/pages/DuenoApp";
 import LandingPage from "@/pages/LandingPage";
+import { DevicePreviewWrapper } from "@/components/DevicePreviewWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { applyTheme, getTheme, applyMode, getMode } from "@/lib/theme";
 
@@ -136,26 +137,26 @@ function App() {
         <BrowserRouter>
           {isOnlyPasajeroApp ? (
             <Routes>
-              <Route path="/" element={<PassengerApp />} />
-              <Route path="/pasajero" element={<PassengerApp />} />
-              <Route path="/mi-taxi" element={<PassengerApp />} />
+              <Route path="/" element={<DevicePreviewWrapper><PassengerApp /></DevicePreviewWrapper>} />
+              <Route path="/pasajero" element={<DevicePreviewWrapper><PassengerApp /></DevicePreviewWrapper>} />
+              <Route path="/mi-taxi" element={<DevicePreviewWrapper><PassengerApp /></DevicePreviewWrapper>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           ) : isOnlyOperadorApp ? (
             <Routes>
-              <Route path="/login" element={<OperadorLogin />} />
-              <Route path="/operador" element={<OperadorApp />} />
+              <Route path="/login" element={<DevicePreviewWrapper><OperadorLogin /></DevicePreviewWrapper>} />
+              <Route path="/operador" element={<DevicePreviewWrapper><OperadorApp /></DevicePreviewWrapper>} />
               <Route path="/" element={<OperadorRootRedirect />} />
               <Route path="*" element={<OperadorRootRedirect />} />
             </Routes>
           ) : isOnlySocioApp ? (
             <Routes>
-              <Route path="/login" element={<DuenoLogin />} />
-              <Route path="/dueno/login" element={<DuenoLogin />} />
-              <Route path="/socio/login" element={<DuenoLogin />} />
-              <Route path="/dueno" element={<DuenoApp />} />
-              <Route path="/socio" element={<DuenoApp />} />
-              <Route path="/" element={<DuenoApp />} />
+              <Route path="/login" element={<DevicePreviewWrapper><DuenoLogin /></DevicePreviewWrapper>} />
+              <Route path="/dueno/login" element={<DevicePreviewWrapper><DuenoLogin /></DevicePreviewWrapper>} />
+              <Route path="/socio/login" element={<DevicePreviewWrapper><DuenoLogin /></DevicePreviewWrapper>} />
+              <Route path="/dueno" element={<DevicePreviewWrapper><DuenoApp /></DevicePreviewWrapper>} />
+              <Route path="/socio" element={<DevicePreviewWrapper><DuenoApp /></DevicePreviewWrapper>} />
+              <Route path="/" element={<DevicePreviewWrapper><DuenoApp /></DevicePreviewWrapper>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           ) : isOnlyCentralApp ? (
@@ -173,14 +174,14 @@ function App() {
               <Route path="/taxihub" element={<LandingPage />} />
               <Route path="/terminal" element={<Terminal />} />
               <Route path="/terminal/login" element={<TerminalLogin />} />
-              <Route path="/login" element={<OperadorLogin />} />
-              <Route path="/operador" element={<OperadorApp />} />
-              <Route path="/pasajero" element={<PassengerApp />} />
-              <Route path="/mi-taxi" element={<PassengerApp />} />
-              <Route path="/dueno/login" element={<DuenoLogin />} />
-              <Route path="/socio/login" element={<DuenoLogin />} />
-              <Route path="/dueno" element={<DuenoApp />} />
-              <Route path="/socio" element={<DuenoApp />} />
+              <Route path="/login" element={<DevicePreviewWrapper><OperadorLogin /></DevicePreviewWrapper>} />
+              <Route path="/operador" element={<DevicePreviewWrapper><OperadorApp /></DevicePreviewWrapper>} />
+              <Route path="/pasajero" element={<DevicePreviewWrapper><PassengerApp /></DevicePreviewWrapper>} />
+              <Route path="/mi-taxi" element={<DevicePreviewWrapper><PassengerApp /></DevicePreviewWrapper>} />
+              <Route path="/dueno/login" element={<DevicePreviewWrapper><DuenoLogin /></DevicePreviewWrapper>} />
+              <Route path="/socio/login" element={<DevicePreviewWrapper><DuenoLogin /></DevicePreviewWrapper>} />
+              <Route path="/dueno" element={<DevicePreviewWrapper><DuenoApp /></DevicePreviewWrapper>} />
+              <Route path="/socio" element={<DevicePreviewWrapper><DuenoApp /></DevicePreviewWrapper>} />
               <Route path="/dev" element={<DevPanel />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

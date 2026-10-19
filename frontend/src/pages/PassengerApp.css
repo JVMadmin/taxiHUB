@@ -21,66 +21,67 @@
 .taxi-passenger-dark {
   --passenger-ink: #F5F5F7;
   --passenger-muted: #9CA0AA;
-  --passenger-line: rgba(255, 255, 255, 0.06);
-  --passenger-surface: #17191E;
-  --passenger-canvas: #0B0D10;
-  --passenger-green: #7CFC3C;
-  --passenger-green-dark: #66DB2E;
-  --passenger-red: #F4544C;
-  --passenger-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --passenger-line: rgba(255, 255, 255, 0.08);
+  --passenger-surface: #12151D;
+  --passenger-canvas: #0B0D12;
+  --passenger-green: #00D084;
+  --passenger-green-dark: #00B572;
+  --passenger-red: #F43F5E;
+  --passenger-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
   color: var(--passenger-ink);
   background: var(--passenger-canvas);
 }
 
 .taxi-passenger-dark .leaflet-container {
-  background: #0B0D10 !important;
+  background: #0B0D12 !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-auth-orb {
-  background: rgba(79, 93, 255, 0.14) !important;
+  background: rgba(0, 208, 132, 0.14) !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-auth-form {
-  border-color: rgba(255, 255, 255, 0.06) !important;
-  background: #17191E !important;
-  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #141722 !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.65) !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-field input,
 .taxi-passenger-dark .taxi-passenger-rating-sheet input,
 .taxi-passenger-dark input {
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  background: #1B1E24 !important;
-  color: #F5F5F7 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: #181C26 !important;
+  color: #F8FAFC !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-driver-sheet,
 .taxi-passenger-dark .taxi-passenger-home-sheet,
 .taxi-passenger-dark .taxi-passenger-request-sheet,
 .taxi-passenger-dark .taxi-passenger-rating-sheet {
-  border-color: rgba(255, 255, 255, 0.06) !important;
-  background: #17191E !important;
-  box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #12151D !important;
+  box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.65) !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-sheet-handle span {
-  background: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-primary-button {
-  background: #4F5DFF !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 6px 20px rgba(79, 93, 255, 0.35) !important;
+  background: #00D084 !important;
+  color: #05130D !important;
+  font-weight: 800 !important;
+  box-shadow: 0 6px 20px rgba(0, 208, 132, 0.28) !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-primary-button:hover {
-  background: #3D49D6 !important;
+  background: #00B572 !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-secondary-button {
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  background: #1B1E24 !important;
-  color: #F5F5F7 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: #181C26 !important;
+  color: #F8FAFC !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-secondary-button:hover {
@@ -128,9 +129,19 @@
 }
 
 .taxi-passenger-floating-header {
-  position: fixed;
-  inset: 0 0 auto;
-  padding-top: 14px;
+  position: absolute !important;
+  top: 48px !important;
+  left: 16px !important;
+  right: 16px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 500 !important;
 }
 
 .taxi-passenger-menu-button,
@@ -243,37 +254,44 @@
 
 .taxi-passenger-trip-summary {
   position: absolute;
-  inset: 68px 12px auto;
-  z-index: 20;
-  padding: 19px 18px 16px;
-  border: 1px solid rgba(210, 220, 218, 0.95);
-  border-radius: 19px;
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: var(--passenger-shadow);
+  top: 106px;
+  left: 14px;
+  right: 14px;
+  z-index: 30;
+  max-width: 352px;
+  margin: 0 auto;
+  padding: 10px 14px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(20, 23, 31, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+  color: #ffffff;
 }
 
 .taxi-passenger-trip-summary h1 {
-  margin: 0 0 16px;
-  color: var(--passenger-green-dark);
-  font-size: clamp(20px, 5vw, 25px);
+  margin: 0 0 6px;
+  color: #00D084;
+  font-size: 13.5px;
   font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.15;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   text-align: center;
 }
 
 .taxi-passenger-route-summary {
   display: flex;
-  gap: 13px;
+  gap: 8px;
 }
 
 .taxi-passenger-route-rail {
   display: flex;
-  flex: 0 0 14px;
+  flex: 0 0 10px;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 0 7px;
+  padding: 2px 0 4px;
 }
 
 .taxi-passenger-route-rail > span:not(.taxi-passenger-route-dot) {
@@ -284,9 +302,9 @@
 
 .taxi-passenger-route-dot {
   display: block;
-  width: 14px;
-  height: 14px;
-  border: 3px solid var(--passenger-surface);
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--passenger-surface);
   border-radius: 50%;
   box-shadow: 0 0 0 1px currentColor;
 }
@@ -304,7 +322,7 @@
 .taxi-passenger-route-copy {
   display: grid;
   flex: 1;
-  gap: 13px;
+  gap: 4px;
 }
 
 .taxi-passenger-route-copy div {
@@ -314,15 +332,17 @@
 
 .taxi-passenger-route-copy small {
   color: var(--passenger-muted);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 500;
+  line-height: 1;
 }
 
 .taxi-passenger-route-copy strong {
   overflow: hidden;
   color: var(--passenger-ink);
-  font-size: 15px;
+  font-size: 11.5px;
   font-weight: 600;
+  line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -330,23 +350,25 @@
 .taxi-passenger-eta {
   display: grid;
   justify-items: center;
-  margin-top: 15px;
-  padding-top: 12px;
+  margin-top: 5px;
+  padding-top: 5px;
   border-top: 1px solid #edf0ef;
 }
 
 .taxi-passenger-eta strong {
   color: var(--passenger-green-dark);
-  font-size: 44px;
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: -0.08em;
+  letter-spacing: -0.04em;
   line-height: 1;
 }
 
 .taxi-passenger-eta span {
-  margin-top: 5px;
+  margin-top: 2px;
   color: var(--passenger-muted);
-  font-size: 12px;
+  font-size: 10px;
+  line-height: 1.15;
+  text-align: center;
 }
 
 .taxi-passenger-status-chip {
@@ -1212,72 +1234,192 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(9, 25, 29, 0.32);
+  background: rgba(5, 8, 14, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 1100;
 }
 
 .taxi-passenger-chat-panel,
 .taxi-passenger-rating-sheet {
   width: 100%;
-  border: 1px solid var(--passenger-line);
-  border-radius: 23px 23px 0 0;
-  background: var(--passenger-surface);
-  box-shadow: 0 -13px 35px rgba(17, 33, 42, 0.16);
-  animation: passenger-sheet-in 220ms cubic-bezier(0.23, 1, 0.32, 1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 26px 26px 0 0;
+  background: #11141D !important;
+  box-shadow: 0 -18px 45px rgba(0, 0, 0, 0.75);
+  animation: passenger-sheet-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  color: #F8FAFC !important;
 }
 
 .taxi-passenger-chat-panel {
   display: flex;
-  height: min(78svh, 630px);
+  height: min(80svh, 640px);
   flex-direction: column;
-  padding: 0 17px 14px;
+  padding: 0 16px 14px;
 }
 
 .taxi-passenger-chat-panel > header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 67px;
-  border-bottom: 1px solid var(--passenger-line);
+  gap: 12px;
+  min-height: 68px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .taxi-passenger-chat-panel > header > button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 10px;
-  color: var(--passenger-ink);
-  background: #eff4f2;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #F8FAFC;
+  background: #181C26;
+  transition: all 0.15s ease;
+}
+
+.taxi-passenger-chat-panel > header > button:hover {
+  background: #222736;
 }
 
 .taxi-passenger-chat-panel > header > button svg,
 .taxi-passenger-chat-panel > header > svg { width: 18px; height: 18px; }
-.taxi-passenger-chat-panel > header > svg { margin-left: auto; color: var(--passenger-green); }
+.taxi-passenger-chat-panel > header > svg { margin-left: auto; color: #00D084; }
 .taxi-passenger-chat-panel > header > div { display: grid; gap: 2px; }
-.taxi-passenger-chat-panel > header strong { color: var(--passenger-ink); font-size: 14px; }
-.taxi-passenger-chat-panel > header span { color: var(--passenger-muted); font-size: 11px; }
+.taxi-passenger-chat-panel > header strong { color: #FFFFFF; font-size: 15px; font-weight: 700; }
+.taxi-passenger-chat-panel > header span { color: #94A3B8; font-size: 11.5px; font-weight: 500; }
 
 .taxi-passenger-chat-messages {
   display: flex;
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
   overflow-y: auto;
-  padding: 16px 3px;
+  padding: 16px 2px;
 }
 
-.taxi-passenger-chat-empty { margin: auto; color: var(--passenger-muted); font-size: 12px; text-align: center; }
-.taxi-passenger-chat-bubble { display: grid; max-width: 78%; gap: 3px; align-self: flex-start; padding: 9px 12px; border-radius: 14px 14px 14px 4px; color: var(--passenger-ink); background: #edf3f1; font-size: 12px; }
-.taxi-passenger-chat-bubble-self { align-self: flex-end; border-radius: 14px 14px 4px 14px; color: #ffffff; background: var(--passenger-green); }
-.taxi-passenger-chat-bubble small { color: currentColor; opacity: 0.65; font-size: 9px; }
+.taxi-passenger-chat-empty {
+  margin: auto;
+  color: #94A3B8;
+  font-size: 13px;
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.5;
+}
 
-.taxi-passenger-chat-compose { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--passenger-line); }
-.taxi-passenger-chat-compose input { min-height: 43px; border: 1px solid var(--passenger-line) !important; border-radius: 12px; color: var(--passenger-ink) !important; background: #fbfcfc !important; box-shadow: none !important; }
-.taxi-passenger-chat-compose > button { display: flex; align-items: center; justify-content: center; width: 44px; min-width: 44px; border: 0; border-radius: 12px; color: #ffffff; background: var(--passenger-green); }
-.taxi-passenger-chat-compose > button svg { width: 17px; height: 17px; }
+.taxi-passenger-chat-bubble {
+  display: grid;
+  max-width: 82%;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 10px 14px;
+  border-radius: 16px 16px 16px 4px;
+  color: #F1F5F9;
+  background: #191E2A;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.taxi-passenger-chat-bubble-self {
+  align-self: flex-end;
+  border-radius: 16px 16px 4px 16px;
+  color: #05130D;
+  background: #00D084;
+  border: 1px solid rgba(0, 208, 132, 0.6);
+  font-weight: 500;
+  box-shadow: 0 4px 14px rgba(0, 208, 132, 0.25);
+}
+
+.taxi-passenger-chat-bubble small {
+  color: currentColor;
+  opacity: 0.75;
+  font-size: 9.5px;
+  margin-top: 2px;
+}
+
+.taxi-passenger-chat-img {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 10px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  margin-top: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.taxi-passenger-chat-img:hover {
+  transform: scale(1.02);
+}
+
+.taxi-passenger-chat-compose {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.taxi-passenger-chat-compose input {
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px;
+  color: #FFFFFF !important;
+  background: #181C26 !important;
+  box-shadow: none !important;
+  font-size: 13px;
+  padding: 0 14px;
+}
+
+.taxi-passenger-chat-compose input::placeholder {
+  color: #64748B !important;
+}
+
+.taxi-passenger-chat-attach-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  color: #94A3B8;
+  background: #181C26;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.taxi-passenger-chat-attach-btn:hover {
+  color: #FFFFFF;
+  background: #222736;
+}
+
+.taxi-passenger-chat-compose > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  color: #05130D;
+  background: #00D084;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 208, 132, 0.3);
+  transition: all 0.15s ease;
+}
+
+.taxi-passenger-chat-compose > button:hover {
+  background: #00B572;
+}
+
+.taxi-passenger-chat-compose > button svg { width: 18px; height: 18px; }
 
 .taxi-passenger-rating-sheet { display: grid; justify-items: center; padding: 0 22px 25px; text-align: center; }
 .taxi-passenger-rating-avatar { width: 56px; height: 56px; margin-top: 14px; font-size: 16px; }
@@ -1479,8 +1621,8 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-tenant-badge {
-  background: rgba(124, 252, 60, 0.14);
-  color: #7CFC3C;
+  background: rgba(0, 208, 132, 0.14);
+  color: #00D084;
 }
 
 .taxi-passenger-glass-btn {
@@ -1515,8 +1657,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 11px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid var(--passenger-line);
 }
 
@@ -1526,16 +1668,16 @@
   flex: 1;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
   text-align: center;
 }
 
 .taxi-passenger-step-dot {
   position: relative;
   z-index: 2;
-  width: 11px;
-  height: 11px;
-  border: 2px solid #cbd5d3;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid #cbd5d3;
   border-radius: 50%;
   background: var(--passenger-surface);
   transition: all 0.25s ease;
@@ -1544,14 +1686,14 @@
 .taxi-passenger-step-done .taxi-passenger-step-dot {
   border-color: var(--passenger-green);
   background: var(--passenger-green);
-  box-shadow: 0 0 0 3px rgba(8, 168, 106, 0.18);
+  box-shadow: 0 0 0 2px rgba(8, 168, 106, 0.18);
 }
 
 .taxi-passenger-step small {
   color: var(--passenger-muted);
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1;
 }
 
 .taxi-passenger-step-done small {
@@ -1561,10 +1703,10 @@
 
 .taxi-passenger-step-line {
   position: absolute;
-  top: 4.5px;
+  top: 3px;
   left: 50%;
   width: 100%;
-  height: 2px;
+  height: 1.5px;
   background: #dfe5e4;
   z-index: 1;
 }
@@ -1909,7 +2051,7 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-quote-price {
-  color: #7CFC3C;
+  color: #00D084;
 }
 
 /* Payment Method Selector */
@@ -1941,7 +2083,7 @@
 
 .taxi-passenger-pay-option-active {
   border-color: var(--passenger-green);
-  background: rgba(8, 168, 106, 0.1);
+  background: rgba(0, 208, 132, 0.1);
   color: var(--passenger-green-dark);
   font-weight: 700;
 }
@@ -1952,9 +2094,9 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-pay-option-active {
-  border-color: #7CFC3C;
-  background: rgba(124, 252, 60, 0.12);
-  color: #7CFC3C;
+  border-color: #00D084;
+  background: rgba(0, 208, 132, 0.12);
+  color: #00D084;
 }
 
 /* Unread Chat Badge & Quick Chips */
@@ -2036,5 +2178,25 @@
     width: 100%;
     transform: translateX(-50%);
   }
+}
+
+/* Animación de onda radar parpadeante para la ubicación del pasajero */
+@keyframes th-radar-wave {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.95;
+  }
+  65% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 0.28;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.2);
+    opacity: 0;
+  }
+}
+
+.th-passenger-pulsing-marker {
+  pointer-events: none;
 }
 

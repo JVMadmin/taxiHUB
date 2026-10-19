@@ -17,12 +17,12 @@
   --th-primary-light: #DDE1FF;
   --th-primary-soft: rgba(79, 93, 255, 0.14);
 
-  /* En vivo / disponible (verde neón — solo estados activos, nunca decorativo) */
-  --th-live: #7CFC3C;
-  --th-live-soft: rgba(124, 252, 60, 0.14);
+  /* En vivo / disponible (esmeralda de precisión — WCAG AAA) */
+  --th-live: #00D084;
+  --th-live-soft: rgba(0, 208, 132, 0.14);
 
   /* Semánticos */
-  --th-success: #7CFC3C;
+  --th-success: #00D084;
   --th-danger: #F4544C;
   --th-danger-soft: rgba(244, 84, 76, 0.12);
   --th-warning: #FFB224;

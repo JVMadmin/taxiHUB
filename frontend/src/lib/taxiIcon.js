@@ -33,47 +33,54 @@ export function pointIcon(label, color, { size = "md" } = {}) {
   const lbl = String(label || "").trim();
   const isDestino = lbl.toLowerCase().includes("destino");
   const isOrigen = lbl.toLowerCase().includes("origen") || lbl.toLowerCase().includes("cliente");
-  const c = isDestino ? "#f43f5e" : isOrigen ? "#10b981" : (color || "#10b981");
+  const c = isDestino ? "#F43F5E" : isOrigen ? "#00D084" : (color || "#00D084");
 
   const scale = size === "lg" ? 1.2 : size === "sm" ? 0.85 : 1.0;
-  const w = Math.round(32 * scale);
-  const h = Math.round(44 * scale);
-  const fullW = Math.max(w + 60, 110);
+  const w = Math.round(34 * scale);
+  const h = Math.round(46 * scale);
+  const fullW = Math.max(w + 64, 114);
   const fullH = h + 28;
   const uid = ++_pinUid;
 
   const html = `
-    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;user-select:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,0.55));">
-      <!-- Tag / Pill superior estilo HUD Dark -->
-      <div style="margin-bottom:4px;display:inline-flex;align-items:center;gap:5px;background:rgba(11,13,16,0.92);color:#f1f5f9;border:1.2px solid rgba(255,255,255,0.14);border-radius:18px;padding:3px 9px;font-size:10.5px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-family:'Inter',system-ui,sans-serif;box-shadow:0 4px 10px rgba(0,0,0,0.45);backdrop-filter:blur(6px);white-space:nowrap;">
-        <span style="width:6.5px;height:6.5px;border-radius:50%;background:${c};box-shadow:0 0 7px ${c};"></span>
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;user-select:none;filter:drop-shadow(0 10px 16px rgba(0,0,0,0.65));">
+      <!-- Tag / Pill superior estilo HUD Dark Luxury -->
+      <div style="margin-bottom:5px;display:inline-flex;align-items:center;gap:6px;background:rgba(12,15,22,0.95);color:#F8FAFC;border:1px solid rgba(255,255,255,0.16);border-radius:20px;padding:3.5px 10px;font-size:10.5px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;font-family:'Inter',system-ui,sans-serif;box-shadow:0 6px 14px rgba(0,0,0,0.5);backdrop-filter:blur(8px);white-space:nowrap;">
+        <span style="width:7px;height:7px;border-radius:50%;background:${c};box-shadow:0 0 8px ${c};"></span>
         ${lbl}
       </div>
 
-      <!-- Pin aerodinámico tipo vector con halo neón -->
+      <!-- Pin aerodinámico tipo 3D con specular highlight y halo -->
       <div style="position:relative;width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;">
-        <svg width="${w}" height="${h}" viewBox="0 0 32 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+        <svg width="${w}" height="${h}" viewBox="0 0 34 46" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
           <defs>
-            <radialGradient id="th-pin-grad-${uid}" cx="50%" cy="38%" r="55%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
-              <stop offset="65%" stop-color="${c}" stop-opacity="0.95"/>
-              <stop offset="100%" stop-color="${c}" stop-opacity="1"/>
+            <linearGradient id="th-pin-grad-${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.6"/>
+              <stop offset="25%" stop-color="${c}" stop-opacity="1"/>
+              <stop offset="100%" stop-color="${isDestino ? "#9F1239" : "#065F46"}" stop-opacity="1"/>
+            </linearGradient>
+            <radialGradient id="th-glow-${uid}" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="${c}" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
             </radialGradient>
-            <filter id="th-shadow-${uid}" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="${c}" flood-opacity="0.5"/>
-            </filter>
           </defs>
-          <!-- Sombra en suelo -->
-          <ellipse cx="16" cy="42" rx="6.5" ry="2" fill="rgba(0,0,0,0.6)"/>
+          <!-- Sombra en suelo 3D -->
+          <ellipse cx="17" cy="44" rx="8" ry="2.5" fill="rgba(0,0,0,0.7)"/>
 
-          <!-- Cuerpo estilizado del pin -->
-          <path d="M16 42 C16 42 29 25.5 29 16 C29 8.2 23.2 2 16 2 C8.8 2 3 8.2 3 16 C3 25.5 16 42 16 42 Z"
+          <!-- Halo luminoso -->
+          <circle cx="17" cy="17" r="16" fill="url(#th-glow-${uid})"/>
+
+          <!-- Cuerpo estilizado del pin 3D -->
+          <path d="M17 44 C17 44 31 27 31 17 C31 8.8 24.8 2 17 2 C9.2 2 3 8.8 3 17 C3 27 17 44 17 44 Z"
                 fill="url(#th-pin-grad-${uid})"
-                stroke="#090B0E" stroke-width="1.8" filter="url(#th-shadow-${uid})"/>
+                stroke="#0B0E14" stroke-width="1.6"/>
 
-          <!-- Núcleo central con halo de alto contraste -->
-          <circle cx="16" cy="16" r="6" fill="#090B0E" stroke="#ffffff" stroke-width="1.5" opacity="0.95"/>
-          <circle cx="16" cy="16" r="3" fill="${c}"/>
+          <!-- Brillo especular superior -->
+          <ellipse cx="17" cy="8" rx="6" ry="2.5" fill="#FFFFFF" opacity="0.35"/>
+
+          <!-- Núcleo central concéntrico -->
+          <circle cx="17" cy="17" r="6.5" fill="#0B0E14" stroke="#FFFFFF" stroke-width="1.6" opacity="0.95"/>
+          <circle cx="17" cy="17" r="3.2" fill="${c}"/>
         </svg>
       </div>
     </div>`;
@@ -277,29 +284,38 @@ export function taxiAssetIcon({ heading = 0, size = "sm" } = {}) {
 }
 
 export function taxiRoleAssetIcon({ heading = 0, size = "sm" } = {}) {
-  const dim = size === "lg" ? 70 : size === "md" ? 58 : 46;
+  const dim = size === "lg" ? 72 : size === "md" ? 60 : 48;
   const deg = (Number(heading) || 0) - 90;
   const html = `
-    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 6px 8px rgba(16,45,42,.28))">
-      <img src="/assets/vehicles/taxi-operador.png" alt="" style="width:${dim + 12}px;height:${dim + 12}px;object-fit:contain;transform:rotate(${deg}deg)" />
+    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;">
+      <!-- Sombra de contacto 3D en el suelo -->
+      <div style="position:absolute;width:${dim + 4}px;height:${dim / 2}px;bottom:2px;background:radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 70%);border-radius:50%;transform:rotate(${deg}deg);"></div>
+      <!-- Vehículo 3D con drop shadow realista -->
+      <div style="position:relative;width:${dim + 12}px;height:${dim + 12}px;transform:rotate(${deg}deg);filter:drop-shadow(0 10px 14px rgba(0,0,0,0.65));">
+        <img src="/assets/vehicles/taxi-operador.png" alt="" style="width:100%;height:100%;object-fit:contain;" />
+      </div>
     </div>`;
   return L.divIcon({ html, className: "th-taxi-role-asset", iconSize: [dim + 12, dim + 12], iconAnchor: [(dim + 12) / 2, (dim + 12) / 2] });
 }
 
 export function taxiOrdinarioAssetIcon({ heading = 0, size = "md", label = "", foto = null } = {}) {
-  const dim = size === "lg" ? 76 : size === "sm" ? 50 : 62;
+  const dim = size === "lg" ? 78 : size === "sm" ? 52 : 64;
   const deg = (Number(heading) || 0) - 90;
   const assetSrc = foto || "/assets/vehicles/taxihub-taxi-azul.png";
   const labelHtml = label
-    ? `<span style="margin-top:2px;display:inline-flex;align-items:center;gap:3px;background:rgba(9,11,14,0.92);color:#ffffff;border:1.2px solid rgba(255,255,255,0.22);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 6px rgba(0,0,0,0.65)">
+    ? `<span style="margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:rgba(12,15,22,0.95);color:#FFFFFF;border:1px solid rgba(255,255,255,0.18);border-radius:8px;padding:2px 7px;font-size:10px;font-weight:700;line-height:1;white-space:nowrap;font-family:'Inter',system-ui,sans-serif;box-shadow:0 4px 10px rgba(0,0,0,0.6);backdrop-filter:blur(6px);">
+        <span style="width:5px;height:5px;border-radius:50%;background:#00D084;box-shadow:0 0 6px #00D084;"></span>
         ${label}
        </span>`
     : "";
-  const fullW = Math.max(dim + 24, 76);
-  const fullH = dim + (label ? 24 : 0);
+  const fullW = Math.max(dim + 24, 80);
+  const fullH = dim + (label ? 26 : 0);
   const html = `
     <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;user-select:none;pointer-events:auto">
-      <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 8px 10px rgba(0,0,0,0.55))">
+      <!-- Sombra 3D en pavimento -->
+      <div style="position:absolute;width:${dim + 6}px;height:${dim / 2}px;top:${dim / 4}px;background:radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 70%);border-radius:50%;transform:rotate(${deg}deg);"></div>
+      <!-- Vehículo 3D -->
+      <div style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 10px 14px rgba(0,0,0,0.65))">
         <img src="${assetSrc}" alt="" style="width:100%;height:100%;object-fit:contain;display:block" />
       </div>
       ${labelHtml}
@@ -372,4 +388,24 @@ export function routeArrowIcon(heading = 0, color = "#10b981") {
 export function colorForOperador(op, filtroRutaColor) {
   if (filtroRutaColor) return filtroRutaColor;
   return ESTADO_COLORS[op.estado] || ESTADO_COLORS.fuera_de_servicio;
+}
+
+// Marcador pulsante y parpadeante de ubicación de usuario/pasajero (efecto radar y halo neón en tiempo real)
+export function passengerPulsingIcon(label = "Mi ubicación") {
+  const lbl = String(label || "Mi ubicación").trim();
+  const html = `
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;user-select:none;">
+      <!-- Anillo exterior parpadeante y expansivo (radar pulse 3D) -->
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(0,208,132,0.22);border:1.5px solid rgba(0,208,132,0.75);animation:th-radar-wave 2s cubic-bezier(0.2,0.8,0.2,1) infinite;"></div>
+      <!-- Halo medio de resplandor esmeralda -->
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:rgba(0,208,132,0.4);box-shadow:0 0 16px rgba(0,208,132,0.85);"></div>
+      <!-- Núcleo central 3D con specular reflection -->
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);z-index:2;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #FFFFFF 0%, #00D084 65%, #059669 100%);border:2.5px solid #0B0E14;box-shadow:0 0 10px #00D084;"></div>
+      <!-- Etiqueta inferior estilo píldora HUD Dark -->
+      <div style="margin-top:36px;display:inline-flex;align-items:center;gap:5px;background:rgba(12,15,22,0.95);color:#FFFFFF;border:1px solid rgba(0,208,132,0.5);border-radius:14px;padding:2.5px 9px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.65);backdrop-filter:blur(6px);">
+        <span style="width:6px;height:6px;border-radius:50%;background:#00D084;box-shadow:0 0 6px #00D084;"></span>
+        ${lbl}
+      </div>
+    </div>`;
+  return L.divIcon({ html, className: "th-passenger-pulsing-marker", iconSize: [116, 68], iconAnchor: [58, 24] });
 }

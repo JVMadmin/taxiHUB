@@ -82,19 +82,55 @@ export function sonarAlertaOferta() {
   } catch {}
 }
 
+export function esVozFemenina(v) {
+  if (!v) return false;
+  const nombre = ((v.name || "") + " " + (v.voiceURI || "")).toLowerCase();
+  const femaleKeywords = [
+    "female", "mujer", "dalia", "sabina", "paulina", "hilda", "elena", 
+    "helena", "laura", "monica", "mónica", "lucia", "lucía", "sofia", 
+    "sofía", "camila", "penelope", "penélope", "victoria", "carmen", "rosa",
+    "maria", "maría", "esperanza", "clara", "alva", "paloma", "francisca", "salome", "salomé",
+    "zira", "mia", "eva", "ines", "inés"
+  ];
+  return femaleKeywords.some((kw) => nombre.includes(kw));
+}
+
 function elegirVoz() {
   try {
-    const voces = window.speechSynthesis?.getVoices?.() || [];
+    const synth = window.speechSynthesis;
+    const voces = synth?.getVoices?.() || [];
     if (!voces.length) return null;
-    // Preferencia: español México → cualquier español → primera disponible.
-    return (
-      voces.find((v) => /es[-_]MX/i.test(v.lang)) ||
-      voces.find((v) => /^es/i.test(v.lang)) ||
-      voces[0]
-    );
+    
+    // 1. Voz femenina en español de México
+    const femMx = voces.find((v) => /es[-_]MX/i.test(v.lang) && esVozFemenina(v));
+    if (femMx) return femMx;
+
+    // 2. Voz femenina en cualquier dialecto de español (es-ES, es-US, es-419, etc.)
+    const femEs = voces.find((v) => /^es/i.test(v.lang) && esVozFemenina(v));
+    if (femEs) return femEs;
+
+    // 3. Cualquier voz en español México
+    const esMx = voces.find((v) => /es[-_]MX/i.test(v.lang));
+    if (esMx) return esMx;
+
+    // 4. Cualquier voz en español
+    const esAny = voces.find((v) => /^es/i.test(v.lang));
+    if (esAny) return esAny;
+
+    // 5. Cualquier voz femenina
+    const femAny = voces.find((v) => esVozFemenina(v));
+    if (femAny) return femAny;
+
+    return voces[0];
   } catch {
     return null;
   }
+}
+
+if (typeof window !== "undefined" && window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    vozElegida = elegirVoz();
+  };
 }
 
 export function vozDisponible() {
@@ -121,7 +157,7 @@ export function detenerVoz() {
  * nativo del sistema si está disponible para garantizar reproducción con pantalla
  * apagada; en navegador usa `speechSynthesis` + keep-alive de AudioContext.
  */
-export function hablarVoz(texto, { rate = 1.02, pitch = 1, alertaPrevia = false } = {}) {
+export function hablarVoz(texto, { rate = 1.02, pitch = 1.16, alertaPrevia = false } = {}) {
   if (!texto || !vozDisponible()) return false;
   try {
     if (alertaPrevia) sonarAlertaOferta();
