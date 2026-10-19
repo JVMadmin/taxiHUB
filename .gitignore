@@ -106,3 +106,13 @@ frontend/build-operador/
 whatsapp-bridge/
 motion-taxihub/
 .agents/
+
+# Handoff con credenciales y scripts/capturas sueltos de depuración (solo locales)
+CLAUDE_HANDOFF.md
+/debug_*.py
+/inspect_mongo.py
+/remote_cleanup.py
+/verify_fix.py
+/test_antislop_verify.py
+/test_dual_capture.py
+/screenshot_*.png
