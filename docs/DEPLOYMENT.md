@@ -1,6 +1,6 @@
 # TaxiHUB — Arquitectura y Guía de Despliegue en VPS Oracle ARM64
 
-Esta guía documenta la infraestructura en producción de **TaxiHUB** desplegada en el VPS Oracle Cloud (`159.54.146.150`).
+Esta guía documenta la infraestructura en producción de **TaxiHUB** desplegada en un VPS Oracle Cloud (IP y acceso en el `CLAUDE_HANDOFF.md` local, fuera de git).
 
 ---
 

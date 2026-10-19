@@ -1,14 +1,16 @@
+import os
 import subprocess
 import json
 
-KEY_PATH = r"C:\Users\Quantum\Downloads\ssh-key-2026-10-06.key"
-VPS_HOST = "ubuntu@159.54.146.150"
+# Datos del VPS fuera del repositorio (es público): ver CLAUDE_HANDOFF.md local.
+KEY_PATH = os.environ["TAXIHUB_SSH_KEY"]
+VPS_HOST = os.environ["TAXIHUB_VPS"]  # usuario@host
 
 def run_remote_sh(script_content):
     cmd = [
         "ssh",
         "-i", KEY_PATH,
-        "-o", "StrictHostKeyChecking=no",
+        "-o", "StrictHostKeyChecking=accept-new",
         "-o", "ConnectTimeout=5",
         VPS_HOST,
         "bash -s"

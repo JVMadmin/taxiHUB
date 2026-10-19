@@ -157,7 +157,16 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("central_taxis")
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "dev-jwt-secret-taxihub")
+ES_PRODUCCION = os.environ.get("ENV", "").lower() == "production"
+JWT_SECRET = os.environ.get("JWT_SECRET") or "dev-jwt-secret-taxihub"
+if ES_PRODUCCION and JWT_SECRET == "dev-jwt-secret-taxihub":
+    # El secreto por defecto es público (está en el repositorio): con él cualquiera
+    # podría firmar tokens válidos de terminal o de desarrollador.
+    raise RuntimeError("JWT_SECRET es obligatorio en producción (ENV=production)")
+
+# Simulación de demostración (flota sembrada + patrullaje GPS). Encendida por
+# defecto porque taxihub.cloud funciona hoy como demo; SIMULACION_DEMO=0 la apaga.
+SIMULACION_DEMO = os.environ.get("SIMULACION_DEMO", "1").strip().lower() not in ("0", "false", "no", "off")
 JWT_ALGORITHM = "HS256"
 
 SCOPES = {"operador": "operador", "terminal": "terminal", "pasajero": "pasajero", "dev": "dev", "dueno": "dueno"}
@@ -3413,10 +3422,29 @@ async def wa_bridge_vincular(body: WaVincularDemoBody, current=Depends(require_t
     return await wa_get_status(current)
 
 
+async def _sitio_wa_autorizado(request: Request, sitio_pedido: Optional[str]) -> str:
+    """Quién puede inyectar mensajes entrantes: el puente con `Bearer WA_WEBHOOK_TOKEN`
+    (elige el sitio) o una sesión de terminal/dev (la terminal queda en su propio sitio)."""
+    auth = request.headers.get("Authorization", "")
+    token = os.environ.get("WA_WEBHOOK_TOKEN")
+    if token and auth == f"Bearer {token}":
+        return sitio_pedido or DEFAULT_SITIO
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="No autorizado")
+    actor = await _require_terminal_or_dev(request)
+    if actor.get("_actor") == "terminal":
+        return actor.get("sitio_id") or DEFAULT_SITIO
+    return sitio_pedido or actor.get("sitio_id") or DEFAULT_SITIO
+
+
 @api_router.post("/wa/incoming")
-async def wa_incoming(body: WaIncomingBody):
+async def wa_incoming(body: WaIncomingBody, request: Request):
     """Recibe un mensaje entrante desde el puente Baileys local o desde el simulador de número de prueba."""
-    sitio = body.sitio_id or DEFAULT_SITIO
+    sitio = await _sitio_wa_autorizado(request, body.sitio_id)
+    return await _registrar_wa_entrante(body, sitio)
+
+
+async def _registrar_wa_entrante(body: WaIncomingBody, sitio: str) -> dict:
     now = datetime.now(timezone.utc).isoformat()
     entry = {"de": "cliente", "texto": body.texto or "Hola, solicito un taxi", "ts": now}
     if body.lat is not None and body.lng is not None:
@@ -3454,9 +3482,8 @@ async def wa_incoming(body: WaIncomingBody):
 @api_router.post("/wa/test-incoming")
 async def wa_test_incoming(body: WaIncomingBody, current=Depends(require_terminal)):
     """Permite a la operadora probar un mensaje entrante desde su número de prueba con 1 clic."""
-    sitio = body.sitio_id or current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
-    body.sitio_id = sitio
-    return await wa_incoming(body)
+    sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
+    return await _registrar_wa_entrante(body, sitio)
 
 
 @api_router.get("/wa/conversaciones")
@@ -10110,9 +10137,12 @@ async def startup():
     (UPLOAD_DIR / "logo").mkdir(parents=True, exist_ok=True)
     logger.info("Directorio de archivos listo: %s", UPLOAD_DIR)
     logger.info("Central de Taxis API iniciada")
-    if await db.operadores.count_documents({}) < 15:
-        await sembrar_datos_simulacion()
-    _iniciar_patrullaje()
+    if SIMULACION_DEMO:
+        if await db.operadores.count_documents({}) < 15:
+            await sembrar_datos_simulacion()
+        _iniciar_patrullaje()
+    else:
+        logger.info("Simulación demo desactivada (SIMULACION_DEMO=0)")
     _iniciar_cascada()
 
 
