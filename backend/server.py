@@ -7821,6 +7821,7 @@ DEMO_TAXIS = [
     {
         "usuario": "op2",
         "nombre": "Ana Torres",
+        "genero": "F",
         "telefono": "916-200-0002",
         "placa": "TX-102",
         "marca": "Chevrolet",
@@ -8441,6 +8442,30 @@ _HASH_TAXI123 = hash_password("taxi123")
 _HASH_SOCIO123 = hash_password("socio123")
 _HASH_CENTRAL123 = hash_password("central123")
 
+# Retratos de choferes demo (frontend/public/assets/drivers/driver-NN.jpg, fotos de
+# stock de Pexels, ver CREDITS.md). Se asignan por género para que ningún chofer
+# reciba la foto de una persona de otro género.
+FOTOS_DEMO_HOMBRES = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+FOTOS_DEMO_MUJERES = [2, 16, 17]
+
+
+def _foto_demo(n: int) -> str:
+    return f"/assets/drivers/driver-{n:02d}.jpg"
+
+
+def _fotos_demo_conductores() -> Dict[str, str]:
+    """usuario → foto para todos los taxis demo, alternando dentro de cada género."""
+    fotos, h, m = {}, 0, 0
+    for t in DEMO_TAXIS + DEMO_TAXIS_PAKALNA + DEMO_TAXIS_FORANEOS:
+        if t.get("genero") == "F":
+            fotos[t["usuario"]] = _foto_demo(FOTOS_DEMO_MUJERES[m % len(FOTOS_DEMO_MUJERES)])
+            m += 1
+        else:
+            fotos[t["usuario"]] = _foto_demo(FOTOS_DEMO_HOMBRES[h % len(FOTOS_DEMO_HOMBRES)])
+            h += 1
+    return fotos
+
+
 _simulacion_activa = False
 _simulacion_task = None
 
@@ -8671,7 +8696,7 @@ async def sembrar_datos_simulacion():
         {
             "nombre": "Doña Carmen Velasco Cruz", "usuario": "socia_carmen", "telefono": "916-345-0020",
             "cuota": 350.0, "taxis": ["TX-104", "TX-105", "TX-118", "TX-119"],
-            "foto_url": "/assets/drivers/driver-02.jpg", "rfc": "VECC740923MCS", "curp": "VECC740923MCSCLN01",
+            "foto_url": "/assets/drivers/driver-16.jpg", "rfc": "VECC740923MCS", "curp": "VECC740923MCSCLN01",
             "concesion_folio": "SCT-CHIS-PAL-00198", "poliza_flota": "GNP-TAXI-77412",
             "domicilio_fiscal": "Calle Independencia #45, Barrio La Cañada, Palenque",
             "banco_cuenta": "Banorte · CLABE 072180005591823019",
@@ -8701,7 +8726,7 @@ async def sembrar_datos_simulacion():
         {
             "nombre": "Sra. Patricia Morales López", "usuario": "socia_patricia", "telefono": "916-345-0050",
             "cuota": 350.0, "taxis": ["TX-111", "TX-112", "TX-113", "TX-123", "TX-124"],
-            "foto_url": "/assets/drivers/driver-05.jpg", "rfc": "MOLP760730MCS", "curp": "MOLP760730MCSRLN05",
+            "foto_url": "/assets/drivers/driver-17.jpg", "rfc": "MOLP760730MCS", "curp": "MOLP760730MCSRLN05",
             "concesion_folio": "SCT-CHIS-PAL-00359", "poliza_flota": "QUALITAS-FL-99510",
             "domicilio_fiscal": "Av. Merle Green #22, Zona La Cañada, Palenque",
             "banco_cuenta": "HSBC · CLABE 021180040591827364",
@@ -8753,6 +8778,7 @@ async def sembrar_datos_simulacion():
             cuota_por_placa[placa] = s["cuota"]
 
     # 3. 25 Taxis de Palenque + 5 Taxis de Pakal-Ná + 4 Taxis Foráneos (con expediente completo SCT/SEMOVI)
+    fotos_demo = _fotos_demo_conductores()
     tipos_sangre = ["O+", "A+", "O+", "B+", "O-", "A+"]
     op_ids = {}
     await db.documentos_conductor.delete_many({})
@@ -8763,7 +8789,7 @@ async def sembrar_datos_simulacion():
         puntos_calle = pista.get("puntos", [[lat, lng]])
         sentido_dir = t.get("sentido_direccion", "adelante")
         track = _generar_track_calle(puntos_calle, t["idx"], sentido_dir, 15)
-        driver_foto = f"/assets/drivers/driver-{(i % 15) + 1:02d}.jpg"
+        driver_foto = fotos_demo[t["usuario"]]
         pref_curp = "".join([c for c in t["nombre"].upper() if c.isalpha()][:4]).ljust(4, "X")
 
         op_doc = {
@@ -10178,6 +10204,16 @@ async def _migraciones():
             {"$set": {"tipo_vehiculo_id": str(taxi_estandar["_id"])}},
         )
     await db.vehiculos.update_many({"foto_url": {"$exists": False}}, {"$set": {"foto_url": None}})
+
+    # 5b) Retratos demo por género en bases ya sembradas. Solo toca cuentas que
+    # siguen usando un retrato del catálogo (nunca una foto subida por el usuario).
+    retrato_catalogo = {"$regex": r"^/assets/drivers/driver-\d+\.jpg$"}
+    for usuario, foto in _fotos_demo_conductores().items():
+        await db.operadores.update_one({"usuario": usuario, "foto_url": retrato_catalogo},
+                                       {"$set": {"foto_url": foto}})
+    for usuario, n in (("socia_carmen", 16), ("socia_patricia", 17)):
+        await db.usuarios_dueno.update_one({"usuario": usuario, "foto_url": retrato_catalogo},
+                                           {"$set": {"foto_url": _foto_demo(n)}})
 
     # 6) Conversación demo de WhatsApp (flujo ubicación→servicio del despacho).
     await _seed_wa_conversacion()

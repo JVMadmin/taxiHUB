@@ -49,11 +49,11 @@ const FALLBACK_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const TAXI_ASSET = "/assets/vehicles/taxihub-taxi-azul.png";
 const MARCH_LOGO = "/assets/vehicles/march.png";
 const DEMO_DRIVER_AVATARS = {
-  op1: "/assets/drivers/carlos-ramirez.svg",
-  op2: "/assets/drivers/ana-torres.svg",
-  op3: "/assets/drivers/luis-mendez.svg",
-  op4: "/assets/drivers/jose-hernandez.svg",
-  op5: "/assets/drivers/default-driver.svg",
+  op1: "/assets/drivers/driver-01.jpg",
+  op2: "/assets/drivers/driver-02.jpg",
+  op3: "/assets/drivers/driver-03.jpg",
+  op4: "/assets/drivers/driver-04.jpg",
+  op5: "/assets/drivers/driver-05.jpg",
 };
 
 function ClienteAvatar({ nombre, className }) {
