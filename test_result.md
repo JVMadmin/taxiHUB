@@ -214,6 +214,17 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "Implementados POST /api/servicios/{id}/calificacion y GET/POST /api/servicios/{id}/mensajes, autorización por scope, persistencia embebida/compartida, notificaciones WS e índices startup. py_compile pasa; pytest no pudo iniciar porque faltan pytest-xdist y pytest-asyncio en el entorno."
+  - task: "División de backend/server.py en módulos por área (refactor sin cambios de comportamiento)"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "server.py pasa de ~10 300 a ~3 150 líneas: rutas movidas a auth, operadores, turnos, clientes, catalogos, servicios, reportes, chat, dueno, sitio, dev, whatsapp, websockets y simulacion (*_module.py, fábricas con _DbProxy) + simulacion_datos.py. Verificado: misma tabla de rutas y misma resolución de cada ruta (200 rutas), pytest 103/103, arranque real con siembra + patrullaje (34 taxis, 33 en movimiento) y paneles terminal/dev/dueño con las mismas respuestas que antes, y canales WebSocket con tokens válidos/inválidos iguales que antes."
 frontend:
   - task: "Terminal: termApi para todas las llamadas, popup de taxi ampliado, panel de servicios con pestañas + despacho + flota"
     implemented: true
@@ -397,7 +408,7 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 11
+  test_sequence: 12
   run_ui: true
 
 test_plan:
@@ -430,4 +441,5 @@ agent_communication:
     message: "Fix de empaquetado y enrutamiento exclusivo para la app Android del Conductor (Capacitor/APK com.taxihub.operador). Diagnóstico de causa raíz: la ruta '/' en App.js caía a Terminal en hosts 'localhost', redirigiendo a /terminal/login ('credenciales de despachadora') e impidiendo autenticar conductores con op1/taxi123, además de permitir volver atrás a páginas web. Solución: (1) App.js detecta entorno nativo vía Capacitor.isNativePlatform() y bloquea 100% las rutas a OperadorLogin (/login) y OperadorApp (/operador), con wildcard y raíz redirigiendo a Operador; (2) Listener de botón atrás con CapApp.minimizeApp() para evitar salir a webs externas o pantallas ajenas; (3) Sanitización de th_backend_url en api.js apuntando por defecto a https://taxihub.cloud; (4) Recompilación web craco build, capacitor sync android, gradlew assembleDebug (APK 105.7 MB) y despliegue a VPS Oracle Cloud; (5) Suite E2E scripts/test_driver_android_e2e.py 7/7 verde en producción (https://taxihub.cloud)."
   - agent: "main"
     message: "Fase de Experiencia Nativa Android Conductor: (1) Permiso CAMERA y features de hardware en AndroidManifest.xml para captura fotográfica de combustible/odómetro; (2) Configuración de WebView en MainActivity.java habilitando reproducción de audio sin gesto previo (alertas y TTS audibles aun con la app sin interacción), geolocalización y DOM storage; (3) Integración de LocalNotifications de Capacitor en voz.js con solicitud de permisos en tiempo de ejecución para Android 13+; (4) Adaptación dinámica de StatusBar con @capacitor/status-bar; (5) Manejo inteligente del botón Atrás mediante evento custom app:hardwareBack para cerrar modales/drawers antes de minimizar al home; (6) Bootstrap síncrono en index.html (__TAXIHUB_APP_MODE__='operador'); (7) Recompilación limpia y APK actualizado (133.1 MB) desplegado en VPS Oracle Cloud con 7/7 pruebas E2E aprobadas."
-
+  - agent: "main"
+    message: "Refactor backend sin cambios de comportamiento: server.py dividido en módulos por área (ver AGENTS.md › Layout). Retestar el backend completo contra un Mongo real si es posible (despacho de pasajero con cascada, chat, reportes con foto, WhatsApp, panel dev y dueño, WebSockets); la suite local corre con mongomock y la verificación de arranque usó MONGO_URL=memory."
