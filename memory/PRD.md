@@ -93,7 +93,20 @@ Plataforma de despacho para central de taxis con dos interfaces: Terminal (panel
 - **Imágenes de tipo/modelo de vehículo**: catálogo local extensible en `lib/utils.js` (`VEHICLE_TYPE_ASSETS`, hoy `march` → `/assets/vehicles/march.png`) con prioridad foto propia → catálogo por modelo/marca/tipo → imagen del VehicleType → genérica. `/auth/me` embebe el vehículo del operador. La misma imagen se muestra en la ficha del pasajero (nueva miniatura), el header del operador y la mission card de la terminal. Verificado en las tres apps con el Nissan March de Carlos (TX-101).
 - **Documento comercial**: `docs/FUNCIONES-APPS.md` con las funciones de las tres aplicaciones, seguridad y resumen técnico para presentar a clientes.
 
+### Fases 13+ (2026-08-28 → 2026-10-14)
+Detalle en `docs/` (FASE1…FASE12 de la versión 2.0, `PREMIUM_*`, `DEPLOYMENT.md`) y en el historial de git: TaxiHUB 2.0 (Taxi Operations OS), socios/dueños, expedientes, mantenimiento, combustible y turnos, geofence de llegada, WhatsApp (puente Baileys), multisitio (`sitio_id`), apps Android nativas (chofer, pasajero, socio), despliegue en VPS Oracle ARM64 y cascada automática de ofertas con prioridad demo para op1.
+
+### Estabilización y seguridad (2026-10-19/20)
+- **Producción = git**: el estado desplegado quedó en commit (modo dual de celulares, voz femenina una vez por oferta, chat con fotos, rediseño esmeralda); `server.py` del VPS verificado idéntico al commit.
+- **Retratos de la simulación**: las fotos de choferes que eran de figuras públicas se reemplazaron por fotos de stock de taxistas (Pexels, `assets/drivers/CREDITS.md`), asignadas por género con migración idempotente.
+- **Seguridad**: `JWT_SECRET` obligatorio en producción; `/api/wa/incoming` exige token del puente o sesión de terminal (y queda en su sitio); IP y llave del VPS fuera del repo (es público); `SIMULACION_DEMO` controla la demo.
+- **Despacho confiable**: sin GPS reciente solo recibe ofertas el chofer con la app conectada; prioridad demo (op1) solo dentro de su sitio; duración de oferta desde `config.oferta_duracion_seg`; reserva atómica del chofer (no puede quedarse con dos servicios); viajes pendientes se reofrecen y vencen tras `pendiente_max_minutos`.
+- **Despliegue reproducible**: `scripts/deploy_vps.sh` (pruebas → `git archive` → build/up solo de backend y frontend); `downloads/` en el volumen `taxihub_downloads`.
+- Tests: 103 en verde.
+
 ## Backlog
+- Alinear versiones de Capacitor (core 6 vs android/cli 8) y reconstruir los APK.
+- Dividir `server.py` y las pantallas grandes (`PassengerApp`, `OperadorApp`, `TerminalMenu`).
 - P3: ETA/zonas/prioridad en el despacho; turnos y rotación; polilíneas de ruta; app móvil Android (GPS en segundo plano) e iOS; pago card/online; job en segundo plano para expiraciones; índices geoespaciales 2dsphere para flotas grandes.
 - P0: Fase 2 — App del operador (login, entrar/salir, botones de estado, selector de ruta, geolocalización cada 8-10s).
 - P1: Fase 4 — Gestión de rutas (crear/editar color) desde Terminal.

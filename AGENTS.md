@@ -1,30 +1,44 @@
 # AGENTS.md
 
 ## Overview
-Taxi dispatch platform: a FastAPI + MongoDB (motor) backend and a React SPA frontend. Two UIs: the **Terminal** (admin/despatch, real-time Leaflet map) and the **Operador** (driver) app. Dark theme. Spanish UI strings throughout — keep user-facing text in Spanish.
+Taxi dispatch platform: a FastAPI + MongoDB (motor) backend and a React SPA frontend that builds five apps from one codebase: **Terminal** (central/dispatch, real-time Leaflet map), **Operador** (driver), **Pasajero** (passenger), **Socio/Dueño** (fleet owner) and the public **Landing** (`taxihub.cloud`). Android apps are packaged with Capacitor. Dark theme. Spanish UI strings throughout — keep user-facing text in Spanish.
+
+Production (`https://taxihub.cloud`) currently runs as a **demo**: a simulated fleet (34 drivers, GPS patrol over real Palenque streets) is seeded at startup. Keep the simulation working unless the user says otherwise.
 
 ## Layout
-- `backend/server.py` — the entire API in one file (all routes, models, WebSockets, storage helpers). Route prefix `/api`. Collections: `operadores`, `clientes`, `rutas`, `servicios`, `reportes_objetos`, `mensajes_chat`, `usuarios_terminal`, `tarifas_predefinidas`, `config`, `archivos`.
-- `frontend/` — Create React App **via CRACO** (`craco start/build/test`). Path alias `@` → `src`. Tailwind + shadcn/ui + Leaflet.
-- `memory/PRD.md` — authoritative feature/phase history. `memory/test_credentials.md` is gitignored (created per-env).
+- `backend/server.py` — most of the API in one file (~10k lines: routes, models, WebSockets, dispatch, simulation, storage helpers). Route prefix `/api`. Extra routers: `mantenimiento_module.py`, `socios_extra_module.py`, `terminal_consulta_module.py`.
+- Mongo collections in use include `operadores`, `vehiculos`, `tipos_vehiculo`, `clientes`, `servicios`, `rutas`, `colonias`, `tarifas_predefinidas`, `turnos`, `combustible_cargas`, `reportes_objetos`, `mensajes_chat`, `wa_conversaciones`, `usuarios_terminal`, `usuarios_dueno`, `sitios`, `config`, `archivos`, plus owner/maintenance collections.
+- `backend/app/db.py` + `migrations/` — Postgres/SQLAlchemy scaffolding that is **not used** by the running app yet.
+- `frontend/` — Create React App **via CRACO** (`craco start/build/test`). Path alias `@` → `src`. Tailwind + shadcn/ui + Leaflet. App selection in `src/App.js` (`REACT_APP_APP_MODE`, `?app=`, native platform).
+- `frontend/public/assets/drivers/` — demo driver portraits (Pexels stock, see `CREDITS.md`), assigned by gender in `server.py` (`FOTOS_DEMO_HOMBRES` / `FOTOS_DEMO_MUJERES`). Never use photos of public figures.
+- `memory/PRD.md` — feature/phase history; `docs/` — per-phase design docs and `DEPLOYMENT.md`.
+- `CLAUDE_HANDOFF.md` (root, gitignored) — VPS access and production credentials. **The GitHub repo is public**: never commit hosts, keys, passwords or that file.
 
 ## Backend
-- Env: `server.py` loads `backend/.env` (gitignored). Required: `MONGO_URL`, `DB_NAME`, `JWT_SECRET`. Also used: `CORS_ORIGINS`, `DEV_USER`, `DEV_PASSWORD`. Do not commit secrets.
-- Run: `uvicorn server:app --reload` (from `backend/`).
-- Auth: two JWT schemes — operador (`/auth/login`) and terminal (`/terminal/login`, token has `scope: "terminal"`). Dev panel at `/dev` (frontend `DevPanel.jsx`); its login validates against `DEV_USER`/`DEV_PASSWORD` env vars — there is no hardcoded default.
-- Lint/format deps installed (`black`, `isort`, `flake8`, `mypy`) but there is **no** configured command/script — run them manually if you change Python; do not assume a `lint` target exists.
-- Real-time via the in-file `ConnectionManager` (terminal broadcast + per-operador websockets). State/ubicacion/servicio/reporte/mensaje events pushed over these sockets.
-- File uploads (fotos de reportes, perfil y logo) se guardan en disco local en `backend/uploads/` (`put_object`/`get_object`) y se sirven vía `GET /api/files/{path}`.
+- Env: `server.py` loads `backend/.env` (gitignored). `MONGO_URL` (`memory` = in-memory mongomock), `DB_NAME`, `JWT_SECRET` (mandatory and non-default when `ENV=production`, otherwise startup fails), `CORS_ORIGINS`, `DEV_USER`, `DEV_PASSWORD`, `WA_WEBHOOK_TOKEN` (WhatsApp bridge → `/api/wa/incoming` and `/api/wa/webhook`), `SIMULACION_DEMO` (default `1`), `DESPACHO_PRIORIDAD_USUARIO` (default `op1`; empty disables the demo priority driver).
+- Run: `uvicorn server:app --reload` (from `backend/`). The frontend dev env (`frontend/.env.development`) expects the API on `127.0.0.1:8001`.
+- Auth: JWT scopes `operador`, `terminal`, `pasajero`, `dueno`, `dev`; every token carries `sitio_id` (tenant). Dev panel at `/dev` validates against `DEV_USER`/`DEV_PASSWORD`.
+- Dispatch: passenger requests are auto-offered to one driver at a time (`_autodespachar_servicio_pasajero`), cascading after `config.oferta_duracion_seg`; pending passenger trips are retried every 10 s and expire after `config.pendiente_max_minutos`. Assignment reserves the driver atomically (`_asignar_atomicamente`). Candidates need fresh GPS (`config.gps_stale_seconds`) or a live operator WebSocket.
+- Lint/format deps installed (`black`, `isort`, `flake8`, `mypy`) but there is **no** configured command/script.
+- Real-time via the in-file `ConnectionManager` (terminal broadcast per sitio + per-operador/pasajero/dueño websockets). Background loops (cascade, GPS patrol) run in-process: run a **single** uvicorn worker.
+- File uploads are stored on local disk in `backend/uploads/` (`put_object`/`get_object`), served via `GET /api/files/{path}`.
 
 ## Frontend
-- `frontend/src/lib/api.js` — API client. `BACKEND_URL` comes from `REACT_APP_BACKEND_URL`; JWT read from `localStorage("op_token")`. WS base derived from the same URL.
+- `frontend/src/lib/api.js` — API client. `BACKEND_URL` from `REACT_APP_BACKEND_URL` (or `localStorage.th_backend_url`); JWT per app in localStorage (`op_token`, `pas_token`, …). WS base derived from the same URL.
 - Theme/palette via `data-theme` in localStorage; app root is forced `dark`.
-- E2E testability: interactive elements get `data-testid` values, centralized in `frontend/src/constants/testIds/` (one file per feature, re-exported from `index.js`). Value convention is kebab-case `<feature>-<element>`. Add new test IDs there when adding UI; do not inline raw strings in JSX.
+- E2E testability: interactive elements get `data-testid` values, centralized in `frontend/src/constants/testIds/` (one file per feature, re-exported from `index.js`). Value convention is kebab-case `<feature>-<element>`. Add new test IDs there when adding UI; do not inline raw strings in JSX (many legacy inline ones remain).
+- Capacitor versions are currently mixed (`@capacitor/core` 6 vs `@capacitor/android`/`cli` 8) — align them before touching native code.
 
 ## Testing (important)
 - **Do not modify `backend/pytest.ini` `addopts`** — keep exactly `-n 2 --dist loadscope` (pytest-xdist is a required plugin). Serial run = `-n 0` (NOT `-p no:xdist`, which errors).
-- `tests/` is currently empty (`__init__.py` only); generated suites appear under `test_reports/`. A `-n`/`--dist` custom option in your own test code will collide with xdist's — rename it.
+- Run from `backend/`: `python -m pytest -q`. With freshly installed packages pytest may wrongly report the required plugins as missing; add `-o required_plugins=` (do not edit the ini).
+- Suites live in `tests/` (backend, mongomock, ~100 tests); generated suites appear under `test_reports/`. A `-n`/`--dist` custom option in your own test code will collide with xdist's — rename it.
 - `test_result.md` contains the required agent testing protocol. Preserve the `#===`-delimited block verbatim and update the YAML data (status_history, test_plan, needs_retesting) per that protocol; it's the handoff channel for the testing agent.
+
+## Deploy
+- Use `scripts/deploy_vps.sh` (see `docs/DEPLOYMENT.md`): tests → `git archive HEAD` → rebuild and recreate only `taxihub-backend` and `taxihub-frontend`. Run `--revisar` (read-only) first. Do not `docker cp` into containers.
+- `/usr/share/nginx/html/downloads/` in `taxihub-frontend` holds the APKs and the Windows installer (volume `taxihub_downloads`): never delete or overwrite it.
+- The VPS hosts other projects (Caddy `nexium-caddy`, other apps): never restart or modify containers that are not `taxihub-*`. Confirm every production action with the user.
 
 ## Package manager
 - Frontend uses **yarn** (packageManager pinned yarn@1.22.22); use `yarn` not npm for installs. Backend uses pip with `backend/requirements.txt`.
