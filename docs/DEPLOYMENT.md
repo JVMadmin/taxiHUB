@@ -38,8 +38,9 @@ producción distinta de git). Desde la raíz del repo, en Git Bash:
 
 ```bash
 export TAXIHUB_VPS=usuario@host TAXIHUB_SSH_KEY=/ruta/llave.key TAXIHUB_PYTHON=/ruta/python
-scripts/deploy_vps.sh --revisar   # solo lectura: estado del VPS, montajes y downloads/
-scripts/deploy_vps.sh             # pruebas -> git archive HEAD -> build + up backend/frontend
+scripts/deploy_vps.sh --revisar              # solo lectura: estado del VPS, montajes y downloads/
+scripts/deploy_vps.sh --preparar <commit>    # prueba el commit, migra downloads/, sube código y construye
+scripts/deploy_vps.sh --recrear <commit>     # recrea backend y luego frontend (sin esto nada cambia en vivo)
 ```
 
 - Solo se despliega lo que tiene commit; el `.env` del VPS no se toca.

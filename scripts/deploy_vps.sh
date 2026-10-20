@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Despliegue reproducible de TaxiHUB al VPS (reemplaza el `docker cp` manual).
 #
-#   scripts/deploy_vps.sh --revisar     # solo lectura: muestra el estado del VPS, no cambia nada
-#   scripts/deploy_vps.sh               # pruebas -> empaqueta HEAD -> build + up de backend y frontend
+#   scripts/deploy_vps.sh --revisar            # solo lectura: estado del VPS, no cambia nada
+#   scripts/deploy_vps.sh --preparar <commit>  # pruebas del commit -> volumen downloads -> código -> build
+#                                              # (no toca los contenedores en ejecución)
+#   scripts/deploy_vps.sh --recrear <commit>   # recrea backend y luego frontend con lo construido
+#   scripts/deploy_vps.sh <commit>             # --preparar y --recrear seguidos (<commit> por defecto: HEAD)
 #
 # Variables (fuera del repo, que es público; valores en el CLAUDE_HANDOFF.md local):
 #   TAXIHUB_VPS       usuario@host
@@ -11,7 +14,8 @@
 #   TAXIHUB_PYTHON    intérprete con backend/requirements.txt para correr las pruebas
 #
 # Garantías:
-#   - Solo se despliega lo que está en un commit (git archive HEAD); nada de archivos sueltos.
+#   - Solo se despliega un commit concreto (git archive), probado en un worktree temporal:
+#     ni archivos sin commit ni lo que otras sesiones agreguen después a la rama.
 #   - El .env del VPS no se toca.
 #   - downloads/ (APKs e instalador) se copia al volumen `taxihub_downloads` ANTES de recrear
 #     el frontend y se verifica que el número de archivos no baje.
@@ -46,28 +50,35 @@ sudo -n docker inspect taxihub-backend --format '{{index .Config.Labels "com.doc
 REMOTO
 }
 
-if [[ "${1:-}" == "--revisar" ]]; then
-  revisar
-  exit 0
-fi
+MODO="todo"
+case "${1:-}" in
+  --revisar) revisar; exit 0 ;;
+  --preparar) MODO="preparar"; shift ;;
+  --recrear) MODO="recrear"; shift ;;
+esac
+REV="$(git rev-parse --short "${1:-HEAD}^{commit}")"
+echo "== Commit a desplegar: $REV ($(git log -1 --format=%s "$REV"))"
 
-if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
-  echo "Hay cambios sin commit: solo se despliega lo que está en un commit." >&2
-  exit 1
-fi
+preparar() {
+  echo "== Pruebas del backend en un worktree temporal de $REV"
+  local WT
+  WT="$(mktemp -d)/taxihub-$REV"
+  git worktree add --detach --quiet "$WT" "$REV"
+  local PY="${TAXIHUB_PYTHON:-python}"
+  if ! ( cd "$WT/backend" && "$PY" -m pytest -q -p no:cacheprovider -o required_plugins= ); then
+    git worktree remove --force "$WT"
+    echo "Las pruebas fallaron en $REV: no se despliega." >&2
+    exit 1
+  fi
+  git worktree remove --force "$WT"
 
-echo "== Pruebas del backend"
-PY="${TAXIHUB_PYTHON:-python}"
-( cd backend && "$PY" -m pytest -q -p no:cacheprovider -o required_plugins= )
+  local PAQ
+  PAQ="$(mktemp -d)/taxihub-$REV.tar.gz"
+  git archive --format=tar.gz -o "$PAQ" "$REV" backend frontend docker-compose.prod.yml
+  echo "== Paquete $(du -h "$PAQ" | cut -f1) de $REV"
+  scp -i "$TAXIHUB_SSH_KEY" -o StrictHostKeyChecking=accept-new "$PAQ" "$TAXIHUB_VPS:/tmp/taxihub-$REV.tar.gz"
 
-REV="$(git rev-parse --short HEAD)"
-PAQ="$(mktemp -d)/taxihub-$REV.tar.gz"
-git archive --format=tar.gz -o "$PAQ" HEAD backend frontend docker-compose.prod.yml
-echo "== Paquete $PAQ ($(du -h "$PAQ" | cut -f1)) de $REV"
-
-scp -i "$TAXIHUB_SSH_KEY" -o StrictHostKeyChecking=accept-new "$PAQ" "$TAXIHUB_VPS:/tmp/taxihub-$REV.tar.gz"
-
-"${SSH[@]}" "DIR='$DIR' REV='$REV' COMPOSE='$COMPOSE' bash -s" <<'REMOTO'
+  "${SSH[@]}" "DIR='$DIR' REV='$REV' COMPOSE='$COMPOSE' bash -s" <<'REMOTO'
 set -euo pipefail
 cd "$DIR"
 test -f .env || { echo "Falta $DIR/.env"; exit 1; }
@@ -80,35 +91,60 @@ if ! sudo -n docker volume inspect taxihub_downloads >/dev/null 2>&1; then
     sudo -n docker cp taxihub-frontend:/usr/share/nginx/html/downloads/. "$TMP/"
   fi
   sudo -n docker run --rm -v taxihub_downloads:/dst -v "$TMP":/src:ro alpine sh -c 'cp -a /src/. /dst/'
-  echo "downloads/ copiado al volumen: $(sudo -n docker run --rm -v taxihub_downloads:/d alpine sh -c 'ls /d | wc -l') archivos"
 fi
-ANTES="$(sudo -n docker run --rm -v taxihub_downloads:/d alpine sh -c 'ls /d | wc -l')"
+echo "downloads/ en el volumen: $(sudo -n docker run --rm -v taxihub_downloads:/d alpine sh -c 'ls /d | wc -l') archivos"
 
 # 2) Código del commit (no toca .env ni datos)
 tar -xzf "/tmp/taxihub-$REV.tar.gz" -C "$DIR"
 echo "$REV" > "$DIR/REVISION"
+rm -f "/tmp/taxihub-$REV.tar.gz"
 
-# 3) Imágenes anteriores para volver atrás
-for img in taxihub-taxihub-backend taxihub-taxihub-frontend; do
-  sudo -n docker image inspect "$img:latest" >/dev/null 2>&1 && sudo -n docker tag "$img:latest" "$img:anterior"
-done
+# 3) Imágenes actuales -> :anterior (vuelta atrás), solo si aún no se construyó este commit
+if [ "$(cat "$DIR/.ultimo_build" 2>/dev/null)" != "$REV" ]; then
+  for img in taxihub-taxihub-backend taxihub-taxihub-frontend; do
+    if sudo -n docker image inspect "$img:latest" >/dev/null 2>&1; then
+      sudo -n docker tag "$img:latest" "$img:anterior"
+    fi
+  done
+fi
 
-# 4) Build y recreación solo de backend y frontend
+# 4) Build (los contenedores en ejecución no cambian todavía)
 $COMPOSE build taxihub-backend taxihub-frontend
+echo "$REV" > "$DIR/.ultimo_build"
+echo "Preparado $REV: imágenes construidas, contenedores sin tocar."
+REMOTO
+}
+
+recrear() {
+  "${SSH[@]}" "DIR='$DIR' REV='$REV' COMPOSE='$COMPOSE' bash -s" <<'REMOTO'
+set -euo pipefail
+cd "$DIR"
+[ "$(cat .ultimo_build 2>/dev/null)" = "$REV" ] || { echo "Primero: --preparar $REV"; exit 1; }
+ANTES="$(sudo -n docker run --rm -v taxihub_downloads:/d alpine sh -c 'ls /d | wc -l')"
+
 $COMPOSE up -d --no-deps taxihub-backend
-for i in $(seq 1 30); do
+for i in $(seq 1 40); do
   [ "$(sudo -n docker inspect -f '{{.State.Health.Status}}' taxihub-backend)" = healthy ] && break
   sleep 3
 done
-sudo -n docker inspect -f '{{.State.Health.Status}}' taxihub-backend | grep -q healthy || { echo "Backend no quedó sano"; exit 1; }
+if ! sudo -n docker inspect -f '{{.State.Health.Status}}' taxihub-backend | grep -q healthy; then
+  echo "Backend no quedó sano; últimos logs:"; sudo -n docker logs --tail 40 taxihub-backend
+  exit 1
+fi
 $COMPOSE up -d --no-deps taxihub-frontend
 
 DESPUES="$(sudo -n docker exec taxihub-frontend sh -c 'ls /usr/share/nginx/html/downloads | wc -l')"
 [ "$DESPUES" -ge "$ANTES" ] || { echo "ALERTA: downloads/ tenía $ANTES archivos y ahora $DESPUES"; exit 1; }
 echo "Desplegado $REV · downloads/: $DESPUES archivos"
-rm -f "/tmp/taxihub-$REV.tar.gz"
 REMOTO
 
-echo "== Verificación pública"
-curl -fsS -o /dev/null -w "frontend %{http_code}\n" https://taxihub.cloud/
-curl -fsS -o /dev/null -w "api %{http_code}\n" https://taxihub.cloud/api/config/sitio
+  echo "== Verificación pública"
+  curl -fsS -o /dev/null -w "frontend %{http_code}\n" https://taxihub.cloud/
+  curl -fsS -o /dev/null -w "api %{http_code}\n" https://taxihub.cloud/api/config/sitio
+}
+
+case "$MODO" in
+  preparar) preparar ;;
+  recrear) recrear ;;
+  todo) preparar; recrear ;;
+esac
