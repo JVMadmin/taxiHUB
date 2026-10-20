@@ -92,6 +92,8 @@ if ! sudo -n docker volume inspect taxihub_downloads >/dev/null 2>&1; then
   fi
   sudo -n docker run --rm -v taxihub_downloads:/dst -v "$TMP":/src:ro alpine sh -c 'cp -a /src/. /dst/'
 fi
+# nginx corre con otro usuario: la raíz del volumen debe ser legible (cp -a copia el 700 de mktemp)
+sudo -n docker run --rm -v taxihub_downloads:/d alpine chmod 755 /d
 echo "downloads/ en el volumen: $(sudo -n docker run --rm -v taxihub_downloads:/d alpine sh -c 'ls /d | wc -l') archivos"
 
 # 2) Código del commit (no toca .env ni datos)
@@ -121,6 +123,14 @@ set -euo pipefail
 cd "$DIR"
 [ "$(cat .ultimo_build 2>/dev/null)" = "$REV" ] || { echo "Primero: --preparar $REV"; exit 1; }
 ANTES="$(sudo -n docker run --rm -v taxihub_downloads:/d alpine sh -c 'ls /d | wc -l')"
+
+# Foto exacta de lo que corre ahora (incluye cambios hechos con docker cp en el pasado):
+# es la vuelta atrás real, más fiel que las imágenes :anterior.
+FOTO="previo-$(date +%Y%m%d-%H%M)"
+for c in backend frontend; do
+  sudo -n docker commit "taxihub-$c" "taxihub-taxihub-$c:$FOTO" >/dev/null
+done
+echo "Vuelta atrás disponible: taxihub-taxihub-{backend,frontend}:$FOTO"
 
 $COMPOSE up -d --no-deps taxihub-backend
 for i in $(seq 1 40); do
