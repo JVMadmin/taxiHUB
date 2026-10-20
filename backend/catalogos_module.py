@@ -2,7 +2,10 @@
 Catálogos del sitio: tipos de vehículo (VehicleType, con imagen),
 vehículos de la flota, rutas colectivas, colonias/cuadrantes con precio y
 tarifas predefinidas. Nunca se hardcodea `tipo -> imagen`: todo vive en
-Mongo. Mismo patrón factory que los demás módulos.
+Mongo y el vehículo solo referencia el id de su tipo. El catálogo de tipos
+es de lectura pública (sin datos sensibles, lo consumen las 5 superficies);
+la escritura queda reservada a `require_terminal`. Mismo patrón factory que
+los demás módulos.
 """
 from typing import Optional
 
