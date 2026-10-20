@@ -51,32 +51,29 @@ services:
       dockerfile: Dockerfile
     container_name: taxihub-frontend
     restart: unless-stopped
+    volumes:
+      # APKs e instalador .exe: viven fuera de la imagen para que reconstruirla
+      # nunca los borre (antes estaban dentro del contenedor).
+      - taxihub_downloads:/usr/share/nginx/html/downloads
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
     depends_on:
       taxihub-backend:
         condition: service_healthy
 
-  taxihub-seed:
-    image: curlimages/curl:8.6.0
-    container_name: taxihub-seed
-    restart: "no"
-    networks:
-      - backend
-    depends_on:
-      taxihub-backend:
-        condition: service_healthy
-    command: >
-      sh -c "
-        echo 'Verificando y asegurando estado inicial de TaxiHUB...';
-        curl -sf -X POST http://taxihub-backend:8000/api/seed || true;
-        echo;
-        echo 'TaxiHUB Seed Verificado';
-      "
+# La siembra demo la hace el backend al arrancar (SIMULACION_DEMO=1 por defecto);
+# el antiguo servicio taxihub-seed fallaba con 401 en producción.
 
 volumes:
   taxihub_mongo_data:
   taxihub_uploads:
+  taxihub_downloads:
+    name: taxihub_downloads
 
 networks:
   backend:

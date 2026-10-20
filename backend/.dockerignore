@@ -1,0 +1,9 @@
+# Nunca dentro de la imagen: secretos, datos de usuarios y basura local
+.env
+.env.*
+uploads/
+__pycache__/
+*.pyc
+*.log
+test_reports/
+.pytest_cache/

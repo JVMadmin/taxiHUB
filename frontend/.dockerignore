@@ -3,3 +3,7 @@ node_modules
 .gitignore
 .env.development
 README.md
+build
+build-operador
+android
+test_reports

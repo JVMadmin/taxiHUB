@@ -31,7 +31,25 @@ El despliegue reutiliza la arquitectura modular de `/opt/nexium`:
 
 ---
 
-## 3. Comandos de Gestión
+## 3. Desplegar una nueva versión
+
+Ya no se usa `docker cp` dentro de los contenedores (se perdía en cada rebuild y dejaba
+producción distinta de git). Desde la raíz del repo, en Git Bash:
+
+```bash
+export TAXIHUB_VPS=usuario@host TAXIHUB_SSH_KEY=/ruta/llave.key TAXIHUB_PYTHON=/ruta/python
+scripts/deploy_vps.sh --revisar   # solo lectura: estado del VPS, montajes y downloads/
+scripts/deploy_vps.sh             # pruebas -> git archive HEAD -> build + up backend/frontend
+```
+
+- Solo se despliega lo que tiene commit; el `.env` del VPS no se toca.
+- `downloads/` (APKs e instalador) vive en el volumen `taxihub_downloads`. La primera vez
+  el script copia ahí lo que había dentro del contenedor y verifica que no falte ningún archivo.
+- Mongo y los demás proyectos del VPS no se reinician.
+- Vuelta atrás: las imágenes previas quedan como `taxihub-taxihub-backend:anterior` y
+  `taxihub-taxihub-frontend:anterior`.
+
+## 4. Comandos de Gestión
 
 ### Ver estado de contenedores
 ```bash
@@ -46,10 +64,11 @@ sudo docker compose logs -f taxihub-frontend
 sudo docker logs -f nexium-caddy
 ```
 
-### Re-ejecutar seeds reproducibles
-```bash
-sudo docker compose run --rm taxihub-seed
-```
+### Datos de simulación
+El backend siembra la flota demo al arrancar si hay menos de 15 operadores
+(`SIMULACION_DEMO=1`, valor por defecto). Para volver a sembrar con la sesión de
+terminal o dev: `POST /api/simulacion/sembrar`. Para apagar la simulación:
+`SIMULACION_DEMO=0` en el `.env` y redesplegar.
 
 ### Recargar Caddy tras cambios de configuración
 ```bash
@@ -58,7 +77,7 @@ sudo docker exec nexium-caddy caddy reload --config /etc/caddy/Caddyfile
 
 ---
 
-## 4. Cuentas de Acceso Configuradas
+## 5. Cuentas de Acceso Configuradas
 
 - **Terminal Despacho**: `central` / `central123`
 - **Portal Socios / Dueños**: `socio_roberto` / `socio123`
@@ -66,7 +85,7 @@ sudo docker exec nexium-caddy caddy reload --config /etc/caddy/Caddyfile
 
 ---
 
-## 5. Regla de Red en Oracle Cloud (VCN Ingress)
+## 6. Regla de Red en Oracle Cloud (VCN Ingress)
 
 Para permitir el tráfico HTTPS desde internet hacia Caddy, la lista de seguridad de la VCN debe tener permitidos los puertos 80 y 443:
 - **Protocolo**: TCP

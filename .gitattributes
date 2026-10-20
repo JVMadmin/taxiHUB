@@ -1,0 +1,4 @@
+# Scripts que corren en Linux (VPS / contenedores): siempre LF
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.conf text eol=lf
