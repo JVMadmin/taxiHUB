@@ -575,6 +575,13 @@ export default function PassengerApp() {
             setTaxiPos(null);
             cargarHistorial();
             toast("El servicio fue cancelado");
+          } else if (m.servicio?.estado === "vencido") {
+            setServicio(null);
+            setTaxiPos(null);
+            cargarHistorial();
+            toast("No encontramos un taxi disponible", {
+              description: "Todos los conductores están ocupados. Intenta solicitarlo de nuevo en unos minutos.",
+            });
           } else {
             setServicio(m.servicio);
           }

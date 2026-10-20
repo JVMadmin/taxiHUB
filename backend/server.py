@@ -167,6 +167,8 @@ if ES_PRODUCCION and JWT_SECRET == "dev-jwt-secret-taxihub":
 # Simulación de demostración (flota sembrada + patrullaje GPS). Encendida por
 # defecto porque taxihub.cloud funciona hoy como demo; SIMULACION_DEMO=0 la apaga.
 SIMULACION_DEMO = os.environ.get("SIMULACION_DEMO", "1").strip().lower() not in ("0", "false", "no", "off")
+# Chofer que recibe primero las ofertas de pasajeros de su sitio (demo: op1 / TX-101).
+PRIORIDAD_DESPACHO_USUARIO = os.environ.get("DESPACHO_PRIORIDAD_USUARIO", "op1").strip()
 JWT_ALGORITHM = "HS256"
 
 SCOPES = {"operador": "operador", "terminal": "terminal", "pasajero": "pasajero", "dev": "dev", "dueno": "dueno"}
@@ -824,6 +826,8 @@ class ConnectionManager:
         conns = self.operadores.get(operador_id, [])
         if ws in conns:
             conns.remove(ws)
+        if not conns:
+            self.operadores.pop(operador_id, None)
 
     async def connect_pasajero(self, pasajero_id: str, ws: WebSocket):
         self.pasajeros.setdefault(pasajero_id, []).append(ws)
@@ -1816,8 +1820,9 @@ async def turno_activo(current: dict = Depends(require_operador_estricto)):
 @api_router.get("/turnos/mis-turnos")
 async def turno_historial(current: dict = Depends(require_operador_estricto),
                           limite: int = Query(30, ge=1, le=100)):
+    # `_id` desempata turnos con el mismo `inicio` (reloj de baja resolución).
     docs = await db.turnos.find({"operador_id": current["id"]}).sort(
-        "inicio", -1).to_list(limite)
+        [("inicio", -1), ("_id", -1)]).to_list(limite)
     return {"turnos": [_turno_out(d) for d in docs]}
 
 
@@ -2615,15 +2620,18 @@ async def _buscar_candidatos(
     solo_libres: bool = True,
     tipo_vehiculo_id: Optional[str] = None,
     excluir_ids: Optional[List[str]] = None,
+    solo_usuario: Optional[str] = None,
 ) -> List[dict]:
-    """Taxis disponibles para un servicio: AVAILABLE, vehículo activo, GPS fresco,
-    ordenados por distancia (Haversine) al origen."""
+    """Taxis disponibles para un servicio: AVAILABLE, vehículo activo, GPS fresco
+    (o app conectada por WebSocket), ordenados por distancia (Haversine) al origen."""
     await _expirar_ofertas_vencidas()
     umbral = await gps_stale_seconds()
     base = {"estado": EstadoOperador.libre.value} if solo_libres else {}
     query = {**base, "activo": {"$ne": False}}
     if sitio_id:
         query.update(_sitio_query_for(sitio_id))
+    if solo_usuario:
+        query["usuario"] = solo_usuario
     docs = await db.operadores.find(query).to_list(1000)
     tipos = await _mapa_tipos_vehiculo()
     excluidos = set(excluir_ids or [])
@@ -2634,10 +2642,11 @@ async def _buscar_candidatos(
             continue
         if op.get("lat") is None or op.get("lng") is None:
             continue
+        # Sin GPS reciente solo cuenta si la app del chofer sigue conectada: un taxi
+        # con la app cerrada no debe recibir ofertas aunque su cuenta esté activa.
         gps_ok = _gps_fresco(op.get("ultima_actualizacion"), umbral)
-        en_turno = bool(op.get("en_operacion") or op.get("activo"))
-        ws_vivo = op_id_str in manager.operadores
-        if not gps_ok and not (en_turno or ws_vivo):
+        ws_vivo = bool(manager.operadores.get(op_id_str))
+        if not gps_ok and not ws_vivo:
             continue
         if await _tiene_servicio_activo(op_id_str):
             continue
@@ -2701,6 +2710,7 @@ async def dispatch_offer(body: DispatchOfferBody, _=Depends(require_terminal)):
             "estado": EstadoServicio.ofrecido.value,
             "ofrecido_a": ids,
             "expira_en": expira,
+            "oferta_ttl_s": ttl,
             "rechazados": [],
         }},
     )
@@ -3784,6 +3794,15 @@ async def _asignar_atomicamente(servicio_id: str, operador_id: str,
         if v and v.get("activo") is False:
             raise HTTPException(status_code=409, detail="El vehículo del operador está inactivo")
     ts = now_iso()
+    # 1) Reservar al chofer de forma atómica (libre → ocupado): si dos servicios
+    #    compiten por el mismo taxi, solo uno logra la reserva.
+    reserva = await db.operadores.update_one(
+        {"_id": to_oid(operador_id), "estado": EstadoOperador.libre.value},
+        {"$set": {"estado": EstadoOperador.ocupado.value, "ultima_actualizacion": ts}},
+    )
+    if reserva.modified_count == 0:
+        raise HTTPException(status_code=409, detail="El operador no está disponible")
+    # 2) Ganar el servicio; si otro chofer ya lo tomó, se libera la reserva.
     res = await db.servicios.update_one(
         {"_id": to_oid(servicio_id), "estado": {"$in": permitir_estados}},
         {"$set": {
@@ -3794,13 +3813,13 @@ async def _asignar_atomicamente(servicio_id: str, operador_id: str,
         }},
     )
     if res.matched_count == 0:
+        await db.operadores.update_one(
+            {"_id": to_oid(operador_id), "estado": EstadoOperador.ocupado.value},
+            {"$set": {"estado": EstadoOperador.libre.value}},
+        )
         return False
     after = await db.servicios.find_one({"_id": to_oid(servicio_id)})
     op_sitio = op.get("sitio_id") or (after or {}).get("sitio_id") or DEFAULT_SITIO
-    await db.operadores.update_one(
-        {"_id": to_oid(operador_id)},
-        {"$set": {"estado": EstadoOperador.ocupado.value, "ultima_actualizacion": ts}},
-    )
     estado_msg = {"type": "estado", "operador_id": operador_id, "estado": EstadoOperador.ocupado.value, "ts": ts, "sitio_id": op_sitio}
     await manager.broadcast_terminal(estado_msg, sitio_id=op_sitio)
     await _notificar_dueno_de_operador(operador_id, estado_msg)
@@ -4045,40 +4064,19 @@ async def _autodespachar_servicio_pasajero(servicio_id: str) -> Optional[dict]:
             lat, lng, num=35, sitio_id=sitio_id, excluir_ids=rechazados
         )
 
-    # Regla de simulación/pruebas: priorizar unidad 101 (op1) como primera opción si está libre
-    # y no está en la lista de rechazados para este servicio.
-    idx_101 = -1
-    for i, c in enumerate(candidatos):
-        placa = str(c.get("placa") or "")
-        usuario = str(c.get("usuario") or "")
-        veh = c.get("vehiculo") or {}
-        num_eco = str(veh.get("numero_economico") or "")
-        v_placa = str(veh.get("placa") or "")
-        if "101" in placa or usuario == "op1" or "101" in num_eco or "101" in v_placa:
-            idx_101 = i
-            break
-    if idx_101 > 0:
-        candidatos.insert(0, candidatos.pop(idx_101))
-    elif idx_101 == -1:
-        # Si op1 no quedó en el corte por distancia pero está libre y no ha rechazado, incluirlo primero
-        try:
-            op1_doc = await db.operadores.find_one({"usuario": "op1", "estado": EstadoOperador.libre.value, "activo": {"$ne": False}})
-            if op1_doc and str(op1_doc["_id"]) not in rechazados and not await _tiene_servicio_activo(str(op1_doc["_id"])):
-                op1_ser = serialize(op1_doc)
-                dist = haversine_km(lat, lng, op1_doc.get("lat") or lat, op1_doc.get("lng") or lng)
-                op1_ser["distancia_km"] = round(dist, 3)
-                op1_ser["distancia_m"] = round(dist * 1000)
-                op1_ser["eta_s"] = max(45, round((dist * 1000) / (26.0 / 3.6)))
-                op1_ser["eta_min"] = max(1, round(op1_ser["eta_s"] / 60.0))
-                vid1 = op1_doc.get("vehiculo_id")
-                if vid1:
-                    v1 = await db.vehiculos.find_one({"_id": to_oid(vid1)})
-                    if v1:
-                        tipos = await _mapa_tipos_vehiculo()
-                        op1_ser["vehiculo"] = _vehiculo_resumen(v1, tipos)
-                candidatos.insert(0, op1_ser)
-        except Exception as e_op1:
-            logger.warning("No se pudo evaluar fallback prioritario para op1: %s", e_op1)
+    # Simulación: el chofer prioritario (op1 / TX-101 por defecto) recibe primero la
+    # oferta si es elegible EN ESTE SITIO (libre, GPS o app conectada, sin servicio
+    # activo y sin haber rechazado este viaje). DESPACHO_PRIORIDAD_USUARIO="" la apaga.
+    if PRIORIDAD_DESPACHO_USUARIO:
+        idx = next((i for i, c in enumerate(candidatos) if c.get("usuario") == PRIORIDAD_DESPACHO_USUARIO), -1)
+        if idx > 0:
+            candidatos.insert(0, candidatos.pop(idx))
+        elif idx == -1:
+            prioritario = await _buscar_candidatos(
+                lat, lng, num=1, sitio_id=sitio_id, excluir_ids=rechazados,
+                solo_usuario=PRIORIDAD_DESPACHO_USUARIO,
+            )
+            candidatos = prioritario + candidatos
 
     if not candidatos:
         await db.servicios.update_one(
@@ -4089,7 +4087,7 @@ async def _autodespachar_servicio_pasajero(servicio_id: str) -> Optional[dict]:
 
     mejor_candidato = candidatos[0]
     ids_oferta = [mejor_candidato["id"]]
-    ttl = 45.0  # 45 segundos para aceptar antes de pasar en cascada al siguiente conductor
+    ttl = await oferta_ttl_seconds()  # config `oferta_duracion_seg`; luego cascada al siguiente
     expira = (datetime.now(timezone.utc) + timedelta(seconds=ttl)).isoformat()
     await db.servicios.update_one(
         {"_id": s["_id"]},
@@ -4098,6 +4096,7 @@ async def _autodespachar_servicio_pasajero(servicio_id: str) -> Optional[dict]:
                 "estado": EstadoServicio.ofrecido.value,
                 "ofrecido_a": ids_oferta,
                 "expira_en": expira,
+                "oferta_ttl_s": ttl,
             }
         },
     )
@@ -4131,15 +4130,18 @@ async def _cascada_ofertas_vencidas() -> int:
         if exp and (exp.replace(tzinfo=timezone.utc) if exp.tzinfo is None else exp) <= ahora:
             ofrecidos = list(s.get("ofrecido_a") or [])
             sid = str(s["_id"])
-            logger.info("Oferta expirada a los 30s para servicio=%s (ofrecido a %s). Cascada al siguiente conductor...", sid, ofrecidos)
-            await db.servicios.update_one(
-                {"_id": s["_id"], "estado": EstadoServicio.ofrecido.value},
+            res = await db.servicios.update_one(
+                {"_id": s["_id"], "estado": EstadoServicio.ofrecido.value, "expira_en": s.get("expira_en")},
                 {
                     "$addToSet": {"rechazados": {"$each": ofrecidos}},
                     "$set": {"ofrecido_a": []},
                     "$unset": {"expira_en": ""},
                 }
             )
+            if res.modified_count == 0:
+                # Otro ciclo (bucle de fondo o búsqueda anidada) ya procesó esta oferta.
+                continue
+            logger.info("Oferta expirada para servicio=%s (ofrecido a %s). Cascada al siguiente conductor...", sid, ofrecidos)
             # Reasignar automáticamente al siguiente candidato disponible más cercano
             s_sig = await _autodespachar_servicio_pasajero(sid)
             if s_sig and not (s_sig.get("ofrecido_a") or []):
@@ -4154,12 +4156,50 @@ async def _cascada_ofertas_vencidas() -> int:
     return n
 
 
+REINTENTO_PENDIENTES_SEG = 10.0
+
+
+async def _reintentar_pendientes() -> int:
+    """Viajes de pasajero que quedaron `pendiente` (todos los choferes rechazaron o
+    no había libres): se vuelven a ofrecer a choferes que se liberen, y tras
+    `pendiente_max_minutos` sin taxi pasan a `vencido` para avisar al pasajero."""
+    ahora = datetime.now(timezone.utc)
+    max_min = float(await get_config("pendiente_max_minutos", 10))
+    docs = await db.servicios.find({
+        "estado": EstadoServicio.pendiente.value,
+        "tipo": "pasajero",
+        "origen.lat": {"$ne": None},
+    }).to_list(200)
+    n = 0
+    for s in docs:
+        creado = _parse_iso(s.get("timestamp_creacion"))
+        if creado and creado.tzinfo is None:
+            creado = creado.replace(tzinfo=timezone.utc)
+        if creado and (ahora - creado).total_seconds() > max_min * 60:
+            res = await db.servicios.update_one(
+                {"_id": s["_id"], "estado": EstadoServicio.pendiente.value},
+                {"$set": {"estado": EstadoServicio.vencido.value, "ts_vencido": now_iso()}},
+            )
+            if res.modified_count:
+                await _notificar_servicio(await db.servicios.find_one({"_id": s["_id"]}))
+                n += 1
+            continue
+        s_sig = await _autodespachar_servicio_pasajero(str(s["_id"]))
+        if s_sig and s_sig.get("estado") == EstadoServicio.ofrecido.value:
+            n += 1
+    return n
+
+
 async def _bucle_cascada_ofertas():
     global _cascada_activa
-    logger.info("Bucle de cascada de servicios activo (timeout 30s, verificación continua).")
+    logger.info("Bucle de cascada de servicios activo (TTL de oferta desde config, verificación continua).")
+    ultimo_reintento = 0.0
     while _cascada_activa:
         try:
             await _cascada_ofertas_vencidas()
+            if time.monotonic() - ultimo_reintento >= REINTENTO_PENDIENTES_SEG:
+                ultimo_reintento = time.monotonic()
+                await _reintentar_pendientes()
         except Exception as exc:
             logger.error("Error en bucle de cascada de ofertas: %s", exc)
         await asyncio.sleep(1.5)

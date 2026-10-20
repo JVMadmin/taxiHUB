@@ -1027,15 +1027,16 @@ export default function OperadorApp() {
     }
   }, [servicio]);
 
-  // Cuenta regresiva de la oferta (45 segundos completos, inmune a desfases de reloj)
-  const OFERTA_TOTAL_MS = 45000;
+  // Cuenta regresiva de la oferta: duración que fija el servidor (`oferta_ttl_s`),
+  // medida desde que llegó al teléfono para ser inmune a desfases de reloj.
+  const ofertaTotalMs = (Number(servicio?.oferta_ttl_s) || 45) * 1000;
   const ofertaExpira = useMemo(() => {
     if (!servicio || servicio.estado !== "ofrecido") return null;
     const inicio = ofertaRecibidaAtRef.current || Date.now();
     const transcurrido = now.getTime() - inicio;
-    const restante = OFERTA_TOTAL_MS - transcurrido;
+    const restante = ofertaTotalMs - transcurrido;
     return restante > 0 ? restante : 0;
-  }, [servicio, now]);
+  }, [servicio, now, ofertaTotalMs]);
 
   useEffect(() => {
     if (ofertaExpira === 0 && servicio?.estado === "ofrecido") {
