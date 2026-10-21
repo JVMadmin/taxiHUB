@@ -28,7 +28,7 @@ Production (`https://taxihub.cloud`) currently runs as a **demo**: a simulated f
 - `frontend/src/lib/api.js` — API client. `BACKEND_URL` from `REACT_APP_BACKEND_URL` (or `localStorage.th_backend_url`); JWT per app in localStorage (`op_token`, `pas_token`, …). WS base derived from the same URL.
 - Theme/palette via `data-theme` in localStorage; app root is forced `dark`.
 - E2E testability: interactive elements get `data-testid` values, centralized in `frontend/src/constants/testIds/` (one file per feature, re-exported from `index.js`). Value convention is kebab-case `<feature>-<element>`. Add new test IDs there when adding UI; do not inline raw strings in JSX (many legacy inline ones remain).
-- Capacitor versions are currently mixed (`@capacitor/core` 6 vs `@capacitor/android`/`cli` 8) — align them before touching native code.
+- Capacitor 8 everywhere (`core`, `android`, `cli` and the official plugins): keep them on the same major when upgrading. `scripts/build_all_apks.py` builds the three APKs (driver, passenger, owner) with `cap sync` + `gradlew assembleDebug -PappId=…`.
 
 ## Testing (important)
 - **Do not modify `backend/pytest.ini` `addopts`** — keep exactly `-n 2 --dist loadscope` (pytest-xdist is a required plugin). Serial run = `-n 0` (NOT `-p no:xdist`, which errors).

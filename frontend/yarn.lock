@@ -1110,20 +1110,20 @@
   resolved "https://registry.yarnpkg.com/@capacitor-community/background-geolocation/-/background-geolocation-1.2.26.tgz#f7036754804acc43d219d284e6dee0e2489c1398"
   integrity sha512-kuva8VQ6zM+uIKgHUJTP87IYbmGKhX7DZw62JYfGZ888h4Xr5zeN+UTR6KBRHQVrGBpzSfbv+6/HQVuHYa7W5A==
 
-"@capacitor/android@^8.5.2":
-  version "8.5.2"
-  resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-8.5.2.tgz#e774465cd42c321f643bb365ffe50b89697ef2bb"
-  integrity sha512-rtiaz78egCcS+vs29wkWCL3C+RhazKMSygXcjutwWP8NmO6r5UBxOvGf3Wjz5+ahobyQ723tn9gCePwRwcNDZQ==
+"@capacitor/android@^8.5.3":
+  version "8.5.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-8.5.3.tgz#60be0f99326861fcf1b8d252b15850f6cc2a526a"
+  integrity sha512-ilH4gSSz3DrketMkzDVAvY9JsWJ//rCQnECLTdcFRO7xXDogwAbUvQAnIAbiqefwV/D1xfjEL4Gw1MJXEcaA9g==
 
-"@capacitor/app@^6.0.0":
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/@capacitor/app/-/app-6.0.3.tgz#c33ec5d29bc74090d860363934a28c4d0213955d"
-  integrity sha512-4gFUCbcVz0N/YYN32OBFerocWXslIv3Nc90gDiRsBkJc0plwK6kIUT6PKa5WtW2kfhteUeCVXQbvArH2fH+0Ug==
+"@capacitor/app@^8.1.2":
+  version "8.1.2"
+  resolved "https://registry.yarnpkg.com/@capacitor/app/-/app-8.1.2.tgz#3f39b7b02d2277b3ef6f659747d0d6e56b60a1cc"
+  integrity sha512-uKBlsrXH0IdvUn69e/KKYbZ32A06pcrUdG8LWuZ/6y33YMXZXLEEdNSwl+jKS/SrsTWqnePs8EqSWaiQM3mUGA==
 
-"@capacitor/cli@^8.5.2":
-  version "8.5.2"
-  resolved "https://registry.yarnpkg.com/@capacitor/cli/-/cli-8.5.2.tgz#3508c35adb52eef7d54d3cf95bd3636c6d4aab7f"
-  integrity sha512-O2kpA5ZPJUAmliDCcmpMf8xnJwMezxlFPUrlyOAjbL3U9MFNY3l4ZpPI/UXwvyPmR8ETcVF9pFr+VdWq61rqTQ==
+"@capacitor/cli@^8.5.3":
+  version "8.5.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/cli/-/cli-8.5.3.tgz#5eb66608123befc4890a6d92394358a0e2bb68d7"
+  integrity sha512-/G6xwna+p4GS3lthSdWN3OThCH2F85O0Ukdy8rv3oAXvgEMeyFgPEIA3PMAS++IkHwUuBYBAKOQJnZfcrh1n0w==
   dependencies:
     "@ionic/cli-framework-output" "^2.2.8"
     "@ionic/utils-subprocess" "^3.0.1"
@@ -1144,42 +1144,49 @@
     xcode "^3.0.1"
     xml2js "^0.6.2"
 
-"@capacitor/core@^6.0.0":
-  version "6.2.2"
-  resolved "https://registry.yarnpkg.com/@capacitor/core/-/core-6.2.2.tgz#62b40a5102310f3ccb451c7e81fc00dc2b95b260"
-  integrity sha512-qEI3DcwJEPzhW+hVGKH8m4jbujtkdUiGkpMLHmpR8epACU7wEsV6NF8pCHzpsMYjc80oK7Cmpcw+MIienv/YRw==
+"@capacitor/core@^8.5.3":
+  version "8.5.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/core/-/core-8.5.3.tgz#9f4d92fe5eb2d44b01d920190a54ee965e9aeb5d"
+  integrity sha512-oBE1oGuYE4ZzYYrulC75OuHdSsD6zLUy7d5o1tFwDLG4govGoubY15cxpiI5l0+q87Lm5p0bhbehMdzJg4aFag==
   dependencies:
     tslib "^2.1.0"
 
-"@capacitor/device@^6.0.0":
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/@capacitor/device/-/device-6.0.3.tgz#6ad16c97375cbca21a639377640bbaf255cebbff"
-  integrity sha512-AmPtVuWeW31Ui+UMIl5zgCzwMU4fL4hIvYYvbAhXXyKWjxi1nk+CAh9B3k4OYUQLJI5nan0PoJ4GiiJ7x6DT/A==
+"@capacitor/device@^8.0.3":
+  version "8.0.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/device/-/device-8.0.3.tgz#9fb49223fa0c090541d38341269a3cb45a2cabfe"
+  integrity sha512-rliPCCZwxtjU6200jJNDAsQhioyozV3fGgiP+NgRqtDOI7i+Jdz+DYNwEup+3MGZZ4NEmkuFaBeWLM3T01vJRg==
 
-"@capacitor/geolocation@^6.0.0":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@capacitor/geolocation/-/geolocation-6.1.1.tgz#c9e1e799a82df9b2345f777038da0d2070c03675"
-  integrity sha512-zR24reZqkb9farg+qVqR0+DdDYs05SqkiqxCENoPofk/QWD6AobcHKDZutwifqO66jK2rM0ECo8MvbQv4MUTyA==
+"@capacitor/geolocation@^8.2.4":
+  version "8.2.4"
+  resolved "https://registry.yarnpkg.com/@capacitor/geolocation/-/geolocation-8.2.4.tgz#a2e8cb1175d18504d678114a4eba1cf5c0a35750"
+  integrity sha512-FDcUiPQc2AXSTAV61QSDPXml11guKBx5HPEkdWvUqw7kMqrc2Ucp0bsWngeLyRs/01a5aWBI0hEuvetuF3PsrQ==
+  dependencies:
+    "@capacitor/synapse" "^1.0.4"
 
-"@capacitor/local-notifications@^6.0.0":
-  version "6.1.3"
-  resolved "https://registry.yarnpkg.com/@capacitor/local-notifications/-/local-notifications-6.1.3.tgz#84f92cdfb065e1c11769ed1d4f5f24a58c851ce1"
-  integrity sha512-AsVVPmuYoSzHX4kbLBwjdrV7q3KBagpJtngNyz6FFwNk9C5osyQATWxKWXwqJgMcMm0CqZ5yvpm+beHKBYsHYw==
+"@capacitor/local-notifications@^8.3.1":
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/@capacitor/local-notifications/-/local-notifications-8.3.1.tgz#16b1387c5fb1dad0e136da4154f17f50180d2cbb"
+  integrity sha512-F7zu/+p/mIR958YP4axOkeI5hBKRaXDyYjbNPrAil2wWfd7OxScPSTvP9t85NpQ0eULVRu0/sntoxOg6ck477A==
 
-"@capacitor/push-notifications@^6.0.0":
-  version "6.0.5"
-  resolved "https://registry.yarnpkg.com/@capacitor/push-notifications/-/push-notifications-6.0.5.tgz#c98d893d724abc20a879318af7a4de3a719b807e"
-  integrity sha512-CsRmb0cnZd9Uwx24ym4My5fNKrQvwI4D51aMEph5pUZy+LAjp6q0y4NJe8DEgwaVdAqVLbb4rqn75AZ4WSiFYg==
+"@capacitor/push-notifications@^8.1.3":
+  version "8.1.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/push-notifications/-/push-notifications-8.1.3.tgz#00ae8fbc8347e733d9292df025a5a95201cf8551"
+  integrity sha512-UlOCTS3uiw8ZUJ1rkFKJgoqPADipHDNn0lq5mNRwtXALVxQXIeIoRd3iqpzC+962R2LpCRJRkCTjPX2OHK3tBA==
 
-"@capacitor/screen-orientation@^6.0.0":
-  version "6.0.4"
-  resolved "https://registry.yarnpkg.com/@capacitor/screen-orientation/-/screen-orientation-6.0.4.tgz#a28ac6ac10832531391283556b20c9460ef027ef"
-  integrity sha512-BKuGqUGvN7hSEmotI7m8UlGRRBGd9YpAzlnQAXp9VNvKkinSkreMHPrEOiR/sG3QX/vR/BJ190tGQiICmylcTg==
+"@capacitor/screen-orientation@^8.0.2":
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/@capacitor/screen-orientation/-/screen-orientation-8.0.2.tgz#87b04ffa59385d5e50cb060dc5a4332f196a2440"
+  integrity sha512-4hC/LBRI3m0Mm3J+U7NyFd3WtQt/GryYgutOqygP1NTw3eAn1p1d+88Z8GwsuGpRj2vxyWySDUJSndXyAfxwUw==
 
-"@capacitor/status-bar@^6.0.0":
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/@capacitor/status-bar/-/status-bar-6.0.3.tgz#a48438b600dfaee7b0832f0cfcd5583fc21b0b55"
-  integrity sha512-nFlgSmtx6Zwaw0tEvZgQsWHBeOfWWB/AvEoCApopLT4mHkBVoSrwkLvy2PjZs5wxCbsmqvQczr3XCyTwaDZVQg==
+"@capacitor/status-bar@^8.0.4":
+  version "8.0.4"
+  resolved "https://registry.yarnpkg.com/@capacitor/status-bar/-/status-bar-8.0.4.tgz#ce93e52c2feba9ef218c7bd3e839aa447c183269"
+  integrity sha512-ZMzBUyHBzwDUxcHadEhvOvmoPmMQGMZgaMRJu8ohELeI6IaxoVH9ZhdF/OHnY3/yykv3Glev8Tnbh4aZY/0B0w==
+
+"@capacitor/synapse@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@capacitor/synapse/-/synapse-1.0.4.tgz#c6beb33119d9656b1f04cb7783989fb78933ef6d"
+  integrity sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw==
 
 "@craco/craco@7.1.0":
   version "7.1.0"

@@ -2,7 +2,6 @@
   "appId": "com.taxihub.operador",
   "appName": "TaxiHub Operador",
   "webDir": "build",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https",
     "cleartext": true

@@ -241,10 +241,9 @@ export default function OperadorApp() {
   // Adaptación nativa de la barra de estado en Android
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      try {
-        StatusBar.setStyle({ style: driverLight ? Style.Light : Style.Dark });
-        StatusBar.setBackgroundColor({ color: driverLight ? "#F4F7F6" : "#0B0D10" });
-      } catch {}
+      // Promesas: el try/catch no atrapa su rechazo. setBackgroundColor no existe en Android 15+.
+      StatusBar.setStyle({ style: driverLight ? Style.Light : Style.Dark }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: driverLight ? "#F4F7F6" : "#0B0D10" }).catch(() => {});
     }
   }, [driverLight]);
 

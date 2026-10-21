@@ -105,7 +105,7 @@ Detalle en `docs/` (FASE1…FASE12 de la versión 2.0, `PREMIUM_*`, `DEPLOYMENT.
 - Tests: 103 en verde.
 
 ## Backlog
-- Alinear versiones de Capacitor (core 6 vs android/cli 8) y reconstruir los APK.
+- Reconstruir y publicar los APK con Capacitor 8 alineado (core/plugins pasaron de 6 a 8 el 2026-10-20).
 - Dividir `server.py` y las pantallas grandes (`PassengerApp`, `OperadorApp`, `TerminalMenu`).
 - P3: ETA/zonas/prioridad en el despacho; turnos y rotación; polilíneas de ruta; app móvil Android (GPS en segundo plano) e iOS; pago card/online; job en segundo plano para expiraciones; índices geoespaciales 2dsphere para flotas grandes.
 - P0: Fase 2 — App del operador (login, entrar/salir, botones de estado, selector de ruta, geolocalización cada 8-10s).
