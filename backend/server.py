@@ -2833,6 +2833,15 @@ async def _migraciones():
     # 6) Conversación demo de WhatsApp (flujo ubicación→servicio del despacho).
     await _seed_wa_conversacion()
 
+    # 7) Avisos demo sembrados con el número provisional de soporte → número real.
+    await db.avisos_dev.update_many(
+        {"contacto_soporte": {"$regex": "916 100 9999"}},
+        {"$set": {
+            "mensaje": "Escríbenos por WhatsApp para dudas, altas de unidades o capacitación.",
+            "contacto_soporte": "WhatsApp Soporte: +52 916 163 2304",
+        }},
+    )
+
     logger.info("Migraciones aplicadas (sitios, sitio_id, vehículos backfill, tipos de vehículo)")
 
 

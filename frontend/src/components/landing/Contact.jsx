@@ -3,6 +3,19 @@ import { Send, MessageSquare, PhoneCall, CheckCircle2, ShieldAlert } from "lucid
 import { LANDING } from "@/constants/testIds";
 import { Reveal } from "./motion";
 
+// WhatsApp de ventas: wa.me exige solo dígitos con lada de país (México = 52, sin el "1" de celular).
+export const WHATSAPP_VENTAS = "529161632304";
+export const WHATSAPP_VENTAS_TEXTO = "+52 916 163 2304";
+
+export function abrirWhatsAppVentas(texto) {
+  const url = `https://wa.me/${WHATSAPP_VENTAS}${texto ? `?text=${encodeURIComponent(texto)}` : ""}`;
+  // Si el navegador bloquea la ventana nueva (Safari/WebView), abrir en la misma pestaña.
+  // Sin "noopener" en features: con él window.open siempre devuelve null.
+  const win = window.open(url, "_blank");
+  if (win) win.opener = null;
+  else window.location.href = url;
+}
+
 export function Contact() {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -38,11 +51,11 @@ export function Contact() {
       localStorage.setItem("taxihub_last_lead", JSON.stringify(payload));
       setSubmitted(true);
 
-      const msg = encodeURIComponent(
+      abrirWhatsAppVentas(
         `Hola TaxiHUB, soy ${formData.nombre} de la central "${formData.central}". Tenemos aproximadamente ${formData.unidades} unidades. Me interesa la tarifa de $99 MXN por unidad y el pago único de implementación.` +
-          (formData.mensaje ? ` Detalle: ${formData.mensaje}` : "")
+          (formData.mensaje ? ` Detalle: ${formData.mensaje}` : "") +
+          ` Mi teléfono: ${formData.telefono}.`
       );
-      window.open(`https://wa.me/529161009999?text=${msg}`, "_blank");
     } catch (err) {
       setError("Error al procesar la solicitud. Por favor contáctanos por WhatsApp.");
     } finally {
@@ -76,7 +89,7 @@ export function Contact() {
                   <div>
                     <h4 className="text-sm font-bold text-slate-900">Atención Directa por WhatsApp</h4>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Respuesta inmediata al +52 916 100 9999
+                      Escríbenos al {WHATSAPP_VENTAS_TEXTO}
                     </p>
                   </div>
                 </div>

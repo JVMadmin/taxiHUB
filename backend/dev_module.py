@@ -55,7 +55,7 @@ def build_router(*, DEFAULT_PUNTOS_CALIENTES, DEFAULT_SITIO, JWT_ALGORITHM, JWT_
         mensaje: str
         nivel: str = "info"
         destino: Optional[str] = "terminal_y_socios"
-        contacto_soporte: Optional[str] = "+52 916 100 9999 (Soporte SaaS TaxiHub)"
+        contacto_soporte: Optional[str] = "+52 916 163 2304 (Soporte SaaS TaxiHub)"
         duracion_horas: int = 24
         horas_vigencia: Optional[int] = None
 

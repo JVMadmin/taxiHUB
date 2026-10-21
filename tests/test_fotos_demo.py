@@ -40,3 +40,19 @@ async def test_migracion_corrige_retratos_sin_tocar_fotos_subidas(fresh_db):
     assert _num(h["foto_url"]) in server.FOTOS_DEMO_HOMBRES
     op1 = await fresh_db.operadores.find_one({"usuario": "op1"})
     assert op1["foto_url"] == "central-taxis/perfiles/propia.webp"
+
+
+async def test_migracion_cambia_numero_provisional_de_soporte(fresh_db):
+    await fresh_db.avisos_dev.insert_one({
+        "titulo": "Soporte Técnico TaxiHub Cloud Activo",
+        "mensaje": "Compresión WebP por tenant y blindaje WhatsApp Anti-Ban verificados al 100%.",
+        "contacto_soporte": "WhatsApp Soporte SaaS: +52 916 100 9999",
+        "activo": True,
+    })
+    await fresh_db.avisos_dev.insert_one({"titulo": "Propio", "contacto_soporte": "+52 55 1234 5678", "activo": True})
+    await server._migraciones()
+    demo = await fresh_db.avisos_dev.find_one({"titulo": "Soporte Técnico TaxiHub Cloud Activo"})
+    assert demo["contacto_soporte"] == "WhatsApp Soporte: +52 916 163 2304"
+    assert "Anti-Ban" not in demo["mensaje"]
+    propio = await fresh_db.avisos_dev.find_one({"titulo": "Propio"})
+    assert propio["contacto_soporte"] == "+52 55 1234 5678"
