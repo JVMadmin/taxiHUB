@@ -17,3 +17,4 @@ export * from './passenger';
 export * from './driver';
 export * from './theme';
 export * from './landing';
+export * from './whatsapp';

@@ -50,6 +50,16 @@ scripts/deploy_vps.sh --recrear <commit>     # recrea backend y luego frontend (
 - Vuelta atrás: las imágenes previas quedan como `taxihub-taxihub-backend:anterior` y
   `taxihub-taxihub-frontend:anterior`.
 
+### Puente WhatsApp (`taxihub-wa-bridge`)
+- Requiere `WA_WEBHOOK_TOKEN` (32+ caracteres al azar, p. ej. `openssl rand -hex 24`) en el `.env`
+  del VPS: lo comparten backend y puente. Sin él, el script no construye ni levanta el puente.
+- Sin puertos publicados: solo lo ve el backend por la red `backend`.
+- Las sesiones vinculadas viven en el volumen `taxihub_wa_sesiones` (no borrarlo).
+- Vincular una central: Terminal → WhatsApp → *Configurar Número / QR* → *Escanear QR* (o *Código
+  8 dígitos*) y en el teléfono de la central: *Dispositivos vinculados → Vincular un dispositivo*.
+- Las centrales demo (`default`, `sitio_pakalna`) siguen simuladas con `SIMULACION_DEMO=1`.
+- Logs: `sudo docker logs -f taxihub-wa-bridge`.
+
 ## 4. Comandos de Gestión
 
 ### Ver estado de contenedores

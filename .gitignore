@@ -116,3 +116,6 @@ CLAUDE_HANDOFF.md
 /test_antislop_verify.py
 /test_dual_capture.py
 /screenshot_*.png
+
+# Datos locales del puente WhatsApp (credenciales de sesión)
+wa-bridge/data/

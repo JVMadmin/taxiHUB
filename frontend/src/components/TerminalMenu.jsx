@@ -208,6 +208,7 @@ export const TerminalMenu = memo(function TerminalMenu({
                   onVerMapa={onVerWaMapa}
                   onCrearServicio={onMarkWaLocation}
                   onAssigned={onAssigned}
+                  reloadSignal={servicioSignal}
                 />
               </div>
             )}

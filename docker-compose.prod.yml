@@ -30,6 +30,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@nexium-postgres:5432/${POSTGRES_DB}
       ENV: production
       CORS_ORIGINS: https://taxihub.cloud,https://www.taxihub.cloud
+      WA_BRIDGE_URL: http://taxihub-wa-bridge:3099
     volumes:
       - taxihub_uploads:/app/uploads
     networks:
@@ -66,6 +67,23 @@ services:
       taxihub-backend:
         condition: service_healthy
 
+  # Puente WhatsApp (Baileys): una sesión por central, solo en la red interna (sin puertos
+  # publicados). Comparte WA_WEBHOOK_TOKEN con el backend en ambos sentidos.
+  taxihub-wa-bridge:
+    build:
+      context: ./wa-bridge
+      dockerfile: Dockerfile
+    container_name: taxihub-wa-bridge
+    restart: unless-stopped
+    environment:
+      WA_WEBHOOK_TOKEN: ${WA_WEBHOOK_TOKEN:-}
+      BACKEND_URL: http://taxihub-backend:8000
+      DATA_DIR: /data
+    volumes:
+      - taxihub_wa_sesiones:/data
+    networks:
+      - backend
+
 # La siembra demo la hace el backend al arrancar (SIMULACION_DEMO=1 por defecto);
 # el antiguo servicio taxihub-seed fallaba con 401 en producción.
 
@@ -74,6 +92,8 @@ volumes:
   taxihub_uploads:
   taxihub_downloads:
     name: taxihub_downloads
+  taxihub_wa_sesiones:
+    name: taxihub_wa_sesiones
 
 networks:
   backend:

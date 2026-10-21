@@ -1,0 +1,19 @@
+{
+  "name": "taxihub-wa-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Puente WhatsApp (Baileys) de TaxiHUB: una sesión por sitio, reenvía mensajes al backend",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "baileys": "7.0.0-rc14",
+    "pino": "9.7.0"
+  }
+}

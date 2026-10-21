@@ -525,13 +525,19 @@ export default function Terminal() {
           setLiveMessage(msg.mensaje);
         } else if (msg.type === "wa_mensaje") {
           setServicioSignal((n) => n + 1);
-          toast.info(`💬 WhatsApp de ${msg.cliente_nombre || msg.cliente_telefono || "Cliente"}`, {
-            description: msg.mensaje?.texto || "📍 Ubicación GPS compartida",
-            action: {
-              label: "Abrir",
-              onClick: () => setAdminSection("whatsapp"),
-            },
-          });
+          // El evento trae la conversación completa; solo avisar cuando escribe el pasajero
+          // (las respuestas de la central y los avisos de entrega también llegan por aquí).
+          const conv = msg.conversacion || {};
+          const ultimo = conv.ultimo_mensaje || {};
+          if (ultimo.de === "cliente") {
+            toast.info(`💬 WhatsApp de ${conv.cliente_nombre || conv.cliente_telefono || "Cliente"}`, {
+              description: ultimo.texto || "📍 Ubicación GPS compartida",
+              action: {
+                label: "Abrir",
+                onClick: () => setAdminSection("whatsapp"),
+              },
+            });
+          }
         } else if (msg.type === "reporte") {
           setLiveReporte(msg.reporte);
           toast.info("🎒 Nuevo objeto reportado");

@@ -1,9 +1,16 @@
 """
-WhatsApp Opción A: puente QR Baileys con blindaje anti-baneo (spintax,
-cola por sitio) + webhook/entrada del puente (`/wa/incoming`, `/wa/webhook`,
-autenticados con `WA_WEBHOOK_TOKEN`) y bandeja de conversaciones de la
-terminal. Mismo patrón factory que los demás módulos; `server.py`
-re-exporta `_seed_wa_conversacion` (lo usa `_migraciones`).
+WhatsApp Opción A: puente QR Baileys (`wa-bridge/`, una sesión por sitio) con
+cadencia humana (spintax, "escribiendo…", cola por sitio, solo responde a quien
+escribió en las últimas 24 h) + webhook/entrada del puente (`/wa/incoming`,
+`/wa/webhook`, autenticados con `WA_WEBHOOK_TOKEN`) y bandeja de conversaciones
+de la terminal.
+
+Los sitios demo (`SITIOS_DEMO` con la simulación activa) siguen simulados: con
+las cuentas demo públicas nadie debe vincular su WhatsApp real a ellos. Para
+probar el puente en un sitio demo: `WA_PUENTE_EN_DEMO=1`.
+
+Mismo patrón factory que los demás módulos; `server.py` re-exporta
+`_seed_wa_conversacion` (lo usa `_migraciones`).
 """
 import os
 import random
@@ -13,17 +20,49 @@ from types import SimpleNamespace
 from typing import Optional, Dict, Literal
 
 import httpx
-from fastapi import APIRouter, HTTPException, Depends, Request, Response
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 
 
-def build(*, DEFAULT_SITIO, _require_terminal_or_dev, _sitio_query_for, db, logger,
-          manager, now_iso, require_terminal, serialize, to_oid):
+def build(*, DEFAULT_SITIO, SITIOS_DEMO, _require_terminal_or_dev, _sitio_query_for, db, logger,
+          manager, now_iso, require_terminal, serialize, simulacion_demo, to_oid):
     router = APIRouter(prefix="/api", tags=["whatsapp"])
 
-    WA_BRIDGE_URL = os.environ.get("WA_BRIDGE_URL", "http://127.0.0.1:3099").rstrip("/")
     _wa_last_send_ts: Dict[str, float] = {}
     _wa_demo_state: Dict[str, Dict] = {}
+
+    _PROTECCION = {
+        "solo_respuesta_entrante_24h": True,
+        "simulacion_escritura_humana_ms": "1500-3200",
+        "variacion_spintax_polimorfica": True,
+        "cola_rate_limit_min_seg": 3.0,
+        "lectura_natural_delay_ms": "800-1500",
+        "sesion_persistente_multifile": True,
+        "aviso": ("Conexión no oficial (WhatsApp Web): estas reglas reducen el riesgo, pero WhatsApp "
+                  "puede bloquear el número si los pasajeros lo reportan como spam."),
+    }
+
+    def _es_sitio_demo(sitio: str) -> bool:
+        if os.environ.get("WA_PUENTE_EN_DEMO", "").strip().lower() in ("1", "true", "si", "sí", "on"):
+            return False
+        return bool(simulacion_demo()) and sitio in SITIOS_DEMO
+
+    async def _puente(metodo: str, ruta: str, timeout: float = 4.0, **kwargs):
+        """Llama al puente Baileys. Devuelve (status, json) o (None, None) si no responde."""
+        url = os.environ.get("WA_BRIDGE_URL", "http://127.0.0.1:3099").rstrip("/") + ruta
+        token = os.environ.get("WA_BRIDGE_TOKEN") or os.environ.get("WA_WEBHOOK_TOKEN") or ""
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as hc:
+                r = await hc.request(metodo, url, headers=headers, **kwargs)
+            try:
+                data = r.json()
+            except ValueError:
+                data = {}
+            return r.status_code, data
+        except Exception as e:
+            logger.info("Puente WhatsApp no disponible (%s %s): %s", metodo, ruta, e)
+            return None, None
 
     class WaReply(BaseModel):
         texto: str = Field(min_length=1, max_length=1000)
@@ -112,52 +151,60 @@ def build(*, DEFAULT_SITIO, _require_terminal_or_dev, _sitio_query_for, db, logg
         d["ventana_24h_activa"] = len(msgs_cliente) > 0
         return d
 
+    _ERRORES_ENVIO = {
+        "whatsapp_no_conectado": "WhatsApp no está vinculado en esta central.",
+        "fuera_de_ventana_24h": "El pasajero no ha escrito en las últimas 24 h; WhatsApp solo permite responderle.",
+        "puente_no_disponible": "El servicio de WhatsApp no responde.",
+    }
+
     async def _enviar_por_bridge_antiban(sitio_id: str, telefono: str, texto: str) -> dict:
-        """Ejecuta las reglas Anti-Ban (cola rate-limit >= 3s, typing presence 'composing'
-        1.5-3.2s) y despacha al microservicio Baileys si está activo."""
+        """Cadencia humana (cola >= 3 s, "escribiendo…" 1.5–3.2 s) y envío por el puente
+        Baileys. En sitios demo el envío es simulado. Devuelve los campos que se guardan
+        en el mensaje: `id`, `estado_envio` (simulado | encolado | fallido) y `antiban`."""
         import time as _time
         now_t = _time.time()
         last_t = _wa_last_send_ts.get(sitio_id, 0.0)
         espera_cola = max(0.0, 3.0 - (now_t - last_t))
         typing_ms = random.randint(1500, 3200)
         _wa_last_send_ts[sitio_id] = now_t + espera_cola
+        mensaje_id = uuid.uuid4().hex
 
-        state = _wa_demo_state.setdefault(sitio_id, {
-            "conectado": True,
-            "numero_vinculado": "+52 916 345 9900",
-            "mensajes_enviados_hoy": 0,
-            "modo": "bridge_qr_antiban",
-        })
-        state["mensajes_enviados_hoy"] = state.get("mensajes_enviados_hoy", 0) + 1
+        if _es_sitio_demo(sitio_id):
+            state = _wa_demo_state.setdefault(sitio_id, {})
+            state["mensajes_enviados_hoy"] = state.get("mensajes_enviados_hoy", 0) + 1
+            estado, error = "simulado", None
+        else:
+            status, data = await _puente(
+                "POST", "/send", timeout=6.0,
+                json={
+                    "sitio_id": sitio_id,
+                    "telefono": telefono,
+                    "texto": texto,
+                    "typing_ms": typing_ms,
+                    "delay_queue_ms": int(espera_cola * 1000),
+                    "mensaje_id": mensaje_id,
+                },
+            )
+            if status in (200, 202):
+                estado, error = "encolado", None
+            else:
+                estado = "fallido"
+                error = (data or {}).get("error") or "puente_no_disponible"
 
-        # Intentar envío al microservicio Baileys local (no bloquea los tests si no corre)
-        entregado_bridge = False
-        try:
-            async with httpx.AsyncClient(timeout=1.5) as hc:
-                r = await hc.post(
-                    f"{WA_BRIDGE_URL}/send",
-                    json={
-                        "sitio_id": sitio_id,
-                        "telefono": telefono,
-                        "texto": texto,
-                        "typing_ms": typing_ms,
-                        "delay_queue_ms": int(espera_cola * 1000),
-                    },
-                )
-                if r.status_code == 200:
-                    entregado_bridge = True
-        except Exception:
-            pass
-
-        return {
+        meta = {
+            "id": mensaje_id,
+            "estado_envio": estado,
             "antiban": {
                 "regla_1_solo_respuesta_24h": True,
                 "regla_2_composing_ms": typing_ms,
                 "regla_3_spintax_unico": True,
                 "regla_4_rate_limit_delay_s": round(espera_cola, 2),
-                "entregado_bridge": entregado_bridge,
-            }
+                "entregado_bridge": estado == "encolado",
+            },
         }
+        if error:
+            meta["error_envio"] = _ERRORES_ENVIO.get(error, error)
+        return meta
 
     def _generar_qr_data_url(texto: str) -> str:
         try:
@@ -181,109 +228,110 @@ def build(*, DEFAULT_SITIO, _require_terminal_or_dev, _sitio_query_for, db, logg
             logger.warning("Error generando QR real: %s", e)
             return ""
 
-    @router.get("/wa/qr.png")
-    async def wa_qr_png(sitio_id: Optional[str] = None):
-        """Devuelve la imagen PNG real del código QR de WhatsApp para escanear directamente con la cámara del celular."""
-        sitio = sitio_id or DEFAULT_SITIO
-        state = _wa_demo_state.get(sitio) or {}
-        qr_text = state.get("qr_code") or f"https://wa.me/5219163459900?text=TaxiHub%20Central%20{sitio}"
-        try:
-            import qrcode
-            import io
-            qr = qrcode.QRCode(box_size=10, border=3)
-            qr.add_data(qr_text)
-            qr.make(fit=True)
-            img = qr.make_image(fill_color="black", back_color="white")
-            buf = io.BytesIO()
-            img.save(buf, format="PNG")
-            return Response(content=buf.getvalue(), media_type="image/png")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error generando imagen QR: {e}")
+    async def _estado_demo(sitio: str, sitio_doc: Dict) -> Dict:
+        """Estado simulado de los sitios demo (no hay WhatsApp real detrás)."""
+        default_num = sitio_doc.get("whatsapp_numero") or sitio_doc.get("telefono_central") or "+52 916 345 9900"
+        state = _wa_demo_state.setdefault(sitio, {})
+        state.setdefault("conectado", True)
+        state.setdefault("numero_vinculado", default_num)
+        state.setdefault("mensajes_enviados_hoy", 4)
+        state.setdefault("qr_code", f"TAXIHUB-DEMO|{sitio}|{uuid.uuid4().hex[:12]}")
+        state.setdefault("pairing_code", "DEMO-0000")
+        return {
+            "sitio_id": sitio,
+            "demo": True,
+            "puente_disponible": False,
+            "estado": "conectado" if state["conectado"] else "desconectado",
+            "conectado": state["conectado"],
+            "numero_vinculado": state["numero_vinculado"],
+            "dispositivo": "Simulación de la demo",
+            "modo": "demo_simulado",
+            "qr_code": state["qr_code"],
+            "qr_data_url": _generar_qr_data_url(state["qr_code"]),
+            "pairing_code": state["pairing_code"],
+            "mensajes_enviados_hoy": state["mensajes_enviados_hoy"],
+            "motivo": None,
+            "antiban_proteccion": _PROTECCION,
+        }
+
+    async def _estado_real(sitio: str, sitio_doc: Dict) -> Dict:
+        status, b = await _puente("GET", "/status", timeout=3.0, params={"sitio_id": sitio})
+        puente = status == 200
+        b = b if puente else {}
+        estado = b.get("estado") or "desconectado"
+        conectado = estado == "conectado"
+        qr = b.get("qr_code") if estado == "esperando_qr" else None
+        return {
+            "sitio_id": sitio,
+            "demo": False,
+            "puente_disponible": puente,
+            "estado": estado,
+            "conectado": conectado,
+            "numero_vinculado": b.get("numero_vinculado") or sitio_doc.get("whatsapp_numero"),
+            "dispositivo": b.get("dispositivo") or "TaxiHUB Central",
+            "modo": "baileys_live" if conectado else ("sin_vincular" if puente else "puente_no_disponible"),
+            "qr_code": qr,
+            "qr_data_url": _generar_qr_data_url(qr) if qr else "",
+            "pairing_code": b.get("pairing_code") if estado == "esperando_codigo" else None,
+            "mensajes_enviados_hoy": b.get("mensajes_enviados_hoy", 0),
+            "motivo": b.get("motivo"),
+            "antiban_proteccion": _PROTECCION,
+        }
 
     @router.get("/wa/status")
     async def wa_get_status(current=Depends(require_terminal)):
         sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
         sitio_doc = await db.sitios.find_one({"clave": sitio}) or {}
-        default_num = sitio_doc.get("whatsapp_numero") or sitio_doc.get("telefono_central") or "+52 916 345 9900"
-        state = _wa_demo_state.setdefault(sitio, {
-            "conectado": True,
-            "numero_vinculado": default_num,
-            "dispositivo": "Terminal Windows Central (Baileys Multi-Device)",
-            "mensajes_enviados_hoy": 4,
-            "modo": "bridge_qr_antiban",
-            "qr_code": f"2@TAXIHUB-BAILEYS-MD,{sitio},{uuid.uuid4().hex[:12]}",
-            "pairing_code": "TXHB-9164",
-        })
-        # Si el microservicio Baileys local está arriba, consultar su estado en vivo
-        bridge_live = False
-        try:
-            async with httpx.AsyncClient(timeout=0.8) as hc:
-                r = await hc.get(f"{WA_BRIDGE_URL}/status", params={"sitio_id": sitio})
-                if r.status_code == 200:
-                    bdata = r.json()
-                    bridge_live = True
-                    state.update({k: v for k, v in bdata.items() if v is not None})
-        except Exception:
-            pass
+        if _es_sitio_demo(sitio):
+            return await _estado_demo(sitio, sitio_doc)
+        return await _estado_real(sitio, sitio_doc)
 
-        qr_str = state.get("qr_code", f"2@TAXIHUB-BAILEYS-MD,{sitio},{uuid.uuid4().hex[:12]}")
-        qr_data_url = _generar_qr_data_url(qr_str)
-
-        return {
-            "sitio_id": sitio,
-            "conectado": state.get("conectado", True),
-            "numero_vinculado": state.get("numero_vinculado", default_num),
-            "dispositivo": state.get("dispositivo", "Terminal Windows Central (Baileys Multi-Device)"),
-            "modo": "baileys_live" if bridge_live else state.get("modo", "bridge_qr_antiban"),
-            "qr_code": qr_str,
-            "qr_data_url": qr_data_url,
-            "pairing_code": state.get("pairing_code", "TXHB-9164"),
-            "mensajes_enviados_hoy": state.get("mensajes_enviados_hoy", 0),
-            "antiban_proteccion": {
-                "solo_respuesta_entrante_24h": True,
-                "simulacion_escritura_humana_ms": "1500-3200",
-                "variacion_spintax_polimorfica": True,
-                "cola_rate_limit_min_seg": 3.0,
-                "lectura_natural_delay_ms": "800-1500",
-                "sesion_persistente_multifile": True,
-                "riesgo_baneo": "nulo (0% spam saliente)",
-            },
-        }
+    async def _guardar_numero(sitio: str, numero: str):
+        await db.sitios.update_one(
+            {"clave": sitio},
+            {"$set": {"whatsapp_numero": numero, "actualizado": now_iso()}},
+            upsert=True,
+        )
 
     @router.post("/wa/bridge/vincular")
     async def wa_bridge_vincular(body: WaVincularDemoBody, current=Depends(require_terminal)):
         sitio = current.get("sitio_id") or current.get("_tenant") or DEFAULT_SITIO
-        state = _wa_demo_state.setdefault(sitio, {})
         nuevo_num = (body.numero or body.telefono or "").strip()
-        if body.dispositivo:
-            state["dispositivo"] = body.dispositivo.strip()
-        if body.accion == "desvincular":
-            state["conectado"] = False
-            state["qr_code"] = f"TAXIHUB-WA-QR|{sitio}|{uuid.uuid4().hex[:8]}"
-        elif body.accion == "regenerar_qr":
-            state["conectado"] = False
-            state["qr_code"] = f"TAXIHUB-WA-QR|{sitio}|{uuid.uuid4().hex[:8]}"
-        elif body.accion == "codigo_emparejamiento":
+
+        if _es_sitio_demo(sitio):
+            state = _wa_demo_state.setdefault(sitio, {})
+            if body.accion in ("desvincular", "regenerar_qr"):
+                state["conectado"] = False
+                state["qr_code"] = f"TAXIHUB-DEMO|{sitio}|{uuid.uuid4().hex[:8]}"
+            elif body.accion == "codigo_emparejamiento":
+                digits = "".join(c for c in (nuevo_num or "0000") if c.isdigit())[-4:].zfill(4)
+                state["pairing_code"] = f"DEMO-{digits}"
+                state["conectado"] = True
+            else:
+                state["conectado"] = True
             if nuevo_num:
                 state["numero_vinculado"] = nuevo_num
-                await db.sitios.update_one(
-                    {"clave": sitio},
-                    {"$set": {"whatsapp_numero": nuevo_num, "actualizado": now_iso()}},
-                    upsert=True,
-                )
-            digits = "".join(c for c in (nuevo_num or "9160") if c.isdigit())[-4:].zfill(4)
-            state["pairing_code"] = f"TX{uuid.uuid4().hex[:2].upper()}-{digits}"
-            state["conectado"] = True
-        else:
-            state["conectado"] = True
-            num_final = nuevo_num or state.get("numero_vinculado") or "+52 916 345 9900"
-            state["numero_vinculado"] = num_final
+                await _guardar_numero(sitio, nuevo_num)
+            return await wa_get_status(current)
+
+        if body.accion in ("vincular", "configurar_numero"):
             if nuevo_num:
-                await db.sitios.update_one(
-                    {"clave": sitio},
-                    {"$set": {"whatsapp_numero": num_final, "actualizado": now_iso()}},
-                    upsert=True,
-                )
+                await _guardar_numero(sitio, nuevo_num)
+            return await wa_get_status(current)
+
+        if body.accion == "codigo_emparejamiento":
+            digitos = "".join(c for c in nuevo_num if c.isdigit())
+            if len(digitos) < 11:
+                raise HTTPException(status_code=422, detail="Escribe el número con lada de país, p. ej. +52 916 123 4567")
+            await _guardar_numero(sitio, nuevo_num)
+            status, data = await _puente("POST", f"/sesiones/{sitio}/iniciar", timeout=25.0,
+                                         json={"modo": "codigo", "telefono": digitos})
+        elif body.accion == "regenerar_qr":
+            status, data = await _puente("POST", f"/sesiones/{sitio}/iniciar", timeout=25.0, json={"modo": "qr"})
+        else:  # desvincular
+            status, data = await _puente("POST", f"/sesiones/{sitio}/cerrar", timeout=15.0, json={})
+        if status != 200:
+            raise HTTPException(status_code=503, detail="El servicio de WhatsApp no está disponible. Intenta de nuevo en un minuto.")
         return await wa_get_status(current)
 
     async def _sitio_wa_autorizado(request: Request, sitio_pedido: Optional[str]) -> str:
@@ -381,7 +429,8 @@ def build(*, DEFAULT_SITIO, _require_terminal_or_dev, _sitio_query_for, db, logg
             {"type": "wa_mensaje", "conversacion": _wa_conv_serialize(updated), "sitio_id": sitio},
             sitio_id=sitio,
         )
-        return {"ok": True, "mensaje": msg_entry, "antiban": meta["antiban"]}
+        return {"ok": True, "mensaje": msg_entry, "antiban": meta["antiban"],
+                "entregado": meta["estado_envio"] != "fallido", "error_envio": meta.get("error_envio")}
 
     @router.post("/wa/conversaciones/{conv_id}/auto-reply-despacho")
     async def wa_auto_reply_despacho(conv_id: str, body: WaAutoReplyDespacho, current=Depends(require_terminal)):
@@ -452,13 +501,15 @@ def build(*, DEFAULT_SITIO, _require_terminal_or_dev, _sitio_query_for, db, logg
             {"type": "wa_mensaje", "conversacion": serialized, "sitio_id": sitio},
             sitio_id=sitio,
         )
-        return {"ok": True, "texto": texto, "mensaje": msg_entry, "conversacion": serialized}
+        return {"ok": True, "texto": texto, "mensaje": msg_entry, "conversacion": serialized,
+                "entregado": meta["estado_envio"] != "fallido", "error_envio": meta.get("error_envio")}
 
     @router.post("/wa/webhook")
     async def wa_webhook(request: Request):
         """Ingreso de eventos del puente QR Baileys o proveedor WhatsApp Business.
         Requiere WA_WEBHOOK_TOKEN configurado; sin él responde 503.
-        Formato: {sitio_id?, remitente: {nombre, telefono}, mensaje: {texto | lat+lng}}
+        Mensaje entrante: {sitio_id?, remitente: {nombre, telefono}, mensaje: {texto | lat+lng}}
+        Resultado de un envío: {tipo: "estado_envio", sitio_id, mensaje_id, estado: enviado|fallido, error?}
         """
         token = os.environ.get("WA_WEBHOOK_TOKEN")
         if not token:
@@ -468,6 +519,8 @@ def build(*, DEFAULT_SITIO, _require_terminal_or_dev, _sitio_query_for, db, logg
             raise HTTPException(status_code=401, detail="No autorizado")
         payload = await request.json()
         sitio = payload.get("sitio_id") or DEFAULT_SITIO
+        if payload.get("tipo") == "estado_envio":
+            return await _registrar_estado_envio(sitio, payload)
         rem = payload.get("remitente") or {}
         msg = payload.get("mensaje") or {}
         now = datetime.now(timezone.utc).isoformat()
@@ -491,6 +544,25 @@ def build(*, DEFAULT_SITIO, _require_terminal_or_dev, _sitio_query_for, db, logg
                 sitio_id=sitio,
             )
         return {"ok": True}
+
+    async def _registrar_estado_envio(sitio: str, payload: Dict) -> Dict:
+        mensaje_id = payload.get("mensaje_id")
+        estado = payload.get("estado") if payload.get("estado") in ("enviado", "fallido") else None
+        if not mensaje_id or not estado:
+            raise HTTPException(status_code=422, detail="mensaje_id y estado son obligatorios")
+        cambios = {"mensajes.$.estado_envio": estado}
+        if estado == "fallido":
+            cambios["mensajes.$.error_envio"] = str(payload.get("error") or "No se pudo enviar")[:200]
+            cambios["mensajes.$.antiban.entregado_bridge"] = False
+        r = await db.wa_conversaciones.update_one({"sitio_id": sitio, "mensajes.id": mensaje_id}, {"$set": cambios})
+        if not r.matched_count:
+            return {"ok": True, "actualizado": False}
+        conv = await db.wa_conversaciones.find_one({"sitio_id": sitio, "mensajes.id": mensaje_id})
+        await manager.broadcast_terminal(
+            {"type": "wa_mensaje", "conversacion": _wa_conv_serialize(conv), "sitio_id": sitio},
+            sitio_id=sitio,
+        )
+        return {"ok": True, "actualizado": True}
 
     async def _seed_wa_conversacion():
         """Conversación demo para validar el flujo ubicación→servicio."""

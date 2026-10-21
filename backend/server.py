@@ -2918,7 +2918,8 @@ _wa = build_whatsapp(
     DEFAULT_SITIO=DEFAULT_SITIO, _require_terminal_or_dev=_require_terminal_or_dev,
     _sitio_query_for=_sitio_query_for, db=_db_proxy, logger=logger, manager=manager,
     now_iso=now_iso, require_terminal=require_terminal, serialize=serialize,
-    to_oid=to_oid,
+    to_oid=to_oid, simulacion_demo=lambda: SIMULACION_DEMO,
+    SITIOS_DEMO=(DEFAULT_SITIO, "sitio_pakalna"),
 )
 app.include_router(_wa.router)
 _seed_wa_conversacion = _wa._seed_wa_conversacion

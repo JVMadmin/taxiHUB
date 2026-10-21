@@ -20,6 +20,7 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingState } from "@/components/LoadingState";
 import { toast } from "sonner";
+import { WHATSAPP } from "@/constants/testIds";
 
 const QUICK_REPLIES = [
   "🚕 Ya va un taxi en camino",
@@ -54,7 +55,38 @@ function getUrgency(ts) {
  * del taxi libre más cercano con distancia y ETA, botón de despacho en 1 clic,
  * chips de respuestas rápidas y semáforos de urgencia.
  */
-export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], serviciosHoyPorOperador = {}, onAssigned }) {
+// Texto y color del estado de la vinculación según /wa/status.
+function describirEstadoWa(st) {
+  if (!st) return { titulo: "Consultando WhatsApp…", color: "gris" };
+  if (st.demo) return { titulo: "WhatsApp de demostración (simulado)", color: "verde" };
+  if (st.conectado) return { titulo: "WhatsApp conectado", color: "verde" };
+  if (!st.puente_disponible) return { titulo: "Servicio de WhatsApp no disponible", color: "rojo" };
+  switch (st.estado) {
+    case "esperando_qr":
+      return { titulo: "Escanea el código QR para vincular", color: "ambar" };
+    case "esperando_codigo":
+      return { titulo: "Ingresa el código en tu WhatsApp", color: "ambar" };
+    case "conectando":
+    case "reconectando":
+      return { titulo: "Conectando con WhatsApp…", color: "ambar" };
+    default:
+      return {
+        titulo:
+          st.motivo === "sesion_cerrada_en_telefono"
+            ? "Se cerró la sesión desde el teléfono: vuelve a vincular"
+            : st.motivo === "qr_expirado"
+            ? "El código QR expiró: genera uno nuevo"
+            : st.motivo === "abierta_en_otro_lugar"
+            ? "WhatsApp se abrió en otro equipo: vuelve a vincular"
+            : "WhatsApp sin vincular",
+        color: "ambar",
+      };
+  }
+}
+
+const ESTADOS_TRANSITORIOS = ["esperando_qr", "esperando_codigo", "conectando", "reconectando"];
+
+export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], serviciosHoyPorOperador = {}, onAssigned, reloadSignal }) {
   const [convs, setConvs] = useState(null);
   const [error, setError] = useState(null);
   const [abierta, setAbierta] = useState(null);
@@ -110,26 +142,54 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
     loadStatus();
   }, [load, loadStatus]);
 
+  // Mensajes nuevos o avisos de entrega por WebSocket: refrescar lista y chat abierto.
+  const abiertaId = abierta?.id;
+  useEffect(() => {
+    if (!reloadSignal) return;
+    load();
+    if (abiertaId) {
+      termApi
+        .get(`/wa/conversaciones/${abiertaId}`)
+        .then(({ data }) => setAbierta((prev) => (prev?.id === data.id ? data : prev)))
+        .catch(() => {});
+    }
+  }, [reloadSignal, abiertaId, load]);
+
+  // El QR de WhatsApp cambia cada ~20 s: consultar seguido mientras se vincula.
+  const estadoWa = waStatus?.estado;
+  useEffect(() => {
+    if (!showAntiBan && !ESTADOS_TRANSITORIOS.includes(estadoWa)) return undefined;
+    const id = setInterval(loadStatus, ESTADOS_TRANSITORIOS.includes(estadoWa) ? 3000 : 15000);
+    return () => clearInterval(id);
+  }, [showAntiBan, estadoWa, loadStatus]);
+
   const handleVincularBridge = async (accion = "vincular") => {
     setVinculandoQr(true);
     try {
-      const numFinal = (numeroConfig || waStatus?.numero_vinculado || "+52 916 345 9900").trim();
+      const numFinal = (numeroConfig || waStatus?.numero_vinculado || "").trim();
+      if (accion === "codigo_emparejamiento" && numFinal.replace(/\D/g, "").length < 11) {
+        toast.error("Escribe el número de la central con lada de país, p. ej. +52 916 123 4567");
+        return;
+      }
       const { data } = await termApi.post("/wa/bridge/vincular", {
         accion,
-        numero: numFinal,
-        telefono: numFinal,
-        dispositivo: dispositivoConfig || "Terminal Windows Central (Baileys Multi-Device)",
+        numero: numFinal || undefined,
+        telefono: numFinal || undefined,
+        dispositivo: dispositivoConfig || undefined,
       });
       setWaStatus(data);
       if (accion === "codigo_emparejamiento") {
-        toast.success(`Código de vinculación generado para ${numFinal}: ${data?.pairing_code || "TXHB-9164"}`);
+        if (data?.pairing_code) toast.success(`Código de vinculación: ${data.pairing_code}`);
+        else toast.info("Pidiendo el código a WhatsApp… aparecerá en unos segundos");
       } else if (accion === "regenerar_qr") {
-        toast.success("Nuevo código QR generado para escanear desde WhatsApp");
+        toast.success(data?.conectado ? "WhatsApp ya está conectado" : "Escanea el código QR desde tu WhatsApp");
+      } else if (accion === "desvincular") {
+        toast.success("WhatsApp desvinculado de esta central");
       } else {
-        toast.success(`Número WhatsApp ${numFinal} vinculado con blindaje Anti-Ban activo`);
+        toast.success(`Número ${numFinal} guardado`);
       }
-    } catch {
-      toast.error("No se pudo actualizar la configuración de WhatsApp");
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "No se pudo actualizar la configuración de WhatsApp");
     } finally {
       setVinculandoQr(false);
     }
@@ -175,11 +235,15 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
     if (e) e.preventDefault();
     if (!respuesta.trim() || !abierta) return;
     try {
-      await termApi.post(`/wa/conversaciones/${abierta.id}/reply`, { texto: respuesta.trim() });
+      const { data } = await termApi.post(`/wa/conversaciones/${abierta.id}/reply`, { texto: respuesta.trim() });
       setRespuesta("");
       await abrir(abierta);
       load();
-      toast.success("Mensaje enviado (con cadencia humana Anti-Ban)");
+      if (data?.entregado === false) {
+        toast.error("No se pudo enviar por WhatsApp", { description: data.error_envio || undefined });
+      } else {
+        toast.success("Mensaje en camino por WhatsApp");
+      }
     } catch {
       toast.error("No se pudo enviar la respuesta");
     }
@@ -229,22 +293,32 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
       await termApi.post(`/servicios/${sid}/asignar`, { operador_id: op.id });
 
       // Auto-respuesta inteligente por WhatsApp con Spintax + unidad + placas + ETA
+      let avisoEnviado = false;
+      let errorAviso = null;
       if (convId) {
         try {
-          await termApi.post(`/wa/conversaciones/${convId}/auto-reply-despacho`, {
+          const { data: auto } = await termApi.post(`/wa/conversaciones/${convId}/auto-reply-despacho`, {
             operador_id: op.id,
             servicio_id: sid,
             eta_min: etaMin,
           });
+          avisoEnviado = auto?.entregado !== false;
+          errorAviso = auto?.error_envio || null;
           await abrir({ id: convId });
         } catch {
           // Si falla el auto-reply secundario, el despacho principal ya quedó hecho
         }
       }
 
-      toast.success(`⚡ Unidad ${op.placa || op.nombre} despachada + Auto-respuesta enviada`, {
-        description: `Datos de unidad, placas y ETA (~${etaMin} min) enviados al cliente por WhatsApp.`,
-      });
+      if (avisoEnviado) {
+        toast.success(`⚡ Unidad ${op.placa || op.nombre} despachada + aviso por WhatsApp`, {
+          description: `Unidad, placas y llegada (~${etaMin} min) en camino al pasajero.`,
+        });
+      } else {
+        toast.warning(`Unidad ${op.placa || op.nombre} despachada, pero el aviso por WhatsApp no salió`, {
+          description: errorAviso || "Avísale al pasajero por teléfono.",
+        });
+      }
       setTaxiListo(null);
       onAssigned?.(sid, op);
       load();
@@ -267,7 +341,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
     );
   });
 
-  const qrSeed = waStatus?.qr_code || "TAXIHUB-WA-QR";
+  const estadoUi = describirEstadoWa(waStatus);
 
   /* ---------- 1. Lista de conversaciones ---------- */
   if (!abierta) {
@@ -278,19 +352,25 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span
+                data-testid={WHATSAPP.estadoPunto}
                 className={cn(
                   "h-2.5 w-2.5 shrink-0 rounded-full",
-                  waStatus?.conectado !== false
+                  estadoUi.color === "verde"
                     ? "bg-[#7CFC3C] shadow-[0_0_8px_#7CFC3C]"
-                    : "bg-amber-400 shadow-[0_0_8px_#fbbf24]"
+                    : estadoUi.color === "rojo"
+                    ? "bg-[#F4544C] shadow-[0_0_8px_#F4544C]"
+                    : estadoUi.color === "ambar"
+                    ? "bg-amber-400 shadow-[0_0_8px_#fbbf24]"
+                    : "bg-zinc-500"
                 )}
               />
               <div className="min-w-0">
-                <div className="truncate text-[11px] font-bold text-[#F5F5F7]">
-                  {waStatus?.conectado !== false ? "WhatsApp Vinculado · Anti-Ban Activo" : "Esperando Vinculación QR / Código"}
+                <div data-testid={WHATSAPP.estadoTitulo} className="truncate text-[11px] font-bold text-[#F5F5F7]">
+                  {estadoUi.titulo}
                 </div>
                 <div className="truncate text-[10px] font-mono text-emerald-300/95">
-                  {waStatus?.numero_vinculado || "+52 916 345 9900"} · Auto-respuesta activa
+                  {waStatus?.numero_vinculado || "Sin número vinculado"}
+                  {waStatus?.conectado ? ` · ${waStatus.mensajes_enviados_hoy || 0} enviados hoy` : ""}
                 </div>
               </div>
             </div>
@@ -309,7 +389,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
               {/* Selector de método de configuración */}
               <div className="grid grid-cols-3 gap-1 rounded-lg bg-black/25 p-1">
                 {[
-                  { id: "numero", label: "Número Prueba" },
+                  { id: "numero", label: "Número" },
                   { id: "codigo", label: "Código 8 Dígitos" },
                   { id: "qr", label: "Escanear QR" },
                 ].map((tab) => (
@@ -332,8 +412,13 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
               {/* Formulario de Número de WhatsApp */}
               <div className="space-y-1.5 rounded-xl border border-white/10 bg-[#17191E] p-2.5">
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-[#9CA0AA]">
-                  Número de WhatsApp (Central o tu Número de Prueba)
+                  Número de WhatsApp de la central (con lada, p. ej. +52)
                 </label>
+                {waStatus?.demo && (
+                  <p data-testid={WHATSAPP.avisoDemo} className="text-[10px] text-amber-300/90">
+                    Esta es la central de demostración: la vinculación es simulada y no conecta un WhatsApp real.
+                  </p>
+                )}
                 <div className="flex gap-1.5">
                   <input
                     data-testid="wa-config-numero-input"
@@ -358,14 +443,25 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                     className="shrink-0 rounded-lg bg-emerald-500 px-3 py-1 text-[10px] font-extrabold text-zinc-950 hover:bg-emerald-400 transition-colors disabled:opacity-50"
                   >
                     {vinculandoQr
-                      ? "Guardando…"
+                      ? "Conectando…"
                       : modoVinculacion === "codigo"
                       ? "Generar Código"
                       : modoVinculacion === "qr"
-                      ? "Nuevo QR"
-                      : "Vincular Número"}
+                      ? "Mostrar QR"
+                      : "Guardar Número"}
                   </button>
                 </div>
+                {waStatus?.conectado && !waStatus?.demo && (
+                  <button
+                    type="button"
+                    data-testid={WHATSAPP.desvincular}
+                    disabled={vinculandoQr}
+                    onClick={() => handleVincularBridge("desvincular")}
+                    className="mt-1 text-[10px] font-semibold text-[#F4544C] underline underline-offset-2 hover:text-red-300 disabled:opacity-50"
+                  >
+                    Desvincular este WhatsApp
+                  </button>
+                )}
 
                 {modoVinculacion === "codigo" && (
                   <div className="mt-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-center">
@@ -376,15 +472,20 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                       data-testid="wa-pairing-code"
                       className="mt-1 font-mono text-base font-black tracking-[0.22em] text-emerald-300"
                     >
-                      {waStatus?.pairing_code || "TXHB-9164"}
+                      {waStatus?.pairing_code || "— — — —"}
                     </div>
+                    {!waStatus?.pairing_code && (
+                      <div className="mt-1 text-[10px] text-[#9CA0AA]">
+                        Escribe el número y pulsa <strong>Generar Código</strong>.
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {modoVinculacion === "qr" && (
                   <div className="mt-2 space-y-2 rounded-xl border border-emerald-500/30 bg-black/40 p-3 text-center">
                     <div className="text-[11px] font-bold text-white">
-                      Código QR Real Multi-Device (WhatsApp Web)
+                      {waStatus?.demo ? "QR de demostración (no vincula WhatsApp)" : "Vincular con código QR"}
                     </div>
                     <p className="text-[10px] text-[#9CA0AA]">
                       Abre WhatsApp en tu teléfono → <strong>Dispositivos vinculados</strong> → <strong>Vincular un dispositivo</strong> y apunta tu cámara a este código:
@@ -398,15 +499,19 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                           className="h-44 w-44 rounded-xl bg-white p-2 shadow-2xl ring-2 ring-emerald-500/50"
                         />
                       ) : (
-                        <div className="flex h-44 w-44 items-center justify-center rounded-xl bg-white/10 text-xs text-zinc-400">
-                          Generando QR real...
+                        <div className="flex h-44 w-44 items-center justify-center rounded-xl bg-white/10 p-3 text-xs text-zinc-400">
+                          {waStatus?.conectado
+                            ? "WhatsApp ya está conectado"
+                            : "Pulsa Mostrar QR para generar el código"}
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center justify-center gap-1.5 text-[9px] font-mono text-emerald-400">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                      QR ISO/IEC 18004 con corrección de error activa · Listo para escanear
-                    </div>
+                    {waStatus?.qr_data_url && !waStatus?.demo && (
+                      <div className="flex items-center justify-center gap-1.5 text-[9px] font-mono text-emerald-400">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        El código se renueva solo cada ~20 s
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -460,13 +565,16 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
               </div>
 
               <div className="font-semibold text-emerald-300">
-                6 Reglas Anti-Bloqueo Activas (Baileys Multi-Device):
+                Cómo cuidamos el número de la central:
               </div>
               <ul className="space-y-0.5 text-[10px] text-[#9CA0AA]">
-                <li>✓ <strong className="text-[#F5F5F7]">Solo respuesta reactiva (24h):</strong> nunca envía mensajes masivos en frío.</li>
-                <li>✓ <strong className="text-[#F5F5F7]">Simulación humana:</strong> evento <em>"Escribiendo..."</em> de 1.5s a 3.2s + Spintax dinámico.</li>
-                <li>✓ <strong className="text-[#F5F5F7]">Cola Rate-Limit:</strong> máximo 14 mensajes/min con espaciado aleatorio y sesión persistente.</li>
+                <li>✓ <strong className="text-[#F5F5F7]">Solo responde a quien escribió</strong> en las últimas 24 h; nunca envía mensajes masivos.</li>
+                <li>✓ <strong className="text-[#F5F5F7]">Ritmo humano:</strong> muestra <em>"Escribiendo…"</em> de 1.5 a 3.2 s y varía el texto de cada aviso.</li>
+                <li>✓ <strong className="text-[#F5F5F7]">Pausa entre envíos:</strong> mínimo 3 s (≈14 mensajes por minuto como máximo).</li>
               </ul>
+              {waStatus?.antiban_proteccion?.aviso && (
+                <p className="text-[10px] leading-snug text-amber-300/90">{waStatus.antiban_proteccion.aviso}</p>
+              )}
             </div>
           )}
         </div>
@@ -737,6 +845,26 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                 {/* Texto del mensaje */}
                 {m.texto && (
                   <div className="text-sm leading-relaxed whitespace-pre-wrap">{m.texto}</div>
+                )}
+
+                {/* Estado de entrega de los mensajes de la central */}
+                {!esCliente && m.estado_envio && (
+                  <div
+                    data-testid={WHATSAPP.estadoEnvio}
+                    title={m.error_envio || undefined}
+                    className={cn(
+                      "mt-1 text-right text-[10px] font-semibold",
+                      m.estado_envio === "fallido" ? "text-[#F4544C]" : "text-[#9CA0AA]"
+                    )}
+                  >
+                    {m.estado_envio === "fallido"
+                      ? `No enviado${m.error_envio ? ` · ${m.error_envio}` : ""}`
+                      : m.estado_envio === "enviado"
+                      ? "✓ Enviado"
+                      : m.estado_envio === "encolado"
+                      ? "Enviando…"
+                      : "Simulado (demo)"}
+                  </div>
                 )}
 
                 {/* Tarjeta de ubicación compartida */}
