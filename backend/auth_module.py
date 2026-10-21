@@ -67,18 +67,23 @@ def build_router(*, ClienteLoginBody, DEFAULT_SITIO, DuenoLoginBody, DuenoUserCr
 
     @router.post("/terminal/usuarios")
     async def crear_usuario_terminal(body: TerminalUserCreate, request: Request):
-        """Alta de operadoras de terminal. Si ya existen cuentas en el sitio, exige
-        token de terminal o de desarrollador (cierra registro público no autorizado)."""
+        """Alta de operadoras de terminal. Una terminal solo crea cuentas en su propio
+        sitio; el desarrollador, en cualquiera. En producción siempre exige token (antes
+        un sitio sin cuentas aceptaba altas anónimas y una terminal podía crear cuentas
+        en otro sitio y leer su WhatsApp). Fuera de producción, sin token solo se puede
+        crear la primera cuenta de un sitio (arranque local)."""
         target_sitio = body.sitio_id or DEFAULT_SITIO
-        existentes = await db.usuarios_terminal.count_documents(_sitio_query_for(target_sitio))
         auth = request.headers.get("Authorization", "")
-        if existentes > 0:
-            if auth.startswith("Bearer "):
-                actor = await _require_terminal_or_dev(request)
-                if actor.get("_actor") == "terminal" and not body.sitio_id:
-                    target_sitio = actor.get("sitio_id") or DEFAULT_SITIO
-            elif os.environ.get("ENV", "").lower() == "production":
-                raise HTTPException(status_code=401, detail="Solo un administrador o desarrollador puede crear cuentas de terminal")
+        if auth.startswith("Bearer "):
+            actor = await _require_terminal_or_dev(request)
+            if actor.get("_actor") == "terminal":
+                propio = actor.get("sitio_id") or DEFAULT_SITIO
+                if body.sitio_id and body.sitio_id != propio:
+                    raise HTTPException(status_code=403, detail="Solo puedes crear cuentas en tu propia central")
+                target_sitio = propio
+        elif (os.environ.get("ENV", "").lower() == "production"
+              or await db.usuarios_terminal.count_documents(_sitio_query_for(target_sitio)) > 0):
+            raise HTTPException(status_code=401, detail="Solo un administrador o desarrollador puede crear cuentas de terminal")
         if await db.usuarios_terminal.find_one({"usuario": body.usuario}):
             raise HTTPException(status_code=409, detail="El usuario ya existe")
         doc = {
