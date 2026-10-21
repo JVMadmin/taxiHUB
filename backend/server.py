@@ -2833,6 +2833,17 @@ async def _migraciones():
     # 6) Conversación demo de WhatsApp (flujo ubicación→servicio del despacho).
     await _seed_wa_conversacion()
 
+    # 6b) Choferes en servicio sin hora de inicio (siembras viejas): el cronómetro de la app
+    # mostraba "--:--:--". Se toma su última actualización como inicio.
+    async for op_doc in db.operadores.find(
+        {"estado": {"$in": ["libre", "ocupado", "no_disponible"]}, "inicio_operacion": {"$in": [None, ""]}},
+        {"ultima_actualizacion": 1},
+    ):
+        await db.operadores.update_one(
+            {"_id": op_doc["_id"]},
+            {"$set": {"inicio_operacion": op_doc.get("ultima_actualizacion") or now_iso()}},
+        )
+
     # 7) Avisos demo sembrados con el número provisional de soporte → número real.
     await db.avisos_dev.update_many(
         {"contacto_soporte": {"$regex": "916 100 9999"}},

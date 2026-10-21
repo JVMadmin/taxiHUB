@@ -28,6 +28,8 @@ Production (`https://taxihub.cloud`) currently runs as a **demo**: a simulated f
 ## Frontend
 - `frontend/src/lib/api.js` — API client. `BACKEND_URL` from `REACT_APP_BACKEND_URL` (or `localStorage.th_backend_url`); JWT per app in localStorage (`op_token`, `pas_token`, …). WS base derived from the same URL.
 - Theme/palette via `data-theme` in localStorage; app root is forced `dark`.
+- Driver map: `components/maps/DriverMap3D.jsx` (MapLibre GL: OpenFreeMap dark style + 3D buildings, AWS Terrarium relief on capable devices, camera follows the taxi). Used when WebGL exists and `driver_map_3d` isn't `"0"`; otherwise the Leaflet map. The taxi image faces east (rotation = heading − 90°); `rumboFiable` in `OperadorApp.jsx` only trusts GPS heading when moving (≥ 1.5 m/s or ≥ 8 m displacement).
+- Landing (`components/landing/`, `pages/LandingPage.jsx`): dark theme tokens in `landing.css`; media in `public/landing/` are real captures of the local demo (hero loop `hero-terminal.*`, `taxihub-demo.*`, `terminal|operador|socio.*`, `og-taxihub.jpg`). Keep claims verifiable (no invented metrics).
 - E2E testability: interactive elements get `data-testid` values, centralized in `frontend/src/constants/testIds/` (one file per feature, re-exported from `index.js`). Value convention is kebab-case `<feature>-<element>`. Add new test IDs there when adding UI; do not inline raw strings in JSX (many legacy inline ones remain).
 - Capacitor 8 everywhere (`core`, `android`, `cli` and the official plugins): keep them on the same major when upgrading. `scripts/build_all_apks.py` builds the three APKs (driver, passenger, owner) with `cap sync` + `gradlew assembleDebug -PappId=…`.
 

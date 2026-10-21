@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "@/components/landing/landing.css";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Hero } from "@/components/landing/Hero";
@@ -7,27 +7,48 @@ import { ProductStory } from "@/components/landing/ProductStory";
 import { Features } from "@/components/landing/Features";
 import { VideoSection } from "@/components/landing/VideoSection";
 import { Pricing } from "@/components/landing/Pricing";
-import { Contact } from "@/components/landing/Contact";
+import { Contact, abrirWhatsAppVentas } from "@/components/landing/Contact";
 import { Footer } from "@/components/landing/Footer";
 import { LANDING } from "@/constants/testIds";
+
+function WhatsAppFlotante() {
+  return (
+    <button
+      type="button"
+      data-testid={LANDING.whatsappFlotante}
+      onClick={() => abrirWhatsAppVentas("Hola TaxiHUB, quiero información para mi central de taxis.")}
+      aria-label="Escríbenos por WhatsApp"
+      className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-[#05210f] shadow-[0_12px_40px_-8px_rgba(37,211,102,0.6)] transition-transform hover:scale-105 active:scale-95"
+    >
+      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a9.9 9.9 0 0 0-8.5 15l-1.4 5.1 5.2-1.4A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4a.5.5 0 0 0 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3Z" />
+      </svg>
+    </button>
+  );
+}
 
 export default function LandingPage() {
   const [units, setUnits] = useState(25);
 
+  useEffect(() => {
+    const previo = document.title;
+    document.title = "TaxiHUB — Software de despacho para centrales de taxi";
+    return () => { document.title = previo; };
+  }, []);
+
   return (
     <div
       data-testid={LANDING.page}
-      className="th-landing relative min-h-[100dvh] w-full overflow-x-hidden bg-white text-slate-900 selection:bg-emerald-500/20 selection:text-emerald-950"
+      className="th-landing dark relative min-h-[100dvh] w-full overflow-x-hidden selection:bg-emerald-400/30 selection:text-white"
     >
       <a href="#contenido-principal" className="l-skip">
         Saltar al contenido principal
       </a>
 
-      {/* Iluminación atmosférica suave de día (Light/Day mode) */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-40 left-1/4 h-[36rem] w-[36rem] rounded-full bg-emerald-100/40 blur-[130px]" />
-        <div className="absolute top-1/3 -right-32 h-[32rem] w-[32rem] rounded-full bg-sky-100/40 blur-[140px]" />
-        <div className="absolute -bottom-40 left-1/3 h-[28rem] w-[44rem] rounded-full bg-slate-100/70 blur-[130px]" />
+      {/* Luz ambiental: brillo esmeralda tenue detrás del producto */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[60rem] overflow-hidden" aria-hidden="true">
+        <div className="absolute left-1/2 top-[-18rem] h-[44rem] w-[70rem] -translate-x-1/2 rounded-full bg-emerald-500/[0.13] blur-[140px]" />
+        <div className="absolute right-[-10rem] top-[20rem] h-[28rem] w-[28rem] rounded-full bg-teal-400/[0.06] blur-[120px]" />
       </div>
 
       <LandingNav />
@@ -43,6 +64,7 @@ export default function LandingPage() {
       </main>
 
       <Footer />
+      <WhatsAppFlotante />
     </div>
   );
 }

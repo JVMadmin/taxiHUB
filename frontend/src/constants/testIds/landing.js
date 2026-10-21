@@ -12,6 +12,8 @@ export const LANDING = {
   simulatorPause: "landing-simulator-pause",
   storyStep: "landing-story-step",
   video: "landing-video",
+  heroVideo: "landing-hero-video",
+  whatsappFlotante: "landing-whatsapp-flotante",
   priceCard: "landing-price-card",
   priceUnits: "landing-price-units",
   priceTotal: "landing-price-total",

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Monitor, Smartphone, Building2, Volume2, MapPin, Camera, Zap, CheckCircle2 } from "lucide-react";
+import { Monitor, Smartphone, Building2, Volume2, CheckCircle2 } from "lucide-react";
 import { LANDING } from "@/constants/testIds";
 import { EASE, Eyebrow, Reveal } from "./motion";
 
@@ -8,55 +8,55 @@ const STEPS = [
   {
     id: "terminal",
     icon: Monitor,
-    tag: "Terminal Central · Windows y Web",
-    title: "Todas las unidades en un mapa con despacho directo.",
-    body: "La operadora ve la flota en tiempo real sobre el mapa de Palenque, despacha desde el menú contextual o con atajos de teclado (F2, 1–6) y asigna la unidad libre más cercana automáticamente.",
+    tag: "Central de despacho · Web y Windows",
+    title: "Toda tu flota en un mapa, y el viaje asignado en segundos.",
+    body: "La operadora ve cada unidad en vivo sobre el mapa de su ciudad, toma la llamada o el WhatsApp y asigna la unidad libre más cercana con un clic o con atajos de teclado.",
     img: "terminal",
-    alt: "Terminal real de despacho con mapa y unidades en vivo",
+    alt: "Central de despacho real de TaxiHUB con las unidades de Palenque en el mapa",
     w: 1440,
     h: 900,
     aspect: "landscape",
     highlights: [
-      "Mapa interactivo de Palenque con capas de satélite y calles",
-      "Asignación automática por cercanía GPS o selección manual directa",
-      "Atajos de teclado instantáneos (F2 nueva llamada, 1-6 asignar)",
-      "WhatsApp integrado por código QR sin costo por mensaje",
+      "Mapa con calles, satélite y colonias de tu ciudad",
+      "Asignación por cercanía GPS o elección manual de la unidad",
+      "Atajos de teclado: F2 nueva llamada, 1–6 elegir unidad",
+      "WhatsApp de la central dentro de la misma pantalla",
     ],
   },
   {
     id: "operador",
     icon: Smartphone,
-    tag: "App del Chofer · Android Nativa",
-    title: "GPS continuo y ofertas por voz, sin tocar el teléfono.",
-    body: "Diseñada específicamente para los taxistas: servicio de segundo plano activo con la pantalla apagada en el bolsillo, síntesis de voz IA que lee el destino al instante y fotos de odómetro y combustible al abrir y cerrar turno.",
+    tag: "App del chofer · Android",
+    title: "Navegación 3D al cliente y el viaje leído en voz alta.",
+    body: "El chofer recibe la oferta con voz, la acepta con un toque y sigue la ruta en un mapa 3D con distancia y tiempo de llegada. Su ubicación se sigue enviando aunque apague la pantalla.",
     img: "operador",
-    alt: "App real del operador en Android con mapa y turno activo",
+    alt: "App real del chofer con navegación 3D hacia el cliente en Palenque",
     w: 390,
     h: 844,
     aspect: "portrait",
     highlights: [
-      "GPS en 2° plano continuo con pantalla apagada en el bolsillo",
-      "Síntesis de voz IA: lee destino y detalles sin mirar la pantalla",
-      "Fotos obligatorias de odómetro y gasolina para auditar turnos",
-      "Aceptación rápida en 1 toque y navegación directa",
+      "Mapa 3D con edificios y relieve que gira con el taxi",
+      "Lectura del viaje por voz: no tiene que mirar la pantalla",
+      "GPS en segundo plano con la pantalla apagada",
+      "Fotos de odómetro y gasolina al abrir y cerrar turno",
     ],
   },
   {
     id: "socio",
     icon: Building2,
-    tag: "Panel del Socio · Android y Web",
-    title: "El dueño fija la cuota, audita y confirma el efectivo.",
-    body: "Control integral de cada vehículo de la concesión: cuota diaria configurada, auditoría de fotografías del tablero al cierre de turno y confirmación de recepción de liquidaciones en tiempo real.",
+    tag: "Panel del socio · Web y Android",
+    title: "El dueño ve sus ingresos del día y dónde está cada unidad.",
+    body: "Cada socio revisa sus taxis en el mapa, los servicios e ingresos del día, fija la cuota por turno y confirma el efectivo recibido, sin cuentas en papel.",
     img: "socio",
-    alt: "Panel real del socio y concesionario dueño de flota",
+    alt: "Panel real del socio con servicios e ingresos del día",
     w: 1440,
     h: 900,
     aspect: "landscape",
     highlights: [
-      "Monitoreo de recaudación y cuotas fijadas por unidad",
-      "Auditoría fotográfica del tablero al inicio y fin de jornada",
-      "Registro de gastos de mantenimiento y liquidaciones en efectivo",
-      "Acceso web y móvil seguro para inversionistas",
+      "Ingresos y servicios del día por unidad",
+      "Cuota por turno y confirmación del efectivo recibido",
+      "Fotos del tablero al inicio y cierre de cada turno",
+      "Mantenimiento y gastos de cada vehículo",
     ],
   },
 ];
@@ -66,14 +66,14 @@ export function ProductStory() {
   const current = STEPS[active];
 
   return (
-    <section id="producto" aria-labelledby="story-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section id="producto" aria-labelledby="story-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
       <Reveal className="max-w-2xl">
         <Eyebrow>El producto real</Eyebrow>
-        <h2 id="story-title" className="font-display mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">
-          Tres herramientas sincronizadas en tiempo real.
+        <h2 id="story-title" className="font-display l-titulo mt-3">
+          Tres apps, una sola operación.
         </h2>
-        <p className="mt-3 text-base text-slate-600">
-          La central despacha en segundos, el chofer recibe las ofertas por voz y el dueño supervisa sus unidades e ingresos diarios.
+        <p className="l-texto mt-4">
+          La central despacha, el chofer llega y el dueño cobra: todos ven lo mismo, en tiempo real.
         </p>
       </Reveal>
 
@@ -91,24 +91,24 @@ export function ProductStory() {
               onClick={() => setActive(i)}
               className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
                 isSelected
-                  ? "border-emerald-500 bg-emerald-50/80 text-emerald-950 shadow-md ring-2 ring-emerald-500/20"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  ? "border-emerald-400/50 bg-emerald-400/10 text-white"
+                  : "border-white/10 bg-white/[0.03] text-[#a1a6b2] hover:border-white/20 hover:bg-white/[0.06]"
               }`}
             >
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                   isSelected
-                    ? "border-emerald-400 bg-emerald-600 text-white shadow-xs"
-                    : "border-slate-200 bg-slate-50 text-slate-500"
+                    ? "border-emerald-300 bg-emerald-500 text-[#02130c]"
+                    : "border-white/10 bg-white/5 text-[#a1a6b2]"
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-300">
                   Paso {String(i + 1).padStart(2, "0")}
                 </div>
-                <div className="text-sm font-bold text-slate-900">{s.tag.split("·")[0].trim()}</div>
+                <div className="text-sm font-bold text-white">{s.tag.split("·")[0].trim()}</div>
               </div>
             </button>
           );
@@ -116,7 +116,7 @@ export function ProductStory() {
       </div>
 
       {/* Contenedor principal con vista activa */}
-      <div className="mt-8 rounded-3xl border border-slate-200/90 bg-slate-50/50 p-6 shadow-xl sm:p-8">
+      <div className="l-card mt-8 p-6 sm:p-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
@@ -128,16 +128,16 @@ export function ProductStory() {
           >
             {/* Columna de información y beneficios */}
             <div className="lg:col-span-5 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-1 font-mono text-xs font-bold text-emerald-800 shadow-xs">
-                <current.icon className="h-4 w-4 text-emerald-600" />
+              <div className="l-chip font-mono">
+                <current.icon className="h-4 w-4" />
                 <span>{current.tag}</span>
               </div>
 
-              <h3 className="font-display text-2xl font-black leading-tight text-slate-900 sm:text-3xl">
+              <h3 className="font-display text-2xl font-extrabold leading-tight sm:text-[2rem]">
                 {current.title}
               </h3>
 
-              <p className="text-base leading-relaxed text-slate-600">
+              <p className="l-texto">
                 {current.body}
               </p>
 
@@ -145,19 +145,19 @@ export function ProductStory() {
               <div className="space-y-3 pt-2">
                 {current.highlights.map((h, idx) => (
                   <div key={idx} className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                    <span className="text-sm font-medium text-slate-700">{h}</span>
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                    <span className="text-sm font-medium text-[#d4d7de]">{h}</span>
                   </div>
                 ))}
               </div>
 
               {current.id === "operador" && (
-                <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-4 text-xs leading-relaxed text-sky-900">
-                  <div className="font-bold flex items-center gap-1.5 text-sky-950 mb-1">
-                    <Volume2 className="h-4 w-4 text-sky-600" /> Lectura por voz en altavoz
+                <div className="rounded-2xl border border-sky-400/20 bg-sky-400/[0.07] p-4 text-xs leading-relaxed text-sky-100/90">
+                  <div className="font-bold flex items-center gap-1.5 text-white mb-1">
+                    <Volume2 className="h-4 w-4 text-sky-300" /> Lectura por voz en altavoz
                   </div>
                   Cuando la central asigna un viaje, la app reproduce automáticamente por voz:{" "}
-                  <em>"Nuevo servicio: Calle Central a Pakal-Ná, tarifa cuarenta pesos"</em> sin que el chofer desvíe la mirada del volante.
+                  <em>"Nuevo servicio: Terminal ADO a la Zona Arqueológica"</em> sin que el chofer quite la vista del camino.
                 </div>
               )}
             </div>
@@ -166,13 +166,11 @@ export function ProductStory() {
             <div className="lg:col-span-7 flex justify-center">
               {current.aspect === "portrait" ? (
                 /* Marco auténtico de teléfono móvil Android para la app del chofer */
-                <div className="relative mx-auto w-full max-w-[320px] rounded-[38px] border-[8px] border-slate-900 bg-slate-950 p-2 shadow-2xl shadow-slate-900/25 ring-1 ring-slate-800">
+                <div className="l-telefono relative mx-auto w-full max-w-[310px]">
                   {/* Bocina / cámara superior */}
-                  <div className="mx-auto mb-2 h-4 w-28 rounded-full bg-slate-900 flex items-center justify-center">
-                    <span className="h-2 w-2 rounded-full bg-slate-800" />
-                  </div>
+                  <div className="absolute left-1/2 top-4 z-10 h-6 w-24 -translate-x-1/2 rounded-full bg-black" aria-hidden="true" />
                   {/* Pantalla del teléfono */}
-                  <div className="overflow-hidden rounded-[26px] bg-slate-900">
+                  <div className="overflow-hidden rounded-[36px] bg-black">
                     <picture>
                       <source srcSet={`/landing/${current.img}.webp`} type="image/webp" />
                       <img
@@ -187,17 +185,16 @@ export function ProductStory() {
                     </picture>
                   </div>
                   {/* Barra de inicio inferior */}
-                  <div className="mx-auto mt-2 h-1 w-20 rounded-full bg-slate-700" />
                 </div>
               ) : (
                 /* Marco de monitor / ventana de escritorio para Terminal y Socio */
-                <div className="w-full rounded-2xl border border-slate-200/90 bg-white p-2 shadow-xl shadow-slate-200/80">
-                  <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-slate-50">
-                    <div className="flex items-center gap-2 border-b border-slate-200/80 bg-white px-4 py-2.5" aria-hidden="true">
-                      <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                      <span className="ml-3 truncate font-mono text-[11px] text-slate-500 bg-slate-100 px-3 py-0.5 rounded-md border border-slate-200">
+                <div className="l-ventana w-full">
+                  <div className="overflow-hidden rounded-[14px] bg-black">
+                    <div className="flex items-center gap-2 px-3 py-2" aria-hidden="true">
+                      <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+                      <span className="ml-3 truncate rounded-md bg-white/5 px-3 py-0.5 font-mono text-[11px] text-[#a1a6b2]">
                         taxihub.cloud/{current.id === "terminal" ? "terminal" : "dueno"}
                       </span>
                     </div>

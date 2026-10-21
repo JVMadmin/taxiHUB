@@ -30,27 +30,27 @@ export function LandingNav() {
       className="sticky top-4 z-40 px-4 sm:px-6"
       role="banner"
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-4 py-2.5 shadow-sm backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-white/10 bg-[#0b0d10]/75 px-4 py-2.5 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl">
         <a
           href="#inicio"
           onClick={(e) => go(e, "inicio")}
-          className="flex items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="flex items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:ring-emerald-400"
           aria-label="TaxiHUB inicio"
         >
           <BrandLockup markSize="sm" />
-          <span className="hidden font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-700 sm:inline-block bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+          <span className="hidden font-mono text-[11px] font-semibold tracking-wide text-emerald-300 sm:inline-block bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/25">
             taxihub.cloud
           </span>
         </a>
 
         {/* Enlaces de escritorio */}
-        <nav className="hidden items-center gap-6 text-sm font-semibold text-slate-600 md:flex" aria-label="Navegación principal">
+        <nav className="hidden items-center gap-6 text-sm font-semibold text-[#a1a6b2] md:flex" aria-label="Navegación principal">
           {SECTIONS.map((s) => (
             <a
               key={s.id}
               href={`#${s.id}`}
               onClick={(e) => go(e, s.id)}
-              className="transition-colors hover:text-slate-900"
+              className="transition-colors hover:text-white"
             >
               {s.label}
             </a>
@@ -63,10 +63,10 @@ export function LandingNav() {
             type="button"
             data-testid={LANDING.goTerminal}
             onClick={() => navigate("/terminal/login")}
-            className="group flex min-h-[40px] items-center gap-2 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]"
+            className="group flex min-h-[40px] items-center gap-2 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-[#02130c] transition-all hover:bg-emerald-400 active:scale-[0.98]"
           >
             <span>Abrir Terminal</span>
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black/15 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
               <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
             </span>
           </button>
@@ -76,7 +76,7 @@ export function LandingNav() {
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -85,30 +85,30 @@ export function LandingNav() {
 
       {/* Menú desplegable móvil */}
       {open && (
-        <div className="mx-auto mt-2 max-w-6xl rounded-2xl border border-slate-200 bg-white p-4 shadow-xl md:hidden">
+        <div className="mx-auto mt-2 max-w-6xl rounded-2xl border border-white/10 bg-[#0b0d10]/95 p-4 shadow-2xl backdrop-blur-xl md:hidden">
           <nav className="flex flex-col gap-2" aria-label="Navegación móvil">
             {SECTIONS.map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
                 onClick={(e) => go(e, s.id)}
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                className="rounded-lg px-3 py-2 text-sm font-semibold text-[#d4d7de] hover:bg-white/5 hover:text-white"
               >
                 {s.label}
               </a>
             ))}
-            <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-3">
+            <div className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-3">
               <button
                 type="button"
                 onClick={() => { setOpen(false); navigate("/terminal/login"); }}
-                className="w-full rounded-lg bg-emerald-600 py-2.5 text-center text-xs font-bold text-white"
+                className="w-full rounded-lg bg-emerald-500 py-2.5 text-center text-xs font-bold text-[#02130c]"
               >
                 Abrir Terminal de Despacho
               </button>
               <button
                 type="button"
                 onClick={() => { setOpen(false); navigate("/dueno/login"); }}
-                className="w-full rounded-lg bg-slate-100 py-2.5 text-center text-xs font-bold text-slate-800"
+                className="w-full rounded-lg bg-white/10 py-2.5 text-center text-xs font-bold text-white"
               >
                 Panel Socio / Dueño
               </button>

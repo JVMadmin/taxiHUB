@@ -367,6 +367,8 @@ def build(*, APP_NAME, DEFAULT_PUNTOS_CALIENTES, DEFAULT_SITIO, EstadoOperador,
                 "descripcion_sentido": t.get("descripcion_sentido", ""),
                 "gps_accuracy": round(random.uniform(2.5, 4.5), 1),
                 "ultima_actualizacion": now_iso(),
+                # En servicio desde hace 45 min a 5 h (cronómetro de turno de la app del chofer).
+                "inicio_operacion": now_iso(-random.randint(45, 300)) if t["estado"] != "fuera_de_servicio" else None,
                 "sitio_id": t_sitio,
                 "activo": True,
                 "track": track,

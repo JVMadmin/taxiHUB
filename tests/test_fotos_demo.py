@@ -56,3 +56,14 @@ async def test_migracion_cambia_numero_provisional_de_soporte(fresh_db):
     assert "Anti-Ban" not in demo["mensaje"]
     propio = await fresh_db.avisos_dev.find_one({"titulo": "Propio"})
     assert propio["contacto_soporte"] == "+52 55 1234 5678"
+
+
+async def test_migracion_da_inicio_de_turno_a_choferes_en_servicio(fresh_db):
+    await fresh_db.operadores.insert_one({"usuario": "en_servicio_sin_inicio", "estado": "ocupado",
+                                          "ultima_actualizacion": "2026-10-20T10:00:00+00:00"})
+    await fresh_db.operadores.insert_one({"usuario": "fuera", "estado": "fuera_de_servicio"})
+    await server._migraciones()
+    a = await fresh_db.operadores.find_one({"usuario": "en_servicio_sin_inicio"})
+    assert a["inicio_operacion"] == "2026-10-20T10:00:00+00:00"
+    b = await fresh_db.operadores.find_one({"usuario": "fuera"})
+    assert not b.get("inicio_operacion")

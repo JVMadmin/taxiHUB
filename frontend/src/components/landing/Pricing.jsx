@@ -13,29 +13,29 @@ export function Pricing({ units, setUnits }) {
     <section id="precio" aria-labelledby="precio-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <div className="grid items-start gap-10 lg:grid-cols-12">
         <Reveal className="lg:col-span-5">
-          <Eyebrow>Tarifa transparente</Eyebrow>
-          <h2 id="precio-title" className="font-display mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+          <Eyebrow>Precio</Eyebrow>
+          <h2 id="precio-title" className="font-display l-titulo mt-3">
             Solo pagas por unidad activa.
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-slate-600">
-            Un precio plano y honesto diseñado para cooperativas, agrupaciones y sitios de radio taxi en México.
+          <p className="mt-3 text-base leading-relaxed text-[#a1a6b2]">
+            Un precio fijo por unidad para cooperativas, agrupaciones y sitios de radio taxi. Sin comisiones por viaje.
           </p>
 
           <div className="mt-6 space-y-3">
             {[
-              "Puente QR de WhatsApp oficial sin comisiones por mensaje",
-              "Soporte para terminales Windows ilimitadas en tu central",
-              "App móvil para todos los conductores y socios flotilleros",
-              "Cartografía local de tu ciudad y configuración de puntos calientes",
+"WhatsApp de la central por QR, sin costo por mensaje",
+"Todas las terminales de despacho que necesites",
+"App para todos tus choferes y socios",
+"Mapa de tu ciudad con tus puntos frecuentes",
             ].map((feature, idx) => (
-              <div key={idx} className="flex items-start gap-2.5 text-sm text-slate-700">
-                <Check className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+              <div key={idx} className="flex items-start gap-2.5 text-sm text-[#d4d7de]">
+                <Check className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
                 <span>{feature}</span>
               </div>
             ))}
           </div>
 
-          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900">
+          <div className="mt-8 rounded-2xl border border-amber-400/25 bg-amber-400/[0.07] p-4 text-xs text-amber-100/90">
             <strong className="font-bold">Pago único de implementación inicial:</strong> Incluye la carga personalizada del mapa de tu ciudad, el alta de tus sitios y colonias con tarifas oficiales, y la capacitación directa a tus despachadoras.
           </div>
         </Reveal>
@@ -44,18 +44,18 @@ export function Pricing({ units, setUnits }) {
         <Reveal delay={0.1} className="lg:col-span-7">
           <div
             data-testid={LANDING.priceCard}
-            className="rounded-3xl border-2 border-emerald-500/30 bg-white p-7 sm:p-9 shadow-2xl shadow-emerald-500/10"
+            className="rounded-3xl border-2 border-emerald-500/30 bg-white/[0.03] p-7 sm:p-9 "
           >
-            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-100 pb-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/[0.08] pb-6">
               <div>
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                  Plan Central Oficial
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-300 bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/25">
+                  Plan Central
                 </span>
                 <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-display text-4xl sm:text-5xl font-extrabold text-slate-900">
+                  <span className="font-display text-4xl sm:text-5xl font-extrabold text-white">
                     $99
                   </span>
-                  <span className="font-mono text-sm font-semibold text-slate-500">
+                  <span className="font-mono text-sm font-semibold text-[#8b909c]">
                     MXN / mes por unidad
                   </span>
                 </div>
@@ -64,7 +64,7 @@ export function Pricing({ units, setUnits }) {
 
             {/* Selector de Unidades */}
             <div className="mt-7">
-              <label htmlFor="units-input" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+              <label htmlFor="units-input" className="block text-xs font-bold uppercase tracking-wider text-[#d4d7de]">
                 Calcula el costo para tu flota:
               </label>
 
@@ -72,7 +72,7 @@ export function Pricing({ units, setUnits }) {
                 <button
                   type="button"
                   onClick={() => setUnits((u) => clamp(u - 5))}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[#d4d7de] hover:bg-white/10 transition-colors"
                   aria-label="Restar 5 unidades"
                 >
                   <Minus className="h-4 w-4" />
@@ -87,14 +87,14 @@ export function Pricing({ units, setUnits }) {
                     value={units}
                     onChange={(e) => setUnits(clamp(e.target.value))}
                     data-testid={LANDING.priceUnits}
-                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-center font-mono text-2xl font-extrabold text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-center font-mono text-2xl font-extrabold text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setUnits((u) => clamp(u + 5))}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[#d4d7de] hover:bg-white/10 transition-colors"
                   aria-label="Sumar 5 unidades"
                 >
                   <Plus className="h-4 w-4" />
@@ -109,29 +109,29 @@ export function Pricing({ units, setUnits }) {
                 step="1"
                 value={units}
                 onChange={(e) => setUnits(Number(e.target.value))}
-                className="mt-4 w-full accent-emerald-600"
+                className="mt-4 w-full accent-emerald-400"
               />
             </div>
 
             {/* Total estimado */}
             <div
               data-testid={LANDING.priceTotal}
-              className="mt-7 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 flex items-center justify-between"
+              className="mt-7 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-5 flex items-center justify-between"
             >
               <div>
-                <span className="text-xs font-semibold text-emerald-900 block">Total mensual estimado:</span>
-                <span className="font-mono text-xs text-slate-500">{units} unidades activas</span>
+                <span className="text-xs font-semibold text-emerald-200 block">Total mensual estimado:</span>
+                <span className="font-mono text-xs text-[#8b909c]">{units} unidades activas</span>
               </div>
               <div className="text-right">
-                <div className="font-display font-mono text-3xl sm:text-4xl font-extrabold text-emerald-700">
-                  ${fmt(total)} <span className="text-sm font-semibold text-emerald-900">MXN</span>
+                <div className="font-display font-mono text-3xl sm:text-4xl font-extrabold text-emerald-300">
+                  ${fmt(total)} <span className="text-sm font-semibold text-emerald-200">MXN</span>
                 </div>
               </div>
             </div>
 
             <a
               href="#contacto"
-              className="mt-6 block w-full rounded-xl bg-emerald-600 py-3.5 text-center text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]"
+              className="mt-6 block w-full rounded-xl bg-emerald-500 py-3.5 text-center text-sm font-bold text-[#02130c]  transition-all hover:bg-emerald-400 active:scale-[0.98]"
             >
               Solicitar cotización e instalación
             </a>

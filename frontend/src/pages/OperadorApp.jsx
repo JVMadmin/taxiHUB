@@ -29,8 +29,10 @@ import {
   PlayCircle, StopCircle, Check, LocateFixed, Navigation as NavIcon, Wallet,
   Clock, Flag, User, AlertTriangle, Gauge, Fuel, Mic, Settings,
   Camera, ShieldCheck, Banknote, Satellite, RefreshCw, Volume2, Layers,
-  Play, Crosshair, ChevronDown, Loader2,
+  Play, Crosshair, ChevronDown, Loader2, Box,
 } from "lucide-react";
+import { DriverMap3D, webglDisponible } from "@/components/maps/DriverMap3D";
+import { DRIVER } from "@/constants/testIds";
 import { applyMode } from "@/lib/theme";
 import { activarKeepAliveAudio, sonarAlertaOferta, hablarVoz, detenerVoz, anunciarServicioEntrante, probarAudioVoz, reconocimientoDisponible, crearReconocimiento, clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar, resolverSitioAproximado } from "@/lib/voz";
 import { iniciarGpsSegundoPlano, detenerGpsSegundoPlano, enviarUbicacionRobusta, obtenerEstadoGps, vaciarColaOffline, obtenerColaOffline } from "@/lib/backgroundGps";
@@ -38,6 +40,34 @@ import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
 const fmtMoney2 = (n) => `$${Number(n || 0).toLocaleString("es-MX")}`;
+
+// lib/backgroundGps llama con rutas "/api/..." y `body` en texto (estilo fetch); `api` (axios)
+// ya trae el prefijo /api y espera `data`. Sin este adaptador el GPS iba a /api/api/... (404).
+const gpsApiFetch = async (url, { body, ...opts } = {}) => {
+  const resp = await api({
+    url: url.replace(/^\/api(?=\/)/, ""),
+    data: typeof body === "string" ? JSON.parse(body) : body,
+    ...opts,
+  });
+  return resp?.data;
+};
+
+// Rumbo confiable del taxi. El del GPS solo vale en movimiento (≥ 1.5 m/s); si no, se usa el
+// desplazamiento real desde el último punto de referencia (≥ 8 m). Parado, el ruido del GPS
+// hacía girar el taxi al azar: se conserva el último rumbo bueno.
+function rumboFiable(ancla, c, previo) {
+  const h = Number(c.heading);
+  if (c.heading != null && Number.isFinite(h) && c.speed != null && c.speed >= 1.5) {
+    return { heading: h, ancla: c };
+  }
+  if (ancla) {
+    const d = distM(ancla, c);
+    if (d != null && d >= 8) return { heading: bearing(ancla.lat, ancla.lng, c.lat, c.lng), ancla: c };
+    return { heading: previo ?? null, ancla };
+  }
+  return { heading: null, ancla: c };
+}
+
 const LOC_INTERVAL = 8000; // 8s intervalo de reporte GPS en primer plano
 
 const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -149,6 +179,7 @@ export default function OperadorApp() {
   const [logo, setLogo] = useState(null);
   const profileRef = useRef(null);
   const lastPosRef = useRef(null);
+  const anclaRumboRef = useRef(null); // último punto desde el que se midió el rumbo
   const [wsState, setWsState] = useState("reconnecting");
   const [gpsStale, setGpsStale] = useState(false);
   const [now, setNow] = useState(() => new Date());
@@ -162,6 +193,15 @@ export default function OperadorApp() {
     setMapLayer(next);
     localStorage.setItem("driver_map_layer", next);
     toast.info(next === "satelite" ? "Modo Satelital con calles y lugares activado" : "Modo Calles de Palenque activado");
+  };
+  // Mapa 3D (MapLibre) por defecto si hay WebGL; el chofer puede volver al mapa plano.
+  const [webgl] = useState(() => webglDisponible());
+  const [mapa3d, setMapa3d] = useState(() => localStorage.getItem("driver_map_3d") !== "0");
+  const toggleMapa3d = () => {
+    const next = !mapa3d;
+    setMapa3d(next);
+    localStorage.setItem("driver_map_3d", next ? "1" : "0");
+    toast.info(next ? "Vista 3D activada" : "Vista plana activada");
   };
   const rutaColor = driverLight ? "#059669" : "#10b981";
   const driverAvatar = op?.foto_url ? fileUrl(op.foto_url) : DEMO_DRIVER_AVATARS[op?.usuario] || "/assets/drivers/default-driver.svg";
@@ -188,7 +228,7 @@ export default function OperadorApp() {
   const forzarSyncCola = async () => {
     const res = await vaciarColaOffline({
       operadorId: op?.id,
-      apiFetch: async (url, opts) => (await api({ url, ...opts }))?.data,
+      apiFetch: gpsApiFetch,
     });
     if (res?.ok) {
       toast.success(`Cola sincronizada (${res.procesados} puntos enviados)`);
@@ -336,10 +376,7 @@ export default function OperadorApp() {
     try {
       await enviarUbicacionRobusta(punto, {
         operadorId: opId,
-        apiFetch: async (url, opts) => {
-          const resp = await api({ url, ...opts });
-          return resp?.data || resp;
-        },
+        apiFetch: gpsApiFetch,
       });
     } catch (_) {}
   }, [op]);
@@ -359,10 +396,9 @@ export default function OperadorApp() {
           heading: pos.coords.heading,
           client_ts: new Date().toISOString(),
         };
-        // Rumbo estimado si el dispositivo no lo da
-        if (lastPosRef.current && c.heading == null) {
-          c.heading = bearing(lastPosRef.current.lat, lastPosRef.current.lng, lat, lng);
-        }
+        const r = rumboFiable(anclaRumboRef.current, c, lastPosRef.current?.heading);
+        c.heading = r.heading;
+        anclaRumboRef.current = r.ancla;
         lastPosRef.current = c;
         setCoords(c);
         setGpsStale(false);
@@ -395,9 +431,9 @@ export default function OperadorApp() {
             client_ts: loc.client_ts || new Date().toISOString(),
             fromBackgroundService: true,
           };
-          if (lastPosRef.current && c.heading == null) {
-            c.heading = bearing(lastPosRef.current.lat, lastPosRef.current.lng, loc.lat, loc.lng);
-          }
+          const r = rumboFiable(anclaRumboRef.current, c, lastPosRef.current?.heading);
+          c.heading = r.heading;
+          anclaRumboRef.current = r.ancla;
           lastPosRef.current = c;
           setCoords(c);
           setGpsStale(false);
@@ -1070,6 +1106,18 @@ export default function OperadorApp() {
     return [17.5099, -91.9847];
   }, [coords, servicio]);
 
+  // Puntos del mapa 3D: mismos criterios que los marcadores del mapa Leaflet.
+  const puntosMapa = useMemo(() => {
+    const pts = [];
+    if (navegacion && navTarget) {
+      pts.push({ pos: navTarget, texto: navegacion.tipo === "cliente" ? "Cliente" : "Destino", color: navegacion.tipo === "cliente" ? "#22c55e" : "#ef4444" });
+    } else {
+      if (servicio?.origen?.lat != null && servicio.estado === "asignado") pts.push({ pos: [servicio.origen.lat, servicio.origen.lng], texto: "Cliente", color: "#22c55e" });
+      if (servicio?.destino?.lat != null && servicio.estado === "en_curso") pts.push({ pos: [servicio.destino.lat, servicio.destino.lng], texto: "Destino", color: "#ef4444" });
+    }
+    return pts;
+  }, [navegacion, navTarget, servicio]);
+
   if (!op) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background text-muted-foreground">
@@ -1093,6 +1141,19 @@ export default function OperadorApp() {
 
       {/* MAPA de navegación (elemento principal) */}
       <div className="absolute inset-0 z-0" data-testid="driver-map">
+        {webgl && mapa3d ? (
+          <DriverMap3D
+            center={mapCenter}
+            driverPos={driverPos}
+            heading={coords?.heading}
+            puntos={puntosMapa}
+            rutaLatLngs={ruta.latlngs}
+            boundsPoints={boundsPoints}
+            capa={mapLayer}
+            modo3d
+            recenterN={recenterN}
+          />
+        ) : (
         <MapContainer center={mapCenter} zoom={15} zoomControl={false} markerZoomAnimation={false} className="h-full w-full">
           {mapLayer === "satelite" ? (
             <>
@@ -1141,6 +1202,7 @@ export default function OperadorApp() {
             </>
           )}
         </MapContainer>
+        )}
       </div>
 
       {/* 1. HEADER FLOTANTE SIMPLIFICADO */}
@@ -1162,9 +1224,9 @@ export default function OperadorApp() {
         <div className="flex items-center gap-2">
           <div className="text-right">
             <div className="text-xs font-mono text-[#00D084] bg-[#00D084]/15 px-2.5 py-1 rounded-full font-semibold">
-              ⏱ {inicio ? elapsed(inicio) : "01:36:51"}
+              ⏱ {inicio ? elapsed(inicio) : "--:--:--"}
             </div>
-            <span className="text-[10px] text-zinc-500 block mt-0.5">{turno?.odometro_inicio ? `${turno.odometro_inicio} km` : "78,433 km"} • GPS OK</span>
+            <span className="text-[10px] text-zinc-500 block mt-0.5">{turno?.odometro_inicio ? `${turno.odometro_inicio} km • ` : ""}{coords ? "GPS OK" : "Sin GPS"}</span>
           </div>
           <button
             data-testid="driver-ajustes-btn"
@@ -1196,6 +1258,17 @@ export default function OperadorApp() {
         >
           <Layers className="h-4 w-4" />
         </button>
+        {webgl && (
+          <button
+            data-testid={DRIVER.mapa3dToggle}
+            onClick={toggleMapa3d}
+            aria-pressed={mapa3d}
+            className={`w-10 h-10 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border transition active:scale-95 text-[11px] font-black ${mapa3d ? "bg-[#00D084] text-[#04120c] border-[#00D084]" : "bg-[#14171F]/90 text-zinc-300 border-white/5 hover:text-white"}`}
+            title={mapa3d ? "Cambiar a vista plana" : "Cambiar a vista 3D"}
+          >
+            {mapa3d ? "3D" : <Box className="h-4 w-4" />}
+          </button>
+        )}
         {navegacion && (
           <div data-testid="ruta-info" className="bg-[#14171F]/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/5 text-center shadow-lg">
             <div className="text-xs font-mono font-bold text-[#00D084]">{fmtDist(ruta.distance_m)}</div>

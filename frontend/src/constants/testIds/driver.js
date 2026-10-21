@@ -14,6 +14,7 @@ export const DRIVER = {
   finalizarViaje: "terminar-viaje-btn",
   rutaInfo: "ruta-info",
   recentrarMapa: "recentrar-mapa-btn",
+  mapa3dToggle: "driver-mapa-3d-toggle",
   sheetHome: "driver-sheet-home",
   sheetServicio: "driver-sheet-servicio",
   sheetPropio: "driver-sheet-propio",
