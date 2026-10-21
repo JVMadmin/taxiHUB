@@ -14,8 +14,16 @@ import java.util.List;
 public class MainActivity extends BridgeActivity {
     private TaxiHubNativeBridge nativeBridge;
 
+    // Un solo puente (un solo motor de voz) para el plugin y para window.TaxiHubNative.
+    public synchronized TaxiHubNativeBridge getNativeBridge() {
+        if (nativeBridge == null) nativeBridge = new TaxiHubNativeBridge(this);
+        return nativeBridge;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Antes de super.onCreate: así el plugin existe desde la primera carga de la web.
+        registerPlugin(TaxiHubNativePlugin.class);
         super.onCreate(savedInstanceState);
 
         // Encender pantalla y mostrar sobre la pantalla de bloqueo para avisos de despacho de servicios
@@ -41,9 +49,9 @@ public class MainActivity extends BridgeActivity {
             settings.setGeolocationEnabled(true);
             settings.setMediaPlaybackRequiresUserGesture(false);
 
-            // Inyectar el puente nativo en window.TaxiHubNative
-            nativeBridge = new TaxiHubNativeBridge(this);
-            bridge.getWebView().addJavascriptInterface(nativeBridge, "TaxiHubNative");
+            // window.TaxiHubNative (compatibilidad): solo aparece tras una recarga; la web
+            // usa primero Capacitor.Plugins.TaxiHubNative, que está desde el inicio.
+            bridge.getWebView().addJavascriptInterface(getNativeBridge(), "TaxiHubNative");
         }
     }
 

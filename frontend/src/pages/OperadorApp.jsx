@@ -34,9 +34,10 @@ import {
 import { DriverMap3D, webglDisponible } from "@/components/maps/DriverMap3D";
 import { DRIVER } from "@/constants/testIds";
 import { applyMode } from "@/lib/theme";
-import { activarKeepAliveAudio, sonarAlertaOferta, hablarVoz, detenerVoz, anunciarServicioEntrante, probarAudioVoz, reconocimientoDisponible, crearReconocimiento, clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar, resolverSitioAproximado } from "@/lib/voz";
+import { puenteNativo, activarKeepAliveAudio, sonarAlertaOferta, hablarVoz, detenerVoz, anunciarServicioEntrante, probarAudioVoz, reconocimientoDisponible, crearReconocimiento, clasificarComandoOferta, pedirPermisoNotificaciones, mostrarNotificacion, vibrar, resolverSitioAproximado } from "@/lib/voz";
 import { iniciarGpsSegundoPlano, detenerGpsSegundoPlano, enviarUbicacionRobusta, obtenerEstadoGps, vaciarColaOffline, obtenerColaOffline } from "@/lib/backgroundGps";
 import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
 const fmtMoney2 = (n) => `$${Number(n || 0).toLocaleString("es-MX")}`;
@@ -273,9 +274,7 @@ export default function OperadorApp() {
 
   // Solicitar permisos nativos de notificación y ubicación al abrir la app en Android
   useEffect(() => {
-    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.requestAllPermissions === "function") {
-      window.TaxiHubNative.requestAllPermissions();
-    }
+    puenteNativo()?.requestAllPermissions?.();
   }, []);
 
   // Adaptación nativa de la barra de estado en Android
@@ -492,17 +491,37 @@ export default function OperadorApp() {
     return () => clearInterval(t);
   }, [enOperacion, op?.id]);
 
-  // WebSocket: recibe asignación de servicios + estado de conexión
+  // WebSocket: recibe asignación de servicios + estado de conexión.
+  // Latido: "ping" cada 25 s; si en 70 s no llega "pong" la conexión está muerta (en redes
+  // móviles se corta sin avisar y la app seguía "en línea" sin recibir ofertas) y se reconecta.
   useEffect(() => {
     if (!op) return;
     let closed = false;
     let retry;
+    let latido;
+    let ultimoPong = 0;
+    let servidorConPong = false; // un servidor sin latido (versión anterior) nunca contesta
     const connect = () => {
+      clearTimeout(retry);
+      clearInterval(latido);
       setWsState(navigator.onLine ? "reconnecting" : "offline");
       const ws = new WebSocket(`${WS_BASE}/ws/operador/${op.id}?token=${encodeURIComponent(getToken() || "")}`);
       wsRef.current = ws;
-      ws.onopen = () => setWsState(navigator.onLine ? "online" : "reconnecting");
+      ws.onopen = () => {
+        setWsState(navigator.onLine ? "online" : "reconnecting");
+        ultimoPong = Date.now();
+        latido = setInterval(() => {
+          if (ws.readyState !== WebSocket.OPEN) return;
+          if (servidorConPong && Date.now() - ultimoPong > 70000) {
+            ws.close();
+            return;
+          }
+          try { ws.send("ping"); } catch (_) { /* onclose reconecta */ }
+        }, 25000);
+      };
       ws.onclose = (ev) => {
+        clearInterval(latido);
+        if (wsRef.current !== ws) return; // conexión vieja reemplazada al volver a la app
         setWsState((s) => (navigator.onLine ? "reconnecting" : "offline"));
         if (ev.code === 1008) {
           logoutOperador();
@@ -513,6 +532,11 @@ export default function OperadorApp() {
       };
       ws.onmessage = (ev) => {
         const msg = JSON.parse(ev.data);
+        if (msg.type === "pong") {
+          ultimoPong = Date.now();
+          servidorConPong = true;
+          return;
+        }
         if (msg.type === "nuevo_servicio") {
           setServicio(msg.servicio);
           setServicioPropio(null);
@@ -547,9 +571,39 @@ export default function OperadorApp() {
     connect();
     const onOnline = () => setWsState("reconnecting");
     const onOffline = () => setWsState("offline");
+    // Al volver a la app (pantalla encendida, desde otra app o desde la notificación):
+    // reconectar si el socket murió en segundo plano y revisar si hay una oferta pendiente.
+    const alVolver = () => {
+      if (closed) return;
+      if (wsRef.current?.readyState !== WebSocket.OPEN) {
+        const viejo = wsRef.current;
+        wsRef.current = null;
+        try { viejo?.close(); } catch (_) { /* noop */ }
+        connect();
+      }
+      api.get("/servicios/mis-activos").then(({ data }) => {
+        const oferta = (data || []).find((s) => s.estado === "ofrecido");
+        if (oferta && servicioRef.current?.id !== oferta.id) {
+          setServicio(oferta);
+          notificarServicioRef.current?.(oferta);
+        }
+      }).catch(() => {});
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") alVolver(); };
+    document.addEventListener("visibilitychange", onVisible);
+    const reanudar = Capacitor.isNativePlatform() ? CapApp.addListener("resume", alVolver) : null;
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
-    return () => { closed = true; clearTimeout(retry); wsRef.current?.close(); window.removeEventListener("online", onOnline); window.removeEventListener("offline", onOffline); };
+    return () => {
+      closed = true;
+      clearTimeout(retry);
+      clearInterval(latido);
+      wsRef.current?.close();
+      document.removeEventListener("visibilitychange", onVisible);
+      reanudar?.then((h) => h.remove()).catch(() => {});
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
   }, [op]);
 
   const cambiarEstado = async (estado) => {

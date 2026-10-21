@@ -18,6 +18,31 @@ let audioCtx = null;
 let keepAliveTimer = null;
 
 /**
+ * Puente nativo de la APK (voz, alerta, notificaciones). Primero el plugin de Capacitor
+ * `TaxiHubNative`, que existe desde la primera carga; `window.TaxiHubNative`
+ * (addJavascriptInterface) solo aparece tras recargar la página, por eso antes la APK
+ * se quedaba sin voz y caía a `speechSynthesis`, que el WebView de Android no tiene.
+ */
+export function puenteNativo() {
+  if (typeof window === "undefined") return null;
+  const plugin = window.Capacitor?.Plugins?.TaxiHubNative;
+  if (plugin && typeof plugin.speak === "function") {
+    const ok = (p) => p?.catch?.(() => {});
+    return {
+      speak: (texto) => ok(plugin.speak({ texto })),
+      playAlert: () => ok(plugin.playAlert()),
+      stop: () => ok(plugin.stop()),
+      showNotification: (titulo, cuerpo) => ok(plugin.showNotification({ titulo, cuerpo })),
+      requestAllPermissions: () => ok(plugin.requestAllPermissions()),
+      wakeScreen: () => ok(plugin.wakeScreen()),
+      estado: () => plugin.estado(),
+    };
+  }
+  const legado = window.TaxiHubNative;
+  return legado && typeof legado.speak === "function" ? legado : null;
+}
+
+/**
  * Mantiene vivo el canal de audio en Android/WebView aun con la pantalla apagada
  * emitiendo un pulso inaudible cada 20s mientras el operador está en turno.
  */
@@ -59,8 +84,10 @@ export function activarKeepAliveAudio(activo = true) {
  */
 export function sonarAlertaOferta() {
   try {
-    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.playAlert === "function") {
-      window.TaxiHubNative.playAlert();
+    const nativo = puenteNativo();
+    if (nativo?.playAlert) {
+      nativo.playAlert(); // tono del sistema + vibración; no sumar el tono web encima
+      return;
     }
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
@@ -136,15 +163,13 @@ if (typeof window !== "undefined" && window.speechSynthesis) {
 export function vozDisponible() {
   return (
     typeof window !== "undefined" &&
-    (!!window.TaxiHubNative || "speechSynthesis" in window || !!window.Capacitor?.Plugins?.TextToSpeech)
+    (!!puenteNativo() || "speechSynthesis" in window || !!window.Capacitor?.Plugins?.TextToSpeech)
   );
 }
 
 export function detenerVoz() {
   try {
-    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.stop === "function") {
-      window.TaxiHubNative.stop();
-    }
+    puenteNativo()?.stop?.();
     window.Capacitor?.Plugins?.TextToSpeech?.stop?.();
     window.speechSynthesis?.cancel();
   } catch {
@@ -160,13 +185,19 @@ export function detenerVoz() {
 export function hablarVoz(texto, { rate = 1.02, pitch = 1.16, alertaPrevia = false } = {}) {
   if (!texto || !vozDisponible()) return false;
   try {
-    if (alertaPrevia) sonarAlertaOferta();
-
-    // 1. Motor nativo de Android (TaxiHubNativeBridge) - Funciona con pantalla apagada y en background
-    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.speak === "function") {
-      window.TaxiHubNative.speak(texto);
+    // 1. Motor nativo de Android (TaxiHubNativeBridge) - Funciona con pantalla apagada y en background.
+    //    Con alerta previa, la voz entra cuando termina el tono para no encimarse.
+    const nativo = puenteNativo();
+    if (nativo) {
+      if (alertaPrevia) {
+        sonarAlertaOferta();
+        setTimeout(() => nativo.speak(texto), 900);
+      } else {
+        nativo.speak(texto);
+      }
       return true;
     }
+    if (alertaPrevia) sonarAlertaOferta();
 
     const capTts = window.Capacitor?.Plugins?.TextToSpeech;
     if (capTts?.speak) {
@@ -343,10 +374,7 @@ export function anunciarServicioEntrante({
 }
 
 export function probarAudioVoz() {
-  sonarAlertaOferta();
-  setTimeout(() => {
-    hablarVoz("Audio y alertas de TaxiHUB Driver funcionando correctamente.", { rate: 1.02 });
-  }, 350);
+  hablarVoz("Audio y alertas de TaxiHUB Driver funcionando correctamente.", { rate: 1.02, alertaPrevia: true });
 }
 
 // Precarga voces cuando el navegador las publica tarde (Chrome desktop).
@@ -439,14 +467,15 @@ export function clasificarComandoOferta(texto) {
 export function notificacionesDisponibles() {
   return (
     typeof window !== "undefined" &&
-    (!!window.TaxiHubNative || "Notification" in window || !!window.Capacitor?.Plugins?.LocalNotifications)
+    (!!puenteNativo() || "Notification" in window || !!window.Capacitor?.Plugins?.LocalNotifications)
   );
 }
 
 export async function pedirPermisoNotificaciones() {
   try {
-    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.requestAllPermissions === "function") {
-      window.TaxiHubNative.requestAllPermissions();
+    const nativo = puenteNativo();
+    if (nativo?.requestAllPermissions) {
+      nativo.requestAllPermissions();
       return "granted";
     }
     const localNotif = window.Capacitor?.Plugins?.LocalNotifications;
@@ -455,7 +484,7 @@ export async function pedirPermisoNotificaciones() {
       if (res?.display === "granted") return "granted";
     }
   } catch {}
-  if (!notificacionesDisponibles()) return "denied";
+  if (typeof Notification === "undefined") return "denied";
   try {
     if (Notification.permission === "granted") return "granted";
     return await Notification.requestPermission();
@@ -478,8 +507,9 @@ export function vibrar(patron = [200, 100, 200]) {
  */
 export function mostrarNotificacion({ titulo, cuerpo, tag = "taxihub-oferta" }) {
   try {
-    if (typeof window !== "undefined" && window.TaxiHubNative && typeof window.TaxiHubNative.showNotification === "function") {
-      window.TaxiHubNative.showNotification(titulo, cuerpo);
+    const nativo = puenteNativo();
+    if (nativo?.showNotification) {
+      nativo.showNotification(titulo, cuerpo);
       return true;
     }
     const localNotif = window.Capacitor?.Plugins?.LocalNotifications;
@@ -490,8 +520,6 @@ export function mostrarNotificacion({ titulo, cuerpo, tag = "taxihub-oferta" }) 
             title: titulo,
             body: cuerpo,
             id: Math.floor((Date.now() + Math.random() * 1000) % 100000),
-            sound: "dispatch_alert.wav",
-            smallIcon: "ic_stat_taxihub",
             actionTypeId: "",
             extra: { tag },
           },
@@ -501,7 +529,7 @@ export function mostrarNotificacion({ titulo, cuerpo, tag = "taxihub-oferta" }) 
     }
   } catch {}
 
-  if (!notificacionesDisponibles() || Notification.permission !== "granted") return false;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return false;
   try {
     const n = new Notification(titulo, {
       body: cuerpo,

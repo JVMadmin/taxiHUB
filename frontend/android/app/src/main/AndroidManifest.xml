@@ -47,6 +47,17 @@
         </provider>
     </application>
 
+    <!-- Android 11+ (visibilidad de paquetes): sin esto la app no encuentra el motor de voz
+         del sistema y TextToSpeech no arranca en la APK (en el navegador sí funcionaba). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

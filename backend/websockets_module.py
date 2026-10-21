@@ -83,7 +83,11 @@ def build_router(*, DEFAULT_SITIO, JWT_ALGORITHM, JWT_SECRET, manager):
         await manager.connect_operador(operador_id, ws)
         try:
             while True:
-                await ws.receive_text()  # keepalive
+                # Latido de la app del chofer: en redes móviles una conexión callada se corta
+                # sin aviso y las ofertas dejaban de llegar. "ping" → "pong" la mantiene viva
+                # y le deja a la app detectar una conexión muerta.
+                if await ws.receive_text() == "ping":
+                    await ws.send_text('{"type": "pong"}')
         except WebSocketDisconnect:
             manager.disconnect_operador(operador_id, ws)
 

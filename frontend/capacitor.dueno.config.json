@@ -9,11 +9,14 @@
   },
   "plugins": {
     "LocalNotifications": {
-      "smallIcon": "ic_stat_taxihub",
       "iconColor": "#F59E0B"
     },
     "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
     },
     "StatusBar": {
       "style": "DARK",
@@ -22,7 +25,6 @@
   },
   "android": {
     "allowMixedContent": true,
-    "captureInput": true,
-    "webContentsDebuggingEnabled": false
+    "captureInput": true
   }
 }

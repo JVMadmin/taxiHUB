@@ -27,6 +27,8 @@ public class TaxiHubNativeBridge {
     private final MainActivity activity;
     private TextToSpeech tts;
     private boolean ttsReady = false;
+    private String ttsError = null;
+    private String pendiente = null; // texto pedido antes de que el motor de voz estuviera listo
     private PowerManager.WakeLock wakeLock;
 
     public TaxiHubNativeBridge(MainActivity activity) {
@@ -71,9 +73,21 @@ public class TaxiHubNativeBridge {
                     }
                     tts.setPitch(1.0f);
                     tts.setSpeechRate(1.04f);
+                    // Canal de guía de navegación: suena aunque el volumen multimedia esté bajo
+                    // y baja la música del chofer mientras habla.
+                    tts.setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build());
                     ttsReady = true;
+                    ttsError = null;
                     Log.i(TAG, "Motor nativo de TextToSpeech inicializado correctamente en español.");
+                    String texto = pendiente;
+                    pendiente = null;
+                    if (texto != null) hablarAhora(texto);
                 } else {
+                    // Sin <queries> TTS_SERVICE en el manifiesto (Android 11+) el motor no se ve y cae aquí.
+                    ttsError = "init_status_" + status;
                     Log.e(TAG, "Error al inicializar TextToSpeech nativo: status=" + status);
                 }
             });
@@ -138,30 +152,41 @@ public class TaxiHubNativeBridge {
     @JavascriptInterface
     public void speak(String text) {
         if (text == null || text.trim().isEmpty()) return;
+        // La alerta ("ding" + vibración) la decide la web (alertaPrevia) y llega antes;
+        // sonarla aquí también la duplicaba y se encimaba con la voz.
         wakeScreen();
-        playAlert();
 
         activity.runOnUiThread(() -> {
-            try {
-                if (tts != null && ttsReady) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "taxihub_tts_" + System.currentTimeMillis());
-                    } else {
-                        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
-                    }
-                    Log.i(TAG, "TTS nativo hablando: " + text);
-                } else {
-                    Log.w(TAG, "TTS aún no está listo, reintentando en 600ms...");
-                    activity.getWindow().getDecorView().postDelayed(() -> {
-                        if (tts != null) {
-                            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "taxihub_tts_retry");
-                        }
-                    }, 600);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error en speak: " + e.getMessage());
+            if (tts != null && ttsReady) {
+                hablarAhora(text);
+            } else {
+                // El motor tarda ~1 s en arrancar: se habla en cuanto esté listo.
+                Log.w(TAG, "TTS aún no está listo; el texto queda en espera.");
+                pendiente = text;
+                if (tts == null) initTTS();
             }
         });
+    }
+
+    private void hablarAhora(String text) {
+        try {
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "taxihub_tts_" + System.currentTimeMillis());
+            Log.i(TAG, "TTS nativo hablando: " + text);
+        } catch (Exception e) {
+            Log.e(TAG, "Error en speak: " + e.getMessage());
+        }
+    }
+
+    public boolean isTtsReady() {
+        return ttsReady;
+    }
+
+    public String getTtsError() {
+        return ttsError;
+    }
+
+    public boolean notificacionesPermitidas() {
+        return NotificationManagerCompat.from(activity).areNotificationsEnabled();
     }
 
     @JavascriptInterface

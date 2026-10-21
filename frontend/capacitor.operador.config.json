@@ -16,12 +16,14 @@
       "startOnBoot": true
     },
     "LocalNotifications": {
-      "smallIcon": "ic_stat_taxihub",
-      "iconColor": "#10B981",
-      "sound": "dispatch_alert.wav"
+      "iconColor": "#10B981"
     },
     "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
     },
     "StatusBar": {
       "style": "DARK",
@@ -31,7 +33,6 @@
   "android": {
     "allowMixedContent": true,
     "captureInput": true,
-    "webContentsDebuggingEnabled": false,
     "permissions": [
       "android.permission.ACCESS_COARSE_LOCATION",
       "android.permission.ACCESS_FINE_LOCATION",
