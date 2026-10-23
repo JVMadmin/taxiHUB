@@ -17,6 +17,7 @@ import { useRouting } from "@/hooks/useRouting";
 import { distM, fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
 import { RoutePolyline } from "@/components/RoutePolyline";
 import { VehicleImage } from "@/components/VehicleImage";
+import { BrandMark } from "@/components/Brand";
 import { toast } from "sonner";
 import {
   Car,
@@ -208,13 +209,15 @@ function PassengerTileLayers({ mapStyle }) {
 
 function BrandLogo({ className }) {
   return (
-    <div className={cn("taxi-passenger-brand-wrap", className)}>
-      <img src={MARCH_LOGO} alt="TaxiHUB" className="taxi-passenger-logo-img" />
-      <div className="taxi-passenger-brand-text">
-        <strong>
-          TAXI<span>HUB</span>
+    <div className={cn("taxi-passenger-brand-wrap flex items-center gap-2.5", className)}>
+      <BrandMark size="sm" />
+      <div className="taxi-passenger-brand-text leading-tight text-left">
+        <strong className="text-[1.05rem] tracking-tight block">
+          taxi<span className="text-amber-400 dark:text-[#FFE600]">HUB</span>
         </strong>
-        <small>Pasajero · Palenque</small>
+        <small className="block text-[9px] font-mono tracking-wider uppercase text-muted-foreground">
+          Pasajero · Palenque
+        </small>
       </div>
     </div>
   );

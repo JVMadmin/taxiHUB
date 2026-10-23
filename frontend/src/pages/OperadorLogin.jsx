@@ -5,6 +5,7 @@ import { api, saveAuth, BACKEND_URL } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { BrandMark, BrandWordmark } from "@/components/Brand";
 import { Car, LogIn, Settings } from "lucide-react";
 
 const DEMO_OPERADORES = [

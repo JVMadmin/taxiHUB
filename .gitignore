@@ -49,6 +49,7 @@ dump.rdb
 # System files
 .DS_Store
 *.pem
+.kotlin/
 
 # Python
 __pycache__/

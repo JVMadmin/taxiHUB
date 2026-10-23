@@ -101,7 +101,10 @@ def build_apk(role_info):
     update_index_html(role)
     update_cap_config(name, pkg)
 
-    cmd = "cmd.exe /c gradlew.bat assembleDebug"
+    # -PappId: android/app/build.gradle toma el applicationId de esta propiedad;
+    # sin ella las 3 APKs saldrían como com.taxihub.operador y se pisarían entre sí.
+    # Ruta explícita (.\\): con NoDefaultCurrentDirectoryInExePath=1 cmd no busca en el cwd.
+    cmd = f"cmd.exe /c .\\gradlew.bat assembleDebug -PappId={pkg}"
     print(f"[>] Ejecutando: {cmd}")
     res = subprocess.run(cmd, cwd=ANDROID_DIR, shell=True, capture_output=True, text=True)
     if res.returncode != 0:
@@ -127,7 +130,7 @@ def clean_nested_downloads():
 def main():
     print("=== Iniciando sincronizacion de assets y compilacion multi-rol ===")
     
-    # Mover temporalmente build/downloads fuera para que cap copy no copie los APKs pesados a los assets nativos
+    # Mover temporalmente build/downloads fuera para que cap sync no copie los APKs pesados a los assets nativos
     temp_downloads = os.path.join(FRONTEND_DIR, "downloads_temp_build")
     had_downloads = False
     if os.path.exists(DOWNLOADS_DIR):
@@ -137,11 +140,11 @@ def main():
         shutil.move(DOWNLOADS_DIR, temp_downloads)
 
     try:
-        sync_cmd = "npx cap copy android"
+        sync_cmd = "npx cap sync android"
         print(f"[>] Copiando build web a assets nativos: {sync_cmd}")
         res = subprocess.run(sync_cmd, cwd=FRONTEND_DIR, shell=True, capture_output=True, text=True)
         if res.returncode != 0:
-            print("[!] Error en cap copy:")
+            print("[!] Error en cap sync:")
             print(res.stderr or res.stdout)
             sys.exit(1)
     finally:
