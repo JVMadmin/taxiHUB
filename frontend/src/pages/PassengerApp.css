@@ -24,7 +24,7 @@
   --passenger-line: rgba(255, 255, 255, 0.08);
   --passenger-surface: #12151D;
   --passenger-canvas: #0B0D12;
-  --passenger-green: #00D084;
+  --passenger-green: #FFE600;
   --passenger-green-dark: #00B572;
   --passenger-red: #F43F5E;
   --passenger-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
@@ -68,7 +68,7 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-primary-button {
-  background: #00D084 !important;
+  background: #FFE600 !important; color: #0C0E14 !important;
   color: #05130D !important;
   font-weight: 800 !important;
   box-shadow: 0 6px 20px rgba(0, 208, 132, 0.28) !important;
@@ -272,7 +272,7 @@
 
 .taxi-passenger-trip-summary h1 {
   margin: 0 0 6px;
-  color: #00D084;
+  color: #FFE600;
   font-size: 13.5px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -1285,7 +1285,7 @@
 
 .taxi-passenger-chat-panel > header > button svg,
 .taxi-passenger-chat-panel > header > svg { width: 18px; height: 18px; }
-.taxi-passenger-chat-panel > header > svg { margin-left: auto; color: #00D084; }
+.taxi-passenger-chat-panel > header > svg { margin-left: auto; color: #FFE600; }
 .taxi-passenger-chat-panel > header > div { display: grid; gap: 2px; }
 .taxi-passenger-chat-panel > header strong { color: #FFFFFF; font-size: 15px; font-weight: 700; }
 .taxi-passenger-chat-panel > header span { color: #94A3B8; font-size: 11.5px; font-weight: 500; }
@@ -1328,10 +1328,11 @@
   align-self: flex-end;
   border-radius: 16px 16px 4px 16px;
   color: #05130D;
-  background: #00D084;
-  border: 1px solid rgba(0, 208, 132, 0.6);
-  font-weight: 500;
-  box-shadow: 0 4px 14px rgba(0, 208, 132, 0.25);
+  background: #FFE600;
+  color: #0C0E14;
+  border: 1px solid rgba(255, 230, 0, 0.7);
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(255, 230, 0, 0.28);
 }
 
 .taxi-passenger-chat-bubble small {
@@ -1409,14 +1410,15 @@
   border: 0;
   border-radius: 14px;
   color: #05130D;
-  background: #00D084;
+  background: #FFE600;
+  color: #0C0E14;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 208, 132, 0.3);
+  box-shadow: 0 4px 14px rgba(255, 230, 0, 0.35);
   transition: all 0.15s ease;
 }
 
 .taxi-passenger-chat-compose > button:hover {
-  background: #00B572;
+  background: #FFD000;
 }
 
 .taxi-passenger-chat-compose > button svg { width: 18px; height: 18px; }
@@ -1622,7 +1624,7 @@
 
 .taxi-passenger-dark .taxi-passenger-tenant-badge {
   background: rgba(0, 208, 132, 0.14);
-  color: #00D084;
+  color: #FFE600;
 }
 
 .taxi-passenger-glass-btn {
@@ -2051,7 +2053,7 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-quote-price {
-  color: #00D084;
+  color: #FFE600;
 }
 
 /* Payment Method Selector */
@@ -2094,9 +2096,9 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-pay-option-active {
-  border-color: #00D084;
+  border-color: #FFE600;
   background: rgba(0, 208, 132, 0.12);
-  color: #00D084;
+  color: #FFE600;
 }
 
 /* Unread Chat Badge & Quick Chips */

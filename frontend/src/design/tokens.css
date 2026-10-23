@@ -11,24 +11,24 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
 
 :root {
-  /* Marca */
-  --th-primary: #4F5DFF;
-  --th-primary-dark: #3D49D6;
-  --th-primary-light: #DDE1FF;
-  --th-primary-soft: rgba(79, 93, 255, 0.14);
+  /* Marca — Amarillo Luminoso Oficial TaxiHUB */
+  --th-primary: #FFE600;
+  --th-primary-dark: #FFB800;
+  --th-primary-light: #FFF8C5;
+  --th-primary-soft: rgba(255, 230, 0, 0.15);
 
-  /* En vivo / disponible (esmeralda de precisión — WCAG AAA) */
-  --th-live: #00D084;
-  --th-live-soft: rgba(0, 208, 132, 0.14);
+  /* En vivo / disponible (amarillo taxi luminoso) */
+  --th-live: #FFE600;
+  --th-live-soft: rgba(255, 230, 0, 0.15);
 
   /* Semánticos */
-  --th-success: #00D084;
+  --th-success: #10B981;
   --th-danger: #F4544C;
   --th-danger-soft: rgba(244, 84, 76, 0.12);
-  --th-warning: #FFB224;
-  --th-warning-soft: rgba(255, 178, 36, 0.14);
-  --th-info: #4F5DFF;
-  --th-info-soft: rgba(79, 93, 255, 0.12);
+  --th-warning: #FF9900;
+  --th-warning-soft: rgba(255, 153, 0, 0.14);
+  --th-info: #38BDF8;
+  --th-info-soft: rgba(56, 189, 248, 0.12);
   --th-purple: #9A6BFF;
   --th-purple-soft: rgba(154, 107, 255, 0.14);
   --th-offline: #9CA0AA;
@@ -51,11 +51,11 @@
   --th-radius-xl: 20px;
   --th-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.22);
   --th-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.28), 0 12px 36px rgba(0, 0, 0, 0.32);
-  --th-shadow-brand: 0 6px 24px rgba(79, 93, 255, 0.22);
+  --th-shadow-brand: 0 6px 24px rgba(255, 230, 0, 0.28);
 }
 
 html[data-mode="claro"] {
-  /* Paleta diurna unificada — perla pizarra de alto contraste conservando el acento de la paleta */
+  /* Paleta diurna unificada — perla pizarra con acento taxi gold de alto contraste */
   --th-bg: #EEF2F6;
   --th-surface: #FFFFFF;
   --th-surface-2: #F4F6F9;
@@ -64,20 +64,19 @@ html[data-mode="claro"] {
   --th-muted: #475569;
   --th-border: #CBD5E1;
   --th-border-strong: #94A3B8;
-  --th-live: #059669;
-  --th-live-soft: rgba(5, 150, 105, 0.14);
+  --th-live: #D97706;
+  --th-live-soft: rgba(217, 119, 6, 0.14);
   --th-success: #059669;
   --th-danger: #DC2626;
   --th-warning: #D97706;
   --th-shadow-1: 0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.06);
   --th-shadow-2: 0 4px 12px rgba(15, 23, 42, 0.08), 0 14px 32px rgba(15, 23, 42, 0.12);
-  --th-shadow-brand: 0 6px 20px hsl(var(--brand) / 26%);
+  --th-shadow-brand: 0 6px 20px rgba(217, 119, 6, 0.26);
 }
 
 /* --------------------------------------------------------------------------
    Puente de tokens semánticos (shadcn) — html:root gana la cascada sobre los
-   :root de index.css sin modificarlos. Mismo mundo de color: un solo tono
-   frío-cálido (#0B0D10→#17191E), acento por paleta, verde neón solo semántico.
+   :root de index.css sin modificarlos. Acento de marca oficial: Amarillo Luminoso.
    -------------------------------------------------------------------------- */
 html:root {
   --background: 220 19% 5%;
@@ -86,8 +85,8 @@ html:root {
   --card-foreground: 240 11% 96%;
   --popover: 222 17% 12%;
   --popover-foreground: 240 11% 96%;
-  --primary: 158 64% 52%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 49 100% 50%;
+  --primary-foreground: 240 6% 4%;
   --secondary: 222 12% 13%;
   --secondary-foreground: 240 11% 96%;
   --muted: 222 11% 12%;
@@ -98,16 +97,16 @@ html:root {
   --destructive-foreground: 0 0% 98%;
   --border: 220 8% 16%;
   --input: 220 9% 19%;
-  --ring: 158 64% 52%;
-  --chart-1: 158 64% 52%;
-  --chart-2: 99 100% 66%;
-  --chart-3: 38 92% 50%;
+  --ring: 49 100% 50%;
+  --chart-1: 49 100% 50%;
+  --chart-2: 38 92% 50%;
+  --chart-3: 158 64% 52%;
   --chart-4: 0 72% 51%;
   --chart-5: 271 81% 56%;
-  /* Acento de marca por paleta (default esmeralda, sobreescrito por data-theme) */
-  --brand: 158 64% 52%;
-  --brand-bright: 160 84% 62%;
-  --brand-strong: 160 84% 39%;
+  /* Acento de marca oficial TaxiHUB — Amarillo Luminoso */
+  --brand: 49 100% 50%;
+  --brand-bright: 54 100% 50%;
+  --brand-strong: 42 100% 45%;
   --brand-contrast: 240 6% 4%;
   --surface: 220 16% 7%;
   --surface-2: 223 13% 10%;
@@ -406,14 +405,14 @@ html:not([data-mode="claro"]) .th-icon-3d {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
 }
 
-/* Puente emerald → verde neón semántico (solo dark; claro conserva verde esmeralda de alto contraste) */
+/* Puente emerald → amarillo luminoso de marca (solo dark; claro usa ámbar-dorado de alto contraste) */
 html:not([data-mode="claro"]) .text-emerald-400,
 html:not([data-mode="claro"]) .text-emerald-500 { color: var(--th-live); }
 html:not([data-mode="claro"]) .bg-emerald-400,
-html:not([data-mode="claro"]) .bg-emerald-500 { background-color: var(--th-live); }
+html:not([data-mode="claro"]) .bg-emerald-500 { background-color: var(--th-live); color: #0C0E14 !important; }
 html[data-mode="claro"] .text-emerald-400,
-html[data-mode="claro"] .text-emerald-500 { color: #047857 !important; }
-html[data-mode="claro"] .text-emerald-300 { color: #065F46 !important; }
+html[data-mode="claro"] .text-emerald-500 { color: #D97706 !important; }
+html[data-mode="claro"] .text-emerald-300 { color: #B45309 !important; }
 
 /* --------------------------------------------------------------------------
    App del Operador — piel oscura ("taxi-driver-dark") alineada al sistema.
@@ -430,8 +429,8 @@ html .taxi-driver-shell.taxi-driver-dark {
   --driver-line: rgba(255, 255, 255, 0.08);
   --driver-surface: #17191E;
   --driver-canvas: #0B0D10;
-  --driver-green: #8CFF4F;
-  --driver-green-dark: #6BD83A;
+  --driver-green: #FFE600;
+  --driver-green-dark: #FFB800;
   --driver-red: #F4544C;
 }
 
@@ -496,28 +495,28 @@ html .taxi-driver-shell.taxi-driver-dark [data-testid="estado-buttons"] button {
   background: #1B1E24 !important;
   color: var(--driver-muted) !important;
 }
-/* Ítem de estado activo: verde neón sólido (identidad "en vivo") */
+/* Ítem de estado activo: amarillo luminoso taxi sólido con texto oscuro */
 html .taxi-driver-shell.taxi-driver-dark [data-testid="estado-buttons"] button[aria-pressed="true"] {
   border-color: var(--driver-green) !important;
   color: #0B0D10 !important;
   background: var(--driver-green) !important;
-  box-shadow: 0 4px 16px rgba(140, 255, 79, 0.22);
+  box-shadow: 0 4px 18px rgba(255, 230, 0, 0.28);
 }
 html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-select"] {
   border-color: rgba(255, 255, 255, 0.08) !important;
   background: #1B1E24 !important;
 }
 
-/* CTA de servicio: neón sólido, tinta oscura, glow suave */
+/* CTA de servicio: amarillo luminoso taxi sólido, tinta oscura, glow suave */
 html .taxi-driver-shell.taxi-driver-dark [data-testid="iniciar-servicio-btn"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="aceptar-servicio-btn"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="iniciar-viaje-btn"] {
   color: #0B0D10 !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   background: var(--driver-green) !important;
-  box-shadow: 0 4px 18px rgba(140, 255, 79, 0.22);
+  box-shadow: 0 4px 20px rgba(255, 230, 0, 0.28);
 }
-html .taxi-driver-shell.taxi-driver-dark [data-testid="aceptar-servicio-btn"] { font-weight: 600 !important; }
+html .taxi-driver-shell.taxi-driver-dark [data-testid="aceptar-servicio-btn"] { font-weight: 700 !important; }
 
 /* Botones secundarios (reporte/chat) e inputs */
 html .taxi-driver-shell.taxi-driver-dark [data-testid="reportar-objeto-btn"],
@@ -568,8 +567,8 @@ html .taxi-passenger-auth {
   --passenger-line: rgba(255, 255, 255, 0.08);
   --passenger-surface: #17191E;
   --passenger-canvas: #0B0D10;
-  --passenger-green: #8CFF4F;
-  --passenger-green-dark: #6BD83A;
+  --passenger-green: #FFE600;
+  --passenger-green-dark: #FFB800;
   --passenger-red: #F4544C;
   --passenger-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }

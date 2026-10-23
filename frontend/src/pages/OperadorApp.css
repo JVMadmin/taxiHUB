@@ -32,7 +32,7 @@
   --driver-line: rgba(255, 255, 255, 0.08);
   --driver-surface: #12151D;
   --driver-canvas: #0B0D12;
-  --driver-green: #00D084;
+  --driver-green: #FFE600;
   --driver-green-dark: #00B572;
   --driver-red: #F43F5E;
   color: var(--driver-ink);
@@ -98,8 +98,8 @@
 }
 
 .taxi-driver-dark [data-testid="estado-buttons"] button[aria-pressed="true"] {
-  border-color: #00D084 !important;
-  color: #00D084 !important;
+  border-color: #FFE600 !important;
+  color: #FFE600 !important;
   background: rgba(0, 208, 132, 0.12) !important;
   box-shadow: 0 0 0 2px rgba(0, 208, 132, 0.15) !important;
 }
@@ -107,7 +107,7 @@
 .taxi-driver-dark [data-testid="iniciar-servicio-btn"],
 .taxi-driver-dark [data-testid="aceptar-servicio-btn"],
 .taxi-driver-dark [data-testid="iniciar-viaje-btn"] {
-  background: #00D084 !important;
+  background: #FFE600 !important; color: #0C0E14 !important;
   color: #05130D !important;
   font-weight: 800 !important;
   box-shadow: 0 6px 20px rgba(0, 208, 132, 0.28) !important;

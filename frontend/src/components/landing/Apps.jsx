@@ -11,7 +11,7 @@ const APPS = [
     ver: "v4.2.0 · 64-bit",
     href: "/downloads/TaxiHub-Central.exe",
     tid: LANDING.downloadWindows,
-    color: "emerald",
+    color: "amber",
   },
   {
     icon: Smartphone,
@@ -61,7 +61,7 @@ export function Apps() {
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
-                      <Icon className="h-6 w-6 text-emerald-600" aria-hidden="true" />
+                      <Icon className="h-6 w-6 text-amber-500" aria-hidden="true" />
                     </span>
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-600">
                       {app.ver}
@@ -69,7 +69,7 @@ export function Apps() {
                   </div>
                   <h3 className="font-display mt-5 text-xl font-bold text-slate-900">{app.title}</h3>
                   <p className="mt-1 text-sm text-slate-500">{app.sub}</p>
-                  <div className="mt-4 inline-block rounded-md bg-emerald-50 px-2.5 py-1 font-mono text-xs font-semibold text-emerald-800 border border-emerald-200">
+                  <div className="mt-4 inline-block rounded-md bg-amber-50 px-2.5 py-1 font-mono text-xs font-semibold text-amber-800 border border-amber-200">
                     {app.tag}
                   </div>
                 </div>

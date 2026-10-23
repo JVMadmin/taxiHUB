@@ -17,6 +17,7 @@ import { useRouting } from "@/hooks/useRouting";
 import { distM, fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
 import { RoutePolyline } from "@/components/RoutePolyline";
 import { VehicleImage } from "@/components/VehicleImage";
+import { BrandMark } from "@/components/Brand";
 import { toast } from "sonner";
 import {
   Car,
@@ -208,13 +209,15 @@ function PassengerTileLayers({ mapStyle }) {
 
 function BrandLogo({ className }) {
   return (
-    <div className={cn("taxi-passenger-brand-wrap", className)}>
-      <img src={MARCH_LOGO} alt="TaxiHUB" className="taxi-passenger-logo-img" />
-      <div className="taxi-passenger-brand-text">
-        <strong>
-          TAXI<span>HUB</span>
+    <div className={cn("taxi-passenger-brand-wrap flex items-center gap-2.5", className)}>
+      <BrandMark size="sm" />
+      <div className="taxi-passenger-brand-text leading-tight text-left">
+        <strong className="text-[1.05rem] tracking-tight block">
+          taxi<span className="text-amber-400 dark:text-[#FFE600]">HUB</span>
         </strong>
-        <small>Pasajero · Palenque</small>
+        <small className="block text-[9px] font-mono tracking-wider uppercase text-muted-foreground">
+          Pasajero · Palenque
+        </small>
       </div>
     </div>
   );
@@ -1100,7 +1103,7 @@ export default function PassengerApp() {
 
           {/* Píldora de Sitio / Ciudad */}
           <div className="bg-[#14171F]/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-white/10 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#00D084] animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-[#FFE600] animate-pulse"></span>
             <span className="text-xs font-bold tracking-wide text-white">taxiHUB</span>
             <span className="text-xs text-zinc-400">• Palenque</span>
           </div>
@@ -1180,7 +1183,7 @@ export default function PassengerApp() {
                       <h1 className="text-xl font-bold tracking-tight text-white">Hola, {auth.nombre?.split(" ")[0] || "Pasajero"}</h1>
                       <p className="text-xs text-zinc-400">¿A dónde te llevamos hoy?</p>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-[#00D084]/15 text-[#00D084] px-2.5 py-1 rounded-full border border-[#00D084]/30">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-[#FFE600]/15 text-[#FFE600] px-2.5 py-1 rounded-full border border-[#FFE600]/30">
                       Radio Taxis Palenque
                     </span>
                   </div>
@@ -1195,11 +1198,11 @@ export default function PassengerApp() {
                     className="w-full bg-[#181C26] hover:bg-[#202534] border border-white/10 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-inner transition group text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-[#00D084]/15 text-[#00D084] flex items-center justify-center font-bold">
+                      <div className="w-10 h-10 rounded-xl bg-[#FFE600]/15 text-[#FFE600] flex items-center justify-center font-bold">
                         <Search className="h-5 w-5" />
                       </div>
                       <div className="text-left">
-                        <span className="text-sm font-bold text-white block group-hover:text-[#00D084] transition">¿A dónde vas?</span>
+                        <span className="text-sm font-bold text-white block group-hover:text-[#FFE600] transition">¿A dónde vas?</span>
                         <span className="text-xs text-zinc-400">Buscar calle, colonia o elegir en el mapa</span>
                       </div>
                     </div>
@@ -1223,7 +1226,7 @@ export default function PassengerApp() {
                         }}
                         className="flex items-center gap-2 bg-[#181C26] hover:bg-zinc-800 px-3.5 py-2 rounded-xl border border-white/5 shrink-0 text-xs font-medium text-zinc-200 transition"
                       >
-                        <span className="text-[#00D084]">
+                        <span className="text-[#FFE600]">
                           {poi.id.includes("mercado") ? (
                             <ShoppingBag className="h-3.5 w-3.5" />
                           ) : poi.id.includes("ado") ? (
@@ -1240,19 +1243,19 @@ export default function PassengerApp() {
 
                 {/* Barra de Navegación Inferior */}
                 <div className="grid grid-cols-4 border-t border-white/5 pt-2.5 pb-1 px-2 text-center bg-[#0D0F13]">
-                  <button onClick={() => setView("viaje")} className={`flex flex-col items-center gap-1 ${view === "viaje" && !servicio ? "text-[#00D084]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                  <button onClick={() => setView("viaje")} className={`flex flex-col items-center gap-1 ${view === "viaje" && !servicio ? "text-[#FFE600]" : "text-zinc-500 hover:text-zinc-300"}`}>
                     <Home className="h-5 w-5" />
                     <span className="text-[10px] font-bold">Inicio</span>
                   </button>
-                  <button onClick={() => setView("solicitar")} className={`flex flex-col items-center gap-1 ${view === "solicitar" ? "text-[#00D084]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                  <button onClick={() => setView("solicitar")} className={`flex flex-col items-center gap-1 ${view === "solicitar" ? "text-[#FFE600]" : "text-zinc-500 hover:text-zinc-300"}`}>
                     <Car className="h-5 w-5" />
                     <span className="text-[10px] font-medium">Viajes</span>
                   </button>
-                  <button onClick={() => setView("historial")} className={`flex flex-col items-center gap-1 ${view === "historial" ? "text-[#00D084]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                  <button onClick={() => setView("historial")} className={`flex flex-col items-center gap-1 ${view === "historial" ? "text-[#FFE600]" : "text-zinc-500 hover:text-zinc-300"}`}>
                     <History className="h-5 w-5" />
                     <span className="text-[10px] font-medium">Historial</span>
                   </button>
-                  <button onClick={() => setView("perfil")} className={`flex flex-col items-center gap-1 ${view === "perfil" ? "text-[#00D084]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                  <button onClick={() => setView("perfil")} className={`flex flex-col items-center gap-1 ${view === "perfil" ? "text-[#FFE600]" : "text-zinc-500 hover:text-zinc-300"}`}>
                     <User className="h-5 w-5" />
                     <span className="text-[10px] font-medium">Perfil</span>
                   </button>
@@ -1311,7 +1314,7 @@ export default function PassengerApp() {
                         positions={rutaDelTaxi.latlngs}
                         className="th-route-flow"
                         pathOptions={{
-                          color: "#10b981",
+                          color: "#FFE600",
                           weight: 5,
                           opacity: 0.96,
                           dashArray: "1 12",
@@ -1323,7 +1326,7 @@ export default function PassengerApp() {
                   {servicio.origen?.lat != null && (
                     <Marker
                       position={[servicio.origen.lat, servicio.origen.lng]}
-                      icon={pointIcon("Origen", "#10b981")}
+                      icon={pointIcon("Origen", "#FFE600")}
                     />
                   )}
                   {servicio.destino?.lat != null && (
@@ -1365,12 +1368,12 @@ export default function PassengerApp() {
                       className={cn(
                         "flex h-11 items-center gap-2 rounded-2xl border px-3 text-xs font-bold shadow-xl backdrop-blur-md transition-all active:scale-95",
                         siguiendoTaxi
-                          ? "border-emerald-500/50 bg-emerald-950/85 text-emerald-300 shadow-emerald-950/40"
+                          ? "border-amber-400/50 bg-amber-950/85 text-amber-300 shadow-amber-950/40"
                           : "border-sky-500/50 bg-slate-950/90 text-sky-300 shadow-slate-950/50"
                       )}
                       title={siguiendoTaxi ? "Activar modo libre" : "Centrar y seguir taxi"}
                     >
-                      <Navigation className={cn("h-4 w-4", siguiendoTaxi && "animate-pulse text-emerald-400")} />
+                      <Navigation className={cn("h-4 w-4", siguiendoTaxi && "animate-pulse text-amber-400")} />
                       <span>{siguiendoTaxi ? "Siguiendo" : "Modo libre"}</span>
                     </button>
                   )}
@@ -1414,7 +1417,7 @@ export default function PassengerApp() {
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <ServicioBadge estado={servicio.estado} />
                       {rutaDelTaxi.duration_s != null && (
-                        <span className="text-xs font-mono font-bold text-[#00D084]">
+                        <span className="text-xs font-mono font-bold text-[#FFE600]">
                           ETA: {fmtDuration(rutaDelTaxi.duration_s)}
                         </span>
                       )}
@@ -1446,7 +1449,7 @@ export default function PassengerApp() {
 
                     <div className="mt-2.5 pt-2.5 border-t border-white/5 flex flex-col gap-1.5 text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="text-emerald-400 text-xs">📍</span>
+                        <span className="text-amber-400 text-xs">📍</span>
                         <span className="text-zinc-300 truncate font-medium">
                           {servicio.origen_texto || servicio.origen?.texto || "Mi ubicación"}
                         </span>
@@ -1662,7 +1665,7 @@ export default function PassengerApp() {
                   <Polyline
                     positions={rutaPreview.latlngs}
                     pathOptions={{
-                      color: "#10b981",
+                      color: "#FFE600",
                       weight: 5,
                       opacity: 0.9,
                       dashArray: "1 12",
@@ -1787,7 +1790,7 @@ export default function PassengerApp() {
                         onClick={() => seleccionarResultadoGeo(item, activeSearchField)}
                         className="taxi-passenger-autocomplete-item"
                       >
-                        <MapPin className="w-4 h-4 shrink-0 text-emerald-500" />
+                        <MapPin className="w-4 h-4 shrink-0 text-amber-400" />
                         <div className="min-w-0 flex-1 text-left">
                           <div className="font-semibold text-xs truncate">{item.label}</div>
                           <div className="text-[11px] opacity-65 truncate">
@@ -1837,7 +1840,7 @@ export default function PassengerApp() {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 text-xs font-bold">
-                          <Sparkles className="w-4 h-4 text-emerald-500" />
+                          <Sparkles className="w-4 h-4 text-amber-400" />
                           <span>
                             {cotizacion?.tarifa_nombre || "Tarifa Oficial Radio Taxis Palenque"}
                           </span>
@@ -1907,7 +1910,7 @@ export default function PassengerApp() {
                                     {t.eta_min != null && <span>~{t.eta_min} min</span>}
                                   </div>
                                   {t.costo_estimado != null && (
-                                    <div className="text-xs font-extrabold text-emerald-500 mt-0.5">
+                                    <div className="text-xs font-extrabold text-amber-400 mt-0.5">
                                       ${t.costo_estimado} MXN
                                     </div>
                                   )}
@@ -2045,7 +2048,7 @@ export default function PassengerApp() {
                         });
                         setRatingValue(5);
                       }}
-                      className="text-[11px] font-bold text-emerald-500 underline"
+                      className="text-[11px] font-bold text-amber-400 underline"
                     >
                       Calificar
                     </button>
@@ -2088,7 +2091,7 @@ export default function PassengerApp() {
                     type="button"
                     data-testid={PASSENGER.perfilEditarBtn}
                     onClick={iniciarEdicionPerfil}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-500"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-amber-400"
                   >
                     <Edit3 className="w-3.5 h-3.5" /> Editar perfil
                   </button>
@@ -2342,7 +2345,7 @@ export default function PassengerApp() {
                 title="Adjuntar o tomar foto"
               >
                 {chatUploading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-[#00D084]" />
+                  <Loader2 className="w-5 h-5 animate-spin text-[#FFE600]" />
                 ) : (
                   <Camera className="w-5 h-5" />
                 )}

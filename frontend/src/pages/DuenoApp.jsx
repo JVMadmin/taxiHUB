@@ -117,7 +117,7 @@ export default function DuenoApp() {
               "flex items-center justify-between rounded-xl border px-3 py-2 text-xs font-semibold",
               subUrgente
                 ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
-                : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                : "border-amber-400/30 bg-amber-400/10 text-amber-300"
             )}
             title={`Vencimiento: ${sitioConfig?.suscripcion?.fecha_vencimiento ? new Date(sitioConfig.suscripcion.fecha_vencimiento).toLocaleDateString("es-MX") : "Activo"}`}
           >
@@ -164,7 +164,7 @@ export default function DuenoApp() {
             />
             <div>
               <div className="font-bold text-foreground leading-tight">{dueno.nombre}</div>
-              <div className="mono-num text-[10px] font-semibold text-emerald-400">⏳ {subRestante}</div>
+              <div className="mono-num text-[10px] font-semibold text-amber-400">⏳ {subRestante}</div>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -187,7 +187,7 @@ export default function DuenoApp() {
                 "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold",
                 subUrgente
                   ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
-                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  : "border-amber-400/30 bg-amber-400/10 text-amber-300"
               )}
             >
               <CalendarClock className="h-3.5 w-3.5" />
