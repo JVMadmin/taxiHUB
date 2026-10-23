@@ -9,11 +9,11 @@ export function taxiIcon(color, label, { selected = false } = {}) {
   const ring = selected ? "box-shadow:0 0 0 3px #fff,0 0 0 7px rgba(255,255,255,.28)" : "";
   const html = `
     <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:100%;height:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.65))">
-      <div style="display:flex;align-items:center;gap:5px;background:${c};color:#0b0b0d;
-        border:2px solid #0b0b0d;border-radius:10px;padding:3px 9px 3px 6px;font-weight:800;
+      <div style="display:flex;align-items:center;gap:5px;background:${c};color:#03070C;
+        border:2px solid #03070C;border-radius:10px;padding:3px 9px 3px 6px;font-weight:800;
         font-size:12px;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;${ring}">
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
-          stroke="#0b0b0d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          stroke="#03070C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10 2h4"/><path d="m19 8-1.5-3a2 2 0 0 0-1.8-1H8.3a2 2 0 0 0-1.8 1L5 8"/>
           <path d="M5 8h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2Z"/>
         </svg>${texto}
@@ -73,13 +73,13 @@ export function pointIcon(label, color, { size = "md" } = {}) {
           <!-- Cuerpo estilizado del pin 3D -->
           <path d="M17 44 C17 44 31 27 31 17 C31 8.8 24.8 2 17 2 C9.2 2 3 8.8 3 17 C3 27 17 44 17 44 Z"
                 fill="url(#th-pin-grad-${uid})"
-                stroke="#0B0E14" stroke-width="1.6"/>
+                stroke="#060D16" stroke-width="1.6"/>
 
           <!-- Brillo especular superior -->
           <ellipse cx="17" cy="8" rx="6" ry="2.5" fill="#FFFFFF" opacity="0.35"/>
 
           <!-- Núcleo central concéntrico -->
-          <circle cx="17" cy="17" r="6.5" fill="#0B0E14" stroke="#FFFFFF" stroke-width="1.6" opacity="0.95"/>
+          <circle cx="17" cy="17" r="6.5" fill="#060D16" stroke="#FFFFFF" stroke-width="1.6" opacity="0.95"/>
           <circle cx="17" cy="17" r="3.2" fill="${c}"/>
         </svg>
       </div>
@@ -94,9 +94,9 @@ export function driverIcon(color, heading = 0) {
   const html = `
     <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg);filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))">
       <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;
-        background:${c};border:3px solid #0b0b0d;border-radius:50%">
+        background:${c};border:3px solid #03070C;border-radius:50%">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-          stroke="#0b0b0d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180)">
+          stroke="#03070C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180)">
           <path d="M10 2h4"/><path d="m19 8-1.5-3a2 2 0 0 0-1.8-1H8.3a2 2 0 0 0-1.8 1L5 8"/>
           <path d="M5 8h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2Z"/>
         </svg>
@@ -124,14 +124,14 @@ function carBodySvg(color) {
       <!-- sombra en el suelo -->
       <ellipse cx="32" cy="48" rx="17" ry="4.8" fill="rgba(0,0,0,0.4)"/>
       <!-- ruedas -->
-      <rect x="11" y="36" width="9" height="11" rx="3" fill="#08080b"/>
-      <rect x="44" y="36" width="9" height="11" rx="3" fill="#08080b"/>
-      <rect x="11" y="18" width="9" height="11" rx="3" fill="#08080b"/>
-      <rect x="44" y="18" width="9" height="11" rx="3" fill="#08080b"/>
+      <rect x="11" y="36" width="9" height="11" rx="3" fill="#03070C"/>
+      <rect x="44" y="36" width="9" height="11" rx="3" fill="#03070C"/>
+      <rect x="11" y="18" width="9" height="11" rx="3" fill="#03070C"/>
+      <rect x="44" y="18" width="9" height="11" rx="3" fill="#03070C"/>
       <!-- carrocería -->
-      <path d="M8 33 Q14 12 24 10 h16 Q50 12 56 33 Q56 45 32 46 Q8 45 8 33 Z" fill="url(#th-body)" stroke="#0b0b0d" stroke-width="1.6"/>
+      <path d="M8 33 Q14 12 24 10 h16 Q50 12 56 33 Q56 45 32 46 Q8 45 8 33 Z" fill="url(#th-body)" stroke="#03070C" stroke-width="1.6"/>
       <!-- cabina / techo -->
-      <path d="M20 26 Q25 18 32 18 Q39 18 44 26 Q44 34 40 36 Q32 38 24 36 Q20 34 20 26 Z" fill="#14151c" stroke="#0b0b0d" stroke-width="1.4"/>
+      <path d="M20 26 Q25 18 32 18 Q39 18 44 26 Q44 34 40 36 Q32 38 24 36 Q20 34 20 26 Z" fill="#14151c" stroke="#03070C" stroke-width="1.4"/>
       <!-- parabrisas delantero (hacia arriba) -->
       <path d="M21.5 27.5 Q25 22.5 32 22.5 Q39 22.5 42.5 27.5 L40 32 Q32 34.4 24 32 Z" fill="url(#th-glass)"/>
       <!-- faros delanteros -->
@@ -155,34 +155,34 @@ export function semaforoServiciosStyle(count) {
   if (n === 0) {
     return {
       count: 0,
-      bg: "#334155",
+      bg: "#2A3F5C",
       text: "#FFFFFF",
-      border: "rgba(255,255,255,0.88)",
-      glow: "rgba(15,23,42,0.85)",
+      border: "rgba(207,216,227,0.7)",
+      glow: "rgba(3,7,12,0.85)",
       nivel: "Sin servicios hoy",
-      pillClass: "bg-[#334155] text-white border-white/60",
+      pillClass: "bg-[#2A3F5C] text-white border-white/60",
     };
   }
   if (n <= 2) {
     return {
       count: n,
       bg: "#FFE600",
-      text: "#0C0E14",
+      text: "#050B12",
       border: "#FFF8C5",
       glow: "rgba(255,230,0,0.5)",
       nivel: "Carga baja",
-      pillClass: "bg-[#FFE600] text-[#0C0E14] border-[#FFF8C5]/80",
+      pillClass: "bg-brand text-[#050B12] border-[#FFF8C5]/80",
     };
   }
   if (n <= 4) {
     return {
       count: n,
       bg: "#FF9900",
-      text: "#0C0E14",
+      text: "#050B12",
       border: "#FFD9A0",
       glow: "rgba(255,153,0,0.55)",
       nivel: "Carga media",
-      pillClass: "bg-[#FF9900] text-[#0C0E14] border-[#FFD9A0]/80",
+      pillClass: "bg-[#FF9900] text-[#050B12] border-[#FFD9A0]/80",
     };
   }
   return {
@@ -211,7 +211,7 @@ export function car3dIcon(color, { heading = 0, label = "", selected = false, fo
     ? `<span data-testid="taxi-servicios-hoy-badge" title="Servicios hoy: ${sem.count} (${sem.nivel})" style="position:absolute;top:-4px;right:1px;z-index:6;display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:${sem.bg};color:${sem.text};border:2px solid ${sem.border};font-size:11.5px;font-weight:900;line-height:1;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 8px ${sem.glow},0 1px 3px rgba(0,0,0,0.85);letter-spacing:-0.02em">${sem.count}</span>`
     : "";
   const labelHtml = label
-    ? `<div style="margin-top:2px;background:#0b0b0d;color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace">${label}</div>`
+    ? `<div style="margin-top:2px;background:#03070C;color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace">${label}</div>`
     : "";
   const fullW = Math.max(dim + 22, 76);
   const fullH = dim + (label ? 24 : 0);
@@ -243,9 +243,9 @@ export function pillCarIcon(estado, { heading = 0, selected = false, label = "",
   const ringPulse = selected
     ? `<div class="th-marker-ring" style="position:absolute;inset:-9px;border-radius:${radius + 5}px;border:1.5px solid ${color}"></div>`
     : "";
-  const ringStatic = selected ? `box-shadow:0 0 0 3px #0a0a0d,0 0 0 6px ${color}99;` : "";
+  const ringStatic = selected ? `box-shadow:0 0 0 3px #03070C,0 0 0 6px ${color}99;` : "";
   const labelHtml = label
-    ? `<div style="margin-top:3px;background:#0a0a0d;color:#fff;border:1.5px solid rgba(255,255,255,.18);border-radius:6px;padding:2px 7px;font-size:10.5px;font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace">${label}</div>`
+    ? `<div style="margin-top:3px;background:#03070C;color:#fff;border:1.5px solid rgba(255,255,255,.18);border-radius:6px;padding:2px 7px;font-size:10.5px;font-weight:800;line-height:1;white-space:nowrap;font-family:ui-monospace,Menlo,monospace">${label}</div>`
     : "";
   const headingTri = !offline
     ? `<div style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:0;height:0;
@@ -260,7 +260,7 @@ export function pillCarIcon(estado, { heading = 0, selected = false, label = "",
         <div style="width:100%;height:100%;border-radius:${radius}px;background:${color};
           display:flex;align-items:center;justify-content:center;${ringStatic}">
           <svg xmlns="http://www.w3.org/2000/svg" width="${glyph}" height="${glyph}" viewBox="0 0 24 24" fill="none"
-            stroke="#0a0a0d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            stroke="#03070C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 17h14M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M5 17l1.2-5.5A2 2 0 0 1 8.15 10h7.7a2 2 0 0 1 1.95 1.5L19 17"/>
           </svg>
         </div>
@@ -348,8 +348,9 @@ export function taxiStateAssetIcon(estado, { heading = 0, selected = false, labe
     : "";
   const countVal = serviciosHoy != null ? Number(serviciosHoy) || 0 : 0;
   const sem = semaforoServiciosStyle(countVal);
+  // Insignia en relieve (estilos .th-taxi3d-insignia en design/tokens.css): color del semáforo del día.
   const badgeHtml = `
-    <span data-testid="taxi-servicios-hoy-badge" title="Servicios realizados hoy: ${sem.count} (${sem.nivel})" style="position:absolute;top:-5px;right:2px;z-index:6;display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:${sem.bg};color:${sem.text};border:2px solid ${sem.border};font-size:11.5px;font-weight:900;line-height:1;font-family:ui-monospace,Menlo,monospace;box-shadow:0 3px 8px ${sem.glow},0 1px 3px rgba(0,0,0,0.9);letter-spacing:-0.02em">
+    <span data-testid="taxi-servicios-hoy-badge" class="th-taxi3d-insignia" data-oscuro="${sem.text === "#FFFFFF"}" title="Servicios realizados hoy: ${sem.count} (${sem.nivel})" style="--b:${sem.bg};--t:${sem.text}">
       ${sem.count}
     </span>`;
   // Placa premium (§14): identificador + punto del estado en la misma píldora.
@@ -360,11 +361,19 @@ export function taxiStateAssetIcon(estado, { heading = 0, selected = false, labe
     : "";
   const fullW = Math.max(dim + 26, 86);
   const fullH = dim + (label ? 26 : 0);
+  // Volumen sin cambiar el diseño: sombra de piso + relieve en un contenedor que NO gira (la luz
+  // siempre viene de arriba en pantalla) + brillo recortado con la silueta del propio asset.
   const html = `
-    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
+    <div class="th-taxi3d" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
       ${badgeHtml}
-      <div class="th-taxi-rotator" style="position:relative;width:${dim}px;height:${dim}px;transform:rotate(${deg}deg);filter:drop-shadow(0 7px 9px rgba(8,24,27,.35))">
-        ${pulse}<img src="${asset}" alt="" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1" />
+      <div class="th-taxi3d-cuerpo" style="position:relative;width:${dim}px;height:${dim}px">
+        <span class="th-taxi3d-sombra"></span>
+        <div class="th-taxi3d-relieve">
+          <div class="th-taxi-rotator" style="position:absolute;inset:0;transform:rotate(${deg}deg)">
+            ${pulse}<img src="${asset}" alt="" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1" />
+            <span class="th-taxi3d-brillo" style="-webkit-mask-image:url(${asset});mask-image:url(${asset})"></span>
+          </div>
+        </div>
       </div>${labelHtml}
     </div>`;
   return L.divIcon({ html, className: "th-terminal-state-asset", iconSize: [fullW, fullH], iconAnchor: [fullW / 2, dim / 2] });
@@ -375,7 +384,7 @@ export function routeArrowIcon(heading = 0, color = "#FFE600") {
   const deg = Number(heading) || 0;
   const html = `
     <div class="th-route-arrow" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg)">
-      <div style="width:20px;height:20px;border-radius:999px;background:#090d16;border:1.5px solid ${color};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.65)">
+      <div style="width:20px;height:20px;border-radius:999px;background:#060D16;border:1.5px solid ${color};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.65)">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
           stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 19V5M5 12l7-7 7 7"/>
@@ -400,7 +409,7 @@ export function passengerPulsingIcon(label = "Mi ubicación") {
       <!-- Halo medio de resplandor esmeralda -->
       <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:rgba(255,230,0,0.4);box-shadow:0 0 16px rgba(255,230,0,0.85);"></div>
       <!-- Núcleo central 3D con specular reflection -->
-      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);z-index:2;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #FFFFFF 0%, #FFE600 65%, #FFB800 100%);border:2.5px solid #0B0E14;box-shadow:0 0 10px #FFE600;"></div>
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);z-index:2;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #FFFFFF 0%, #FFE600 65%, #FFB800 100%);border:2.5px solid #060D16;box-shadow:0 0 10px #FFE600;"></div>
       <!-- Etiqueta inferior estilo píldora HUD Dark -->
       <div style="margin-top:36px;display:inline-flex;align-items:center;gap:5px;background:rgba(12,15,22,0.95);color:#FFFFFF;border:1px solid rgba(255,230,0,0.5);border-radius:14px;padding:2.5px 9px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.65);backdrop-filter:blur(6px);">
         <span style="width:6px;height:6px;border-radius:50%;background:#FFE600;box-shadow:0 0 6px #FFE600;"></span>

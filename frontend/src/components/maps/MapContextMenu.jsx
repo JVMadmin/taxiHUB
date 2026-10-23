@@ -86,7 +86,7 @@ export function MapContextMenu({
           <button
             type="button"
             onClick={() => { onDespachoRapido(latlng, taxiMasCercano); onClose(); }}
-            className="flex w-full items-center justify-between gap-2 rounded-xl bg-[#FFE600]/20 border border-[#FFE600]/40 px-2.5 py-2 text-left text-xs font-bold text-[#FFF27A] hover:bg-[#FFE600]/30 transition-all mb-0.5 shadow-sm"
+            className="flex w-full items-center justify-between gap-2 rounded-xl bg-brand/20 border border-brand/40 px-2.5 py-2 text-left text-xs font-bold text-[#FFF27A] hover:bg-brand/30 transition-all mb-0.5 shadow-sm"
             data-testid="context-despacho-rapido-btn"
           >
             <span className="flex items-center gap-2 min-w-0">
@@ -114,10 +114,10 @@ export function MapContextMenu({
         <button
           type="button"
           onClick={() => { onSetOrigen(latlng); onClose(); }}
-          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs font-semibold text-[#FFF27A] hover:bg-[#FFE600]/15 hover:text-[#FFF27A] transition-colors"
+          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs font-semibold text-[#FFF27A] hover:bg-brand/15 hover:text-[#FFF27A] transition-colors"
           data-testid="context-origen-btn"
         >
-          <Navigation className="h-3.5 w-3.5 text-[#FFE600]" />
+          <Navigation className="h-3.5 w-3.5 text-brand" />
           <span>Iniciar servicio aquí (Origen)</span>
         </button>
 

@@ -1,26 +1,34 @@
 import { useMode } from "@/hooks/useMode";
 import { applyMode } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import { Moon, Sun } from "lucide-react";
 
-// Botón sol/luna: cambia entre modo claro (día) y oscuro (noche).
-// En claro muestra el sol; en oscuro, la luna.
-export function ModeToggle({ compact = false }) {
+// Botón de modo día/noche. Muestra la acción: en modo noche, un sol amarillo
+// ("cambiar a modo día"); en modo día, una luna ("cambiar a modo noche").
+// `claro`/`onToggle` permiten usarlo con un estado propio (app del chofer).
+export function ModeToggle({ compact = false, claro: claroProp, onToggle, className }) {
   const mode = useMode();
-  const claro = mode === "claro";
+  const claro = claroProp ?? mode === "claro";
+  const titulo = claro ? "Cambiar a modo noche" : "Cambiar a modo día";
+  const icono = compact ? "h-4 w-4" : "h-5 w-5";
   return (
     <button
+      type="button"
       data-testid="mode-toggle"
-      onClick={() => applyMode(claro ? "oscuro" : "claro")}
-      title={claro ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
-      aria-label={claro ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
-      className={compact
-        ? "th-3d flex h-7 w-7 items-center justify-center rounded-lg text-foreground/80 hover:bg-secondary"
-        : "th-3d flex h-10 w-10 items-center justify-center rounded-xl text-foreground/80 hover:bg-secondary"}
+      onClick={() => (onToggle ? onToggle() : applyMode(claro ? "oscuro" : "claro"))}
+      title={titulo}
+      aria-label={titulo}
+      className={cn(
+        "th-3d th-modo flex items-center justify-center",
+        compact ? "h-8 w-8 rounded-lg" : "h-10 w-10 rounded-xl",
+        className
+      )}
+      data-claro={claro}
     >
       {claro ? (
-        <Sun className={compact ? "th-icon-3d h-3.5 w-3.5 text-amber-500" : "th-icon-3d h-5 w-5 text-amber-500"} />
+        <Moon className={cn("th-icon-3d", icono)} />
       ) : (
-        <Moon className={compact ? "th-icon-3d h-3.5 w-3.5" : "th-icon-3d h-5 w-5"} />
+        <Sun className={cn("th-modo-sol", icono)} strokeWidth={2.2} />
       )}
     </button>
   );

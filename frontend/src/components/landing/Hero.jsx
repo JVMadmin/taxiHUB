@@ -1,145 +1,145 @@
-import { useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { ArrowDown, MapPin, MessageCircle, Navigation } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, MessageCircle, Smartphone, BadgePercent, Play } from "lucide-react";
 import { LANDING } from "@/constants/testIds";
-import { EASE, scrollToId } from "./motion";
+import { CentralDemo } from "./demo/CentralDemo";
 import { abrirWhatsAppVentas } from "./Contact";
+import { DUR, EASE, scrollToId, useInclinacion } from "./motion";
 
-const FACTS = [
-  { icon: MapPin, k: "Toda la flota en un mapa", v: "Ubicación en vivo de cada unidad" },
-  { icon: Navigation, k: "Navegación 3D para el chofer", v: "Ruta al cliente y voz al recibir el viaje" },
-  { icon: MessageCircle, k: "WhatsApp de tu central", v: "Pedidos y respuestas desde la terminal" },
+// Solo capacidades verificables del producto (nada de métricas inventadas).
+const CONFIANZA = [
+  { icono: BadgePercent, texto: "Sin comisión por viaje" },
+  { icono: Smartphone, texto: "Apps Android de chofer, pasajero y socio" },
+  { icono: MessageCircle, texto: "WhatsApp de la central integrado" },
+];
+
+const LINEAS = [
+  { texto: "Tu flota en movimiento,", clase: "" },
+  { texto: "siempre conectada.", clase: "ld-amarillo" },
 ];
 
 export function Hero() {
-  const navigate = useNavigate();
   const reduce = useReducedMotion();
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 60]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
+  const { estilo, eventos } = useInclinacion({ grados: 3, px: 5 });
 
-  const fade = (d = 0) =>
-    reduce
-      ? {}
-      : {
-          initial: { opacity: 0, y: 18 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.7, delay: d, ease: EASE },
-        };
+  // Coreografía: etiqueta → titular por líneas → texto → CTA → confianza; el producto entra
+  // en paralelo con profundidad y, al asentarse, el mapa activa sus unidades.
+  const cont = { oculto: {}, visible: { transition: { staggerChildren: 0.09, delayChildren: 0.12 } } };
+  const item = reduce
+    ? { oculto: { opacity: 1 }, visible: { opacity: 1 } }
+    : { oculto: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: DUR.entrada, ease: EASE } } };
+  const linea = reduce
+    ? { oculto: { y: 0 }, visible: { y: 0 } }
+    : { oculto: { y: "105%" }, visible: { y: 0, transition: { duration: 0.85, ease: EASE } } };
+  const producto = reduce
+    ? { oculto: { opacity: 1 }, visible: { opacity: 1 } }
+    : {
+        oculto: { opacity: 0, y: 46, rotateX: 9, scale: 0.97 },
+        visible: { opacity: 1, y: 0, rotateX: 0, scale: 1, transition: { duration: 1.05, ease: EASE, delay: 0.3 } },
+      };
+  const telefono = reduce
+    ? { oculto: { opacity: 1 }, visible: { opacity: 1 } }
+    : { oculto: { opacity: 0, y: 40, x: -12 }, visible: { opacity: 1, y: 0, x: 0, transition: { duration: 0.9, ease: EASE, delay: 0.7 } } };
 
   return (
-    <section id="inicio" ref={ref} className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 sm:pt-24 sm:pb-28">
-      <div className="mx-auto max-w-3xl text-center">
-        <motion.div {...fade(0)} className="l-chip mx-auto">
-          <span className="relative flex h-2 w-2" aria-hidden="true">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#FFE600] l-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FFE600]" />
-          </span>
-          Software de despacho para centrales de taxi
-        </motion.div>
-
-        <motion.h1
-          {...fade(0.08)}
-          className="font-display mt-6 text-[2.6rem] font-extrabold leading-[1.02] sm:text-6xl lg:text-7xl"
-        >
-          Que ningún pasajero
-          <br className="hidden sm:block" />{" "}
-          <span className="bg-gradient-to-b from-[#FFE600] to-[#FF9900] bg-clip-text text-transparent">
-            se quede sin taxi.
-          </span>
-        </motion.h1>
-
-        <motion.p {...fade(0.16)} className="l-texto mx-auto mt-6 max-w-2xl sm:text-xl">
-          Ve todas tus unidades en un mapa, asigna la más cercana en segundos y avisa al pasajero por WhatsApp.
-          El chofer recibe el viaje por voz y llega con navegación 3D; el dueño cobra su cuota sin cuentas en papel.
-        </motion.p>
-
-        <motion.div {...fade(0.24)} className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            data-testid={LANDING.ctaDemo}
-            onClick={() => abrirWhatsAppVentas("Hola TaxiHUB, quiero una demostración para mi central de taxis.")}
-            className="l-btn l-btn-primario"
-          >
-            Pide tu demo por WhatsApp
-          </button>
-          <a
-            href="#producto"
-            onClick={(e) => { e.preventDefault(); scrollToId("producto", reduce); }}
-            className="l-btn l-btn-secundario"
-          >
-            Ver el producto
-            <ArrowDown className="h-4 w-4 text-[#a1a6b2]" aria-hidden="true" />
-          </a>
-        </motion.div>
-
-        <motion.div {...fade(0.3)} className="mt-5 flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm">
-          <button
-            type="button"
-            data-testid={LANDING.ctaTerminal}
-            onClick={() => navigate("/terminal/login")}
-            className="min-h-[40px] font-semibold text-[#a1a6b2] underline decoration-white/20 underline-offset-4 transition-colors hover:text-white"
-          >
-            Entrar a la Central de Despacho
-          </button>
-          <button
-            type="button"
-            data-testid={LANDING.ctaDueno}
-            onClick={() => navigate("/dueno/login")}
-            className="min-h-[40px] font-semibold text-[#a1a6b2] underline decoration-white/20 underline-offset-4 transition-colors hover:text-white"
-          >
-            Panel Socio / Dueño
-          </button>
-        </motion.div>
+    <section id="inicio" aria-labelledby="hero-titulo" className="relative overflow-hidden pb-16 pt-28 sm:pt-32 lg:pb-24 lg:pt-36">
+      {/* Luz ambiental muy tenue detrás del producto (sin elementos flotantes). */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div className="absolute right-[-8%] top-[18%] h-[38rem] w-[52rem] rounded-full bg-[radial-gradient(closest-side,rgba(255,230,0,0.09),transparent)]" />
+        <div className="absolute inset-x-0 top-0 h-[42rem] bg-[radial-gradient(60rem_30rem_at_30%_-10%,rgba(56,107,170,0.16),transparent)]" />
       </div>
 
-      {/* Terminal real en video (bucle silencioso) */}
-      <motion.div style={reduce ? undefined : { y, scale }} {...fade(0.2)} className="relative mt-14 sm:mt-20">
-        <div className="l-ventana">
-          <div className="flex items-center gap-2 px-3 pb-2 pt-1" aria-hidden="true">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-            <span className="ml-3 truncate rounded-md bg-white/5 px-3 py-0.5 font-mono text-[11px] text-[#a1a6b2]">
-              taxihub.cloud/terminal
+      <div className="ld-contenedor relative grid items-center gap-14 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:gap-8">
+        <motion.div variants={cont} initial="oculto" animate="visible">
+          <motion.div variants={item}>
+            <span className="ld-pildora">
+              <span className="ld-punto-vivo" aria-hidden="true" />
+              Software de despacho para centrales de taxi
             </span>
-          </div>
-          <div className="overflow-hidden rounded-[14px] bg-black">
-            <video
-              data-testid={LANDING.heroVideo}
-              className="block h-auto w-full"
-              width="1440"
-              height="900"
-              poster="/landing/hero-terminal.webp"
-              autoPlay={!reduce}
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label="Terminal real de TaxiHUB con la flota moviéndose en vivo sobre el mapa de Palenque"
-            >
-              <source src="/landing/hero-terminal.webm" type="video/webm" />
-              <source src="/landing/hero-terminal.mp4" type="video/mp4" />
-            </video>
-          </div>
-        </div>
-      </motion.div>
+          </motion.div>
 
-      <motion.ul {...fade(0.36)} className="mt-14 grid gap-6 sm:grid-cols-3">
-        {FACTS.map(({ icon: Icon, k, v }) => (
-          <li key={k} className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#FFE600]/20 bg-[#FFE600]/10">
-              <Icon className="h-5 w-5 text-[#FFE600]" aria-hidden="true" />
-            </span>
-            <div>
-              <div className="text-[15px] font-bold text-white">{k}</div>
-              <div className="text-sm text-[#a1a6b2]">{v}</div>
+          <h1 id="hero-titulo" className="ld-h1 mt-6">
+            {LINEAS.map((l) => (
+              <span key={l.texto} className="block overflow-hidden pb-[0.06em]">
+                <motion.span variants={linea} className={`block ${l.clase}`}>
+                  {l.texto}
+                </motion.span>
+              </span>
+            ))}
+          </h1>
+
+          <motion.p variants={item} className="ld-lead mt-6 max-w-[34rem]">
+            Despacho, mapa en vivo de tus unidades, WhatsApp de la central y las apps de chofer, pasajero y socio en
+            una sola plataforma hecha para la operación diaria de un sitio de taxis.
+          </motion.p>
+
+          <motion.div variants={item} className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              data-testid={LANDING.ctaDemo}
+              onClick={() => abrirWhatsAppVentas("Hola TaxiHUB, quiero una demostración para mi central de taxis.")}
+              className="ld-btn ld-btn--primario"
+            >
+              Pide tu demo por WhatsApp
+              <ArrowRight className="ld-flecha h-4 w-4" aria-hidden="true" />
+            </button>
+            <a
+              href="#producto"
+              data-testid={LANDING.ctaExplorar}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToId("producto", reduce);
+              }}
+              className="ld-btn ld-btn--secundario"
+            >
+              <Play className="h-4 w-4" aria-hidden="true" />
+              Explorar el producto
+            </a>
+          </motion.div>
+
+          <motion.ul variants={item} className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-[0.9rem] text-[#B7C4D4]">
+            {CONFIANZA.map(({ icono: Icono, texto }) => (
+              <li key={texto} className="flex items-center gap-2">
+                <Icono className="h-4 w-4 text-[#FFE600]" aria-hidden="true" />
+                {texto}
+              </li>
+            ))}
+          </motion.ul>
+        </motion.div>
+
+        {/* Producto: Terminal interactiva + app del chofer (captura real) */}
+        <div className="ld-hero-producto relative xl:pl-16" style={{ perspective: 1600 }}>
+          <motion.div variants={producto} initial="oculto" animate="visible" style={estilo} {...eventos} className="relative xl:-mr-[72px]">
+            <div className="ld-tableta">
+              <div className="ld-tableta-pantalla h-[430px] max-sm:h-auto lg:h-[470px]">
+                <CentralDemo entrada />
+              </div>
             </div>
-          </li>
-        ))}
-      </motion.ul>
+            <motion.figure
+              variants={telefono}
+              initial="oculto"
+              animate="visible"
+              className="absolute -bottom-11 -left-16 hidden w-[150px] xl:block"
+              style={{ transform: "translateZ(40px)" }}
+            >
+              <div className="ld-telefono">
+                <img
+                  src="/landing/operador.webp"
+                  width="390"
+                  height="844"
+                  alt="App del chofer de TaxiHUB: servicio asignado con navegación 3D hacia el cliente"
+                  decoding="async"
+                />
+              </div>
+              <figcaption className="ld-mono mt-3 text-center text-[10.5px] uppercase tracking-[0.12em] text-[#8A9BB0]">
+                App del chofer · captura real
+              </figcaption>
+            </motion.figure>
+          </motion.div>
+          <p className="mt-4 text-center text-[12.5px] text-[#8A9BB0] xl:ml-[120px] xl:mt-5 xl:text-right">
+            Toca una unidad en el mapa o en la lista. Unidades y choferes de demostración sobre calles reales de Palenque.
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

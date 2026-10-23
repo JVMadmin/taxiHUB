@@ -1,142 +1,119 @@
-import { Minus, Plus, Check } from "lucide-react";
+import { useState } from "react";
+import { useReducedMotion } from "framer-motion";
+import { Minus, Plus, Check, ArrowRight } from "lucide-react";
 import { LANDING } from "@/constants/testIds";
-import { Eyebrow, Reveal } from "./motion";
+import { Cambio, Etiqueta, Reveal, scrollToId } from "./motion";
 
 export const PRECIO_UNIDAD_MXN = 99;
 const fmt = (n) => new Intl.NumberFormat("es-MX").format(n);
 
-export function Pricing({ units, setUnits }) {
+const INCLUYE = [
+  "Terminales de despacho que necesites, en web o Windows",
+  "App Android para todos tus choferes y socios",
+  "WhatsApp de la central vinculado por QR, sin costo por mensaje",
+  "Mapa de tu ciudad con colonias, tarifas y puntos frecuentes",
+];
+
+export function Pricing() {
+  const reduce = useReducedMotion();
+  const [units, setUnits] = useState(25);
   const clamp = (n) => Math.max(1, Math.min(999, Math.round(Number(n) || 1)));
   const total = units * PRECIO_UNIDAD_MXN;
 
   return (
-    <section id="precio" aria-labelledby="precio-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <div className="grid items-start gap-10 lg:grid-cols-12">
-        <Reveal className="lg:col-span-5">
-          <Eyebrow>Precio</Eyebrow>
-          <h2 id="precio-title" className="font-display l-titulo mt-3">
-            Solo pagas por unidad activa.
-          </h2>
-          <p className="mt-3 text-base leading-relaxed text-[#a1a6b2]">
-            Un precio fijo por unidad para cooperativas, agrupaciones y sitios de radio taxi. Sin comisiones por viaje.
+    <section id="precio" aria-labelledby="precio-titulo" className="ld-seccion">
+      <div className="ld-contenedor grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        <Reveal>
+          <Etiqueta>Precio</Etiqueta>
+          <h2 id="precio-titulo" className="ld-h2 mt-4">Pagas por unidad activa. Sin comisión por viaje.</h2>
+          <p className="ld-lead mt-5 max-w-[34rem]">
+            Un precio fijo por unidad para sitios, cooperativas y agrupaciones de radio taxi. Lo que cobran tus choferes
+            es de ellos.
           </p>
-
-          <div className="mt-6 space-y-3">
-            {[
-"WhatsApp de la central por QR, sin costo por mensaje",
-"Todas las terminales de despacho que necesites",
-"App para todos tus choferes y socios",
-"Mapa de tu ciudad con tus puntos frecuentes",
-            ].map((feature, idx) => (
-              <div key={idx} className="flex items-start gap-2.5 text-sm text-[#d4d7de]">
-                <Check className="h-4 w-4 shrink-0 text-[#FFE600] mt-0.5" />
-                <span>{feature}</span>
-              </div>
+          <ul className="ld-lista-check mt-8">
+            {INCLUYE.map((t) => (
+              <li key={t} className="text-[15px] text-[#B7C4D4]">
+                <Check className="mt-0.5 h-5 w-5 text-[#FFE600]" aria-hidden="true" />
+                <span>{t}</span>
+              </li>
             ))}
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-amber-400/25 bg-amber-400/[0.07] p-4 text-xs text-amber-100/90">
-            <strong className="font-bold">Pago único de implementación inicial:</strong> Incluye la carga personalizada del mapa de tu ciudad, el alta de tus sitios y colonias con tarifas oficiales, y la capacitación directa a tus despachadoras.
-          </div>
+          </ul>
         </Reveal>
 
-        {/* Tarjeta Calculadora Diurna */}
-        <Reveal delay={0.1} className="lg:col-span-7">
-          <div
-            data-testid={LANDING.priceCard}
-            className="rounded-3xl border-2 border-[#FFE600]/30 bg-white/[0.03] p-7 sm:p-9 "
+        <div data-testid={LANDING.priceCard} className="ld-panel p-6 sm:p-8">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[rgba(148,172,204,0.12)] pb-6">
+            <div>
+              <span className="ld-mono text-[11px] uppercase tracking-[0.14em] text-[#FFE600]">Plan Central</span>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="ld-display text-[3rem] font-extrabold leading-none">${PRECIO_UNIDAD_MXN}</span>
+                <span className="ld-mono text-[13px] text-[#8A9BB0]">MXN / mes por unidad</span>
+              </div>
+            </div>
+            <span className="ld-mono rounded-lg border border-[rgba(148,172,204,0.2)] px-2.5 py-1 text-[11px] text-[#B7C4D4]">+ implementación única</span>
+          </div>
+
+          <label htmlFor="units-input" className="mt-7 block text-[13px] font-semibold text-[#B7C4D4]">
+            ¿Cuántas unidades tiene tu central?
+          </label>
+          <div className="mt-3 flex items-center gap-3">
+            <button type="button" onClick={() => setUnits((u) => clamp(u - 5))} className="ld-paso-btn" aria-label="Restar 5 unidades">
+              <Minus className="h-4 w-4" />
+            </button>
+            <input
+              id="units-input"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="999"
+              value={units}
+              onChange={(e) => setUnits(clamp(e.target.value))}
+              data-testid={LANDING.priceUnits}
+              className="ld-campo ld-mono flex-1 text-center text-[1.5rem] font-semibold"
+            />
+            <button type="button" onClick={() => setUnits((u) => clamp(u + 5))} className="ld-paso-btn" aria-label="Sumar 5 unidades">
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+          <input
+            type="range"
+            min="5"
+            max="100"
+            step="1"
+            value={Math.min(100, Math.max(5, units))}
+            onChange={(e) => setUnits(Number(e.target.value))}
+            className="ld-rango mt-4"
+            aria-label="Unidades activas"
+          />
+
+          <div data-testid={LANDING.priceTotal} className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-[#FFE600]/25 bg-[#FFE600]/[0.06] p-5">
+            <div>
+              <span className="block text-[13px] font-semibold text-[#E9EEF5]">Total mensual estimado</span>
+              <span className="ld-mono text-[12px] text-[#8A9BB0]">{units} unidades activas</span>
+            </div>
+            <div className="ld-mono text-right text-[clamp(1.6rem,3vw,2.2rem)] font-semibold text-[#FFE600]" aria-live="polite">
+              <Cambio as="span" clave={total} className="inline-block">
+                ${fmt(total)}
+              </Cambio>{" "}
+              <span className="text-[13px] text-[#B7C4D4]">MXN</span>
+            </div>
+          </div>
+
+          <p className="mt-5 text-[13px] leading-relaxed text-[#8A9BB0]">
+            La implementación es un pago único: cargamos el mapa de tu ciudad, damos de alta tus sitios, colonias y
+            tarifas, y capacitamos a tus operadoras. Te la cotizamos según tu flota.
+          </p>
+          <a
+            href="#contacto"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToId("contacto", reduce);
+            }}
+            className="ld-btn ld-btn--primario mt-6 w-full"
           >
-            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/[0.08] pb-6">
-              <div>
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#FFE600] bg-[#FFE600]/10 px-2.5 py-1 rounded-full border border-[#FFE600]/25">
-                  Plan Central
-                </span>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-display text-4xl sm:text-5xl font-extrabold text-white">
-                    $99
-                  </span>
-                  <span className="font-mono text-sm font-semibold text-[#8b909c]">
-                    MXN / mes por unidad
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Selector de Unidades */}
-            <div className="mt-7">
-              <label htmlFor="units-input" className="block text-xs font-bold uppercase tracking-wider text-[#d4d7de]">
-                Calcula el costo para tu flota:
-              </label>
-
-              <div className="mt-3 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setUnits((u) => clamp(u - 5))}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[#d4d7de] hover:bg-white/10 transition-colors"
-                  aria-label="Restar 5 unidades"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-
-                <div className="flex-1">
-                  <input
-                    id="units-input"
-                    type="number"
-                    min="1"
-                    max="999"
-                    value={units}
-                    onChange={(e) => setUnits(clamp(e.target.value))}
-                    data-testid={LANDING.priceUnits}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-center font-mono text-2xl font-extrabold text-white focus:border-[#FFE600] focus:outline-none focus:ring-2 focus:ring-[#FFE600]/20"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setUnits((u) => clamp(u + 5))}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[#d4d7de] hover:bg-white/10 transition-colors"
-                  aria-label="Sumar 5 unidades"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Slider interactivo */}
-              <input
-                type="range"
-                min="5"
-                max="100"
-                step="1"
-                value={units}
-                onChange={(e) => setUnits(Number(e.target.value))}
-                className="mt-4 w-full accent-[#FFE600]"
-              />
-            </div>
-
-            {/* Total estimado */}
-            <div
-              data-testid={LANDING.priceTotal}
-              className="mt-7 rounded-2xl border border-[#FFE600]/25 bg-[#FFE600]/10 p-5 flex items-center justify-between"
-            >
-              <div>
-                <span className="text-xs font-semibold text-[#FFE600] block">Total mensual estimado:</span>
-                <span className="font-mono text-xs text-[#8b909c]">{units} unidades activas</span>
-              </div>
-              <div className="text-right">
-                <div className="font-display font-mono text-3xl sm:text-4xl font-extrabold text-[#FFE600]">
-                  ${fmt(total)} <span className="text-sm font-semibold text-[#FFE600]">MXN</span>
-                </div>
-              </div>
-            </div>
-
-            <a
-              href="#contacto"
-              className="mt-6 block w-full rounded-xl bg-[#FFE600] py-3.5 text-center text-sm font-bold text-[#0C0E14]  transition-all hover:bg-[#FFB800] active:scale-[0.98]"
-            >
-              Solicitar cotización e instalación
-            </a>
-          </div>
-        </Reveal>
+            Cotizar mi implementación
+            <ArrowRight className="ld-flecha h-4 w-4" aria-hidden="true" />
+          </a>
+        </div>
       </div>
     </section>
   );

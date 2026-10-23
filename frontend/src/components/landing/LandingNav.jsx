@@ -1,121 +1,148 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu, X, ArrowUpRight } from "lucide-react";
-import { BrandLockup } from "@/components/Brand";
+import { BrandMark } from "@/components/Brand";
 import { LANDING } from "@/constants/testIds";
-import { scrollToId } from "./motion";
+import { DUR, EASE, T, scrollToId } from "./motion";
 
 export const SECTIONS = [
-  { id: "producto", label: "Producto" },
+  { id: "inicio", label: "Inicio" },
   { id: "funciones", label: "Funciones" },
-  { id: "precio", label: "Precio" },
+  { id: "producto", label: "Producto" },
+  { id: "precio", label: "Precios" },
   { id: "contacto", label: "Contacto" },
 ];
+
+// Sección visible (la que cruza la franja central de la pantalla).
+function useSeccionActiva() {
+  const [activa, setActiva] = useState("inicio");
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entradas) => {
+        entradas.forEach((e) => {
+          if (e.isIntersecting) setActiva(e.target.id);
+        });
+      },
+      { rootMargin: "-42% 0px -52% 0px" }
+    );
+    // Secciones intermedias marcan al enlace más cercano del menú.
+    const ids = [...SECTIONS.map((s) => s.id), "como-funciona", "beneficios", "preguntas"];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) io.observe(el);
+    });
+    return () => io.disconnect();
+  }, []);
+  const mapa = { "como-funciona": "producto", beneficios: "producto", preguntas: "precio" };
+  return mapa[activa] || activa;
+}
 
 export function LandingNav() {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
-  const [open, setOpen] = useState(false);
+  const [abierto, setAbierto] = useState(false);
+  const [conScroll, setConScroll] = useState(false);
+  const activa = useSeccionActiva();
 
-  const go = (e, id) => {
+  useEffect(() => {
+    const on = () => setConScroll(window.scrollY > 24);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const esc = (e) => e.key === "Escape" && setAbierto(false);
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [abierto]);
+
+  const ir = (e, id) => {
     e.preventDefault();
-    setOpen(false);
+    setAbierto(false);
     scrollToId(id, reduce);
   };
 
   return (
-    <header
+    <motion.header
       data-testid={LANDING.nav}
-      className="sticky top-4 z-40 px-4 sm:px-6"
-      role="banner"
+      className="fixed inset-x-0 top-3 z-40 px-3 sm:top-4 sm:px-6"
+      initial={reduce ? false : { opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: DUR.demo, ease: EASE }}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-white/10 bg-[#0b0d10]/75 px-4 py-2.5 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl">
-        <a
-          href="#inicio"
-          onClick={(e) => go(e, "inicio")}
-          className="flex items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:ring-[#FFE600]"
-          aria-label="TaxiHUB inicio"
-        >
-          <BrandLockup markSize="sm" />
-          <span className="hidden font-mono text-[11px] font-semibold tracking-wide text-[#FFE600] sm:inline-block bg-[#FFE600]/10 px-2 py-0.5 rounded-full border border-[#FFE600]/25">
-            taxihub.cloud
+      <div className="ld-nav-caja mx-auto max-w-[1200px]" data-scroll={conScroll}>
+        <a href="#inicio" onClick={(e) => ir(e, "inicio")} className="flex items-center gap-2.5 rounded-xl" aria-label="TaxiHUB, ir al inicio">
+          <BrandMark size="sm" />
+          <span className="ld-display text-[1.2rem] font-extrabold tracking-tight">
+            taxi<span className="ld-amarillo">HUB</span>
           </span>
         </a>
 
-        {/* Enlaces de escritorio */}
-        <nav className="hidden items-center gap-6 text-sm font-semibold text-[#a1a6b2] md:flex" aria-label="Navegación principal">
+        <nav className="hidden items-center gap-7 md:flex" aria-label="Secciones">
           {SECTIONS.map((s) => (
-            <a
-              key={s.id}
-              href={`#${s.id}`}
-              onClick={(e) => go(e, s.id)}
-              className="transition-colors hover:text-white"
-            >
+            <a key={s.id} href={`#${s.id}`} onClick={(e) => ir(e, s.id)} className="ld-nav-enlace" aria-current={activa === s.id ? "true" : undefined}>
               {s.label}
+              {activa === s.id && (
+                <motion.span layoutId="ld-nav-subrayado" className="ld-nav-subrayado" transition={reduce ? { duration: 0 } : T.comp} />
+              )}
             </a>
           ))}
         </nav>
 
-        {/* Acciones principales */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            data-testid={LANDING.goTerminal}
-            onClick={() => navigate("/terminal/login")}
-            className="group flex min-h-[40px] items-center gap-2 rounded-full bg-[#FFE600] px-4 py-1.5 text-xs font-bold text-[#0C0E14] transition-all hover:bg-[#FFB800] active:scale-[0.98]"
-          >
-            <span>Abrir Terminal</span>
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black/15 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-              <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
-            </span>
+          <button type="button" data-testid={LANDING.goTerminal} onClick={() => navigate("/terminal/login")} className="ld-btn ld-btn--primario ld-btn--chico max-[380px]:hidden">
+            Abrir Terminal
+            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             data-testid={LANDING.navMenuToggle}
-            onClick={() => setOpen((o) => !o)}
-            aria-expanded={open}
-            aria-label={open ? "Cerrar menú" : "Abrir menú"}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden"
+            onClick={() => setAbierto((o) => !o)}
+            aria-expanded={abierto}
+            aria-controls="ld-menu-movil"
+            aria-label={abierto ? "Cerrar menú" : "Abrir menú"}
+            className="grid h-11 w-11 place-items-center rounded-xl text-[#E9EEF5] hover:bg-white/5 md:hidden"
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {abierto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
-      {/* Menú desplegable móvil */}
-      {open && (
-        <div className="mx-auto mt-2 max-w-6xl rounded-2xl border border-white/10 bg-[#0b0d10]/95 p-4 shadow-2xl backdrop-blur-xl md:hidden">
-          <nav className="flex flex-col gap-2" aria-label="Navegación móvil">
+      <AnimatePresence>
+        {abierto && (
+          <motion.nav
+            id="ld-menu-movil"
+            aria-label="Secciones"
+            initial={reduce ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0, transition: T.comp }}
+            exit={{ opacity: 0, y: -6, transition: T.micro }}
+            className="mx-auto mt-2 max-w-[1200px] rounded-2xl border border-[rgba(148,172,204,0.2)] bg-[#07101A]/95 p-3 backdrop-blur-xl md:hidden"
+          >
             {SECTIONS.map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                onClick={(e) => go(e, s.id)}
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-[#d4d7de] hover:bg-white/5 hover:text-white"
+                onClick={(e) => ir(e, s.id)}
+                aria-current={activa === s.id ? "true" : undefined}
+                className="flex min-h-[48px] items-center rounded-xl px-3 text-[15px] font-medium text-[#B7C4D4] hover:bg-white/5 aria-[current=true]:text-[#FFE600]"
               >
                 {s.label}
               </a>
             ))}
-            <div className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-3">
-              <button
-                type="button"
-                onClick={() => { setOpen(false); navigate("/terminal/login"); }}
-                className="w-full rounded-lg bg-[#FFE600] py-2.5 text-center text-xs font-bold text-[#0C0E14]"
-              >
-                Abrir Terminal de Despacho
+            <div className="mt-2 grid gap-2 border-t border-[rgba(148,172,204,0.12)] pt-3">
+              <button type="button" onClick={() => { setAbierto(false); navigate("/terminal/login"); }} className="ld-btn ld-btn--primario min-[381px]:hidden">
+                Abrir Terminal
               </button>
-              <button
-                type="button"
-                onClick={() => { setOpen(false); navigate("/dueno/login"); }}
-                className="w-full rounded-lg bg-white/10 py-2.5 text-center text-xs font-bold text-white"
-              >
-                Panel Socio / Dueño
+              <button type="button" onClick={() => { setAbierto(false); navigate("/dueno/login"); }} className="ld-btn ld-btn--secundario">
+                Panel del socio
               </button>
             </div>
-          </nav>
-        </div>
-      )}
-    </header>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+    </motion.header>
   );
 }

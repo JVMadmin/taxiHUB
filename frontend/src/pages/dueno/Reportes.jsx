@@ -19,10 +19,10 @@ function useChartTheme() {
   const mode = useMode();
   const claro = mode === "claro";
   return {
-    grid: claro ? "#ddd5c3" : "#27272a",
+    grid: claro ? "#ddd5c3" : "#1F3048",
     axis: claro ? "#6c6559" : "#71717a",
     tooltipBg: claro ? "#faf7f0" : "#18181b",
-    tooltipBorder: claro ? "#ddd5c3" : "#27272a",
+    tooltipBorder: claro ? "#ddd5c3" : "#1F3048",
     tooltipText: claro ? "#26221a" : "#e4e4e7",
   };
 }

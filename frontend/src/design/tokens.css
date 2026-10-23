@@ -1,6 +1,6 @@
 /* ==========================================================================
    TaxiHUB 2.1 — Design Tokens ("Taxi Operations OS" / dark cálido)
-   Identidad: negro casi puro (#0B0D10), superficies #17191E, acento
+   Identidad: negro casi puro (#050B12), superficies #0F1926, acento
    azul-índigo eléctrico (#FFE600), verde neón (#FFE600) reservado para
    estados "en vivo"/"disponible". Tipografía Inter 400/500/600.
    Capa aditiva: convive con el sistema 1.x hasta completar la migración.
@@ -22,7 +22,7 @@
   --th-live-soft: rgba(255, 230, 0, 0.15);
 
   /* Semánticos */
-  --th-success: #10B981;
+  --th-success: #22C55E;
   --th-danger: #F4544C;
   --th-danger-soft: rgba(244, 84, 76, 0.12);
   --th-warning: #FF9900;
@@ -31,17 +31,17 @@
   --th-info-soft: rgba(56, 189, 248, 0.12);
   --th-purple: #9A6BFF;
   --th-purple-soft: rgba(154, 107, 255, 0.14);
-  --th-offline: #9CA0AA;
+  --th-offline: #93A4B8;
 
   /* Superficies (modo oscuro por defecto) */
-  --th-bg: #0B0D10;
-  --th-surface: #17191E;
-  --th-surface-2: #1B1E24;
-  --th-surface-3: #22252C;
-  --th-text: #F5F5F7;
-  --th-muted: #9CA0AA;
-  --th-border: rgba(255, 255, 255, 0.06);
-  --th-border-strong: rgba(255, 255, 255, 0.1);
+  --th-bg: #050B12;
+  --th-surface: #0F1926;
+  --th-surface-2: #13202F;
+  --th-surface-3: #162436;
+  --th-text: #EDF2F8;
+  --th-muted: #93A4B8;
+  --th-border: rgba(148, 172, 204, 0.12);
+  --th-border-strong: rgba(148, 172, 204, 0.2);
 
   /* Métricas */
   --th-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -79,38 +79,38 @@ html[data-mode="claro"] {
    :root de index.css sin modificarlos. Acento de marca oficial: Amarillo Luminoso.
    -------------------------------------------------------------------------- */
 html:root {
-  --background: 220 19% 5%;
-  --foreground: 240 11% 96%;
-  --card: 223 13% 10%;
-  --card-foreground: 240 11% 96%;
-  --popover: 222 17% 12%;
-  --popover-foreground: 240 11% 96%;
-  --primary: 49 100% 50%;
-  --primary-foreground: 240 6% 4%;
-  --secondary: 222 12% 13%;
-  --secondary-foreground: 240 11% 96%;
-  --muted: 222 11% 12%;
-  --muted-foreground: 223 8% 64%;
-  --accent: 222 12% 14%;
-  --accent-foreground: 240 11% 96%;
+  --background: 212 57% 5%;
+  --foreground: 215 38% 94%;
+  --card: 215 49% 8%;
+  --card-foreground: 215 38% 94%;
+  --popover: 214 43% 10%;
+  --popover-foreground: 215 38% 94%;
+  --primary: var(--brand);
+  --primary-foreground: 212 57% 5%;
+  --secondary: 214 43% 11%;
+  --secondary-foreground: 215 38% 94%;
+  --muted: 214 45% 10%;
+  --muted-foreground: 213 21% 65%;
+  --accent: 214 40% 13%;
+  --accent-foreground: 215 38% 94%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 98%;
-  --border: 220 8% 16%;
-  --input: 220 9% 19%;
-  --ring: 49 100% 50%;
-  --chart-1: 49 100% 50%;
+  --border: 214 37% 16%;
+  --input: 214 36% 19%;
+  --ring: var(--brand);
+  --chart-1: var(--brand);
   --chart-2: 38 92% 50%;
-  --chart-3: 158 64% 52%;
+  --chart-3: 142 71% 45%;
   --chart-4: 0 72% 51%;
   --chart-5: 271 81% 56%;
-  /* Acento de marca oficial TaxiHUB — Amarillo Luminoso */
-  --brand: 49 100% 50%;
-  --brand-bright: 54 100% 50%;
-  --brand-strong: 42 100% 45%;
-  --brand-contrast: 240 6% 4%;
-  --surface: 220 16% 7%;
-  --surface-2: 223 13% 10%;
-  --surface-3: 224 11% 13%;
+  /* Acento de marca oficial TaxiHUB — Amarillo Luminoso (#FFE600, claro #FFF14D, dorado #FFB800) */
+  --brand: 54 100% 50%;
+  --brand-bright: 55 100% 65%;
+  --brand-strong: 43 100% 50%;
+  --brand-contrast: 212 57% 5%;
+  --surface: 212 57% 5%;
+  --surface-2: 215 49% 8%;
+  --surface-3: 214 43% 11%;
 }
 
 html:root[data-theme="oceano"] {
@@ -246,7 +246,7 @@ html body {
 
 /* --------------------------------------------------------------------------
    Superficies operativas (cards/paneles del sistema 2.0)
-   #17191E · radius 16-20px · borde blanco 6% · glow suave, sin sombra dura
+   #0F1926 · radius 16-20px · borde blanco 6% · glow suave, sin sombra dura
    -------------------------------------------------------------------------- */
 .th-card {
   background: var(--th-surface);
@@ -345,21 +345,21 @@ html .btn-danger-elev {
     0 4px 24px hsl(0 72% 51% / 20%);
 }
 
-/* Chasis "machined" del Terminal → mundo #17191E en oscuro, perla/blanco en diurno */
+/* Chasis "machined" del Terminal → mundo #0F1926 en oscuro, perla/blanco en diurno */
 html:not([data-mode="claro"]) .bezel-shell {
-  background: hsl(223 13% 10% / var(--ui-alpha, 0.85));
+  background: hsl(215 49% 8% / var(--ui-alpha, 0.85));
   border-color: rgba(255, 255, 255, 0.06);
 }
 html:not([data-mode="claro"]) .surface-ui {
-  background: hsl(223 13% 10% / var(--ui-alpha, 0.85));
+  background: hsl(215 49% 8% / var(--ui-alpha, 0.85));
   border-color: rgba(255, 255, 255, 0.06);
 }
 html:not([data-mode="claro"]) .bezel-core {
-  background: hsl(223 12% 12%);
+  background: hsl(214 43% 11%);
   border-color: rgba(255, 255, 255, 0.06);
 }
 html:not([data-mode="claro"]) .input-inset {
-  background: hsl(220 16% 7%) !important;
+  background: hsl(212 57% 5%) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 html[data-mode="claro"] .bezel-shell {
@@ -409,7 +409,7 @@ html:not([data-mode="claro"]) .th-icon-3d {
 html:not([data-mode="claro"]) .text-emerald-400,
 html:not([data-mode="claro"]) .text-emerald-500 { color: var(--th-live); }
 html:not([data-mode="claro"]) .bg-emerald-400,
-html:not([data-mode="claro"]) .bg-emerald-500 { background-color: var(--th-live); color: #0C0E14 !important; }
+html:not([data-mode="claro"]) .bg-emerald-500 { background-color: var(--th-live); color: #050B12 !important; }
 html[data-mode="claro"] .text-emerald-400,
 html[data-mode="claro"] .text-emerald-500 { color: #D97706 !important; }
 html[data-mode="claro"] .text-emerald-300 { color: #B45309 !important; }
@@ -424,28 +424,28 @@ html .taxi-driver-shell {
 }
 
 html .taxi-driver-shell.taxi-driver-dark {
-  --driver-ink: #F5F5F7;
-  --driver-muted: #9CA0AA;
+  --driver-ink: #EDF2F8;
+  --driver-muted: #93A4B8;
   --driver-line: rgba(255, 255, 255, 0.08);
-  --driver-surface: #17191E;
-  --driver-canvas: #0B0D10;
+  --driver-surface: #0F1926;
+  --driver-canvas: #050B12;
   --driver-green: #FFE600;
   --driver-green-dark: #FFB800;
   --driver-red: #F4544C;
 }
 
-html body:has(.taxi-driver-shell.taxi-driver-dark) { background: #070809; }
-html .taxi-driver-shell.taxi-driver-dark .leaflet-container { background: #0B0D10; }
+html body:has(.taxi-driver-shell.taxi-driver-dark) { background: #03070C; }
+html .taxi-driver-shell.taxi-driver-dark .leaflet-container { background: #050B12; }
 
 html .taxi-driver-shell.taxi-driver-dark .text-brand-bright { color: var(--driver-green) !important; }
-html .taxi-driver-shell.taxi-driver-dark .bg-surface-2 { background: #1B1E24 !important; }
-html .taxi-driver-shell.taxi-driver-dark .bg-secondary { background: #1B1E24 !important; color: var(--driver-ink) !important; }
+html .taxi-driver-shell.taxi-driver-dark .bg-surface-2 { background: #13202F !important; }
+html .taxi-driver-shell.taxi-driver-dark .bg-secondary { background: #13202F !important; color: var(--driver-ink) !important; }
 
 /* Avatar circular — identidad del conductor */
 html .taxi-driver-shell.taxi-driver-dark .taxi-driver-avatar-button {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  background: #1B1E24;
+  background: #13202F;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
 }
 html .taxi-driver-shell.taxi-driver-dark .taxi-driver-name { font-weight: 600; }
@@ -456,62 +456,62 @@ html .taxi-driver-shell.taxi-driver-dark .taxi-driver-controls-card,
 html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-info"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="recentrar-mapa-btn"] {
   border-color: rgba(255, 255, 255, 0.06);
-  background: rgba(23, 25, 30, 0.97);
+  background: rgba(15, 25, 38, 0.97);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
 }
 html .taxi-driver-shell.taxi-driver-dark .taxi-driver-controls-inner button:hover {
   color: var(--driver-green-dark);
   background: rgba(255, 255, 255, 0.08);
 }
-html .taxi-driver-shell.taxi-driver-dark .taxi-driver-vehicle-mini { background: #1B1E24; }
+html .taxi-driver-shell.taxi-driver-dark .taxi-driver-vehicle-mini { background: #13202F; }
 
 /* Badges conexión/GPS */
 html .taxi-driver-shell.taxi-driver-dark [data-testid="connection-badge"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="gps-badge"] {
-  background: rgba(23, 25, 30, 0.95);
+  background: rgba(15, 25, 38, 0.95);
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.3);
 }
 
-/* Bottom sheets → superficie #17191E, borde blanco 6% */
+/* Bottom sheets → superficie #0F1926, borde blanco 6% */
 html .taxi-driver-shell.taxi-driver-dark > [data-testid^="driver-sheet"] > div[role],
 html .taxi-driver-shell.taxi-driver-dark > [data-testid^="driver-sheet"] > div:not([aria-hidden]) {
   max-width: min(100vw, 720px);
   border-color: rgba(255, 255, 255, 0.06);
-  background: rgba(23, 25, 30, 0.98) !important;
+  background: rgba(15, 25, 38, 0.98) !important;
   box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.45);
 }
 html .taxi-driver-shell.taxi-driver-dark > [data-testid^="driver-sheet"] > div[role] > div:first-child span,
 html .taxi-driver-shell.taxi-driver-dark > [data-testid^="driver-sheet"] > div:not([aria-hidden]) > div:first-child span {
-  background: #2A2D34;
+  background: #1F3048;
 }
 
 /* Panel de estado + controles */
 html .taxi-driver-shell.taxi-driver-dark [data-testid="estado-actual"] {
   border-color: rgba(255, 255, 255, 0.08) !important;
-  background: #1B1E24 !important;
+  background: #13202F !important;
 }
 html .taxi-driver-shell.taxi-driver-dark [data-testid="estado-buttons"] button {
   border-color: rgba(255, 255, 255, 0.08) !important;
-  background: #1B1E24 !important;
+  background: #13202F !important;
   color: var(--driver-muted) !important;
 }
 /* Ítem de estado activo: amarillo luminoso taxi sólido con texto oscuro */
 html .taxi-driver-shell.taxi-driver-dark [data-testid="estado-buttons"] button[aria-pressed="true"] {
   border-color: var(--driver-green) !important;
-  color: #0B0D10 !important;
+  color: #050B12 !important;
   background: var(--driver-green) !important;
   box-shadow: 0 4px 18px rgba(255, 230, 0, 0.28);
 }
 html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-select"] {
   border-color: rgba(255, 255, 255, 0.08) !important;
-  background: #1B1E24 !important;
+  background: #13202F !important;
 }
 
 /* CTA de servicio: amarillo luminoso taxi sólido, tinta oscura, glow suave */
 html .taxi-driver-shell.taxi-driver-dark [data-testid="iniciar-servicio-btn"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="aceptar-servicio-btn"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="iniciar-viaje-btn"] {
-  color: #0B0D10 !important;
+  color: #050B12 !important;
   font-weight: 700 !important;
   background: var(--driver-green) !important;
   box-shadow: 0 4px 20px rgba(255, 230, 0, 0.28);
@@ -524,13 +524,13 @@ html .taxi-driver-shell.taxi-driver-dark [data-testid="abrir-chat-btn"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="reporte-enviar"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="chat-op-enviar"] {
   border-color: rgba(255, 255, 255, 0.08);
-  background: #1B1E24 !important;
+  background: #13202F !important;
 }
 html .taxi-driver-shell.taxi-driver-dark [data-testid="offer-card"] > div:nth-child(3),
 html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-card-cliente"] > div:nth-child(2),
 html .taxi-driver-shell.taxi-driver-dark [data-testid="ruta-card-destino"] > div:nth-child(2) {
   border-color: rgba(255, 255, 255, 0.06) !important;
-  background: #1B1E24 !important;
+  background: #13202F !important;
 }
 html .taxi-driver-shell.taxi-driver-dark [data-testid="offer-card"] [class*="bg-amber"],
 html .taxi-driver-shell.taxi-driver-dark [data-testid="offer-card"] [class*="border-amber"] {
@@ -546,7 +546,7 @@ html .taxi-driver-shell.taxi-driver-dark [data-testid="rechazar-servicio-btn"] {
 html .taxi-driver-shell.taxi-driver-dark input,
 html .taxi-driver-shell.taxi-driver-dark [role="combobox"] {
   border-color: rgba(255, 255, 255, 0.08) !important;
-  background: #121417 !important;
+  background: #0A121D !important;
   color: var(--driver-ink) !important;
 }
 
@@ -562,11 +562,11 @@ html .taxi-passenger-auth {
 
 html .taxi-passenger-shell.taxi-passenger-dark,
 html .taxi-passenger-auth {
-  --passenger-ink: #F5F5F7;
-  --passenger-muted: #9CA0AA;
+  --passenger-ink: #EDF2F8;
+  --passenger-muted: #93A4B8;
   --passenger-line: rgba(255, 255, 255, 0.08);
-  --passenger-surface: #17191E;
-  --passenger-canvas: #0B0D10;
+  --passenger-surface: #0F1926;
+  --passenger-canvas: #050B12;
   --passenger-green: #FFE600;
   --passenger-green-dark: #FFB800;
   --passenger-red: #F4544C;
@@ -586,15 +586,15 @@ html .taxi-passenger-dark .taxi-passenger-rating-sheet h2 {
 }
 
 html .taxi-passenger-dark .taxi-passenger-map-layer .leaflet-container,
-html .taxi-passenger-auth .leaflet-container { background: #0B0D10; }
+html .taxi-passenger-auth .leaflet-container { background: #050B12; }
 
 /* Resumen de viaje + sheets + capas flotantes */
 html .taxi-passenger-dark .taxi-passenger-trip-summary {
   border-color: rgba(255, 255, 255, 0.06);
-  background: rgba(23, 25, 30, 0.97);
+  background: rgba(15, 25, 38, 0.97);
 }
 html .taxi-passenger-dark .taxi-passenger-route-rail > span:not(.taxi-passenger-route-dot) {
-  border-left-color: #2A2D34;
+  border-left-color: #1F3048;
 }
 html .taxi-passenger-dark .taxi-passenger-eta,
 html .taxi-passenger-dark .taxi-passenger-trip-meta,
@@ -603,27 +603,27 @@ html .taxi-passenger-dark .taxi-passenger-preview-meta {
 }
 html .taxi-passenger-dark .taxi-passenger-status-chip .sem-badge,
 html .taxi-passenger-dark .taxi-passenger-status-chip [class*="rounded"] {
-  background: rgba(23, 25, 30, 0.96);
+  background: rgba(15, 25, 38, 0.96);
   box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35);
 }
 html .taxi-passenger-dark .taxi-passenger-driver-sheet,
 html .taxi-passenger-dark .taxi-passenger-home-sheet,
 html .taxi-passenger-dark .taxi-passenger-request-sheet {
   border-top-color: rgba(255, 255, 255, 0.06);
-  background: rgba(23, 25, 30, 0.98);
+  background: rgba(15, 25, 38, 0.98);
   box-shadow: 0 -11px 28px rgba(0, 0, 0, 0.45);
 }
-html .taxi-passenger-dark .taxi-passenger-sheet-handle span { background: #2A2D34; }
+html .taxi-passenger-dark .taxi-passenger-sheet-handle span { background: #1F3048; }
 
 /* Conductor asignado */
 html .taxi-passenger-dark .taxi-passenger-driver-avatar {
   border-color: rgba(255, 255, 255, 0.12);
-  background: #1B1E24;
+  background: #13202F;
 }
 html .taxi-passenger-dark .taxi-passenger-vehicle-thumb { border-top-color: rgba(255, 255, 255, 0.08); }
 html .taxi-passenger-dark .taxi-passenger-vehicle-thumb-img {
   border-color: rgba(255, 255, 255, 0.08);
-  background: #1B1E24;
+  background: #13202F;
 }
 html .taxi-passenger-dark .taxi-passenger-searching-icon { background: rgba(255, 230, 0, 0.12); }
 
@@ -645,18 +645,18 @@ html .taxi-passenger-dark .taxi-passenger-action-cancel {
 }
 html .taxi-passenger-dark .taxi-passenger-locate-button {
   border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(23, 25, 30, 0.96);
+  background: rgba(15, 25, 38, 0.96);
   box-shadow: 0 7px 18px rgba(0, 0, 0, 0.4);
 }
-html .taxi-passenger-dark .taxi-passenger-destination-field { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-destination-field { background: #13202F; }
 html .taxi-passenger-dark .taxi-passenger-destination-field > span:first-child { background: rgba(255, 230, 0, 0.12); }
-html .taxi-passenger-dark .taxi-passenger-location-button { background: #1B1E24; }
-html .taxi-passenger-dark .taxi-passenger-secondary-button { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-location-button { background: #13202F; }
+html .taxi-passenger-dark .taxi-passenger-secondary-button { background: #13202F; }
 
 /* CTA primario: neón sólido con tinta oscura */
 html .taxi-passenger-dark .taxi-passenger-primary-button,
 html .taxi-passenger-auth .taxi-passenger-primary-button {
-  color: #0B0D10;
+  color: #050B12;
   font-weight: 600;
   background: var(--passenger-green);
   box-shadow: 0 4px 18px rgba(255, 230, 0, 0.2);
@@ -666,7 +666,7 @@ html .taxi-passenger-dark .taxi-passenger-primary-button:hover { background: #7D
 /* Solicitud de servicio */
 html .taxi-passenger-dark .taxi-passenger-map-hint {
   border-color: rgba(255, 255, 255, 0.06);
-  background: rgba(23, 25, 30, 0.96);
+  background: rgba(15, 25, 38, 0.96);
   box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35);
 }
 html .taxi-passenger-dark .taxi-passenger-marked-point {
@@ -679,20 +679,20 @@ html .taxi-passenger-dark .taxi-passenger-destination-input,
 html .taxi-passenger-dark .taxi-passenger-chat-compose input,
 html .taxi-passenger-dark .taxi-passenger-rating-sheet input,
 html .taxi-passenger-auth .taxi-passenger-field input {
-  background: #121417 !important;
+  background: #0A121D !important;
 }
 html .taxi-passenger-dark .taxi-passenger-vehicle-option-selected {
   box-shadow: 0 0 0 2px rgba(255, 230, 0, 0.16);
 }
-html .taxi-passenger-dark .taxi-passenger-vehicle-image { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-vehicle-image { background: #13202F; }
 
 /* Bottom nav + menú + chat */
-html .taxi-passenger-dark .taxi-passenger-bottom-nav { background: rgba(23, 25, 30, 0.97); }
-html .taxi-passenger-dark .taxi-passenger-nav-item { color: #9CA0AA; }
+html .taxi-passenger-dark .taxi-passenger-bottom-nav { background: rgba(15, 25, 38, 0.97); }
+html .taxi-passenger-dark .taxi-passenger-nav-item { color: #93A4B8; }
 html .taxi-passenger-dark .taxi-passenger-menu-backdrop,
 html .taxi-passenger-dark .taxi-passenger-chat-layer,
 html .taxi-passenger-dark .taxi-passenger-rating-layer { background: rgba(0, 0, 0, 0.5); }
-html .taxi-passenger-dark .taxi-passenger-menu-heading > button { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-menu-heading > button { background: #13202F; }
 html .taxi-passenger-dark .taxi-passenger-menu-user > span,
 html .taxi-passenger-dark .taxi-passenger-rating-avatar { background: rgba(255, 230, 0, 0.12); }
 html .taxi-passenger-dark .taxi-passenger-menu-links button:hover,
@@ -702,17 +702,17 @@ html .taxi-passenger-dark .taxi-passenger-menu-logout {
   color: #F4544C;
   background: rgba(244, 84, 76, 0.12);
 }
-html .taxi-passenger-dark .taxi-passenger-chat-panel > header > button { background: #1B1E24; }
-html .taxi-passenger-dark .taxi-passenger-chat-bubble { background: #1B1E24; }
+html .taxi-passenger-dark .taxi-passenger-chat-panel > header > button { background: #13202F; }
+html .taxi-passenger-dark .taxi-passenger-chat-bubble { background: #13202F; }
 html .taxi-passenger-dark .taxi-passenger-chat-bubble-self,
-html .taxi-passenger-dark .taxi-passenger-chat-compose > button { color: #0B0D10; }
-html .taxi-passenger-dark .taxi-passenger-rating-stars button { color: #2A2D34; }
+html .taxi-passenger-dark .taxi-passenger-chat-compose > button { color: #050B12; }
+html .taxi-passenger-dark .taxi-passenger-rating-stars button { color: #1F3048; }
 
 /* Perfil: card de identidad sobre superficie, no neón decorativo */
 html .taxi-passenger-dark .taxi-passenger-profile-card {
   border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--passenger-ink);
-  background: #17191E;
+  background: #0F1926;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 html .taxi-passenger-dark .taxi-passenger-profile-avatar {
@@ -731,111 +731,111 @@ html .taxi-passenger-auth .taxi-passenger-logo { color: var(--passenger-ink); }
 html .taxi-passenger-auth .taxi-passenger-field { color: var(--passenger-ink); }
 
 /* Scrollbar del nuevo mundo de color */
-html * { scrollbar-color: hsl(222 9% 22%) transparent; }
-html *::-webkit-scrollbar-thumb { background: hsl(222 9% 22%); }
-html *::-webkit-scrollbar-thumb:hover { background: hsl(222 9% 30%); }
+html * { scrollbar-color: hsl(214 30% 20%) transparent; }
+html *::-webkit-scrollbar-thumb { background: hsl(214 30% 20%); }
+html *::-webkit-scrollbar-thumb:hover { background: hsl(214 30% 28%); }
 
 /* ==========================================================================
    Amarillo Luminoso 3D: botones, chips e indicadores con volumen.
-   Amarillo #FFE600 a dorado #FFB800, canto #B37A00, tinta carbón #0C0E14.
+   Amarillo hsl(var(--brand)) a dorado hsl(var(--brand-strong)), canto color-mix(in srgb, hsl(var(--brand-strong)) 62%, #000), tinta carbón #050B12.
    Prefijo `html` para ganar a las utilidades de Tailwind (que van después).
    ========================================================================== */
 
 /* Botón primario: degradado, brillo superior y canto inferior que se hunde al presionar */
 html .th-btn-y,
 html .btn-primary-elev {
-  background: linear-gradient(180deg, #FFF27A 0%, #FFE600 45%, #FFC400 100%);
-  color: #0C0E14;
-  border: 1px solid #FFB800;
+  background: linear-gradient(180deg, hsl(var(--brand-bright)) 0%, hsl(var(--brand)) 45%, hsl(var(--brand-strong)) 100%);
+  color: #050B12;
+  border: 1px solid hsl(var(--brand-strong));
   font-weight: 800;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 0 rgba(179, 122, 0, 0.35),
-    0 3px 0 #B37A00,
-    0 8px 22px rgba(255, 230, 0, 0.28);
+    inset 0 -2px 0 hsl(var(--brand-strong) / 0.35),
+    0 3px 0 color-mix(in srgb, hsl(var(--brand-strong)) 62%, #000),
+    0 8px 22px hsl(var(--brand) / 0.28);
   transition: transform 0.08s ease, box-shadow 0.12s ease, filter 0.15s ease;
 }
 html .th-btn-y:hover:not(:disabled),
 html .btn-primary-elev:hover:not(:disabled) {
-  background: linear-gradient(180deg, #FFF59A 0%, #FFEA1F 45%, #FFC400 100%);
+  background: linear-gradient(180deg, hsl(var(--brand-bright)) 0%, hsl(var(--brand-bright)) 25%, hsl(var(--brand)) 100%);
   filter: saturate(1.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -2px 0 rgba(179, 122, 0, 0.35),
-    0 3px 0 #B37A00,
-    0 10px 30px rgba(255, 230, 0, 0.42);
+    inset 0 -2px 0 hsl(var(--brand-strong) / 0.35),
+    0 3px 0 color-mix(in srgb, hsl(var(--brand-strong)) 62%, #000),
+    0 10px 30px hsl(var(--brand) / 0.42);
 }
 html .th-btn-y:active:not(:disabled),
 html .btn-primary-elev:active:not(:disabled) {
   transform: translateY(2px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 2px 6px rgba(179, 122, 0, 0.35),
-    0 1px 0 #B37A00,
-    0 4px 12px rgba(255, 230, 0, 0.22);
+    inset 0 2px 6px hsl(var(--brand-strong) / 0.35),
+    0 1px 0 color-mix(in srgb, hsl(var(--brand-strong)) 62%, #000),
+    0 4px 12px hsl(var(--brand) / 0.22);
 }
 
 /* Botón de icono / secundario del chasis: bloque grafito con bisel y canto */
 html:not([data-mode="claro"]) .th-3d {
-  background: linear-gradient(180deg, #23262E 0%, #16181D 100%);
+  background: linear-gradient(180deg, #162436 0%, #121D2B 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 2px 0 #050608,
+    0 2px 0 #03070C,
     0 4px 10px rgba(0, 0, 0, 0.35);
   transition: transform 0.08s ease, box-shadow 0.12s ease, border-color 0.15s ease, color 0.15s ease;
 }
 html:not([data-mode="claro"]) .th-3d:hover:not(:disabled) {
-  border-color: rgba(255, 230, 0, 0.45);
-  color: #FFE600;
+  border-color: hsl(var(--brand) / 0.45);
+  color: hsl(var(--brand));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 2px 0 #050608,
-    0 0 0 3px rgba(255, 230, 0, 0.08),
+    0 2px 0 #03070C,
+    0 0 0 3px hsl(var(--brand) / 0.08),
     0 6px 16px rgba(0, 0, 0, 0.4);
 }
 html:not([data-mode="claro"]) .th-3d:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 0 0 #050608;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 0 0 #03070C;
 }
 /* Botón de chasis activo (fondo amarillo): bloque amarillo en relieve */
-html:not([data-mode="claro"]) .th-3d.bg-\[\#FFE600\] {
-  background: linear-gradient(180deg, #FFF27A 0%, #FFE600 45%, #FFC400 100%);
-  border-color: #FFB800;
-  color: #0C0E14;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 #B37A00, 0 6px 18px rgba(255, 230, 0, 0.3);
+html:not([data-mode="claro"]) .th-3d.bg-brand {
+  background: linear-gradient(180deg, hsl(var(--brand-bright)) 0%, hsl(var(--brand)) 45%, hsl(var(--brand-strong)) 100%);
+  border-color: hsl(var(--brand-strong));
+  color: #050B12;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 color-mix(in srgb, hsl(var(--brand-strong)) 62%, #000), 0 6px 18px hsl(var(--brand) / 0.3);
 }
 
 /* Chips de filtro: grafito; activo = pastilla amarilla con volumen */
 html .chip {
-  background: linear-gradient(180deg, #1D2027 0%, #15171C 100%);
+  background: linear-gradient(180deg, #121D2B 0%, #121D2B 100%);
   border-color: rgba(255, 255, 255, 0.09);
-  color: #C9CCD3;
+  color: #C3CEDB;
   font-weight: 600;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 0 #050608;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 0 #03070C;
 }
 html .chip:hover {
-  border-color: rgba(255, 230, 0, 0.45);
+  border-color: hsl(var(--brand) / 0.45);
   color: #FFFFFF;
 }
 html .chip-active,
 html .chip-active:hover {
-  background: linear-gradient(180deg, #FFF27A 0%, #FFE600 50%, #FFC400 100%);
-  border-color: #FFB800;
-  color: #0C0E14;
+  background: linear-gradient(180deg, hsl(var(--brand-bright)) 0%, hsl(var(--brand)) 50%, hsl(var(--brand-strong)) 100%);
+  border-color: hsl(var(--brand-strong));
+  color: #050B12;
   font-weight: 800;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 #B37A00, 0 4px 14px rgba(255, 230, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 color-mix(in srgb, hsl(var(--brand-strong)) 62%, #000), 0 4px 14px hsl(var(--brand) / 0.3);
 }
 
 /* Control segmentado (capas del mapa): riel hundido y opción activa en relieve */
 html .th-seg {
-  background: #0B0D10;
+  background: hsl(212 57% 5% / var(--ui-alpha, 0.92));
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 html .th-seg-btn {
-  color: #9CA0AA;
+  color: #93A4B8;
   font-weight: 600;
   border: 1px solid transparent;
   transition: color 0.15s ease, background 0.15s ease, transform 0.08s ease;
@@ -843,11 +843,11 @@ html .th-seg-btn {
 html .th-seg-btn:hover { color: #FFFFFF; background: rgba(255, 255, 255, 0.05); }
 html .th-seg-btn[aria-pressed="true"],
 html .th-seg-btn[aria-pressed="true"]:hover {
-  background: linear-gradient(180deg, #FFF27A 0%, #FFE600 50%, #FFC400 100%);
-  border-color: #FFB800;
-  color: #0C0E14;
+  background: linear-gradient(180deg, hsl(var(--brand-bright)) 0%, hsl(var(--brand)) 50%, hsl(var(--brand-strong)) 100%);
+  border-color: hsl(var(--brand-strong));
+  color: #050B12;
   font-weight: 800;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 #B37A00, 0 4px 12px rgba(255, 230, 0, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 color-mix(in srgb, hsl(var(--brand-strong)) 62%, #000), 0 4px 12px hsl(var(--brand) / 0.28);
 }
 
 /* Pastilla informativa amarilla (licencia, foráneos) */
@@ -856,24 +856,24 @@ html .th-pill-y {
   align-items: center;
   gap: 0.3rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 230, 0, 0.4);
-  background: linear-gradient(180deg, rgba(255, 230, 0, 0.16) 0%, rgba(255, 184, 0, 0.08) 100%);
-  color: #FFE600;
+  border: 1px solid hsl(var(--brand) / 0.4);
+  background: linear-gradient(180deg, hsl(var(--brand) / 0.16) 0%, hsl(var(--brand-strong) / 0.08) 100%);
+  color: hsl(var(--brand));
   font-weight: 800;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 14px rgba(255, 230, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 14px hsl(var(--brand) / 0.08);
 }
-html .th-pill-y:is(button):hover { border-color: #FFE600; background: rgba(255, 230, 0, 0.22); }
+html .th-pill-y:is(button):hover { border-color: hsl(var(--brand)); background: hsl(var(--brand) / 0.22); }
 
 /* Indicador de conexión en vivo: cápsula carbón, radar pulsante y barras de señal */
 html .th-live {
-  --live: #FFE600;
+  --live: #22C55E;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   height: 22px;
   padding: 0 0.55rem 0 0.45rem;
   border-radius: 999px;
-  background: linear-gradient(180deg, #14161B 0%, #0A0B0E 100%);
+  background: linear-gradient(180deg, #0C1520 0%, #0A0B0E 100%);
   border: 1px solid color-mix(in srgb, var(--live) 45%, transparent);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -944,7 +944,7 @@ html .th-gauges {
   gap: 4px;
   padding: 3px;
   border-radius: 14px;
-  background: #0B0D10;
+  background: #050B12;
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
 }
@@ -953,8 +953,8 @@ html .th-gauge {
   min-width: 58px;
   padding: 4px 9px 4px 11px;
   border-radius: 10px;
-  background: linear-gradient(180deg, #1C1F26 0%, #14161B 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 0 #050608;
+  background: linear-gradient(180deg, #121D2B 0%, #0C1520 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 0 #03070C;
   overflow: hidden;
 }
 html .th-gauge::before {
@@ -981,8 +981,183 @@ html .th-gauge-etiqueta {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8B8F99;
+  color: #8496AB;
 }
 html[data-mode="claro"] .th-gauges { background: #E2E8F0; box-shadow: inset 0 2px 5px rgba(15, 23, 42, 0.12); }
 html[data-mode="claro"] .th-gauge { background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%); box-shadow: 0 1px 0 #CBD5E1; }
 html[data-mode="claro"] .th-gauge-valor { text-shadow: none; }
+
+/* La raíz de la app lleva la clase `dark` (shadcn) y su bloque en index.css redefinía las variables
+   con el gris neutro y el --primary esmeralda anteriores: aquí vuelven a la paleta azul negro. */
+html:not([data-mode="claro"]) .dark {
+  --background: 212 57% 5%;
+  --foreground: 215 38% 94%;
+  --card: 215 49% 8%;
+  --card-foreground: 215 38% 94%;
+  --popover: 214 43% 10%;
+  --popover-foreground: 215 38% 94%;
+  --primary: var(--brand);
+  --primary-foreground: 212 57% 5%;
+  --secondary: 214 43% 11%;
+  --secondary-foreground: 215 38% 94%;
+  --muted: 214 45% 10%;
+  --muted-foreground: 213 21% 65%;
+  --accent: 214 40% 13%;
+  --accent-foreground: 215 38% 94%;
+  --border: 214 37% 16%;
+  --input: 214 36% 19%;
+  --ring: var(--brand);
+  --chart-1: var(--brand);
+  --chart-2: 38 92% 50%;
+  --chart-3: 142 71% 45%;
+  --chart-4: 0 72% 51%;
+  --chart-5: 271 81% 56%;
+}
+
+/* Botón de modo: sol amarillo con rayos y halo (acción "modo día"); luna en modo día. */
+html .th-modo .th-modo-sol {
+  color: hsl(var(--brand));
+  fill: hsl(var(--brand) / 0.85);
+  filter: drop-shadow(0 0 5px hsl(var(--brand) / 0.55)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+  transition: transform var(--th-dur-comp, 280ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+html .th-modo:hover .th-modo-sol { transform: rotate(45deg) scale(1.08); }
+html .th-modo[data-claro="true"] { color: #1E293B; }
+
+/* Panel del socio: fondo con luz tenue (para que la transparencia se note) y superficies que
+   respetan --ui-alpha (Ajustes de apariencia → Transparencia de paneles). */
+html:not([data-mode="claro"]) .dueno-shell {
+  background:
+    radial-gradient(60rem 36rem at 85% -10%, hsl(var(--brand) / 0.07), transparent 70%),
+    radial-gradient(50rem 40rem at 0% 100%, rgba(56, 107, 170, 0.12), transparent 70%),
+    hsl(var(--background));
+  background-attachment: fixed;
+}
+html .dueno-shell .bg-card { background-color: hsl(var(--card) / var(--ui-alpha, 1)); }
+html .dueno-shell .bg-card\/95 { background-color: hsl(var(--card) / calc(var(--ui-alpha, 1) * 0.95)); }
+html .dueno-shell .bg-card\/60 { background-color: hsl(var(--card) / calc(var(--ui-alpha, 1) * 0.6)); }
+html .dueno-shell .bg-card\/40 { background-color: hsl(var(--card) / calc(var(--ui-alpha, 1) * 0.4)); }
+html .dueno-shell .bg-secondary\/30 { background-color: hsl(var(--secondary) / calc(var(--ui-alpha, 1) * 0.5)); }
+/* En el panel del socio el esmeralda marca estados positivos (libre, al día, completado): verde del sistema. */
+html:not([data-mode="claro"]) .dueno-shell .text-emerald-400,
+html:not([data-mode="claro"]) .dueno-shell .text-emerald-500 { color: #22C55E; }
+html:not([data-mode="claro"]) .dueno-shell .text-emerald-300 { color: #4ADE80; }
+html:not([data-mode="claro"]) .dueno-shell .bg-emerald-400,
+html:not([data-mode="claro"]) .dueno-shell .bg-emerald-500 { background-color: #22C55E; color: #03140A !important; }
+
+/* Barra de progreso en relieve: riel hundido + relleno de marca con brillo superior y canto. */
+html .th-barra3d {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: #050B12;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 -1px 0 rgba(148, 172, 204, 0.08);
+  overflow: hidden;
+}
+html .th-barra3d > span {
+  position: absolute;
+  inset: 1.5px auto 1.5px 1.5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, hsl(var(--brand-bright)) 0%, hsl(var(--brand)) 50%, hsl(var(--brand-strong)) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 0 10px hsl(var(--brand) / 0.35);
+  transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Insignia en relieve (conteos de servicios): pastilla de marca con tinta oscura. */
+html .th-insignia3d {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--brand-strong));
+  background: linear-gradient(180deg, hsl(var(--brand-bright)) 0%, hsl(var(--brand)) 55%, hsl(var(--brand-strong)) 100%);
+  color: #050B12;
+  font-family: "Fira Code", ui-monospace, monospace;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 2px 0 color-mix(in srgb, hsl(var(--brand-strong)) 62%, #000), 0 4px 10px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+html .th-insignia3d[data-cero="true"] {
+  background: linear-gradient(180deg, #243650 0%, #162436 100%);
+  border-color: rgba(148, 172, 204, 0.3);
+  color: #CFD8E3;
+  text-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 0 #03070C, 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Unidades del mapa de la Terminal con volumen (lib/taxiIcon.js → taxiStateAssetIcon). */
+.th-taxi3d-sombra {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 62%;
+  height: 52%;
+  transform: translate(-50%, -28%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.28) 62%, transparent);
+  filter: blur(2.5px);
+  pointer-events: none;
+}
+.th-taxi3d-relieve {
+  position: absolute;
+  inset: 0;
+  transform: translateY(-2px);
+  filter:
+    drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6))
+    drop-shadow(0 2px 0 rgba(0, 0, 0, 0.32))
+    drop-shadow(0 7px 7px rgba(0, 0, 0, 0.35));
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.th-terminal-state-asset:hover .th-taxi3d-relieve { transform: translateY(-4px); }
+.th-taxi3d-brillo {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  background: radial-gradient(ellipse 52% 46% at 50% 44%, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.1) 42%, rgba(0, 0, 0, 0.26) 100%);
+}
+.th-taxi3d-insignia {
+  position: absolute;
+  top: -7px;
+  right: 0;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 25px;
+  height: 25px;
+  padding: 0 7px;
+  border-radius: 999px;
+  color: var(--t);
+  font: 900 12.5px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--b) 52%, #fff) 0%, var(--b) 46%, color-mix(in srgb, var(--b) 76%, #000) 100%);
+  border: 1.5px solid color-mix(in srgb, var(--b) 45%, #fff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 2px 0 color-mix(in srgb, var(--b) 48%, #000),
+    0 5px 10px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.th-taxi3d-insignia[data-oscuro="true"] { text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6); }
+
+/* Filtro "Unidades en mapa": vehículo del estado con el mismo relieve que en el mapa. */
+.th-filtro-vehiculo { display: grid; place-items: center; width: 42px; height: 30px; flex: none; }
+.th-filtro-vehiculo img {
+  width: 42px;
+  height: auto;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 4px 5px rgba(0, 0, 0, 0.45));
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease, filter 160ms ease;
+}
+button:hover > .th-filtro-vehiculo img { transform: translateY(-2px); }
+[aria-checked="false"] > .th-filtro-vehiculo img { filter: grayscale(1) drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6)); }

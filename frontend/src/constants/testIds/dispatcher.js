@@ -4,6 +4,12 @@
 export const DISPATCH = {
   terminalZoom: "terminal-zoom",       // + `-${porcentaje}` (70, 80, 90, 100)
   contadoresFlota: "terminal-contadores-flota",
+  filtroMapa: "terminal-filtro-mapa",
+  filtroMapaPanel: "terminal-filtro-mapa-panel",
+  filtroMapaMostrar: "terminal-filtro-mapa-mostrar",
+  filtroMapaEstado: "terminal-filtro-mapa-estado",   // + `-${estado}`
+  filtroMapaSoloLibres: "terminal-filtro-mapa-solo-libres",
+  filtroRuta: "terminal-filtro-ruta",
   serviciosTabs: "serv-tab",             // + `-${estado}`  (p.ej. serv-tab-pendiente)
   despacharBtn: "despachar-",            // + servicioId
   asignarBtn: "asignar-",                // + servicioId (data-testid de tarjeta)

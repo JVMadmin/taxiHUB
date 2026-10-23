@@ -1,6 +1,9 @@
 import { memo } from "react";
 import { cn, resolveDriverAvatar } from "@/lib/utils";
+import { ChevronDown, Check } from "lucide-react";
 import { Truck, Filter, Search, X } from "@/design/icons";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DISPATCH } from "@/constants/testIds";
 import { Input } from "@/components/ui/input";
 import { ESTADO_COLORS, ESTADO_LABEL } from "@/lib/api";
 import { ESTADOS_OPERADOR, ORDEN_CONTEO_FLOTA } from "@/design/status";
@@ -8,56 +11,68 @@ import { timeAgo } from "@/lib/time";
 
 /**
  * FleetPanel — panel lateral de flota del Centro de Operaciones (DS 2.0).
- * Filtro por ruta (chips), búsqueda, lista de unidades con estado SSOT.
+ * Filtro por ruta (botón a la derecha del encabezado), búsqueda, lista de unidades con estado SSOT.
  * El contenedor DraggablePanel lo provee el consumidor.
  */
 export const FleetPanel = memo(function FleetPanel({
   rutas, filtroRuta, onFiltroRuta, busqueda, onBusqueda,
   visibles, selectedId, onSelect, onClose, serviciosHoyCounts = {},
 }) {
+  const rutaActual = filtroRuta === "todas" ? null : rutas.find((r) => r.id === filtroRuta);
   return (
     <aside data-testid="terminal-sidebar" className="flex h-full flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            <Truck className="h-3.5 w-3.5" /> Flota en operación
+        <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <Truck className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Flota</span>
           </div>
+          {/* Filtro por ruta: botón a la derecha del panel; abre la lista de rutas. */}
+          <Popover>
+            <PopoverTrigger
+              data-testid={DISPATCH.filtroRuta}
+              title="Filtrar por ruta"
+              className={cn(
+                "th-3d flex h-8 max-w-[118px] shrink-0 items-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold",
+                filtroRuta === "todas" ? "text-foreground/90" : "bg-brand text-[#050B12]"
+              )}
+            >
+              <Filter className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{rutaActual ? rutaActual.nombre : "Ruta"}</span>
+              <ChevronDown className="h-3 w-3 shrink-0 opacity-70" />
+            </PopoverTrigger>
+            <PopoverContent align="end" sideOffset={6} className="z-[1200] w-64 border-border p-2 text-popover-foreground" style={{ background: "hsl(214 43% 10% / var(--ui-alpha, 0.96))" }}>
+              <div className="px-1.5 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Filtrar por ruta</div>
+              <div className="grid gap-1" role="radiogroup" aria-label="Filtrar por ruta">
+                {[{ id: "todas", nombre: "Todas las rutas" }, ...rutas].map((r) => {
+                  const sel = filtroRuta === r.id;
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={sel}
+                      data-testid={r.id === "todas" ? "filtro-todas" : `filtro-ruta-${r.id}`}
+                      onClick={() => onFiltroRuta(r.id)}
+                      className={cn("chip w-full justify-start rounded-lg py-2 text-left", sel && "chip-active")}
+                    >
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: r.color_hex || "hsl(var(--brand))" }} />
+                      <span className="min-w-0 flex-1 truncate">{r.nombre}</span>
+                      {sel && <Check className="h-3.5 w-3.5 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors"
+            className="th-3d flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
             title="Ocultar barra lateral de flota"
             aria-label="Ocultar panel de flota"
           >
-            <span className="text-[11px]">Ocultar</span>
             <X className="h-3.5 w-3.5" />
           </button>
-        </div>
-
-        <div>
-          <div className="mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <Filter className="h-3 w-3" /> Filtrar por ruta
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              data-testid="filtro-todas"
-              onClick={() => onFiltroRuta("todas")}
-              className={cn("chip", filtroRuta === "todas" && "chip-active")}
-            >
-              Todas
-            </button>
-            {rutas.map((r) => (
-              <button
-                key={r.id}
-                data-testid={`filtro-ruta-${r.id}`}
-                onClick={() => onFiltroRuta(r.id)}
-                className={cn("chip", filtroRuta === r.id && "chip-active")}
-              >
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: r.color_hex }} />
-                {r.nombre}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="h-px bg-border" />

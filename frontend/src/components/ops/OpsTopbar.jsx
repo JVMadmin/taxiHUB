@@ -76,12 +76,12 @@ export const OpsTopbar = memo(function OpsTopbar({
       {avisoVisible && (
         <div
           data-testid="terminal-dev-aviso-banner"
-          className="pointer-events-auto flex items-center justify-between gap-3 rounded-xl border border-[#FFE600]/25 border-l-[3px] border-l-[#FFE600] bg-[#0C0E14]/95 px-3 py-1.5 text-xs text-[#D4D7DE] shadow-lg backdrop-blur-md"
+          className="pointer-events-auto flex items-center justify-between gap-3 rounded-xl border border-brand/25 border-l-[3px] border-l-brand bg-[#050B12]/95 px-3 py-1.5 text-xs text-[#CFD8E3] shadow-lg backdrop-blur-md"
         >
           <div className="flex min-w-0 items-center gap-2">
-            <Megaphone className="h-3.5 w-3.5 shrink-0 text-[#FFE600]" />
+            <Megaphone className="h-3.5 w-3.5 shrink-0 text-brand" />
             <span className="font-bold text-white">{avisoVisible.titulo || "Aviso de Soporte SaaS"}:</span>
-            <span className="truncate text-[#D4D7DE]/90">{avisoVisible.mensaje}</span>
+            <span className="truncate text-[#CFD8E3]/90">{avisoVisible.mensaje}</span>
             {avisoVisible.contacto_soporte && (
               <span className="th-pill-y hidden px-2 py-0.5 font-mono text-[10px] xl:inline-flex">
                 {avisoVisible.contacto_soporte}
@@ -91,7 +91,7 @@ export const OpsTopbar = memo(function OpsTopbar({
           <button
             type="button"
             onClick={() => setDismissedAvisoId(avisoVisible.id)}
-            className="shrink-0 rounded-lg p-1 text-[#9CA0AA] hover:bg-white/10 hover:text-white"
+            className="shrink-0 rounded-lg p-1 text-[#93A4B8] hover:bg-white/10 hover:text-white"
             title="Ocultar aviso"
           >
             <X className="h-3.5 w-3.5" />
@@ -149,7 +149,7 @@ export const OpsTopbar = memo(function OpsTopbar({
               title="Servicios de hoy"
               aria-label="Servicios"
               className={cn("th-3d hidden h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-semibold transition-colors lg:flex",
-                serviciosOpen ? "bg-[#FFE600] text-[#0C0E14]" : "text-foreground/90")}
+                serviciosOpen ? "bg-brand text-[#050B12]" : "text-foreground/90")}
             >
               <ClipboardList className="th-icon-3d h-4 w-4" />
               <span>Servicios</span>

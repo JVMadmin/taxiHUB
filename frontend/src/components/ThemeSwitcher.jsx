@@ -13,7 +13,7 @@ export function ThemeSwitcher({ className = "", compact = false }) {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const pick = (id) => { applyTheme(id); setTheme(id); setOpen(false); };
+  const pick = (id) => { applyTheme(id, { porUsuario: true }); setTheme(id); setOpen(false); };
 
   return (
     <div ref={ref} className={`relative ${className}`}>
@@ -42,7 +42,7 @@ export function ThemeSwitcher({ className = "", compact = false }) {
             >
               <span className="h-4 w-4 rounded-full border border-border" style={{ background: t.swatch }} />
               <span className="flex-1 text-left">{t.label}</span>
-              {theme === t.id && <Check className="h-4 w-4 text-emerald-400" />}
+              {theme === t.id && <Check className="h-4 w-4 text-brand" />}
             </button>
           ))}
         </div>

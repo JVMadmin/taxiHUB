@@ -22,7 +22,7 @@ export function TerminalDisplayControls({ alpha, onChange, zoom = 0.8, onZoomCha
       >
         <Settings2 className="th-icon-3d h-5 w-5" />
       </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={8} className="w-72 border-border text-popover-foreground" style={{ background: "hsl(240 5% 9% / var(--ui-alpha,0.95))" }}>
+      <PopoverContent align="end" sideOffset={8} className="z-[1200] w-72 border-border text-popover-foreground" style={{ background: "hsl(214 43% 10% / var(--ui-alpha,0.95))" }}>
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/15">
@@ -69,7 +69,7 @@ export function TerminalDisplayControls({ alpha, onChange, zoom = 0.8, onZoomCha
                     data-testid={`${DISPATCH.terminalZoom}-${t}`}
                     onClick={() => onZoomChange(t / 100)}
                     className={`rounded-lg py-1.5 text-xs font-bold transition-colors ${
-                      zoomPct === t ? "bg-[#FFE600] text-[#0C0E14]" : "bg-secondary text-foreground hover:bg-secondary/70"
+                      zoomPct === t ? "bg-brand text-[#050B12]" : "bg-secondary text-foreground hover:bg-secondary/70"
                     }`}
                   >
                     {t}%

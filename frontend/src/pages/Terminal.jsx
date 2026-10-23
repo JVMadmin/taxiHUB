@@ -19,6 +19,7 @@ import { RoutePolyline } from "@/components/RoutePolyline";
 import { getTerminalToken, getTerminalUser, logoutTerminal } from "@/pages/TerminalLogin";
 import { useMode } from "@/hooks/useMode";
 import { OpsTopbar } from "@/components/ops/OpsTopbar";
+import { FiltroUnidadesMapa } from "@/components/ops/FiltroUnidadesMapa";
 import { FleetPanel } from "@/components/ops/FleetPanel";
 import { MissionCard } from "@/components/ops/MissionCard";
 import { OpsMobileDock } from "@/components/ops/OpsMobileDock";
@@ -30,7 +31,7 @@ import { SmoothTaxiMarker } from "@/components/maps/SmoothTaxiMarker";
 import { ColoniasLayer, getColoniaAt } from "@/components/maps/ColoniasLayer";
 import { MapContextMenu } from "@/components/maps/MapContextMenu";
 import { precargarTilesPalenque } from "@/lib/PalenqueTileCache";
-import { Layers, Satellite, ChevronRight, ChevronLeft, Eye, EyeOff, Shapes, X, Zap, Flame } from "lucide-react";
+import { Layers, Satellite, ChevronRight, ChevronLeft, Shapes, X, Zap, Flame } from "lucide-react";
 import { toast } from "sonner";
 
 const CENTER = [17.5099, -91.9847]; // Palenque, Chiapas
@@ -186,6 +187,18 @@ export default function Terminal() {
   const [mapLayer, setMapLayer] = useState("calles"); // "calles" | "satelite"
   const [mostrarColonias, setMostrarColonias] = useState(false);
   const [mostrarFlota, setMostrarFlota] = useState(true);
+  // Estados visibles en el mapa (filtro "Unidades en mapa"), guardados en este equipo.
+  const [estadosMapa, setEstadosMapa] = useState(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem("th_estados_mapa") || "null");
+      if (Array.isArray(v)) return v;
+    } catch (_) { /* valor inválido: por defecto */ }
+    return ["libre", "ocupado", "no_disponible", "averiado"];
+  });
+  const cambiarEstadosMapa = useCallback((v) => {
+    setEstadosMapa(v);
+    try { localStorage.setItem("th_estados_mapa", JSON.stringify(v)); } catch (_) { /* sin almacenamiento */ }
+  }, []);
   const [serviciosHoyList, setServiciosHoyList] = useState([]);
 
   const [servicioSignal, setServicioSignal] = useState(0);
@@ -629,6 +642,18 @@ export default function Terminal() {
     });
   }, [lista, filtroRuta]);
 
+  // Unidades con ubicación (y en la ruta filtrada) por estado: alimentan el filtro del mapa.
+  const conGps = useMemo(
+    () => lista.filter((o) => o.lat != null && o.lng != null && (filtroRuta === "todas" || o.ruta_asignada === filtroRuta)),
+    [lista, filtroRuta]
+  );
+  const conteosMapa = useMemo(() => {
+    const c = {};
+    conGps.forEach((o) => { c[o.estado] = (c[o.estado] || 0) + 1; });
+    return c;
+  }, [conGps]);
+  const enMapa = useMemo(() => conGps.filter((o) => estadosMapa.includes(o.estado)), [conGps, estadosMapa]);
+
   const operadoresLibres = useMemo(
     () => lista.filter((o) => o.estado === "libre"),
     [lista]
@@ -865,7 +890,7 @@ export default function Terminal() {
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="surface-ui absolute left-3 top-1/2 -translate-y-1/2 z-[510] flex items-center gap-2 rounded-xl border border-[#FFE600]/60 bg-[#17191E]/95 px-3.5 py-2 text-xs font-bold text-foreground shadow-[0_6px_20px_rgba(255,230,0,0.35)] backdrop-blur-md transition-all hover:scale-105 hover:bg-[#FFE600] hover:text-white"
+            className="surface-ui absolute left-3 top-1/2 -translate-y-1/2 z-[510] flex items-center gap-2 rounded-xl border border-brand/60 bg-[#0F1926]/95 px-3.5 py-2 text-xs font-bold text-foreground shadow-[0_6px_20px_rgba(255,230,0,0.35)] backdrop-blur-md transition-all hover:scale-105 hover:bg-brand hover:text-white"
             title="Mostrar panel lateral de flota"
             data-testid="expand-sidebar-btn"
           >
@@ -907,30 +932,14 @@ export default function Terminal() {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setMostrarFlota((v) => !v)}
-            className={cn(
-              "surface-ui pointer-events-auto flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-2xl backdrop-blur-md transition-colors",
-              mostrarFlota
-                ? "border-border/80 bg-surface/95 text-amber-400 hover:bg-amber-400/15"
-                : "border-amber-500/40 bg-amber-500/20 text-amber-300"
-            )}
-            data-testid="toggle-flota-btn"
-            title={mostrarFlota ? "Ocultar unidades en el mapa" : "Mostrar unidades en el mapa"}
-          >
-            {mostrarFlota ? (
-              <>
-                <Eye className="h-3.5 w-3.5 text-amber-400" />
-                <span>Unidades en mapa ({visibles.length})</span>
-              </>
-            ) : (
-              <>
-                <EyeOff className="h-3.5 w-3.5 text-amber-400" />
-                <span>Unidades ocultas</span>
-              </>
-            )}
-          </button>
+          <FiltroUnidadesMapa
+            conteos={conteosMapa}
+            estados={estadosMapa}
+            onEstados={cambiarEstadosMapa}
+            mostrar={mostrarFlota}
+            onMostrar={setMostrarFlota}
+            enMapa={enMapa.length}
+          />
         </div>
 
         <div className="absolute inset-0 z-0" data-testid="terminal-map">
@@ -989,7 +998,7 @@ export default function Terminal() {
           {/* Ruta real (OSRM) del servicio activo del taxi seleccionado */}
           {verRutaServicio && servicioActivo && rutaServicio.latlngs && rutaServicio.latlngs.length > 1 && (
             <>
-              <Polyline positions={rutaServicio.latlngs} pathOptions={{ color: "#0b0b0d", weight: 10, opacity: 0.55, lineCap: "round" }} />
+              <Polyline positions={rutaServicio.latlngs} pathOptions={{ color: "#03070C", weight: 10, opacity: 0.55, lineCap: "round" }} />
               <RoutePolyline
                 positions={rutaServicio.latlngs}
                 className="th-route-flow"
@@ -1027,7 +1036,7 @@ export default function Terminal() {
               <span key={`ruta-trazo-wrap-${r.id}`}>
                 <Polyline
                   positions={r.trazo}
-                  pathOptions={{ color: "#090d16", weight: 7, opacity: 0.45, lineCap: "round" }}
+                  pathOptions={{ color: "#060D16", weight: 7, opacity: 0.45, lineCap: "round" }}
                 />
                 <Polyline
                   key={`ruta-trazo-${r.id}`}
@@ -1057,7 +1066,7 @@ export default function Terminal() {
             <>
               <Polyline
                 positions={drawnPoints}
-                pathOptions={{ color: "#090d16", weight: 9, opacity: 0.65, lineCap: "round", lineJoin: "round" }}
+                pathOptions={{ color: "#060D16", weight: 9, opacity: 0.65, lineCap: "round", lineJoin: "round" }}
               />
               <Polyline
                 positions={drawnPoints}
@@ -1121,7 +1130,7 @@ export default function Terminal() {
             />
           ))}
           {(mostrarColonias || drawingMode === "colonia") && <ColoniasLayer customColonias={colonias} />}
-          {(mostrarFlota && drawingMode !== "colonia") && visibles.map((o) => (
+          {(mostrarFlota && drawingMode !== "colonia") && enMapa.map((o) => (
             <SmoothTaxiMarker
               key={o.id}
               op={o}
@@ -1160,7 +1169,7 @@ export default function Terminal() {
         {/* Fila inferior del Topbar: Puntos Calientes + Buscador Geográfico sin solapamiento */}
         <div className="pointer-events-none flex flex-col gap-1.5 xl:flex-row xl:items-center xl:justify-between">
           <div
-            className="surface-ui pointer-events-auto hidden items-center gap-1.5 overflow-x-auto rounded-xl border border-white/[0.08] bg-[#13151A]/90 px-2.5 py-1 shadow-xl backdrop-blur-md lg:flex no-scrollbar"
+            className="surface-ui pointer-events-auto hidden items-center gap-1.5 overflow-x-auto rounded-xl border border-white/[0.08] bg-[#0C1520]/90 px-2.5 py-1 shadow-xl backdrop-blur-md lg:flex no-scrollbar"
             data-testid="puntos-calientes-bar"
           >
             <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-400 pr-1 border-r border-white/10">
@@ -1235,7 +1244,7 @@ export default function Terminal() {
 
       {drawingMode && (
         <div
-          className="surface-ui absolute left-1/2 top-44 z-[710] flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-500/60 bg-[#13151A]/95 px-4 py-1.5 text-xs font-semibold text-amber-300 shadow-2xl backdrop-blur-md lg:top-36"
+          className="surface-ui absolute left-1/2 top-44 z-[710] flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-500/60 bg-[#0C1520]/95 px-4 py-1.5 text-xs font-semibold text-amber-300 shadow-2xl backdrop-blur-md lg:top-36"
           data-testid="drawing-banner"
         >
           <span>
@@ -1283,10 +1292,12 @@ export default function Terminal() {
         <DraggablePanel
           dragKey="mission"
           className={cn(
-            "absolute inset-x-3 z-[540] w-[285px] max-w-[calc(100vw-2rem)] lg:inset-x-auto lg:right-16",
+            "absolute inset-x-3 z-[540] w-[370px] max-w-[calc(100vw-2rem)] lg:inset-x-auto lg:right-16",
             adminSection ? "top-[128px] lg:top-[142px]" : "bottom-4"
           )}
         >
+          {/* Tarjeta de la unidad 30% más grande (texto, fotos y controles) sin rehacer su diseño. */}
+          <div style={{ zoom: 1.3 }}>
           <MissionCard
             op={{ ...selectedOp, rutaNombre: nombreRuta(selectedOp.ruta_asignada) }}
             serviciosHoy={serviciosHoyCounts[selectedOp.id] || 0}
@@ -1304,13 +1315,14 @@ export default function Terminal() {
             onVerExpediente={() => { setChoferExpedienteId(selectedOp.id); setAdminSection("choferes"); }}
             onClose={() => { setSelectedId(null); setFollow(false); }}
           />
+          </div>
         </DraggablePanel>
       )}
       </div>
 
         {/* HUD Flotante: Servicio en borrador y control de puntos */}
         {(coords.origen || coords.destino) && (
-          <div className="surface-ui absolute top-4 left-1/2 -translate-x-1/2 z-[800] flex items-center gap-2 rounded-2xl border border-white/15 bg-[#13151A]/95 px-4 py-2 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
+          <div className="surface-ui absolute top-4 left-1/2 -translate-x-1/2 z-[800] flex items-center gap-2 rounded-2xl border border-white/15 bg-[#0C1520]/95 px-4 py-2 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
             <div className="flex items-center gap-2 text-xs font-medium text-foreground">
               {coords.origen ? (
                 <span className="flex items-center gap-1.5 text-amber-400 font-semibold">

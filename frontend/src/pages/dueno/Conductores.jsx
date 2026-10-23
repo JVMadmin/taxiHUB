@@ -46,7 +46,7 @@ export function Conductores({ liveSignal }) {
               key={c.id}
               data-testid={`conductor-card-${c.id}`}
               onClick={() => setExpedienteId(c.id)}
-              className="group relative flex items-center gap-3.5 rounded-2xl border border-border/80 bg-card/90 p-4 text-left transition-all duration-200 hover:border-brand hover:bg-[#181B22] shadow-sm hover:shadow-lg"
+              className="group relative flex items-center gap-3.5 rounded-2xl border border-border/80 bg-card/90 p-4 text-left transition-all duration-200 hover:border-brand hover:bg-[#121D2B] shadow-sm hover:shadow-lg"
             >
               {/* Fotografía real del chofer */}
               <div className="relative h-13 w-13 shrink-0">

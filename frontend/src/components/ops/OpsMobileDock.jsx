@@ -36,7 +36,7 @@ export function OpsMobileDock({
           data-testid="dock-servicios"
           aria-label="Servicios"
           className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-            serviciosOpen ? "bg-th-live text-[#0B0D10]" : "text-foreground/80 hover:bg-white/[0.08]")}
+            serviciosOpen ? "bg-th-live text-[#050B12]" : "text-foreground/80 hover:bg-white/[0.08]")}
         >
           <ClipboardList className="th-icon-3d h-5 w-5" />
         </button>
@@ -45,7 +45,7 @@ export function OpsMobileDock({
           data-testid="dock-flota"
           aria-label="Panel de flota"
           className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-            sidebarOpen ? "bg-th-live text-[#0B0D10]" : "text-foreground/80 hover:bg-white/[0.08]")}
+            sidebarOpen ? "bg-th-live text-[#050B12]" : "text-foreground/80 hover:bg-white/[0.08]")}
         >
           <LayoutPanelLeft className="th-icon-3d h-5 w-5" />
         </button>
@@ -54,7 +54,7 @@ export function OpsMobileDock({
           data-testid="dock-menu"
           aria-label="Menú de administración"
           className={cn("th-3d flex h-11 w-11 items-center justify-center rounded-xl",
-            adminSection ? "bg-th-live text-[#0B0D10]" : "text-foreground/80 hover:bg-white/[0.08]")}
+            adminSection ? "bg-th-live text-[#050B12]" : "text-foreground/80 hover:bg-white/[0.08]")}
         >
           <MenuIcon className="th-icon-3d h-5 w-5" />
         </button>

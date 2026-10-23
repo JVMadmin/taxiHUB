@@ -108,7 +108,7 @@ export default function OperadorLogin() {
 
             {/* Selector rápido de cuentas de operador para pruebas */}
             <div className="mt-4 border-t border-white/10 pt-3">
-              <div className="mb-1.5 flex items-center justify-between text-[11px] text-[#9CA0AA]">
+              <div className="mb-1.5 flex items-center justify-between text-[11px] text-[#93A4B8]">
                 <span className="font-semibold uppercase tracking-wider">Cuentas rápidas de prueba</span>
                 <button
                   type="button"
@@ -128,17 +128,17 @@ export default function OperadorLogin() {
                       setUsuario(op.usuario);
                       setContrasena(op.pass);
                     }}
-                    className="rounded-lg border border-white/10 bg-[#1B1E24] px-2 py-1.5 text-left text-[10px] text-[#F5F5F7] hover:border-emerald-400/50 transition-colors"
+                    className="rounded-lg border border-white/10 bg-[#13202F] px-2 py-1.5 text-left text-[10px] text-[#EDF2F8] hover:border-emerald-400/50 transition-colors"
                   >
                     <div className="font-bold text-emerald-400">{op.usuario} / {op.pass}</div>
-                    <div className="truncate text-[9px] text-[#9CA0AA]">{op.label}</div>
+                    <div className="truncate text-[9px] text-[#93A4B8]">{op.label}</div>
                   </button>
                 ))}
               </div>
 
               {showServerCfg && (
                 <div className="mt-2.5 rounded-xl border border-white/10 bg-black/30 p-2.5 text-left">
-                  <label className="block text-[10px] font-bold uppercase text-[#9CA0AA]">
+                  <label className="block text-[10px] font-bold uppercase text-[#93A4B8]">
                     URL del Servidor Central (para pruebas en APK / Red Local)
                   </label>
                   <div className="mt-1 flex gap-1.5">
@@ -146,7 +146,7 @@ export default function OperadorLogin() {
                       value={serverUrl}
                       onChange={(e) => setServerUrl(e.target.value)}
                       placeholder="https://taxihub.cloud"
-                      className="h-8 flex-1 rounded-lg border border-white/10 bg-[#121417] px-2 font-mono text-xs text-white"
+                      className="h-8 flex-1 rounded-lg border border-white/10 bg-[#0A121D] px-2 font-mono text-xs text-white"
                     />
                     <button
                       type="button"

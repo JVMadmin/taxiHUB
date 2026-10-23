@@ -52,11 +52,11 @@ export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated,
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         data-testid="servicio-modal"
-        className="bg-[#17191E] border border-white/[0.06] text-[#F5F5F7] sm:max-w-[460px] rounded-[18px] shadow-2xl"
+        className="bg-[#0F1926] border border-white/[0.06] text-[#EDF2F8] sm:max-w-[460px] rounded-[18px] shadow-2xl"
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[#F5F5F7]">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFE600]/15 text-[#FFE600]">
+          <DialogTitle className="flex items-center gap-2 text-[#EDF2F8]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/15 text-brand">
               <PhoneCall className="h-5 w-5" />
             </span>
             Nueva llamada de servicio
@@ -92,8 +92,8 @@ export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated,
 
           <div className="grid gap-1.5">
             <div className="flex items-center justify-between">
-              <Label className="text-[#F5F5F7]/90">Origen *</Label>
-              <button type="button" data-testid="pick-origen" onClick={() => onPick?.("origen")} className="flex items-center gap-1 text-xs text-[#FFE600] hover:text-[#FFB800]">
+              <Label className="text-[#EDF2F8]/90">Origen *</Label>
+              <button type="button" data-testid="pick-origen" onClick={() => onPick?.("origen")} className="flex items-center gap-1 text-xs text-brand hover:text-brand-strong">
                 <MapPin className="h-3 w-3" /> Marcar en mapa
               </button>
             </div>
@@ -102,20 +102,20 @@ export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated,
               value={form.origen}
               onChange={(e) => set("origen", e.target.value)}
               placeholder="Ej. Parque Central"
-              className="input-inset border-border text-[#F5F5F7]"
+              className="input-inset border-border text-[#EDF2F8]"
             />
             {coords?.origen && (
-              <div className="flex items-center gap-2 text-xs text-[#FFE600]">
+              <div className="flex items-center gap-2 text-xs text-brand">
                 <MapPin className="h-3 w-3" /> {coords.origen.lat.toFixed(4)}, {coords.origen.lng.toFixed(4)}
-                <button type="button" onClick={() => onClearPick?.("origen")} className="text-muted-foreground hover:text-[#F5F5F7]/80"><X className="h-3 w-3" /></button>
+                <button type="button" onClick={() => onClearPick?.("origen")} className="text-muted-foreground hover:text-[#EDF2F8]/80"><X className="h-3 w-3" /></button>
               </div>
             )}
           </div>
 
           <div className="grid gap-1.5">
             <div className="flex items-center justify-between">
-              <Label className="text-[#F5F5F7]/90">Destino *</Label>
-              <button type="button" data-testid="pick-destino" onClick={() => onPick?.("destino")} className="flex items-center gap-1 text-xs text-[#FFE600] hover:text-[#FFB800]">
+              <Label className="text-[#EDF2F8]/90">Destino *</Label>
+              <button type="button" data-testid="pick-destino" onClick={() => onPick?.("destino")} className="flex items-center gap-1 text-xs text-brand hover:text-brand-strong">
                 <MapPin className="h-3 w-3" /> Marcar en mapa
               </button>
             </div>
@@ -124,12 +124,12 @@ export function ServicioModal({ open, onOpenChange, operadoresLibres, onCreated,
               value={form.destino}
               onChange={(e) => set("destino", e.target.value)}
               placeholder="Ej. Pakal Ná"
-              className="input-inset border-border text-[#F5F5F7]"
+              className="input-inset border-border text-[#EDF2F8]"
             />
             {coords?.destino && (
-              <div className="flex items-center gap-2 text-xs text-[#FFE600]">
+              <div className="flex items-center gap-2 text-xs text-brand">
                 <MapPin className="h-3 w-3" /> {coords.destino.lat.toFixed(4)}, {coords.destino.lng.toFixed(4)}
-                <button type="button" onClick={() => onClearPick?.("destino")} className="text-muted-foreground hover:text-[#F5F5F7]/80"><X className="h-3 w-3" /></button>
+                <button type="button" onClick={() => onClearPick?.("destino")} className="text-muted-foreground hover:text-[#EDF2F8]/80"><X className="h-3 w-3" /></button>
               </div>
             )}
           </div>

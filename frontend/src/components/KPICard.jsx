@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 const TONES = {
   default: "text-foreground",
   brand: "text-brand-bright",
-  good: "text-emerald-400",
+  good: "text-[#22C55E]",
   warn: "text-amber-400",
   bad: "text-red-400",
 };

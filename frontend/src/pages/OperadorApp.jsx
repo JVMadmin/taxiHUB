@@ -282,7 +282,7 @@ export default function OperadorApp() {
     if (Capacitor.isNativePlatform()) {
       // Promesas: el try/catch no atrapa su rechazo. setBackgroundColor no existe en Android 15+.
       StatusBar.setStyle({ style: driverLight ? Style.Light : Style.Dark }).catch(() => {});
-      StatusBar.setBackgroundColor({ color: driverLight ? "#F4F7F6" : "#0B0D10" }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: driverLight ? "#F4F7F6" : "#050B12" }).catch(() => {});
     }
   }, [driverLight]);
 
@@ -1250,7 +1250,7 @@ export default function OperadorApp() {
           )}
           {ruta.latlngs && ruta.latlngs.length > 1 && (
             <>
-              <Polyline positions={ruta.latlngs} pathOptions={{ color: "#070A0F", weight: 9, opacity: 0.85, lineCap: "round", lineJoin: "round" }} />
+              <Polyline positions={ruta.latlngs} pathOptions={{ color: "#03070C", weight: 9, opacity: 0.85, lineCap: "round", lineJoin: "round" }} />
               <Polyline positions={ruta.latlngs} pathOptions={{ color: "#FFE600", weight: 5.5, opacity: 0.95, lineCap: "round", lineJoin: "round" }} />
               <Polyline positions={ruta.latlngs} pathOptions={{ color: "#FFFFFF", weight: 2, opacity: 0.85, dashArray: "6, 12", lineCap: "round" }} />
             </>
@@ -1260,13 +1260,13 @@ export default function OperadorApp() {
       </div>
 
       {/* 1. HEADER FLOTANTE SIMPLIFICADO */}
-      <div className="absolute top-12 left-4 right-4 z-[500] flex items-center justify-between bg-[#14171F]/90 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border border-white/5 pointer-events-auto">
+      <div className="absolute top-12 left-4 right-4 z-[500] flex items-center justify-between bg-[#0C1520]/90 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border border-white/5 pointer-events-auto">
         <div className="flex items-center gap-3">
           <div className="relative">
             <button onClick={() => profileRef.current?.click()} data-testid="perfil-foto-btn" className="block focus:outline-none">
-              <img src={driverAvatar} alt="Conductor" className="w-11 h-11 rounded-full object-cover ring-2 ring-[#FFE600]" />
+              <img src={driverAvatar} alt="Conductor" className="w-11 h-11 rounded-full object-cover ring-2 ring-brand" />
             </button>
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#FFE600] rounded-full ring-2 ring-[#14171F]"></span>
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-brand rounded-full ring-2 ring-[#0C1520]"></span>
           </div>
           <div>
             <h2 className="text-sm font-bold leading-tight text-white">{op.nombre}</h2>
@@ -1277,11 +1277,21 @@ export default function OperadorApp() {
         {/* Métricas compactas en lugar de ocupar espacio abajo */}
         <div className="flex items-center gap-2">
           <div className="text-right">
-            <div className="text-xs font-mono text-[#FFE600] bg-[#FFE600]/15 px-2.5 py-1 rounded-full font-semibold">
+            <div className="text-xs font-mono text-brand bg-brand/15 px-2.5 py-1 rounded-full font-semibold">
               ⏱ {inicio ? elapsed(inicio) : "--:--:--"}
             </div>
             <span className="text-[10px] text-zinc-500 block mt-0.5">{turno?.odometro_inicio ? `${turno.odometro_inicio} km • ` : ""}{coords ? "GPS OK" : "Sin GPS"}</span>
           </div>
+          <ModeToggle
+            compact
+            claro={driverLight}
+            onToggle={() => {
+              const nextLight = !driverLight;
+              setDriverLight(nextLight);
+              try { localStorage.setItem("driver_mode", nextLight ? "claro" : "oscuro"); } catch {}
+              applyMode(nextLight ? "claro" : "oscuro");
+            }}
+          />
           <button
             data-testid="driver-ajustes-btn"
             onClick={() => setAjustesOpen(true)}
@@ -1299,7 +1309,7 @@ export default function OperadorApp() {
         <button
           data-testid="recentrar-mapa-btn"
           onClick={() => setRecenterN((n) => n + 1)}
-          className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/5 text-zinc-300 hover:text-white transition active:scale-95"
+          className="w-10 h-10 bg-[#0C1520]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/5 text-zinc-300 hover:text-white transition active:scale-95"
           title="Centrar en mi ubicación"
         >
           <Crosshair className="h-5 w-5" />
@@ -1307,7 +1317,7 @@ export default function OperadorApp() {
         <button
           data-testid="cambiar-capa-mapa-btn"
           onClick={toggleMapLayer}
-          className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/5 text-zinc-300 hover:text-white transition active:scale-95"
+          className="w-10 h-10 bg-[#0C1520]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/5 text-zinc-300 hover:text-white transition active:scale-95"
           title={mapLayer === "satelite" ? "Cambiar a Calles" : "Cambiar a Satélite"}
         >
           <Layers className="h-4 w-4" />
@@ -1317,15 +1327,15 @@ export default function OperadorApp() {
             data-testid={DRIVER.mapa3dToggle}
             onClick={toggleMapa3d}
             aria-pressed={mapa3d}
-            className={`w-10 h-10 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border transition active:scale-95 text-[11px] font-black ${mapa3d ? "bg-[#FFE600] text-[#04120c] border-[#FFE600]" : "bg-[#14171F]/90 text-zinc-300 border-white/5 hover:text-white"}`}
+            className={`w-10 h-10 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border transition active:scale-95 text-[11px] font-black ${mapa3d ? "bg-brand text-[#04120c] border-brand" : "bg-[#0C1520]/90 text-zinc-300 border-white/5 hover:text-white"}`}
             title={mapa3d ? "Cambiar a vista plana" : "Cambiar a vista 3D"}
           >
             {mapa3d ? "3D" : <Box className="h-4 w-4" />}
           </button>
         )}
         {navegacion && (
-          <div data-testid="ruta-info" className="bg-[#14171F]/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/5 text-center shadow-lg">
-            <div className="text-xs font-mono font-bold text-[#FFE600]">{fmtDist(ruta.distance_m)}</div>
+          <div data-testid="ruta-info" className="bg-[#0C1520]/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/5 text-center shadow-lg">
+            <div className="text-xs font-mono font-bold text-brand">{fmtDist(ruta.distance_m)}</div>
             <div className="text-[9px] uppercase tracking-wide text-zinc-400">{fmtDuration(ruta.duration_s)}</div>
           </div>
         )}
@@ -1335,8 +1345,8 @@ export default function OperadorApp() {
       {/* 1) Fuera de operación: bienvenida */}
       <BottomSheet open={!enOperacion} dismissible={false} testId="driver-sheet-home">
         <div className="flex flex-col items-center pb-2 text-center text-white">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFE600]/15">
-            <Car className="h-7 w-7 text-[#FFE600]" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/15">
+            <Car className="h-7 w-7 text-brand" />
           </div>
           <h2 className="mt-3 text-lg font-bold text-white">Tu turno aún no empieza</h2>
           <p className="mt-1 text-sm text-zinc-400">Conéctate para recibir solicitudes de la central.</p>
@@ -1344,7 +1354,7 @@ export default function OperadorApp() {
         <button
           data-testid="entrar-operacion-btn"
           onClick={entrar}
-          className="mt-4 w-full bg-[#FFE600] hover:bg-[#00B572] text-[#05130D] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(255,230,0,0.35)] flex items-center justify-center gap-2 transition"
+          className="mt-4 w-full bg-brand hover:bg-brand-strong text-[#050B12] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(255,230,0,0.35)] flex items-center justify-center gap-2 transition"
         >
           <Power className="h-5 w-5" /> Entrar en operación
         </button>
@@ -1352,16 +1362,16 @@ export default function OperadorApp() {
 
       {/* 2) En operación, sin servicio activo: Bottom Sheet Moderno */}
       <BottomSheet open={enOperacion && !servicio && !servicioPropio} dismissible={false} testId="driver-sheet-home">
-        <div className="bg-[#111318] -mx-4 -my-4 px-5 pt-3 pb-6 rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.6)] border-t border-white/10 text-white">
+        <div className="bg-[#0A121D] -mx-4 -my-4 px-5 pt-3 pb-6 rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.6)] border-t border-white/10 text-white">
           {/* Tirador para deslizar (Drag Handle) */}
           <div className="w-10 h-1.5 bg-zinc-700 rounded-full mx-auto mb-4"></div>
 
           {/* Selector de Estado Tipo Segmented Control */}
-          <div className="grid grid-cols-4 gap-1.5 bg-[#1A1D24] p-1.5 rounded-2xl mb-4" data-testid="estado-buttons">
+          <div className="grid grid-cols-4 gap-1.5 bg-[#121D2B] p-1.5 rounded-2xl mb-4" data-testid="estado-buttons">
             <button
               data-testid="estado-libre"
               onClick={() => cambiarEstado("libre")}
-              className={op.estado === "libre" ? "bg-[#FFE600] text-[#05130D] font-bold text-xs py-2.5 rounded-xl shadow-sm transition" : "text-zinc-400 hover:text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1 transition"}
+              className={op.estado === "libre" ? "bg-[#22C55E] text-[#03140A] font-bold text-xs py-2.5 rounded-xl shadow-sm transition" : "text-zinc-400 hover:text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1 transition"}
             >
               Disponible
             </button>
@@ -1390,17 +1400,17 @@ export default function OperadorApp() {
 
           {/* Selector de Ruta (Más estilizado) */}
           <div className="mb-4">
-            <div className="flex items-center justify-between bg-[#1A1D24] px-4 py-2.5 rounded-xl border border-white/5 cursor-pointer">
+            <div className="flex items-center justify-between bg-[#121D2B] px-4 py-2.5 rounded-xl border border-white/5 cursor-pointer">
               <div className="flex-1">
                 <span className="text-[10px] uppercase tracking-wider text-zinc-400 block font-semibold">Modalidad / Ruta</span>
                 <Select value={op.ruta_asignada || "libre"} onValueChange={seleccionarRuta}>
                   <SelectTrigger data-testid="ruta-select" className="bg-transparent border-none text-zinc-200 text-sm font-medium p-0 h-auto focus:ring-0 shadow-none">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1A1D24] border-zinc-700 text-white">
-                    <SelectItem value="libre" className="focus:bg-zinc-800">Servicio de Sitio (Libre)</SelectItem>
+                  <SelectContent className="bg-[#121D2B] border-zinc-700 text-white">
+                    <SelectItem value="libre" className="focus:bg-[#13202F]">Servicio de Sitio (Libre)</SelectItem>
                     {rutas.map((r) => (
-                      <SelectItem key={r.id} value={r.id} className="focus:bg-zinc-800">
+                      <SelectItem key={r.id} value={r.id} className="focus:bg-[#13202F]">
                         <span className="inline-flex items-center gap-2">
                           <span className="h-2.5 w-2.5 rounded-full" style={{ background: r.color_hex }} />
                           {r.nombre}
@@ -1417,20 +1427,20 @@ export default function OperadorApp() {
           <button
             data-testid="iniciar-servicio-btn"
             onClick={() => setIniciarOpen(true)}
-            className="w-full bg-[#FFE600] hover:bg-[#00B572] active:scale-[0.99] text-[#05130D] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(255,230,0,0.35)] flex items-center justify-center gap-2 mb-4 transition"
+            className="w-full bg-brand hover:bg-brand-strong active:scale-[0.99] text-[#050B12] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(255,230,0,0.35)] flex items-center justify-center gap-2 mb-4 transition"
           >
             <Play className="h-4 w-4 fill-current mr-2" /> Iniciar servicio en calle
           </button>
 
           {/* Herramientas Rápidas + Botón de desconexión discreto */}
           <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/5 text-center">
-            <button data-testid="reportar-objeto-btn" onClick={() => fileRef.current?.click()} className="bg-[#1A1D24] hover:bg-zinc-800 py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
+            <button data-testid="reportar-objeto-btn" onClick={() => fileRef.current?.click()} className="bg-[#121D2B] hover:bg-[#13202F] py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
               <Package className="h-4 w-4" /> <span>Objeto</span>
             </button>
-            <button data-testid="abrir-chat-btn" onClick={abrirChat} className="bg-[#1A1D24] hover:bg-zinc-800 py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
+            <button data-testid="abrir-chat-btn" onClick={abrirChat} className="bg-[#121D2B] hover:bg-[#13202F] py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
               <MessageSquare className="h-4 w-4" /> <span>Central</span>
             </button>
-            <button data-testid="combustible-btn" onClick={() => setCombOpen(true)} className="bg-[#1A1D24] hover:bg-zinc-800 py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
+            <button data-testid="combustible-btn" onClick={() => setCombOpen(true)} className="bg-[#121D2B] hover:bg-[#13202F] py-2.5 rounded-xl text-xs text-zinc-300 flex flex-col items-center gap-1 transition">
               <Fuel className="h-4 w-4" /> <span>Gasto</span>
             </button>
             <button data-testid="salir-operacion-btn" onClick={salir} className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 py-2.5 rounded-xl text-xs text-rose-400 flex flex-col items-center gap-1 font-medium transition">
@@ -2024,7 +2034,7 @@ export default function OperadorApp() {
               {chatMsgs.length === 0 && <div className="mt-8 text-center text-xs text-zinc-500">Aún no hay mensajes en esta conversación</div>}
               {chatMsgs.map((m) => (
                 <div key={m.id} className={`flex ${m.remitente === "operador" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${m.remitente === "operador" ? "bg-[#FFE600] text-[#05130D] font-medium" : "bg-[#181C26] text-zinc-100 border border-white/10"}`}>
+                  <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${m.remitente === "operador" ? "bg-brand text-[#050B12] font-medium" : "bg-[#121D2B] text-zinc-100 border border-white/10"}`}>
                     {m.imagen_url && (
                       <img
                         src={m.imagen_url}
@@ -2045,10 +2055,10 @@ export default function OperadorApp() {
                 type="button"
                 disabled={chatUploading}
                 onClick={() => chatFileInputRef.current?.click()}
-                className="w-10 h-10 rounded-xl bg-[#181C26] hover:bg-[#222736] border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white transition shrink-0"
+                className="w-10 h-10 rounded-xl bg-[#121D2B] hover:bg-[#182840] border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white transition shrink-0"
                 title="Adjuntar foto"
               >
-                {chatUploading ? <Loader2 className="h-4 w-4 animate-spin text-[#FFE600]" /> : <Camera className="h-4 w-4" />}
+                {chatUploading ? <Loader2 className="h-4 w-4 animate-spin text-brand" /> : <Camera className="h-4 w-4" />}
               </button>
               <Input
                 data-testid="chat-op-input"
@@ -2056,12 +2066,12 @@ export default function OperadorApp() {
                 onChange={(e) => setChatText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && enviarChat()}
                 placeholder="Escribe un mensaje…"
-                className="bg-[#181C26] border-white/10 text-white placeholder-zinc-500 rounded-xl h-10 text-xs"
+                className="bg-[#121D2B] border-white/10 text-white placeholder-zinc-500 rounded-xl h-10 text-xs"
               />
               <button
                 data-testid="chat-op-enviar"
                 onClick={enviarChat}
-                className="w-10 h-10 rounded-xl bg-[#FFE600] hover:bg-[#00B572] text-[#05130D] flex items-center justify-center transition shrink-0 shadow-[0_0_16px_rgba(255,230,0,0.35)]"
+                className="w-10 h-10 rounded-xl bg-brand hover:bg-brand-strong text-[#050B12] flex items-center justify-center transition shrink-0 shadow-[0_0_16px_rgba(255,230,0,0.35)]"
                 aria-label="Enviar mensaje"
               >
                 <Send className="h-4 w-4" />

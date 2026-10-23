@@ -31,28 +31,28 @@ function GeoInput({ placeholder, onPick }) {
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#1B1E24] px-3 py-2">
-        <Search className="h-4 w-4 shrink-0 text-[#9CA0AA]" />
+      <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#13202F] px-3 py-2">
+        <Search className="h-4 w-4 shrink-0 text-[#93A4B8]" />
         <input
           value={q}
           onChange={(e) => { setQ(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="min-w-0 flex-1 bg-transparent text-sm text-[#F5F5F7] outline-none placeholder:text-[#9CA0AA]/60"
+          className="min-w-0 flex-1 bg-transparent text-sm text-[#EDF2F8] outline-none placeholder:text-[#93A4B8]/60"
         />
-        {res !== null && <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-[#FFE600] border-t-transparent" />}
+        {res !== null && <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-brand border-t-transparent" />}
       </div>
       {open && res !== null && res.length > 0 && (
-        <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-xl border border-white/[0.06] bg-[#17191E] shadow-2xl">
+        <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-xl border border-white/[0.06] bg-[#0F1926] shadow-2xl">
           {res.map((r) => (
             <button
               key={r.id}
               type="button"
               onClick={() => { onPick(r); setQ(`${r.label}${r.sublabel ? `, ${r.sublabel}` : ""}`); setOpen(false); }}
-              className="block w-full border-b border-white/[0.06] px-3 py-2 text-left last:border-0 hover:bg-[#FFE600]/15"
+              className="block w-full border-b border-white/[0.06] px-3 py-2 text-left last:border-0 hover:bg-brand/15"
             >
-              <div className="truncate text-sm font-semibold text-[#F5F5F7]">{r.label}</div>
-              {r.sublabel && <div className="truncate text-[11px] text-[#9CA0AA]">{r.sublabel}</div>}
+              <div className="truncate text-sm font-semibold text-[#EDF2F8]">{r.label}</div>
+              {r.sublabel && <div className="truncate text-[11px] text-[#93A4B8]">{r.sublabel}</div>}
             </button>
           ))}
         </div>
@@ -169,28 +169,28 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
 
   return (
     <div className="fixed inset-0 z-[880] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" data-testid="despacho-overlay">
-      <div className="flex max-h-[90vh] w-full max-w-xl animate-scale-in flex-col rounded-2xl border border-white/[0.06] bg-[#17191E] shadow-2xl">
+      <div className="flex max-h-[90vh] w-full max-w-xl animate-scale-in flex-col rounded-2xl border border-white/[0.06] bg-[#0F1926] shadow-2xl">
         {/* Encabezado */}
         <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
           <div className="flex items-center gap-2.5">
-            <h3 className="flex items-center gap-2 text-base font-bold text-[#F5F5F7]">
-              <Phone className="h-4 w-4 text-[#FFE600]" /> Nueva llamada
+            <h3 className="flex items-center gap-2 text-base font-bold text-[#EDF2F8]">
+              <Phone className="h-4 w-4 text-brand" /> Nueva llamada
             </h3>
-            <span className="hidden sm:inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-mono text-[#9CA0AA]">
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-mono text-[#93A4B8]">
               Teclas 1-6 / Enter = Despacho directo
             </span>
           </div>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-[#9CA0AA] hover:text-[#F5F5F7] transition-colors"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-[#93A4B8] hover:text-[#EDF2F8] transition-colors"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
           {/* PASO 1 — Origen */}
           <section data-testid="despacho-origen">
             <div className="mb-1.5 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FFE600] text-[10px] font-extrabold text-[#0C0E14]">1</span>
-              <span className="text-xs font-bold uppercase tracking-wide text-[#F5F5F7]">¿Dónde está el servicio?</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-extrabold text-[#050B12]">1</span>
+              <span className="text-xs font-bold uppercase tracking-wide text-[#EDF2F8]">¿Dónde está el servicio?</span>
               {coords.origen && (
-                <span className="mono-num ml-auto text-[10px] text-[#FFE600]">
+                <span className="mono-num ml-auto text-[10px] text-brand">
                   {coords.origenTexto ? `${coords.origenTexto} · ` : ""}{coords.origen.lat.toFixed(4)}, {coords.origen.lng.toFixed(4)}
                 </span>
               )}
@@ -201,12 +201,12 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                 type="button"
                 data-testid="despacho-marcar-origen"
                 onClick={() => pedirPunto("origen")}
-                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#FFE600] hover:text-[#FFB800] transition-colors"
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand hover:text-brand-strong transition-colors"
               >
                 <MapPin className="h-3.5 w-3.5" /> Marcar en mapa
               </button>
               {coords.tarifaSugerida && (
-                <span className="rounded-full bg-[#FFE600]/15 border border-[#FFE600]/30 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A]">
+                <span className="rounded-full bg-brand/15 border border-brand/30 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A]">
                   Tarifa base sugerida: ${coords.tarifaSugerida}
                 </span>
               )}
@@ -216,10 +216,10 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
           {/* PASO 2 — Destino (opcional, sin modal bloqueante) */}
           <section data-testid="despacho-destino">
             <div className="mb-1.5 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1B1E24] border border-white/[0.08] text-[10px] font-extrabold text-[#9CA0AA]">2</span>
-              <span className="text-xs font-bold uppercase tracking-wide text-[#9CA0AA]">Destino (opcional)</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#13202F] border border-white/[0.08] text-[10px] font-extrabold text-[#93A4B8]">2</span>
+              <span className="text-xs font-bold uppercase tracking-wide text-[#93A4B8]">Destino (opcional)</span>
               {(coords.destino || coords.destinoTexto) && (
-                <button type="button" onClick={() => setCoords((c) => ({ ...c, destino: null, destinoTexto: null }))} className="ml-auto text-[10px] text-[#9CA0AA] underline hover:text-[#F5F5F7]">
+                <button type="button" onClick={() => setCoords((c) => ({ ...c, destino: null, destinoTexto: null }))} className="ml-auto text-[10px] text-[#93A4B8] underline hover:text-[#EDF2F8]">
                   quitar
                 </button>
               )}
@@ -232,7 +232,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                     type="button"
                     data-testid="despacho-marcar-destino"
                     onClick={() => pedirPunto("destino")}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#9CA0AA] hover:text-[#F5F5F7] transition-colors"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#93A4B8] hover:text-[#EDF2F8] transition-colors"
                   >
                     <Flag className="h-3.5 w-3.5" /> Marcar en mapa
                   </button>
@@ -240,15 +240,15 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                     type="button"
                     data-testid="despacho-sin-destino-btn"
                     onClick={() => setCoords((c) => ({ ...c, destino: null, destinoTexto: "A indicaciones del cliente (Sin destino fijo)" }))}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#FFE600]/30 bg-[#FFE600]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#FFF27A] hover:bg-[#FFE600]/20 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#FFF27A] hover:bg-brand/20 transition-colors"
                   >
                     ⚡ Sin destino fijo (A indicaciones — activo por defecto al asignar)
                   </button>
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#1B1E24] px-3 py-2 text-sm text-[#F5F5F7]">
-                <Flag className="h-4 w-4 shrink-0 text-[#FFE600]" />
+              <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#13202F] px-3 py-2 text-sm text-[#EDF2F8]">
+                <Flag className="h-4 w-4 shrink-0 text-brand" />
                 <span className="truncate">{coords.destinoTexto || (coords.destino?.lat ? `${coords.destino.lat.toFixed(5)}, ${coords.destino.lng.toFixed(5)}` : "Destino fijado")}</span>
                 <button
                   type="button"
@@ -265,19 +265,19 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
           {/* PASO 3 — Cliente (opcional, secundario §17) */}
           <section data-testid="despacho-cliente">
             <button type="button" onClick={() => setClienteOpen((v) => !v)} className="flex w-full items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1B1E24] border border-white/[0.08] text-[10px] font-extrabold text-[#9CA0AA]">3</span>
-              <span className="text-xs font-bold uppercase tracking-wide text-[#9CA0AA]">Datos del cliente (opcional)</span>
-              <span className="ml-auto text-[10px] text-[#9CA0AA] underline hover:text-[#F5F5F7]">{clienteOpen ? "ocultar" : "agregar"}</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#13202F] border border-white/[0.08] text-[10px] font-extrabold text-[#93A4B8]">3</span>
+              <span className="text-xs font-bold uppercase tracking-wide text-[#93A4B8]">Datos del cliente (opcional)</span>
+              <span className="ml-auto text-[10px] text-[#93A4B8] underline hover:text-[#EDF2F8]">{clienteOpen ? "ocultar" : "agregar"}</span>
             </button>
             {clienteOpen && (
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <div className="relative">
-                  <User className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#9CA0AA]" />
-                  <Input data-testid="despacho-cliente" value={cliente.nombre} onChange={(e) => setCliente((c) => ({ ...c, nombre: e.target.value }))} placeholder="Cliente" className="input-inset border-white/[0.08] bg-[#1B1E24] text-[#F5F5F7] pl-8" />
+                  <User className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#93A4B8]" />
+                  <Input data-testid="despacho-cliente" value={cliente.nombre} onChange={(e) => setCliente((c) => ({ ...c, nombre: e.target.value }))} placeholder="Cliente" className="input-inset border-white/[0.08] bg-[#13202F] text-[#EDF2F8] pl-8" />
                 </div>
                 <div className="relative">
-                  <Phone className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#9CA0AA]" />
-                  <Input data-testid="despacho-telefono" value={cliente.telefono} onChange={(e) => setCliente((c) => ({ ...c, telefono: e.target.value }))} placeholder="Teléfono" className="input-inset border-white/[0.08] bg-[#1B1E24] text-[#F5F5F7] pl-8" />
+                  <Phone className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#93A4B8]" />
+                  <Input data-testid="despacho-telefono" value={cliente.telefono} onChange={(e) => setCliente((c) => ({ ...c, telefono: e.target.value }))} placeholder="Teléfono" className="input-inset border-white/[0.08] bg-[#13202F] text-[#EDF2F8] pl-8" />
                 </div>
               </div>
             )}
@@ -286,14 +286,14 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
           {/* PASO 4 — Taxis libres más cercanos y opción de expandir todos los disponibles */}
           <section data-testid="despacho-taxis">
             <div className="mb-1.5 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1B1E24] border border-white/[0.08] text-[10px] font-extrabold text-[#9CA0AA]">4</span>
-              <span className="text-xs font-bold uppercase tracking-wide text-[#F5F5F7]">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#13202F] border border-white/[0.08] text-[10px] font-extrabold text-[#93A4B8]">4</span>
+              <span className="text-xs font-bold uppercase tracking-wide text-[#EDF2F8]">
                 {mostrarTodos ? "Todos los taxis disponibles" : "Taxis libres más cercanos"}
               </span>
-              <span className="mono-num ml-auto text-[10px] text-[#9CA0AA]">{cercanos.length} libres</span>
+              <span className="mono-num ml-auto text-[10px] text-[#93A4B8]">{cercanos.length} libres</span>
             </div>
             {cercanos.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/[0.08] p-3 text-center text-xs text-[#9CA0AA]">
+              <div className="rounded-xl border border-dashed border-white/[0.08] p-3 text-center text-xs text-[#93A4B8]">
                 No hay taxis libres en este momento.
               </div>
             ) : (
@@ -302,16 +302,16 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                   const svHoy = serviciosHoyPorOperador[t.id] ?? t.servicios_hoy ?? 0;
                   const sem = semaforoServiciosStyle(svHoy);
                   return (
-                    <div key={t.id} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#1B1E24] px-3 py-2">
+                    <div key={t.id} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#13202F] px-3 py-2">
                       <span
                         title={i < 6 ? `Atajo de teclado: presiona ${i + 1}` : undefined}
-                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/[0.06] font-mono text-[10px] font-bold text-[#FFE600]"
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/[0.06] font-mono text-[10px] font-bold text-brand"
                       >
                         {i + 1}
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="truncate text-xs font-bold text-[#F5F5F7]">{t.placa || t.nombre}</span>
+                          <span className="truncate text-xs font-bold text-[#EDF2F8]">{t.placa || t.nombre}</span>
                           <span
                             data-testid={`despacho-taxi-servicios-${t.id}`}
                             style={{ background: sem.bg, color: sem.text, borderColor: sem.border }}
@@ -321,11 +321,11 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                             {sem.count} hoy
                           </span>
                         </div>
-                        <div className="truncate text-[10px] text-[#9CA0AA]">
+                        <div className="truncate text-[10px] text-[#93A4B8]">
                           {t.nombre} · {t.vehiculo ? [t.vehiculo.marca, t.vehiculo.modelo].filter(Boolean).join(" ") : (t.marca && t.modelo ? `${t.marca} ${t.modelo}` : "—")}
                         </div>
                       </div>
-                      <span className="mono-num shrink-0 text-xs font-bold text-[#FFE600]">
+                      <span className="mono-num shrink-0 text-xs font-bold text-brand">
                         {t.dist != null ? (t.dist >= 1000 ? `${(t.dist / 1000).toFixed(1)} km` : `${Math.round(t.dist)} m`) : (coords.origen ? "—" : "Libre")}
                       </span>
                       <Button
@@ -346,7 +346,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                     type="button"
                     data-testid="despacho-toggle-todos-taxis"
                     onClick={() => setMostrarTodos((v) => !v)}
-                    className="w-full mt-2 py-2 px-3 rounded-xl border border-white/[0.08] bg-[#1B1E24]/80 hover:bg-[#1B1E24] text-xs font-semibold text-[#FFE600] hover:text-[#FFB800] transition-all flex items-center justify-center gap-1.5"
+                    className="w-full mt-2 py-2 px-3 rounded-xl border border-white/[0.08] bg-[#13202F]/80 hover:bg-[#13202F] text-xs font-semibold text-brand hover:text-brand-strong transition-all flex items-center justify-center gap-1.5"
                   >
                     {mostrarTodos
                       ? "▲ Mostrar solo los más cercanos (Top 5)"

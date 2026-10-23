@@ -133,13 +133,13 @@ export function Mapa({ liveSignal }) {
 
   return (
     <div
-      className="relative h-[calc(100vh-8.5rem)] overflow-hidden rounded-2xl border border-border/80 bg-[#13151A] shadow-2xl"
+      className="relative h-[calc(100vh-8.5rem)] overflow-hidden rounded-2xl border border-border/80 bg-[#0C1520] shadow-2xl"
       data-testid="dueno-mapa"
     >
       {/* 1. Selector rápido de vehículos de la flota en la parte superior */}
       <div className="absolute left-3 top-3 z-[450] flex flex-wrap items-center gap-2 max-w-[calc(100vw-6rem)]">
         {/* Chips de vehículos */}
-        <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-border/80 bg-[#17191E]/95 p-1.5 shadow-xl backdrop-blur-md max-w-[65vw] custom-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-border/80 bg-[#0F1926]/95 p-1.5 shadow-xl backdrop-blur-md max-w-[65vw] custom-scrollbar">
           {visibles.map((v) => {
             const isSel = selected?.id === v.id;
             return (
@@ -171,7 +171,7 @@ export function Mapa({ liveSignal }) {
         </div>
 
         {/* Toggle Satelital / Calles OSM */}
-        <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-[#17191E]/95 p-1 shadow-xl backdrop-blur-md">
+        <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-[#0F1926]/95 p-1 shadow-xl backdrop-blur-md">
           <button
             type="button"
             onClick={() => setMapLayer("calles")}
@@ -206,8 +206,8 @@ export function Mapa({ liveSignal }) {
             className={cn(
               "flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs shadow-2xl transition-all select-none backdrop-blur-md",
               follow
-                ? "border-emerald-400/80 bg-[#13151A] text-white font-black ring-1 ring-emerald-500/50 shadow-emerald-950/50"
-                : "border-white/15 bg-[#17191E]/95 text-slate-200 hover:text-white hover:border-white/30 font-bold"
+                ? "border-emerald-400/80 bg-[#0C1520] text-white font-black ring-1 ring-emerald-500/50 shadow-emerald-950/50"
+                : "border-white/15 bg-[#0F1926]/95 text-slate-200 hover:text-white hover:border-white/30 font-bold"
             )}
           >
             <Crosshair className={cn("h-4 w-4 shrink-0", follow ? "text-emerald-400 animate-spin" : "text-slate-400")} />
@@ -270,7 +270,7 @@ export function Mapa({ liveSignal }) {
       {/* 3. Ficha flotante completa al seleccionar un taxi (mismo sistema de la terminal) */}
       {selected && (
         <div
-          className="bezel-shell absolute bottom-4 left-4 z-[450] w-84 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-white/15 bg-[#17191E]/95 p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200 text-foreground"
+          className="bezel-shell absolute bottom-4 left-4 z-[450] w-84 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-white/15 bg-[#0F1926]/95 p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200 text-foreground"
           data-testid="dueno-mapa-panel"
         >
           {/* Header */}

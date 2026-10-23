@@ -35,7 +35,7 @@ const DOC_LABEL = {
 
 function vigenciaBadge(estado) {
   if (estado === "vigente") {
-    return { label: "VIGENTE", cls: "border-[#FFE600]/40 bg-[#FFE600]/15 text-[#FFF27A]" };
+    return { label: "VIGENTE", cls: "border-brand/40 bg-brand/15 text-[#FFF27A]" };
   }
   if (estado === "por_vencer") {
     return { label: "POR VENCER", cls: "border-amber-500/40 bg-amber-500/15 text-amber-300" };
@@ -261,14 +261,14 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
             className={cn(
               "rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all",
               filtroEstado === fChip.id
-                ? "border-[#FFE600] bg-[#FFE600]/20 text-white shadow-sm"
-                : "border-white/10 bg-[#17191E] text-muted-foreground hover:text-foreground"
+                ? "border-brand bg-brand/20 text-white shadow-sm"
+                : "border-white/10 bg-[#0F1926] text-muted-foreground hover:text-foreground"
             )}
           >
             {fChip.label}
           </button>
         ))}
-        <span className="ml-auto hidden items-center gap-1 rounded-full border border-[#FFE600]/30 bg-[#FFE600]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A] sm:inline-flex">
+        <span className="ml-auto hidden items-center gap-1 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A] sm:inline-flex">
           <ShieldCheck className="h-3 w-3" /> Solo visible para Operadora
         </span>
       </div>
@@ -352,7 +352,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
             <select
               value={f.ruta_asignada}
               onChange={(e) => set("ruta_asignada", e.target.value)}
-              className="h-8 rounded-xl border border-white/[0.08] bg-[#1B1E24] px-2 text-xs text-[#F5F5F7] focus:border-brand focus:outline-none"
+              className="h-8 rounded-xl border border-white/[0.08] bg-[#13202F] px-2 text-xs text-[#EDF2F8] focus:border-brand focus:outline-none"
               data-testid="chofer-ruta"
             >
               <option value="libre">Taxi libre (sin ruta fija)</option>
@@ -385,8 +385,8 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                 className={cn(
                   "group flex cursor-pointer items-center gap-2.5 rounded-xl border p-2.5 transition-all",
                   isSel
-                    ? "border-[#FFE600] bg-[#FFE600]/15 shadow-md"
-                    : "border-white/[0.07] bg-[#17191E] hover:border-white/20 hover:bg-[#1B1E24]"
+                    ? "border-brand bg-brand/15 shadow-md"
+                    : "border-white/[0.07] bg-[#0F1926] hover:border-white/20 hover:bg-[#13202F]"
                 )}
               >
                 <div className="relative shrink-0">
@@ -423,7 +423,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                     {c.socio_nombre ? `Socio: ${c.socio_nombre}` : c.telefono || `@${c.usuario}`}
                   </div>
                 </div>
-                <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", isSel ? "text-[#FFE600] translate-x-0.5" : "text-muted-foreground")} />
+                <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", isSel ? "text-brand translate-x-0.5" : "text-muted-foreground")} />
               </div>
             );
           })}
@@ -434,7 +434,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
 
         {/* Columna derecha: Expediente Completo SCT / SEMOVI del Chofer Seleccionado */}
         <div
-          className="no-scrollbar max-h-[64vh] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#14161B] p-3.5 md:col-span-7"
+          className="no-scrollbar max-h-[64vh] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#0C1520] p-3.5 md:col-span-7"
           data-testid="expediente-chofer-detalle"
         >
           {cargandoDetalle && !cond ? (
@@ -444,7 +444,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
           ) : (
             <div className="space-y-3.5">
               {/* Tarjeta principal con fotografía grande visible por la operadora */}
-              <div className="flex flex-col gap-3 rounded-xl border border-white/[0.08] bg-[#1B1E24] p-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 rounded-xl border border-white/[0.08] bg-[#13202F] p-3 sm:flex-row sm:items-center">
                 <div className="relative shrink-0 self-start">
                   <img
                     src={resolveImgUrl(cond.foto_url, cond.id || cond.nombre)}
@@ -454,11 +454,11 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = "/assets/drivers/driver-01.jpg";
                     }}
-                    className="h-20 w-20 rounded-2xl border-2 border-[#FFE600]/50 object-cover shadow-lg"
+                    className="h-20 w-20 rounded-2xl border-2 border-brand/50 object-cover shadow-lg"
                   />
                   <label
                     title="Actualizar fotografía del expediente (WebP)"
-                    className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#FFE600] text-[#0C0E14] shadow-md hover:bg-[#FFB800]"
+                    className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-brand text-[#050B12] shadow-md hover:bg-brand-strong"
                   >
                     <Camera className="h-3.5 w-3.5" />
                     <input
@@ -483,7 +483,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1 text-foreground/90">
-                      <Phone className="h-3 w-3 text-[#FFE600]" /> {cond.telefono || "Sin teléfono"}
+                      <Phone className="h-3 w-3 text-brand" /> {cond.telefono || "Sin teléfono"}
                     </span>
                     <span className="inline-flex items-center gap-1 font-mono text-amber-300">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {cond.calificacion || "4.9"} ★
@@ -498,12 +498,12 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
               </div>
 
               {/* Bloque 1: Identificación Oficial y Seguridad Social (SCT / IMSS) */}
-              <div className="rounded-xl border border-white/[0.06] bg-[#181B20] p-3">
+              <div className="rounded-xl border border-white/[0.06] bg-[#121D2B] p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-400">
                     <BadgeCheck className="h-3.5 w-3.5" /> Datos Oficiales SCT / SEMOVI / IMSS
                   </span>
-                  <span className="rounded bg-[#FFE600]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#FFF27A]">
+                  <span className="rounded bg-brand/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#FFF27A]">
                     {cond.antidoping_resultado || "ANTIDOPING: NEGATIVO (APTO)"}
                   </span>
                 </div>
@@ -598,7 +598,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
               </div>
 
               {/* Bloque 3: Documentación y Certificaciones del Expediente */}
-              <div className="rounded-xl border border-white/[0.06] bg-[#181B20] p-3">
+              <div className="rounded-xl border border-white/[0.06] bg-[#121D2B] p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     <FileCheck2 className="h-3.5 w-3.5 text-brand-bright" /> Documentación en Expediente ({docsTodos.length})
@@ -631,7 +631,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
 
               {/* Bloque 4: últimos servicios del operador */}
               {detalle?.servicios_recientes?.length > 0 && (
-                <div className="rounded-xl border border-white/[0.06] bg-[#181B20] p-3">
+                <div className="rounded-xl border border-white/[0.06] bg-[#121D2B] p-3">
                   <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     Últimos Servicios Despachados
                   </div>
@@ -641,7 +641,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                         <span className="truncate text-foreground/90">
                           {sv.origen?.texto || "Origen"} → {sv.destino?.texto || "Destino"}
                         </span>
-                        <span className="shrink-0 font-mono font-bold text-[#FFE600]">
+                        <span className="shrink-0 font-mono font-bold text-brand">
                           {sv.costo ? `$${sv.costo}` : sv.estado}
                         </span>
                       </div>
@@ -830,14 +830,14 @@ export function SociosPanel() {
             className={cn(
               "rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all",
               filtro === fc.id
-                ? "border-[#FFE600] bg-[#FFE600]/20 text-white"
-                : "border-white/10 bg-[#17191E] text-muted-foreground hover:text-foreground"
+                ? "border-brand bg-brand/20 text-white"
+                : "border-white/10 bg-[#0F1926] text-muted-foreground hover:text-foreground"
             )}
           >
             {fc.label}
           </button>
         ))}
-        <span className="ml-auto hidden items-center gap-1 rounded-full border border-[#FFE600]/30 bg-[#FFE600]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A] sm:inline-flex">
+        <span className="ml-auto hidden items-center gap-1 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A] sm:inline-flex">
           <ShieldCheck className="h-3 w-3" /> Expediente exclusivo Operadora
         </span>
       </div>
@@ -966,8 +966,8 @@ export function SociosPanel() {
                 className={cn(
                   "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all",
                   isSel
-                    ? "border-[#FFE600] bg-[#FFE600]/15 shadow-md"
-                    : "border-white/[0.07] bg-[#17191E] hover:border-white/20 hover:bg-[#1B1E24]"
+                    ? "border-brand bg-brand/15 shadow-md"
+                    : "border-white/[0.07] bg-[#0F1926] hover:border-white/20 hover:bg-[#13202F]"
                 )}
               >
                 <img
@@ -986,10 +986,10 @@ export function SociosPanel() {
                   </div>
                   <div className="mt-0.5 flex items-center justify-between text-[10px] text-muted-foreground">
                     <span>{s.unidades} unidad(es) · @{s.usuario}</span>
-                    <span className="text-[#FFE600] font-bold">{s.estatus_cuota_sitio || "Al corriente"}</span>
+                    <span className="text-brand font-bold">{s.estatus_cuota_sitio || "Al corriente"}</span>
                   </div>
                 </div>
-                <ChevronRight className={cn("h-4 w-4 shrink-0", isSel ? "text-[#FFE600]" : "text-muted-foreground")} />
+                <ChevronRight className={cn("h-4 w-4 shrink-0", isSel ? "text-brand" : "text-muted-foreground")} />
               </div>
             );
           })}
@@ -1000,7 +1000,7 @@ export function SociosPanel() {
 
         {/* Detalle derecho: Expediente Completo del Socio Concesionario */}
         <div
-          className="no-scrollbar max-h-[64vh] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#14161B] p-3.5 md:col-span-7"
+          className="no-scrollbar max-h-[64vh] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#0C1520] p-3.5 md:col-span-7"
           data-testid="expediente-socio-detalle"
         >
           {cargandoDetalle && !socioSel ? (
@@ -1010,7 +1010,7 @@ export function SociosPanel() {
           ) : (
             <div className="space-y-3.5">
               {/* Cabecera con foto del socio visible para la operadora */}
-              <div className="flex flex-col gap-3 rounded-xl border border-white/[0.08] bg-[#1B1E24] p-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 rounded-xl border border-white/[0.08] bg-[#13202F] p-3 sm:flex-row sm:items-center">
                 <div className="relative shrink-0 self-start">
                   <img
                     src={resolveImgUrl(socioSel.foto_url, socioSel.id || socioSel.nombre)}
@@ -1024,7 +1024,7 @@ export function SociosPanel() {
                   />
                   <label
                     title="Actualizar fotografía del socio (WebP)"
-                    className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#FFE600] text-[#0C0E14] shadow-md hover:bg-[#FFB800]"
+                    className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-brand text-[#050B12] shadow-md hover:bg-brand-strong"
                   >
                     <Camera className="h-3.5 w-3.5" />
                     <input
@@ -1039,7 +1039,7 @@ export function SociosPanel() {
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h4 className="text-base font-extrabold text-white">{socioSel.nombre}</h4>
-                    <span className="rounded-full border border-[#FFE600]/40 bg-[#FFE600]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A]">
+                    <span className="rounded-full border border-brand/40 bg-brand/15 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A]">
                       {socioSel.estatus_cuota_sitio || "Al corriente"}
                     </span>
                   </div>
@@ -1047,7 +1047,7 @@ export function SociosPanel() {
                     {socioSel.modalidad_sct || "Concesión Servicio Público de Transporte en Taxi"}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span><Phone className="mr-1 inline h-3 w-3 text-[#FFE600]" />{socioSel.telefono || "916-345-1001"}</span>
+                    <span><Phone className="mr-1 inline h-3 w-3 text-brand" />{socioSel.telefono || "916-345-1001"}</span>
                     <span>{socioSel.email || `@${socioSel.usuario}`}</span>
                   </div>
                   <div className="text-[11px] text-muted-foreground">
@@ -1057,7 +1057,7 @@ export function SociosPanel() {
               </div>
 
               {/* Datos de Concesión SCT y Póliza Colectiva */}
-              <div className="rounded-xl border border-white/[0.06] bg-[#181B20] p-3">
+              <div className="rounded-xl border border-white/[0.06] bg-[#121D2B] p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-300">
                     <Award className="h-3.5 w-3.5" /> Título de Concesión SCT y Datos Fiscales
@@ -1093,7 +1093,7 @@ export function SociosPanel() {
                   </div>
                   <div className="rounded-lg bg-black/25 p-2">
                     <div className="text-[10px] text-muted-foreground">Unidades Activas</div>
-                    <div className="mt-0.5 font-mono text-[11px] font-bold text-[#FFE600]">
+                    <div className="mt-0.5 font-mono text-[11px] font-bold text-brand">
                       {detalle?.unidades ?? socioSel.unidades ?? 0} taxis
                     </div>
                   </div>
@@ -1107,7 +1107,7 @@ export function SociosPanel() {
               </div>
 
               {/* Parque Vehicular y Conductores Asignados (con fotos visibles) */}
-              <div className="rounded-xl border border-white/[0.06] bg-[#181B20] p-3">
+              <div className="rounded-xl border border-white/[0.06] bg-[#121D2B] p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     <Car className="h-3.5 w-3.5 text-brand-bright" /> Unidades Concesionadas y Choferes Asignados (
@@ -1153,7 +1153,7 @@ export function SociosPanel() {
                           </div>
                         </div>
                         <div className="shrink-0 text-right">
-                          <div className="font-mono text-xs font-bold text-[#FFE600]">
+                          <div className="font-mono text-xs font-bold text-brand">
                             ${v.cuota_diaria || 420}/día
                           </div>
                           <div className="font-mono text-[10px] text-muted-foreground">
@@ -1275,7 +1275,7 @@ export function DashboardPanel() {
             <span className="inline-flex items-center gap-1 text-amber-400">
               <span className="h-2 w-2 rounded-full bg-amber-500" /> Medio
             </span>
-            <span className="inline-flex items-center gap-1 text-[#FFE600]">
+            <span className="inline-flex items-center gap-1 text-brand">
               <span className="h-2 w-2 rounded-full bg-emerald-500" /> Estable
             </span>
           </div>

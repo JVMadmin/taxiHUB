@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/EmptyState";
 import { ServicioBadge } from "@/components/StatusBadge";
 import { ModeToggle } from "@/components/ModeToggle";
+import { applyMode } from "@/lib/theme";
 import { pointIcon, taxiRoleAssetIcon, taxiOrdinarioAssetIcon, passengerPulsingIcon } from "@/lib/taxiIcon";
 import { useRouting } from "@/hooks/useRouting";
 import { distM, fmtDist, fmtDuration, bearing, puntoAdelanteEnRuta } from "@/lib/geo";
@@ -213,7 +214,7 @@ function BrandLogo({ className }) {
       <BrandMark size="sm" />
       <div className="taxi-passenger-brand-text leading-tight text-left">
         <strong className="text-[1.05rem] tracking-tight block">
-          taxi<span className="text-amber-400 dark:text-[#FFE600]">HUB</span>
+          taxi<span className="text-amber-400 dark:text-brand">HUB</span>
         </strong>
         <small className="block text-[9px] font-mono tracking-wider uppercase text-muted-foreground">
           Pasajero · Palenque
@@ -409,6 +410,13 @@ export default function PassengerApp() {
     () => localStorage.getItem("passenger_mode") === "claro"
   );
   const ignoreInitialModeEvent = useRef(true);
+  // Botón sol/luna: directo (sin esperar el evento app:mode, que se ignora la primera vez).
+  const alternarModo = () => {
+    const luz = !passengerLight;
+    setPassengerLight(luz);
+    try { localStorage.setItem("passenger_mode", luz ? "claro" : "oscuro"); } catch (_) { /* sin almacenamiento */ }
+    applyMode(luz ? "claro" : "oscuro");
+  };
   const wsRef = useRef(null);
   const prevEstadoRef = useRef(null);
   const prevEnOrigenRef = useRef(false);
@@ -1076,7 +1084,7 @@ export default function PassengerApp() {
           </button>
           <BrandLogo />
           <div className="taxi-passenger-header-actions">
-            <ModeToggle />
+            <ModeToggle claro={passengerLight} onToggle={alternarModo} />
             <button
               data-testid="pas-logout"
               onClick={salir}
@@ -1094,7 +1102,7 @@ export default function PassengerApp() {
           <button
             type="button"
             data-testid={PASSENGER.menuOpen}
-            className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-zinc-200 hover:text-white transition active:scale-95 text-lg"
+            className="w-10 h-10 bg-[#0C1520]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-zinc-200 hover:text-white transition active:scale-95 text-lg"
             onClick={() => setMenuOpen(true)}
             aria-label="Abrir menú"
           >
@@ -1102,19 +1110,20 @@ export default function PassengerApp() {
           </button>
 
           {/* Píldora de Sitio / Ciudad */}
-          <div className="bg-[#14171F]/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-white/10 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#FFE600] animate-pulse"></span>
+          <div className="bg-[#0C1520]/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-white/10 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-brand animate-pulse"></span>
             <span className="text-xs font-bold tracking-wide text-white">taxiHUB</span>
             <span className="text-xs text-zinc-400">• Palenque</span>
           </div>
 
-          {/* Botón de centrar GPS y estilo mapa */}
+          {/* Modo día/noche, centrar GPS y estilo de mapa */}
           <div className="flex items-center gap-2">
+            <ModeToggle claro={passengerLight} onToggle={alternarModo} className="!h-10 !w-10 !rounded-full shadow-lg" />
             <button
               type="button"
               data-testid="pas-centrar-gps-top"
               onClick={usarMiUbicacion}
-              className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-zinc-200 hover:text-white transition active:scale-95"
+              className="w-10 h-10 bg-[#0C1520]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-zinc-200 hover:text-white transition active:scale-95"
               title="Centrar en mi ubicación GPS"
               aria-label="Centrar en mi ubicación GPS"
             >
@@ -1124,7 +1133,7 @@ export default function PassengerApp() {
               type="button"
               data-testid={PASSENGER.mapaModoToggle}
               onClick={toggleMapStyle}
-              className="w-10 h-10 bg-[#14171F]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition active:scale-95"
+              className="w-10 h-10 bg-[#0C1520]/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition active:scale-95"
               title={mapStyle === "calles" ? "Cambiar a Satélite" : "Cambiar a Calles"}
               aria-label="Cambiar modo de mapa"
             >
@@ -1173,7 +1182,7 @@ export default function PassengerApp() {
               </button>
 
               {/* 2. PANEL INFERIOR DEL PASAJERO */}
-              <div className="taxi-passenger-home-sheet absolute bottom-0 inset-x-0 z-20 bg-[#111318] rounded-t-3xl pt-3 pb-2 shadow-[0_-10px_30px_rgba(0,0,0,0.6)] border-t border-white/10 text-white">
+              <div className="taxi-passenger-home-sheet absolute bottom-0 inset-x-0 z-20 bg-[#0A121D] rounded-t-3xl pt-3 pb-2 shadow-[0_-10px_30px_rgba(0,0,0,0.6)] border-t border-white/10 text-white">
                 <div className="w-10 h-1.5 bg-zinc-700 rounded-full mx-auto mb-4"></div>
 
                 <div className="px-5">
@@ -1183,7 +1192,7 @@ export default function PassengerApp() {
                       <h1 className="text-xl font-bold tracking-tight text-white">Hola, {auth.nombre?.split(" ")[0] || "Pasajero"}</h1>
                       <p className="text-xs text-zinc-400">¿A dónde te llevamos hoy?</p>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-[#FFE600]/15 text-[#FFE600] px-2.5 py-1 rounded-full border border-[#FFE600]/30">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-brand/15 text-brand px-2.5 py-1 rounded-full border border-brand/30">
                       Radio Taxis Palenque
                     </span>
                   </div>
@@ -1195,14 +1204,14 @@ export default function PassengerApp() {
                       if (!pickup) usarMiUbicacion();
                       setView("solicitar");
                     }}
-                    className="w-full bg-[#181C26] hover:bg-[#202534] border border-white/10 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-inner transition group text-left cursor-pointer"
+                    className="w-full bg-[#121D2B] hover:bg-[#182840] border border-white/10 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-inner transition group text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-[#FFE600]/15 text-[#FFE600] flex items-center justify-center font-bold">
+                      <div className="w-10 h-10 rounded-xl bg-brand/15 text-brand flex items-center justify-center font-bold">
                         <Search className="h-5 w-5" />
                       </div>
                       <div className="text-left">
-                        <span className="text-sm font-bold text-white block group-hover:text-[#FFE600] transition">¿A dónde vas?</span>
+                        <span className="text-sm font-bold text-white block group-hover:text-brand transition">¿A dónde vas?</span>
                         <span className="text-xs text-zinc-400">Buscar calle, colonia o elegir en el mapa</span>
                       </div>
                     </div>
@@ -1224,9 +1233,9 @@ export default function PassengerApp() {
                           setDestinoTexto(poi.texto);
                           setView("solicitar");
                         }}
-                        className="flex items-center gap-2 bg-[#181C26] hover:bg-zinc-800 px-3.5 py-2 rounded-xl border border-white/5 shrink-0 text-xs font-medium text-zinc-200 transition"
+                        className="flex items-center gap-2 bg-[#121D2B] hover:bg-[#13202F] px-3.5 py-2 rounded-xl border border-white/5 shrink-0 text-xs font-medium text-zinc-200 transition"
                       >
-                        <span className="text-[#FFE600]">
+                        <span className="text-brand">
                           {poi.id.includes("mercado") ? (
                             <ShoppingBag className="h-3.5 w-3.5" />
                           ) : poi.id.includes("ado") ? (
@@ -1243,19 +1252,19 @@ export default function PassengerApp() {
 
                 {/* Barra de Navegación Inferior */}
                 <div className="grid grid-cols-4 border-t border-white/5 pt-2.5 pb-1 px-2 text-center bg-[#0D0F13]">
-                  <button onClick={() => setView("viaje")} className={`flex flex-col items-center gap-1 ${view === "viaje" && !servicio ? "text-[#FFE600]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                  <button onClick={() => setView("viaje")} className={`flex flex-col items-center gap-1 ${view === "viaje" && !servicio ? "text-brand" : "text-zinc-500 hover:text-zinc-300"}`}>
                     <Home className="h-5 w-5" />
                     <span className="text-[10px] font-bold">Inicio</span>
                   </button>
-                  <button onClick={() => setView("solicitar")} className={`flex flex-col items-center gap-1 ${view === "solicitar" ? "text-[#FFE600]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                  <button onClick={() => setView("solicitar")} className={`flex flex-col items-center gap-1 ${view === "solicitar" ? "text-brand" : "text-zinc-500 hover:text-zinc-300"}`}>
                     <Car className="h-5 w-5" />
                     <span className="text-[10px] font-medium">Viajes</span>
                   </button>
-                  <button onClick={() => setView("historial")} className={`flex flex-col items-center gap-1 ${view === "historial" ? "text-[#FFE600]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                  <button onClick={() => setView("historial")} className={`flex flex-col items-center gap-1 ${view === "historial" ? "text-brand" : "text-zinc-500 hover:text-zinc-300"}`}>
                     <History className="h-5 w-5" />
                     <span className="text-[10px] font-medium">Historial</span>
                   </button>
-                  <button onClick={() => setView("perfil")} className={`flex flex-col items-center gap-1 ${view === "perfil" ? "text-[#FFE600]" : "text-zinc-500 hover:text-zinc-300"}`}>
+                  <button onClick={() => setView("perfil")} className={`flex flex-col items-center gap-1 ${view === "perfil" ? "text-brand" : "text-zinc-500 hover:text-zinc-300"}`}>
                     <User className="h-5 w-5" />
                     <span className="text-[10px] font-medium">Perfil</span>
                   </button>
@@ -1304,7 +1313,7 @@ export default function PassengerApp() {
                       <Polyline
                         positions={rutaDelTaxi.latlngs}
                         pathOptions={{
-                          color: "#0b0b0d",
+                          color: "#03070C",
                           weight: 9,
                           opacity: 0.55,
                           lineCap: "round",
@@ -1369,7 +1378,7 @@ export default function PassengerApp() {
                         "flex h-11 items-center gap-2 rounded-2xl border px-3 text-xs font-bold shadow-xl backdrop-blur-md transition-all active:scale-95",
                         siguiendoTaxi
                           ? "border-amber-400/50 bg-amber-950/85 text-amber-300 shadow-amber-950/40"
-                          : "border-sky-500/50 bg-slate-950/90 text-sky-300 shadow-slate-950/50"
+                          : "border-sky-500/50 bg-[#050B12]/90 text-sky-300 shadow-slate-950/50"
                       )}
                       title={siguiendoTaxi ? "Activar modo libre" : "Centrar y seguir taxi"}
                     >
@@ -1382,7 +1391,7 @@ export default function PassengerApp() {
                 {/* Banner flotante en Modo Libre mostrando la distancia en vivo al taxi */}
                 {!siguiendoTaxi && taxiActual && (
                   <div className="absolute top-20 left-4 right-20 z-[999] animate-fade-in pointer-events-auto">
-                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-sky-500/40 bg-slate-950/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-md">
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-sky-500/40 bg-[#050B12]/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-md">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="relative flex h-2.5 w-2.5 shrink-0">
                           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
@@ -1413,11 +1422,11 @@ export default function PassengerApp() {
                 </div>
                 <div className="taxi-passenger-sheet-inner">
                   {/* Resumen y Stepper integrados en el panel inferior para no obstruir el mapa */}
-                  <div className="mb-3.5 bg-[#1A1D24] p-3.5 rounded-2xl border border-white/5 shadow-sm text-white">
+                  <div className="mb-3.5 bg-[#121D2B] p-3.5 rounded-2xl border border-white/5 shadow-sm text-white">
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <ServicioBadge estado={servicio.estado} />
                       {rutaDelTaxi.duration_s != null && (
-                        <span className="text-xs font-mono font-bold text-[#FFE600]">
+                        <span className="text-xs font-mono font-bold text-brand">
                           ETA: {fmtDuration(rutaDelTaxi.duration_s)}
                         </span>
                       )}
@@ -2345,7 +2354,7 @@ export default function PassengerApp() {
                 title="Adjuntar o tomar foto"
               >
                 {chatUploading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-[#FFE600]" />
+                  <Loader2 className="w-5 h-5 animate-spin text-brand" />
                 ) : (
                   <Camera className="w-5 h-5" />
                 )}

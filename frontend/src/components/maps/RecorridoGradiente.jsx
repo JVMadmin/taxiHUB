@@ -111,7 +111,7 @@ export function RecorridoGradiente({ track, estado = "libre" }) {
           radius={5}
           pathOptions={{
             color: "#FFE600",
-            fillColor: "#0B0D10",
+            fillColor: "#050B12",
             fillOpacity: 1,
             weight: 2,
           }}

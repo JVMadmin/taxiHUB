@@ -94,13 +94,13 @@ export const TerminalMenu = memo(function TerminalMenu({
       {/* Rail de iconos agrupado por responsabilidad (derecha, escritorio, posicionado debajo de la barra superior) */}
       <div
         data-testid="terminal-menu-rail"
-        className="surface-ui no-scrollbar absolute top-[152px] right-3 z-[600] hidden max-h-[calc(100vh-175px)] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#17191E]/95 shadow-2xl backdrop-blur-md transition-all duration-300 ease-motion lg:block sm:right-3.5"
+        className="surface-ui no-scrollbar absolute top-[152px] right-3 z-[600] hidden max-h-[calc(100vh-175px)] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#0F1926]/95 shadow-2xl backdrop-blur-md transition-all duration-300 ease-motion lg:block sm:right-3.5"
         style={{ right: active ? `calc(min(92vw, ${panelWidth}px) + 0.75rem)` : undefined }}
       >
         <div className="flex flex-col gap-1 p-1.5">
           {SECTION_GROUPS.map((g) => (
             <div key={g.label} className="flex flex-col items-center gap-1 border-t border-white/[0.06] py-1 first:border-0 first:pt-0">
-              <span className="text-[8px] font-bold uppercase tracking-widest text-[#9CA0AA]/80">{g.label}</span>
+              <span className="text-[8px] font-bold uppercase tracking-widest text-[#93A4B8]/80">{g.label}</span>
               {g.ids.map((id) => {
                 const s = SECTIONS.find((x) => x.id === id);
                 if (!s) return null;
@@ -114,7 +114,7 @@ export const TerminalMenu = memo(function TerminalMenu({
                     className={cn(
                       "th-3d flex h-8 w-8 items-center justify-center rounded-xl transition-colors",
                       active === id
-                        ? "bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255,230,0,0.35)]"
+                        ? "bg-brand text-[#050B12] shadow-[0_2px_10px_rgba(255,230,0,0.35)]"
                         : "text-foreground/80 hover:bg-white/[0.08]"
                     )}
                   >
@@ -130,16 +130,16 @@ export const TerminalMenu = memo(function TerminalMenu({
       {/* Panel deslizable — sin provocar barra deslizable inferior cuando está cerrado */}
       <div
         className={cn(
-          "surface-ui absolute right-0 top-0 z-[590] h-full max-w-[92vw] transform border-l border-white/[0.06] bg-[#111318] transition-all duration-300 ease-motion",
+          "surface-ui absolute right-0 top-0 z-[590] h-full max-w-[92vw] transform border-l border-white/[0.06] bg-[#0A121D] transition-all duration-300 ease-motion",
           active ? "translate-x-0 pointer-events-auto visible" : "translate-x-full pointer-events-none invisible"
         )}
         style={{ width: panelWidth }}
       >
         {active && (
           <div data-testid={`panel-${active}`} className="flex h-full animate-fade-in flex-col">
-            <div className="flex items-center justify-between border-b border-white/[0.06] bg-[#17191E] px-4 py-3">
+            <div className="flex items-center justify-between border-b border-white/[0.06] bg-[#0F1926] px-4 py-3">
               <h2 className="flex items-center gap-2 text-sm font-bold text-foreground">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFE600]/15 text-[#FFE600]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/15 text-brand">
                   {(() => { const I = SECTIONS.find((s) => s.id === active)?.icon; return I ? <I className="h-4 w-4" /> : null; })()}
                 </span>
                 {SECTIONS.find((s) => s.id === active)?.label}
@@ -825,9 +825,9 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
   return (
     <div className="space-y-3.5" data-testid="reportes-panel-completo">
       {/* Banner de Seguridad & Compresión WebP por Tenant */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#FFE600]/30 bg-[#FFE600]/10 px-3.5 py-2 text-xs text-[#FFF27A]">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-brand/30 bg-brand/10 px-3.5 py-2 text-xs text-[#FFF27A]">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-[#FFE600]" />
+          <ShieldCheck className="h-4 w-4 shrink-0 text-brand" />
           <span>
             <strong>Storage Aislado por Tenant + Escudo Anti-Malware:</strong> Evidencias verificadas y convertidas automáticamente a{" "}
             <code className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-[11px] text-[#FFF27A]">.webp</code>
@@ -852,7 +852,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
             <select
               value={nuevoForm.operador_id}
               onChange={(e) => setNuevoForm((p) => ({ ...p, operador_id: e.target.value }))}
-              className="h-9 rounded-xl border border-white/10 bg-[#1B1E24] px-2.5 text-xs text-foreground"
+              className="h-9 rounded-xl border border-white/10 bg-[#13202F] px-2.5 text-xs text-foreground"
             >
               <option value="">Seleccionar unidad / chofer…</option>
               {Object.values(operadores || {}).map((op) => (
@@ -864,7 +864,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
             <select
               value={nuevoForm.categoria}
               onChange={(e) => setNuevoForm((p) => ({ ...p, categoria: e.target.value }))}
-              className="h-9 rounded-xl border border-white/10 bg-[#1B1E24] px-2.5 text-xs text-foreground"
+              className="h-9 rounded-xl border border-white/10 bg-[#13202F] px-2.5 text-xs text-foreground"
             >
               <option value="Electrónicos">Electrónicos / Celular</option>
               <option value="Equipaje">Equipaje / Mochila</option>
@@ -899,7 +899,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
       )}
 
       {/* Filtros por Estado, Búsqueda e Histórico por Fechas */}
-      <div className="space-y-2 rounded-2xl border border-white/[0.07] bg-[#17191E] p-3">
+      <div className="space-y-2 rounded-2xl border border-white/[0.07] bg-[#0F1926] p-3">
         <div className="flex flex-wrap items-center gap-1.5">
           {[
             { k: "todos", l: `Todos (${contadores.total})` },
@@ -916,8 +916,8 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
               className={cn(
                 "rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all",
                 filtroEstado === st.k
-                  ? "border-[#FFE600] bg-[#FFE600] text-[#0C0E14] shadow"
-                  : "border-white/10 bg-[#1B1E24] text-muted-foreground hover:text-foreground"
+                  ? "border-brand bg-brand text-[#050B12] shadow"
+                  : "border-white/10 bg-[#13202F] text-muted-foreground hover:text-foreground"
               )}
             >
               {st.l}
@@ -943,7 +943,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
               data-testid="reportes-fecha-desde"
               value={desde}
               onChange={(e) => { setDesde(e.target.value); setRangoRapido("custom"); }}
-              className="h-8 w-full rounded-lg border border-white/10 bg-[#1B1E24] px-2 text-[11px] text-foreground"
+              className="h-8 w-full rounded-lg border border-white/10 bg-[#13202F] px-2 text-[11px] text-foreground"
               title="Fecha desde"
             />
             <span className="text-xs text-muted-foreground">a</span>
@@ -952,7 +952,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
               data-testid="reportes-fecha-hasta"
               value={hasta}
               onChange={(e) => { setHasta(e.target.value); setRangoRapido("custom"); }}
-              className="h-8 w-full rounded-lg border border-white/10 bg-[#1B1E24] px-2 text-[11px] text-foreground"
+              className="h-8 w-full rounded-lg border border-white/10 bg-[#13202F] px-2 text-[11px] text-foreground"
               title="Fecha hasta"
             />
           </div>
@@ -997,7 +997,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
             <div
               key={r.id}
               data-testid={`reporte-row-${r.id}`}
-              className="flex flex-col gap-3.5 rounded-2xl border border-white/[0.08] bg-[#17191E] p-3.5 shadow-md sm:flex-row"
+              className="flex flex-col gap-3.5 rounded-2xl border border-white/[0.08] bg-[#0F1926] p-3.5 shadow-md sm:flex-row"
             >
               {/* Evidencia fotográfica en buen tamaño visible con zoom */}
               <div
@@ -1032,7 +1032,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
                 <div>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="rounded-md bg-[#FFE600]/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-[#9BA3FF]">
+                      <span className="rounded-md bg-brand/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-[#9BA3FF]">
                         {r.categoria || "Objeto reportado"}
                       </span>
                       <span className="font-mono text-xs font-extrabold text-amber-300">
@@ -1062,7 +1062,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
                   {r.estado === "devuelto" && (
                     <div
                       data-testid={`reporte-devolucion-info-${r.id}`}
-                      className="mt-2 rounded-xl border border-[#FFE600]/30 bg-[#FFE600]/10 px-3 py-2 text-xs"
+                      className="mt-2 rounded-xl border border-brand/30 bg-brand/10 px-3 py-2 text-xs"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-1 font-bold text-[#FFF27A]">
                         <span>✓ Entregado a: {r.entregado_a || "Propietario acreditado"}</span>
@@ -1118,7 +1118,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
       {/* Modal para registrar entrega formal del objeto */}
       {devolviendoReporte && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md space-y-3 rounded-2xl border border-[#FFE600]/40 bg-[#14161B] p-5 shadow-2xl">
+          <div className="w-full max-w-md space-y-3 rounded-2xl border border-brand/40 bg-[#0C1520] p-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <div className="text-sm font-bold text-[#FFF27A]">Registrar Devolución de Objeto</div>
               <button onClick={() => setDevolviendoReporte(null)} className="text-muted-foreground hover:text-white">
@@ -1174,7 +1174,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
           onClick={() => setLightboxReporte(null)}
         >
           <div
-            className="max-w-2xl overflow-hidden rounded-2xl border border-white/15 bg-[#14161B] shadow-2xl"
+            className="max-w-2xl overflow-hidden rounded-2xl border border-white/15 bg-[#0C1520] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -1408,7 +1408,7 @@ function RutasPanel({
 
         {/* Controles activos de dibujo punto a punto sobre sentido vial */}
         {isDrawingRuta && (
-          <div className="rounded-xl border border-[#FFE600]/40 bg-[#FFE600]/10 p-2.5 text-xs">
+          <div className="rounded-xl border border-brand/40 bg-brand/10 p-2.5 text-xs">
             <div className="flex flex-wrap items-center justify-between gap-1 font-bold text-[#FFF27A]">
               <span className="inline-flex items-center gap-1.5">
                 <Navigation className="h-3.5 w-3.5" />
@@ -1533,7 +1533,7 @@ function RutasPanel({
               </button>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
-              <span className="font-mono font-bold text-[#FFE600]">
+              <span className="font-mono font-bold text-brand">
                 Tarifa colectiva: ${r.tarifa_colectiva ?? 15} MXN
               </span>
               <span>Horario: {r.horario || "05:30 - 22:00"}</span>
@@ -1660,10 +1660,10 @@ function ColoniasPanel({
   return (
     <div className="space-y-4" data-testid="colonias-cuadrantes-panel">
       {/* Herramienta de dibujo de límites de cuadrante en el mapa */}
-      <div className="space-y-3 rounded-2xl border border-[#FFE600]/35 bg-surface-2 p-3.5">
+      <div className="space-y-3 rounded-2xl border border-brand/35 bg-surface-2 p-3.5">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <div className="text-xs font-bold uppercase tracking-wide text-[#FFE600]">
+            <div className="text-xs font-bold uppercase tracking-wide text-brand">
               Editor de Cuadrantes y Precios Delimitantes
             </div>
             <div className="text-[11px] text-muted-foreground">
@@ -1780,7 +1780,7 @@ function ColoniasPanel({
       {/* Lista de colonias / cuadrantes con edición rápida de precios delimitantes */}
       <div className="space-y-2.5">
         {colonias.map((col) => (
-          <div key={col.id || col.nombre} className="space-y-2 rounded-xl border border-white/[0.08] bg-[#17191E] p-3">
+          <div key={col.id || col.nombre} className="space-y-2 rounded-xl border border-white/[0.08] bg-[#0F1926] p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="h-3.5 w-3.5 rounded-full shrink-0" style={{ background: col.color || "#FFE600" }} />
@@ -1813,7 +1813,7 @@ function ColoniasPanel({
                     Number(e.target.value) !== (col.tarifa_base ?? 40) &&
                     actualizarPrecioZona(col, { tarifa_base: Number(e.target.value) })
                   }
-                  className="mt-0.5 w-full bg-transparent font-mono text-xs font-black text-[#FFE600] outline-none"
+                  className="mt-0.5 w-full bg-transparent font-mono text-xs font-black text-brand outline-none"
                 />
               </div>
               <div className="rounded-lg bg-black/30 p-1.5">
@@ -1972,7 +1972,7 @@ function TarifasPanel({ colonias = [] }) {
                   hora_fin: ht === "nocturno" ? "05:59" : ht === "hora_pico" ? "09:30" : "22:00",
                 }));
               }}
-              className="mt-0.5 h-8 w-full rounded-lg border border-white/10 bg-[#1B1E24] px-2 text-xs text-foreground"
+              className="mt-0.5 h-8 w-full rounded-lg border border-white/10 bg-[#13202F] px-2 text-xs text-foreground"
             >
               <option value="todo_el_dia">Todo el día (24 hrs)</option>
               <option value="diurno">Horario Diurno</option>
@@ -1985,7 +1985,7 @@ function TarifasPanel({ colonias = [] }) {
             <select
               value={f.zona_nombre}
               onChange={(e) => setF((p) => ({ ...p, zona_nombre: e.target.value }))}
-              className="mt-0.5 h-8 w-full rounded-lg border border-white/10 bg-[#1B1E24] px-2 text-xs text-foreground"
+              className="mt-0.5 h-8 w-full rounded-lg border border-white/10 bg-[#13202F] px-2 text-xs text-foreground"
             >
               <option value="">General (Todo el sitio)</option>
               {colonias.map((c) => (
@@ -2083,7 +2083,7 @@ function TarifasPanel({ colonias = [] }) {
                 type="number"
                 defaultValue={t.monto}
                 onBlur={(e) => Number(e.target.value) !== t.monto && actualizar(t, { monto: Number(e.target.value) })}
-                className="input-inset mono-num h-8 w-20 border-border text-xs font-bold text-[#FFE600]"
+                className="input-inset mono-num h-8 w-20 border-border text-xs font-bold text-brand"
               />
               <ConfirmAction
                 title={`Eliminar tarifa "${t.nombre}"`}
@@ -2106,7 +2106,7 @@ function TarifasPanel({ colonias = [] }) {
                 <Clock className="h-2.5 w-2.5" /> {t.hora_inicio || "00:00"} – {t.hora_fin || "23:59"} ({t.horario_tipo || "todo_el_dia"})
               </span>
               {t.zona_nombre && (
-                <span className="rounded bg-[#FFE600]/15 px-2 py-0.5 font-semibold text-[#FFF27A]">
+                <span className="rounded bg-brand/15 px-2 py-0.5 font-semibold text-[#FFF27A]">
                   Zona: {t.zona_nombre}
                 </span>
               )}

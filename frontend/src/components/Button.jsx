@@ -7,14 +7,14 @@ import { cn } from "@/lib/utils";
 // primary/destructive envuelven las clases CSS ya existentes en index.css
 // (no se reescribe su elevación); secondary/ghost usan los tokens de Tailwind.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFE600] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         primary: "th-btn-y",
         destructive: "bg-[#F4544C] text-white hover:bg-[#E03E36] active:translate-y-px",
-        secondary: "border border-white/[0.06] bg-[#1B1E24] text-[#F5F5F7] hover:bg-[#22252C]",
-        ghost: "text-[#9CA0AA] hover:bg-white/[0.08] hover:text-[#F5F5F7]",
+        secondary: "border border-white/[0.06] bg-[#13202F] text-[#EDF2F8] hover:bg-[#162436]",
+        ghost: "text-[#93A4B8] hover:bg-white/[0.08] hover:text-[#EDF2F8]",
       },
       size: {
         sm: "h-9 px-3.5 text-xs [&_svg]:size-3.5",

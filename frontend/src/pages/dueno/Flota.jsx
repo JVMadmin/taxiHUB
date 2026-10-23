@@ -154,7 +154,7 @@ export function Flota({ liveSignal }) {
   return (
     <div className="flex flex-col gap-3 h-[calc(100vh-8rem)] min-h-[620px]" data-testid="dueno-flota">
       {/* 1. SECCIÓN SUPERIOR: Carrusel de Vehículos de la Flota (Mismo Tamaño) */}
-      <div className="flex flex-col gap-2 rounded-2xl border border-border/80 bg-[#17191E]/90 p-3 shadow-xl backdrop-blur-md shrink-0">
+      <div className="flex flex-col gap-2 rounded-2xl border border-border/80 bg-[#0F1926]/90 p-3 shadow-xl backdrop-blur-md shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-3 px-1">
           <div className="flex items-center gap-2">
             <Car className="h-5 w-5 text-brand-bright" />
@@ -170,7 +170,7 @@ export function Flota({ liveSignal }) {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar unidad, placa o chofer…"
-              className="input-inset h-8 border-border pl-8 text-xs bg-[#13151A] text-foreground"
+              className="input-inset h-8 border-border pl-8 text-xs bg-[#0C1520] text-foreground"
             />
           </div>
         </div>
@@ -199,7 +199,7 @@ export function Flota({ liveSignal }) {
                     "group relative flex min-w-[210px] max-w-[230px] shrink-0 cursor-pointer flex-col justify-between rounded-xl border p-2.5 transition-all duration-200 select-none",
                     isSelected
                       ? "border-brand bg-brand/10 shadow-lg shadow-brand/15 ring-1 ring-brand"
-                      : "border-white/[0.08] bg-[#13151A]/80 hover:border-white/20 hover:bg-[#1C1F26]"
+                      : "border-white/[0.08] bg-[#0C1520]/80 hover:border-white/20 hover:bg-[#121D2B]"
                   )}
                 >
                   {/* Unidad y Estado */}
@@ -267,7 +267,7 @@ export function Flota({ liveSignal }) {
       </div>
 
       {/* 2. SECCIÓN PRINCIPAL: El Mapa ocupa todo el resto del espacio */}
-      <div className="relative flex-1 min-h-[440px] w-full overflow-hidden rounded-2xl border border-border/80 bg-[#13151A] shadow-2xl">
+      <div className="relative flex-1 min-h-[440px] w-full overflow-hidden rounded-2xl border border-border/80 bg-[#0C1520] shadow-2xl">
         {/* Controles flotantes superiores */}
         <div className="absolute left-3 top-3 z-[450] flex flex-wrap items-center gap-2">
           {/* Toggle Satelital / Calles OSM */}
@@ -302,8 +302,8 @@ export function Flota({ liveSignal }) {
               className={cn(
                 "flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs shadow-2xl transition-all select-none backdrop-blur-md",
                 follow
-                  ? "border-emerald-400/80 bg-[#13151A] text-white font-black ring-1 ring-emerald-500/50 shadow-emerald-950/50"
-                  : "border-white/15 bg-[#17191E]/95 text-slate-200 hover:text-white hover:border-white/30 font-bold"
+                  ? "border-emerald-400/80 bg-[#0C1520] text-white font-black ring-1 ring-emerald-500/50 shadow-emerald-950/50"
+                  : "border-white/15 bg-[#0F1926]/95 text-slate-200 hover:text-white hover:border-white/30 font-bold"
               )}
             >
               <Crosshair className={cn("h-4 w-4 shrink-0", follow ? "text-emerald-400 animate-spin" : "text-slate-400")} />
@@ -380,7 +380,7 @@ export function Flota({ liveSignal }) {
 
         {/* HUD Flotante con Ficha Completa del Vehículo Seleccionado */}
         {selectedVehiculo && (
-          <div className="bezel-shell absolute bottom-4 left-4 z-[450] w-84 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-white/15 bg-[#17191E]/95 p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200 text-foreground">
+          <div className="bezel-shell absolute bottom-4 left-4 z-[450] w-84 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-white/15 bg-[#0F1926]/95 p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200 text-foreground">
             {/* Header del HUD */}
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2.5 mb-2.5">
               <div className="flex items-center gap-2.5">

@@ -462,14 +462,14 @@ button:not(:disabled),
 
 .leaflet-container {
   /* Tono intermedio: las tiles al cargar no contrastan como cuadros negros */
-  background: #14161a;
+  background: #0A121D;
   font-family: inherit;
 }
 
 .leaflet-popup-content-wrapper {
-  background: hsl(240 6% 8% / var(--ui-alpha, 0.96));
-  color: hsl(0 0% 94%);
-  border: 1px solid hsl(240 5% 20%);
+  background: hsl(214 43% 10% / var(--ui-alpha, 0.96));
+  color: hsl(215 38% 94%);
+  border: 1px solid hsl(214 37% 18%);
   border-radius: 12px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
@@ -481,8 +481,8 @@ button:not(:disabled),
 }
 
 .leaflet-popup-tip {
-  background: hsl(240 6% 8% / var(--ui-alpha, 0.96));
-  border: 1px solid hsl(240 5% 20%);
+  background: hsl(214 43% 10% / var(--ui-alpha, 0.96));
+  border: 1px solid hsl(214 37% 18%);
 }
 
 /* Ruta a destino: trazo de marca con flujo animado de sentido (Leaflet pone
@@ -711,23 +711,23 @@ html[data-mode="claro"] {
 
 /* ---- Overrides de fondos oscuros arbitrarios y zinc para que ningún módulo o pestaña quede negro ---- */
 [data-mode="claro"] .bg-zinc-950,
-[data-mode="claro"] .bg-\[\#0B0D10\],
-[data-mode="claro"] .bg-\[\#111318\],
-[data-mode="claro"] .bg-\[\#13151A\],
-[data-mode="claro"] .bg-\[\#14161B\],
-[data-mode="claro"] .bg-\[\#141829\] {
+[data-mode="claro"] .bg-\[\#050B12\],
+[data-mode="claro"] .bg-\[\#0A121D\],
+[data-mode="claro"] .bg-\[\#0C1520\],
+[data-mode="claro"] .bg-\[\#0C1520\],
+[data-mode="claro"] .bg-\[\#0C1520\] {
   background-color: #F1F5F9 !important;
 }
 
 [data-mode="claro"] .bg-zinc-900,
-[data-mode="claro"] .bg-\[\#17191E\],
-[data-mode="claro"] .bg-\[\#181B20\] {
+[data-mode="claro"] .bg-\[\#0F1926\],
+[data-mode="claro"] .bg-\[\#121D2B\] {
   background-color: #FFFFFF !important;
 }
 
-[data-mode="claro"] .bg-zinc-800,
-[data-mode="claro"] .bg-\[\#1B1E24\],
-[data-mode="claro"] .bg-\[\#22252C\] {
+[data-mode="claro"] .bg-[#13202F],
+[data-mode="claro"] .bg-\[\#13202F\],
+[data-mode="claro"] .bg-\[\#162436\] {
   background-color: #F8FAFC !important;
 }
 
@@ -737,10 +737,10 @@ html[data-mode="claro"] {
 
 [data-mode="claro"] .bg-zinc-950\/95,
 [data-mode="claro"] .bg-zinc-950\/90,
-[data-mode="claro"] .bg-\[\#13151A\]\/95,
-[data-mode="claro"] .bg-\[\#13151A\]\/90,
-[data-mode="claro"] .bg-\[\#141829\]\/95,
-[data-mode="claro"] .bg-\[\#17191E\]\/95 {
+[data-mode="claro"] .bg-\[\#0C1520\]\/95,
+[data-mode="claro"] .bg-\[\#0C1520\]\/90,
+[data-mode="claro"] .bg-\[\#0C1520\]\/95,
+[data-mode="claro"] .bg-\[\#0F1926\]\/95 {
   background-color: rgba(255, 255, 255, 0.96) !important;
 }
 
@@ -752,10 +752,10 @@ html[data-mode="claro"] {
   background-color: rgba(255, 255, 255, 0.92) !important;
 }
 
-[data-mode="claro"] .bg-zinc-800\/80,
-[data-mode="claro"] .bg-zinc-800\/70,
-[data-mode="claro"] .bg-zinc-800\/60,
-[data-mode="claro"] .bg-zinc-800\/40 {
+[data-mode="claro"] .bg-[#13202F]\/80,
+[data-mode="claro"] .bg-[#13202F]\/70,
+[data-mode="claro"] .bg-[#13202F]\/60,
+[data-mode="claro"] .bg-[#13202F]\/40 {
   background-color: rgba(241, 245, 249, 0.9) !important;
 }
 
@@ -779,22 +779,22 @@ html[data-mode="claro"] {
 
 [data-mode="claro"] .hover\:bg-white\/5:hover,
 [data-mode="claro"] .hover\:bg-white\/10:hover,
-[data-mode="claro"] .hover\:bg-\[\#22262E\]:hover,
-[data-mode="claro"] .hover\:bg-zinc-800:hover,
-[data-mode="claro"] .hover\:bg-zinc-800\/70:hover {
+[data-mode="claro"] .hover\:bg-\[\#162436\]:hover,
+[data-mode="claro"] .hover\:bg-[#13202F]:hover,
+[data-mode="claro"] .hover\:bg-[#13202F]\/70:hover {
   background-color: #E2E8F0 !important;
 }
 
 /* Textos de alta legibilidad en Modo Diurno */
 [data-mode="claro"] .text-zinc-50,
 [data-mode="claro"] .text-zinc-100,
-[data-mode="claro"] .text-\[\#F5F5F7\] {
+[data-mode="claro"] .text-\[\#EDF2F8\] {
   color: #0F172A !important;
 }
 [data-mode="claro"] .text-zinc-200 { color: #1E293B !important; }
 [data-mode="claro"] .text-zinc-300 { color: #334155 !important; }
 [data-mode="claro"] .text-zinc-400,
-[data-mode="claro"] .text-\[\#9CA0AA\] { color: #475569 !important; }
+[data-mode="claro"] .text-\[\#93A4B8\] { color: #475569 !important; }
 [data-mode="claro"] .text-zinc-500 { color: #64748B !important; }
 [data-mode="claro"] .text-zinc-600 { color: #475569 !important; }
 [data-mode="claro"] .placeholder\:text-zinc-500::placeholder { color: #94A3B8 !important; }
@@ -803,9 +803,9 @@ html[data-mode="claro"] {
    conservando blanco en botones primarios/peligro/badges sólidos */
 [data-mode="claro"] .surface-ui .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
 [data-mode="claro"] .bezel-shell .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
-[data-mode="claro"] .bg-\[\#111318\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
-[data-mode="claro"] .bg-\[\#17191E\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
-[data-mode="claro"] .bg-\[\#13151A\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]) {
+[data-mode="claro"] .bg-\[\#0A121D\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
+[data-mode="claro"] .bg-\[\#0F1926\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]),
+[data-mode="claro"] .bg-\[\#0C1520\] .text-white:not(.btn-primary-elev):not(.btn-danger-elev):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-amber-"]):not([class*="bg-violet-"]):not([class*="bg-brand"]) {
   color: #0F172A !important;
 }
 

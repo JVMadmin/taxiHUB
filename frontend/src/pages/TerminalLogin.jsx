@@ -61,13 +61,13 @@ export default function TerminalLogin({ isCentralOnly = false }) {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0B0D10] px-4 font-sans text-[#F5F5F7]">
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-[#FFE600]/15 blur-[120px]" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#050B12] px-4 font-sans text-[#EDF2F8]">
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-brand/15 blur-[120px]" />
       <div className="relative w-full max-w-sm">
         <form
           onSubmit={submit}
           data-testid="terminal-login-form"
-          className="w-full rounded-[24px] border border-white/[0.08] bg-[#17191E] p-8 shadow-2xl backdrop-blur-xl"
+          className="w-full rounded-[24px] border border-white/[0.08] bg-[#0F1926] p-8 shadow-2xl backdrop-blur-xl"
         >
           <div className="mb-6 flex flex-col items-center gap-2 text-center">
             <BrandMark size="lg" />
@@ -75,7 +75,7 @@ export default function TerminalLogin({ isCentralOnly = false }) {
               sub={isCentralMode ? "Terminal de Central Satelital" : "Centro de Operaciones y Despacho"}
               className="mt-1"
             />
-            <p className="text-xs text-[#9CA0AA]">
+            <p className="text-xs text-[#93A4B8]">
               {isCentralMode
                 ? "Acceso exclusivo para operadoras de Central"
                 : "Ingresa tus credenciales de despachadora"}
@@ -84,7 +84,7 @@ export default function TerminalLogin({ isCentralOnly = false }) {
 
           <div className="grid gap-4">
             <div className="grid gap-1.5">
-              <Label className="text-[#F5F5F7]/90 text-xs font-semibold">Usuario de Central</Label>
+              <Label className="text-[#EDF2F8]/90 text-xs font-semibold">Usuario de Central</Label>
               <Input
                 data-testid="term-usuario"
                 value={usuario}
@@ -92,12 +92,12 @@ export default function TerminalLogin({ isCentralOnly = false }) {
                 placeholder="central"
                 autoCapitalize="none"
                 autoComplete="username"
-                className="input-inset border-white/[0.08] bg-[#1B1E24] text-[#F5F5F7] h-11"
+                className="input-inset border-white/[0.08] bg-[#13202F] text-[#EDF2F8] h-11"
               />
             </div>
 
             <div className="grid gap-1.5">
-              <Label className="text-[#F5F5F7]/90 text-xs font-semibold">Contraseña</Label>
+              <Label className="text-[#EDF2F8]/90 text-xs font-semibold">Contraseña</Label>
               <Input
                 data-testid="term-contrasena"
                 type="password"
@@ -105,11 +105,11 @@ export default function TerminalLogin({ isCentralOnly = false }) {
                 onChange={(e) => setContrasena(e.target.value)}
                 placeholder="••••••"
                 autoComplete="current-password"
-                className="input-inset border-white/[0.08] bg-[#1B1E24] text-[#F5F5F7] h-11"
+                className="input-inset border-white/[0.08] bg-[#13202F] text-[#EDF2F8] h-11"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] text-[#9CA0AA]/80 mt-1">
+            <div className="flex items-center gap-1.5 text-[11px] text-[#93A4B8]/80 mt-1">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
               <span>Por seguridad, el sistema nunca almacena tu contraseña en este equipo.</span>
             </div>
@@ -118,14 +118,14 @@ export default function TerminalLogin({ isCentralOnly = false }) {
               data-testid="term-submit"
               type="submit"
               loading={loading}
-              className="mt-2 h-12 text-base font-semibold bg-[#FFE600] hover:bg-[#FFB800] text-[#0C0E14] shadow-[0_4px_16px_rgba(255,230,0,0.35)]"
+              className="mt-2 h-12 text-base font-semibold bg-brand hover:bg-brand-strong text-[#050B12] shadow-[0_4px_16px_rgba(255,230,0,0.35)]"
             >
               <LogIn className="h-4 w-4" />
               {loading ? "Verificando..." : "Entrar a Central"}
             </Button>
           </div>
 
-          <div className="mt-6 text-center text-xs text-[#9CA0AA]">
+          <div className="mt-6 text-center text-xs text-[#93A4B8]">
             <a href="/" data-testid="web-landing-link" className="text-[#10B981] hover:underline transition-colors">
               ← Volver a taxihub.cloud
             </a>

@@ -99,19 +99,19 @@ export const MissionCard = memo(function MissionCard({
           </div>
           <div className="data-cell">
             <span className="data-cell-label">GPS</span>
-            <span className="data-cell-value text-[#FFE600]">{timeAgo(op.ultima_actualizacion)}</span>
+            <span className="data-cell-value text-brand">{timeAgo(op.ultima_actualizacion)}</span>
           </div>
         </div>
 
         {trackStats && (
-          <div className="mt-3 rounded-xl border border-white/[0.06] bg-[#17191E] p-2.5">
+          <div className="mt-3 rounded-xl border border-white/[0.06] bg-[#0F1926] p-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Recorrido en vivo</span>
               <button
                 data-testid="ver-recorrido-btn"
                 onClick={onToggleTrack}
                 className={cn("rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors",
-                  showTrack ? "border-[#FFE600]/50 bg-[#FFE600]/15 text-[#FFE600]" : "border-white/[0.08] text-foreground/85 hover:border-white/[0.15]")}
+                  showTrack ? "border-brand/50 bg-brand/15 text-brand" : "border-white/[0.08] text-foreground/85 hover:border-white/[0.15]")}
               >
                 {showTrack ? "Ocultar" : "Ver recorrido"}
               </button>
@@ -126,7 +126,7 @@ export const MissionCard = memo(function MissionCard({
 
         {/* Ruta al destino del servicio activo */}
         {servicioActivo && (
-          <div className="mt-3 rounded-xl border border-white/[0.06] bg-[#17191E] p-2.5">
+          <div className="mt-3 rounded-xl border border-white/[0.06] bg-[#0F1926] p-2.5">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                 <RouteIcon className="h-3 w-3" /> Ruta a destino
@@ -136,7 +136,7 @@ export const MissionCard = memo(function MissionCard({
                   data-testid="terminal-ruta-toggle"
                   onClick={onToggleRuta}
                   className={cn("rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors",
-                    verRutaServicio ? "border-[#FFE600]/50 bg-[#FFE600]/15 text-[#FFE600]" : "border-white/[0.08] text-foreground/85 hover:border-white/[0.15]")}
+                    verRutaServicio ? "border-brand/50 bg-brand/15 text-brand" : "border-white/[0.08] text-foreground/85 hover:border-white/[0.15]")}
                 >
                   {verRutaServicio ? "Ocultar" : "Ver ruta"}
                 </button>
@@ -147,12 +147,12 @@ export const MissionCard = memo(function MissionCard({
             {servicioDestino && (
               <>
                 <div className="mt-2 flex items-center gap-2 text-xs text-foreground/85">
-                  <NavIcon className="h-3.5 w-3.5 shrink-0 text-[#FFE600]" />
+                  <NavIcon className="h-3.5 w-3.5 shrink-0 text-brand" />
                   <span className="truncate">{servicioActivo.destino?.texto || "Destino marcado en el mapa"}</span>
                 </div>
                 {rutaServicio.distance_m != null && (
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span><b className="mono-num text-[#FFE600]">{fmtDist(rutaServicio.distance_m)}</b> faltante</span>
+                    <span><b className="mono-num text-brand">{fmtDist(rutaServicio.distance_m)}</b> faltante</span>
                     <span><b className="mono-num text-foreground">{fmtDuration(rutaServicio.duration_s)}</b> ETA</span>
                     <span className="mono-num text-muted-foreground">{rutaServicio.provider === "osrm" ? "rutas reales" : "línea recta"}</span>
                   </div>

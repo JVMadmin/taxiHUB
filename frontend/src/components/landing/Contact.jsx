@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { Send, MessageSquare, PhoneCall, CheckCircle2, ShieldAlert } from "lucide-react";
+import { useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Send, MessageCircle, MapPinned, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import { LANDING } from "@/constants/testIds";
-import { Reveal } from "./motion";
+import { Cambio, Etiqueta, Reveal } from "./motion";
 
 // WhatsApp de ventas: wa.me exige solo dígitos con lada de país (México = 52, sin el "1" de celular).
 export const WHATSAPP_VENTAS = "529161632304";
@@ -16,239 +17,139 @@ export function abrirWhatsAppVentas(texto) {
   else window.location.href = url;
 }
 
+const Campo = ({ etiqueta, id, ...props }) => (
+  <div>
+    <label htmlFor={id} className="mb-1.5 block text-[13px] font-medium text-[#B7C4D4]">{etiqueta}</label>
+    <input id={id} className="ld-campo" {...props} />
+  </div>
+);
+
 export function Contact() {
-  const [formData, setFormData] = useState({
-    nombre: "",
-    central: "",
-    telefono: "",
-    unidades: "15",
-    mensaje: "",
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const reduce = useReducedMotion();
+  const [formData, setFormData] = useState({ nombre: "", central: "", telefono: "", unidades: "15", mensaje: "" });
+  const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
+  const cambiar = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const enviar = (e) => {
     e.preventDefault();
     if (!formData.nombre.trim() || !formData.central.trim() || !formData.telefono.trim()) {
-      setError("Por favor completa tu nombre, central y teléfono para contactarte.");
+      setError("Completa tu nombre, el de tu central y un teléfono para contactarte.");
       return;
     }
-
     setError("");
-    setSubmitting(true);
-
     try {
-      const payload = {
-        ...formData,
-        fecha: new Date().toISOString(),
-      };
-      localStorage.setItem("taxihub_last_lead", JSON.stringify(payload));
-      setSubmitted(true);
-
-      abrirWhatsAppVentas(
-        `Hola TaxiHUB, soy ${formData.nombre} de la central "${formData.central}". Tenemos aproximadamente ${formData.unidades} unidades. Me interesa la tarifa de $99 MXN por unidad y el pago único de implementación.` +
-          (formData.mensaje ? ` Detalle: ${formData.mensaje}` : "") +
-          ` Mi teléfono: ${formData.telefono}.`
-      );
-    } catch (err) {
-      setError("Error al procesar la solicitud. Por favor contáctanos por WhatsApp.");
-    } finally {
-      setSubmitting(false);
+      localStorage.setItem("taxihub_last_lead", JSON.stringify({ ...formData, fecha: new Date().toISOString() }));
+    } catch (_) {
+      /* sin almacenamiento: el mensaje de WhatsApp lleva todo */
     }
+    setEnviado(true);
+    abrirWhatsAppVentas(
+      `Hola TaxiHUB, soy ${formData.nombre} de la central "${formData.central}". Tenemos aproximadamente ${formData.unidades} unidades. Me interesa la tarifa de $99 MXN por unidad y el pago único de implementación.` +
+        (formData.mensaje ? ` Detalle: ${formData.mensaje}` : "") +
+        ` Mi teléfono: ${formData.telefono}.`
+    );
   };
 
   return (
-    <section id="contacto" className="py-20 sm:py-28 relative">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* Columna izquierda: Información comercial */}
-          <div className="lg:col-span-5">
-            <Reveal>
-              <span className="text-[#FFE600] font-mono text-xs font-bold tracking-wider uppercase bg-[#FFE600]/10 px-2.5 py-1 rounded-full border border-[#FFE600]/25">
-                Implementación
+    <section id="contacto" aria-labelledby="contacto-titulo" className="ld-seccion">
+      <div className="ld-contenedor grid items-start gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <Reveal>
+          <Etiqueta>Empieza con tu central</Etiqueta>
+          <h2 id="contacto-titulo" className="ld-h2 mt-4">
+            Lleva tu central a <span className="ld-amarillo">TaxiHUB.</span>
+          </h2>
+          <p className="ld-lead mt-5 max-w-[32rem]">
+            Te mostramos el sistema con tu ciudad: configuramos el mapa, damos de alta tus unidades, capacitamos a tus
+            operadoras y vinculamos el WhatsApp de la central.
+          </p>
+          <div className="mt-8 grid gap-3">
+            <button
+              type="button"
+              onClick={() => abrirWhatsAppVentas("Hola TaxiHUB, quiero una demostración para mi central de taxis.")}
+              className="group flex items-center gap-4 rounded-2xl border border-[rgba(148,172,204,0.14)] bg-[#0A121D] p-4 text-left transition-colors hover:border-[#FFE600]/45"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#22C55E]/10 text-[#4ADE80]" aria-hidden="true">
+                <MessageCircle className="h-5 w-5" />
               </span>
-              <h2 className="font-display l-titulo mt-3">
-                Te ayudamos a pasar tu central a TaxiHUB.
-              </h2>
-              <p className="mt-4 text-base text-[#a1a6b2] leading-relaxed">
-                Configuramos el mapa de tu ciudad, damos de alta tus unidades y choferes, capacitamos a tus
-                operadoras y vinculamos el WhatsApp de la central.
-              </p>
-
-              <div className="mt-8 space-y-4">
-                <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] ">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFE600]/10 text-[#FFE600] shrink-0">
-                    <MessageSquare className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Atención por WhatsApp</h4>
-                    <p className="text-xs text-[#8b909c] mt-0.5">
-                      Escríbenos al {WHATSAPP_VENTAS_TEXTO}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] ">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFE600]/10 text-[#FFE600] shrink-0">
-                    <PhoneCall className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Prueba con tu ciudad</h4>
-                    <p className="text-xs text-[#8b909c] mt-0.5">
-                      Montamos una prueba con tus colonias y puntos frecuentes.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold">Escríbenos por WhatsApp</span>
+                <span className="ld-mono block text-[13px] text-[#8A9BB0]">{WHATSAPP_VENTAS_TEXTO}</span>
+              </span>
+              <ArrowRight className="h-4 w-4 text-[#8A9BB0] transition-transform group-hover:translate-x-1 group-hover:text-[#FFE600]" aria-hidden="true" />
+            </button>
+            <div className="flex items-center gap-4 rounded-2xl border border-[rgba(148,172,204,0.14)] p-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#FFE600]/10 text-[#FFE600]" aria-hidden="true">
+                <MapPinned className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block text-[15px] font-semibold">Prueba con tu ciudad</span>
+                <span className="block text-[13px] text-[#8A9BB0]">Montamos la demostración con tus colonias y puntos frecuentes.</span>
+              </span>
+            </div>
           </div>
+        </Reveal>
 
-          {/* Columna derecha: Formulario diurno */}
-          <div className="lg:col-span-7">
-            <Reveal delay={0.1}>
-              <div className="p-7 sm:p-9 rounded-3xl bg-white/[0.03] border border-white/10 ">
-                <h3 className="text-2xl font-extrabold text-white mb-2">Pide tu demostración</h3>
-                <p className="text-xs text-[#8b909c] mb-6 font-mono">
-                  Tarifa oficial: $99 MXN / mes por unidad activa + pago único de configuración inicial.
-                </p>
+        <div className="ld-panel p-6 sm:p-8">
+          <h3 className="ld-display text-[1.5rem] font-extrabold">Pide tu demostración</h3>
+          <p className="ld-mono mt-1.5 text-[12px] text-[#8A9BB0]">$99 MXN / mes por unidad activa + implementación única</p>
 
-                {submitted ? (
-                  <div
-                    data-testid={LANDING.leadSuccess}
-                    className="p-6 rounded-2xl bg-[#FFE600]/10 border border-[#FFE600]/25 text-center"
-                  >
-                    <CheckCircle2 className="w-12 h-12 text-[#FFE600] mx-auto mb-3" />
-                    <h4 className="text-lg font-bold text-white mb-1">¡Listo!</h4>
-                    <p className="text-sm text-[#a1a6b2] mb-4">
-                      Abrimos WhatsApp con tu mensaje listo para enviar.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setSubmitted(false)}
-                      className="px-4 py-2 rounded-xl bg-white/10 text-xs font-bold text-white hover:bg-white/15 transition"
+          {enviado ? (
+              <Cambio clave="ok" data-testid={LANDING.leadSuccess} className="mt-6 rounded-2xl border border-[#22C55E]/30 bg-[#22C55E]/[0.07] p-6 text-center" role="status">
+                <CheckCircle2 className="mx-auto h-10 w-10 text-[#22C55E]" aria-hidden="true" />
+                <h4 className="mt-3 text-[17px] font-semibold">Listo</h4>
+                <p className="mt-1 text-[14px] text-[#B7C4D4]">Abrimos WhatsApp con tu mensaje listo para enviar.</p>
+                <button type="button" onClick={() => setEnviado(false)} className="ld-btn ld-btn--secundario ld-btn--chico mt-5">
+                  Enviar otra consulta
+                </button>
+              </Cambio>
+            ) : (
+              <Cambio as="form" clave="form" onSubmit={enviar} data-testid={LANDING.leadForm} className="mt-6 grid gap-4" noValidate>
+                <AnimatePresence initial={false}>
+                  {error && (
+                    <motion.div
+                      initial={reduce ? false : { opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      data-testid={LANDING.leadError}
+                      role="alert"
+                      className="flex items-center gap-2 rounded-xl border border-[#F4544C]/35 bg-[#F4544C]/10 p-3 text-[13px] text-[#FFC9C5]"
                     >
-                      Enviar otra consulta
-                    </button>
-                  </div>
-                ) : (
-                  <form
-                    onSubmit={handleSubmit}
-                    data-testid={LANDING.leadForm}
-                    className="space-y-4"
-                  >
-                    {error && (
-                      <div
-                        data-testid={LANDING.leadError}
-                        className="flex items-center gap-2 p-3.5 rounded-xl bg-rose-500/10 border border-rose-400/30 text-rose-200 text-xs font-medium"
-                      >
-                        <ShieldAlert className="w-4 h-4 shrink-0" />
-                        <span>{error}</span>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-[#d4d7de] mb-1">
-                          Tu Nombre Completo *
-                        </label>
-                        <input
-                          type="text"
-                          name="nombre"
-                          required
-                          value={formData.nombre}
-                          onChange={handleChange}
-                          data-testid={LANDING.leadNombre}
-                          placeholder="Ej. Roberto Méndez"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-[#d4d7de] mb-1">
-                          Nombre de la Central o Sitio *
-                        </label>
-                        <input
-                          type="text"
-                          name="central"
-                          required
-                          value={formData.central}
-                          onChange={handleChange}
-                          data-testid={LANDING.leadCentral}
-                          placeholder="Ej. Radio Taxis Maya"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-[#d4d7de] mb-1">
-                          Teléfono o WhatsApp *
-                        </label>
-                        <input
-                          type="tel"
-                          name="telefono"
-                          required
-                          value={formData.telefono}
-                          onChange={handleChange}
-                          data-testid={LANDING.leadTelefono}
-                          placeholder="Ej. 916 123 4567"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-[#d4d7de] mb-1">
-                          Número estimado de unidades
-                        </label>
-                        <input
-                          type="number"
-                          name="unidades"
-                          min="1"
-                          max="1000"
-                          value={formData.unidades}
-                          onChange={handleChange}
-                          data-testid={LANDING.leadUnidades}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition font-mono"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-[#d4d7de] mb-1">
-                        Mensaje o requerimientos especiales
-                      </label>
-                      <textarea
-                        name="mensaje"
-                        rows="3"
-                        value={formData.mensaje}
-                        onChange={handleChange}
-                        data-testid={LANDING.leadMensaje}
-                        placeholder="Cuéntanos sobre tu ciudad o si requieren migrar desde radios analógicos..."
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition resize-none"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      data-testid={LANDING.leadSubmit}
-                      className="w-full mt-2 py-3.5 px-6 rounded-xl bg-[#FFE600] hover:bg-[#FFB800] text-[#0C0E14] font-bold text-sm flex items-center justify-center gap-2  transition disabled:opacity-50 active:scale-[0.98]"
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>{submitting ? "Enviando..." : "Enviar por WhatsApp"}</span>
-                    </button>
-                  </form>
-                )}
-              </div>
-            </Reveal>
-          </div>
+                      <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Campo etiqueta="Tu nombre *" id="lead-nombre" name="nombre" autoComplete="name" value={formData.nombre} onChange={cambiar} data-testid={LANDING.leadNombre} placeholder="Ej. Roberto Méndez" required />
+                  <Campo etiqueta="Central o sitio *" id="lead-central" name="central" autoComplete="organization" value={formData.central} onChange={cambiar} data-testid={LANDING.leadCentral} placeholder="Ej. Radio Taxis Maya" required />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Campo etiqueta="Teléfono o WhatsApp *" id="lead-telefono" name="telefono" type="tel" autoComplete="tel" value={formData.telefono} onChange={cambiar} data-testid={LANDING.leadTelefono} placeholder="Ej. 916 123 4567" required />
+                  <Campo etiqueta="Unidades (aprox.)" id="lead-unidades" name="unidades" type="number" inputMode="numeric" min="1" max="1000" value={formData.unidades} onChange={cambiar} data-testid={LANDING.leadUnidades} className="ld-campo ld-mono" />
+                </div>
+                <div>
+                  <label htmlFor="lead-mensaje" className="mb-1.5 block text-[13px] font-medium text-[#B7C4D4]">Cuéntanos de tu operación</label>
+                  <textarea
+                    id="lead-mensaje"
+                    name="mensaje"
+                    rows={3}
+                    value={formData.mensaje}
+                    onChange={cambiar}
+                    data-testid={LANDING.leadMensaje}
+                    placeholder="Ciudad, cuántas operadoras tienen, si hoy despachan por radio…"
+                    className="ld-campo resize-none"
+                  />
+                </div>
+                <button type="submit" data-testid={LANDING.leadSubmit} className="ld-btn ld-btn--primario mt-1 w-full">
+                  <Send className="h-4 w-4" aria-hidden="true" /> Enviar por WhatsApp
+                </button>
+              </Cambio>
+            )}
         </div>
       </div>
     </section>

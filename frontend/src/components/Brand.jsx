@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 // Identidad visual taxiHUB — Central y Despacho Satelital.
 // Isotipo representativo: Pin GPS satelital + silueta frontal de Taxi con copete iluminado + ondas de radio.
-// Paleta emblemática: Amarillo luminoso (#FFE600 -> #FF9900) con contraste obsidian (#0C0E14).
+// Paleta emblemática: Amarillo luminoso (#FFE600 -> #FF9900) con contraste obsidian (#050B12).
 export function BrandMark({ className, size = "md", logoUrl = null }) {
   const gradId = useId();
 
@@ -35,7 +35,7 @@ export function BrandMark({ className, size = "md", logoUrl = null }) {
         className
       )}
       style={{
-        background: "linear-gradient(145deg, #181B22 0%, #0C0E14 100%)",
+        background: "linear-gradient(145deg, #121D2B 0%, #050B12 100%)",
       }}
     >
       {logoUrl ? (
@@ -84,7 +84,7 @@ export function BrandMark({ className, size = "md", logoUrl = null }) {
             fill={`url(#${gradId})`}
           />
           {/* Núcleo oscuro para profundidad tridimensional */}
-          <circle cx="24" cy="21.5" r="11" fill="#0B0E14" />
+          <circle cx="24" cy="21.5" r="11" fill="#060D16" />
           {/* Copete TAXI iluminado con brillo neón */}
           <rect x="20.5" y="13.2" width="7" height="2.5" rx="1.2" fill="#FFE600" />
           {/* Silueta frontal del Taxi */}
@@ -93,12 +93,12 @@ export function BrandMark({ className, size = "md", logoUrl = null }) {
             fill="#F8FAFC"
           />
           {/* Parabrisas negro tintado */}
-          <path d="M18.6 20.3L19.7 17H28.3L29.4 20.3H18.6Z" fill="#0B0E14" />
+          <path d="M18.6 20.3L19.7 17H28.3L29.4 20.3H18.6Z" fill="#060D16" />
           {/* Faros delanteros tipo led amarillo luminoso */}
           <circle cx="18.8" cy="22.8" r="1.3" fill="#FFE600" />
           <circle cx="29.2" cy="22.8" r="1.3" fill="#FFE600" />
           {/* Rejilla frontal */}
-          <rect x="21.5" y="22.3" width="5" height="1.1" rx="0.5" fill="#0B0E14" />
+          <rect x="21.5" y="22.3" width="5" height="1.1" rx="0.5" fill="#060D16" />
         </svg>
       )}
     </div>
@@ -119,7 +119,7 @@ export function BrandWordmark({
           <>
             <span className="text-slate-900 dark:text-slate-100">taxi</span>
             <span
-              className="ml-0.5 text-amber-500 dark:text-[#FFE600]"
+              className="ml-0.5 text-amber-500 dark:text-brand"
               style={{
                 textShadow: "0 0 14px rgba(255,230,0, 0.45)",
               }}

@@ -13,8 +13,19 @@ export const THEME_LIST = Object.entries(THEMES).map(([id, v]) => ({ id, ...v })
 // look heredado). "claro" = piel diurna "papel cálido".
 export const MODE_KEYS = ["oscuro", "claro"];
 
-export function applyTheme(id) {
+// `porUsuario`: la paleta la eligió la persona en el selector. Quita el color que haya puesto el
+// sitio (estilo en línea de --brand, que si no siempre gana) y lo recuerda por encima del sitio.
+const VARS_MARCA = ["--brand", "--brand-bright", "--brand-strong"];
+export function applyTheme(id, { porUsuario = false } = {}) {
   const theme = THEMES[id] ? id : "amarillo";
+  if (porUsuario) {
+    VARS_MARCA.forEach((v) => document.documentElement.style.removeProperty(v));
+    try {
+      localStorage.setItem("app_theme_user_override", "1");
+    } catch (_) {
+      /* sin almacenamiento: vale para esta sesión */
+    }
+  }
   // amarillo = default (sin atributo) para aplicar la identidad oficial
   if (theme === "amarillo") {
     document.documentElement.removeAttribute("data-theme");
@@ -75,7 +86,7 @@ export function applySitioBranding(cfg) {
   if (cfg.tema_default && THEMES[cfg.tema_default] && !localStorage.getItem("app_theme_user_override")) {
     applyTheme(cfg.tema_default);
   }
-  if (cfg.color_primario) {
+  if (cfg.color_primario && !localStorage.getItem("app_theme_user_override")) {
     const hsl = hexToHslTuple(cfg.color_primario);
     if (hsl) {
       const root = document.documentElement;

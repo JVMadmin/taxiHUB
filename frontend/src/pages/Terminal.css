@@ -1,8 +1,8 @@
 .taxi-terminal-shell {
-  --terminal-ink: #F5F5F7;
-  --terminal-muted: #9CA0AA;
+  --terminal-ink: #EDF2F8;
+  --terminal-muted: #93A4B8;
   --terminal-line: rgba(255, 255, 255, 0.06);
-  --terminal-panel: rgba(23, 25, 30, 0.95);
+  --terminal-panel: rgba(15, 25, 38, 0.95);
   --terminal-green: #FFE600;
   --terminal-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -66,10 +66,8 @@ html[data-mode="claro"] .taxi-terminal-shell {
   animation: terminal-taxi-pulse 1.65s cubic-bezier(0.2, 0.75, 0.3, 1) infinite;
 }
 
-.taxi-terminal-shell .th-terminal-state-asset:hover img {
-  transform: scale(1.08);
-  transition: transform 160ms ease-out;
-}
+.taxi-terminal-shell .th-terminal-state-asset .th-taxi3d-cuerpo { transition: transform 160ms ease-out; }
+.taxi-terminal-shell .th-terminal-state-asset:hover .th-taxi3d-cuerpo { transform: scale(1.07); }
 
 /* Marcadores sincronizados instantáneamente con el zoom y paneo del mapa, sin deriva ni lag */
 .leaflet-marker-icon.th-terminal-state-asset,
@@ -114,7 +112,7 @@ html[data-mode="claro"] .taxi-terminal-shell {
 
 /* Estilos de alto contraste para el Popup del taxi en mapa */
 .th-taxi-popup .leaflet-popup-content-wrapper {
-  background: #17191E !important;
+  background: hsl(214 43% 10% / var(--ui-alpha, 0.97)) !important;
   color: #FFFFFF !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 16px !important;
@@ -123,7 +121,7 @@ html[data-mode="claro"] .taxi-terminal-shell {
 }
 
 .th-taxi-popup .leaflet-popup-tip {
-  background: #17191E !important;
+  background: hsl(214 43% 10% / var(--ui-alpha, 0.97)) !important;
 }
 
 .th-taxi-popup .leaflet-popup-content {
@@ -133,7 +131,7 @@ html[data-mode="claro"] .taxi-terminal-shell {
 }
 
 .th-taxi-popup a.leaflet-popup-close-button {
-  color: #9CA0AA !important;
+  color: #93A4B8 !important;
   padding: 4px 6px 0 0 !important;
 }
 

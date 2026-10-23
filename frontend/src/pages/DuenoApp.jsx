@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { WS_BASE, getDuenoToken, getDueno, logoutDueno, fetchSitioConfig, duenoApi } from "@/lib/api";
 import { cn, resolveDriverAvatar } from "@/lib/utils";
 import { BrandMark, BrandWordmark } from "@/components/Brand";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { AjustesApariencia } from "@/components/AjustesApariencia";
 import { ModeToggle } from "@/components/ModeToggle";
 import { ConnectionBadge } from "@/components/ConnectionBadge";
 import { DeviceModeToggle } from "@/components/DeviceModeToggle";
@@ -50,6 +50,15 @@ export default function DuenoApp() {
 
   const embedded = new URLSearchParams(window.location.search).get("embed") === "1";
   const [deviceMode, setDeviceMode] = useState(() => (embedded ? "app" : "escritorio"));
+  // Transparencia de los paneles del socio (Ajustes de apariencia), guardada en este equipo.
+  const [uiAlpha, setUiAlpha] = useState(() => {
+    const v = parseFloat(localStorage.getItem("dueno_ui_alpha") || "");
+    return Number.isFinite(v) ? Math.min(1, Math.max(0.4, v)) : 0.92;
+  });
+  const cambiarAlpha = (v) => {
+    setUiAlpha(v);
+    try { localStorage.setItem("dueno_ui_alpha", String(v)); } catch (_) { /* sin almacenamiento */ }
+  };
 
   useEffect(() => { if (!getDuenoToken()) navigate("/dueno/login"); }, [navigate]);
 
@@ -88,7 +97,7 @@ export default function DuenoApp() {
   const subUrgente = (sitioConfig?.suscripcion?.dias_restantes ?? 28) <= 5;
 
   const renderApp = (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="dueno-shell flex min-h-screen bg-background text-foreground" style={{ "--ui-alpha": uiAlpha }}>
       {/* Sidebar (desktop) */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-card/60 p-4 lg:flex">
         <div className="mb-6 flex items-center gap-3 px-1">
@@ -171,7 +180,7 @@ export default function DuenoApp() {
             {!embedded && <DeviceModeToggle mode={deviceMode} onChange={setDeviceMode} />}
             <NotificationBell liveSignal={liveSignal} />
             <ModeToggle />
-            <ThemeSwitcher />
+            <AjustesApariencia alpha={uiAlpha} onAlpha={cambiarAlpha} />
             <button data-testid="dueno-logout-mobile" onClick={salir} title="Salir"
               className="th-3d flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground"
               aria-label="Cerrar sesión">
@@ -194,8 +203,8 @@ export default function DuenoApp() {
               <span>Tiempo restante de uso: {subRestante}</span>
             </span>
             {avisosActivos.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/40 bg-indigo-500/15 px-3 py-1 text-xs font-semibold text-indigo-200">
-                <Megaphone className="h-3.5 w-3.5 text-indigo-300" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-semibold text-foreground/90">
+                <Megaphone className="h-3.5 w-3.5 text-brand" />
                 <span>{avisosActivos[0].titulo}: {avisosActivos[0].mensaje}</span>
               </span>
             )}
@@ -204,7 +213,7 @@ export default function DuenoApp() {
             {!embedded && <DeviceModeToggle mode={deviceMode} onChange={setDeviceMode} />}
             <NotificationBell liveSignal={liveSignal} />
             <ModeToggle />
-            <ThemeSwitcher />
+            <AjustesApariencia alpha={uiAlpha} onAlpha={cambiarAlpha} />
           </div>
         </header>
 

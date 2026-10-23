@@ -38,45 +38,50 @@ def verify():
         else:
             print("  [OK] Precio '$99 MXN' presente")
 
-        # Verificar simulador de despacho
-        sim = page.wait_for_selector("[data-testid='landing-simulator']", timeout=5000)
-        if sim:
-            print("  [OK] Simulador de despacho interactivo visible")
-
-        # Probar interaccion del simulador (clic en boton de hotspot)
-        hotspot_btn = page.query_selector("[data-testid='landing-simulator'] button:has-text('Hospital')")
-        if hotspot_btn:
-            hotspot_btn.click()
+        # Demo interactiva del hero: mapa con unidades y selección desde la lista
+        page.wait_for_selector("[data-testid='landing-hero-demo']", timeout=10000)
+        try:
+            page.wait_for_function("document.querySelectorAll('[data-testid=landing-hero-demo] .ld-unidad').length > 5", timeout=20000)
+            page.click("[data-testid='landing-demo-fila-054']")
             time.sleep(1)
-            print("  [OK] Clic en hotspot del simulador interactivo ejecutado")
+            if "054" in page.inner_text("[data-testid='landing-demo-detalle']"):
+                print("  [OK] Demo del hero: seleccionar una unidad actualiza el detalle")
+            else:
+                errors.append("La demo del hero no actualiza el detalle al seleccionar una unidad")
+        except Exception as e:  # sin WebGL el mapa muestra una captura real en su lugar
+            errors.append(f"Mapa de la demo del hero no cargó: {e}")
 
-        # Verificar seccion de video
-        video = page.query_selector("video")
-        if video:
-            poster = video.get_attribute("poster")
-            print(f"  [OK] Reproductor de video presente (poster: {poster})")
+        # Explorador del producto (pestañas) y video real en diálogo
+        page.click("[data-testid='landing-explorador-tab-whatsapp']")
+        time.sleep(1)
+        if page.query_selector("[data-testid='landing-wa-mensajes']"):
+            print("  [OK] Explorador: pestaña WhatsApp")
         else:
-            errors.append("No se encontro el elemento <video> en la landing.")
+            errors.append("El explorador no muestra la pestaña de WhatsApp")
+        video = page.query_selector("[data-testid='landing-video-dialogo'] video")
+        if video:
+            print(f"  [OK] Video real disponible (poster: {video.get_attribute('poster')})")
+        else:
+            errors.append("No se encontró el video real en la landing.")
 
-        # Verificar calculador de precios interactivo
         print("[3/6] Probando calculadora de unidades ($99 MXN)...")
         units_input = page.query_selector("[data-testid='landing-price-units']")
         if units_input:
-            print("  [OK] Input interactivo de unidades encontrado")
-
-        # 4. Verificar descargas
-        print("[4/6] Verificando enlaces de descarga de aplicaciones...")
-        downloads = [
-            "TaxiHub-Central.exe",
-            "taxiHUB-operador-debug.apk",
-            "taxiHUB-socio-debug.apk"
-        ]
-        for d in downloads:
-            link = page.query_selector(f"a[href*='{d}']")
-            if link:
-                print(f"  [OK] Enlace de descarga para {d} presente")
+            units_input.fill("40")
+            time.sleep(0.5)
+            if "3,960" in page.inner_text("[data-testid='landing-price-total']"):
+                print("  [OK] Calculadora: 40 unidades = $3,960 MXN")
             else:
-                errors.append(f"Falta enlace de descarga para {d}")
+                errors.append("La calculadora de precio no actualiza el total")
+
+        # 4. Descargas (no se enlazan desde la landing; deben seguir servidas)
+        print("[4/6] Verificando descargas de las apps...")
+        for d in ["taxiHUB-operador-debug.apk", "taxiHUB-pasajero-debug.apk", "taxiHUB-socio-debug.apk"]:
+            r = page.request.head(f"{PROD_URL}/downloads/{d}")
+            if r.status == 200:
+                print(f"  [OK] /downloads/{d} disponible")
+            else:
+                errors.append(f"/downloads/{d} respondió {r.status}")
 
         # Captura Desktop
         desktop_shot = REPORTS_DIR / "taxihub_production_desktop.png"

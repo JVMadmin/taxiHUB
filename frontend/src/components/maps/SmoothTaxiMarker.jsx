@@ -167,10 +167,11 @@ function SmoothTaxiMarkerComponent({
         icon={icon}
         eventHandlers={{ click: onSelect }}
       >
-        <Popup className="th-taxi-popup" minWidth={170} maxWidth={220}>
-          <div style={{ fontFamily: "Inter, sans-serif", padding: "6px 2px", display: "flex", flexDirection: "column", gap: "8px", minWidth: "170px" }}>
+        {/* Tarjeta de la unidad: 30% más grande que el diseño base (todas las medidas × 1.3). */}
+        <Popup className="th-taxi-popup" minWidth={221} maxWidth={286}>
+          <div style={{ fontFamily: "Inter, sans-serif", padding: "7.8px 2.6px", display: "flex", flexDirection: "column", gap: "10.4px", minWidth: "221px" }}>
             {/* Foto + Nombre + Unidad */}
-            <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "11.7px" }}>
               <div
                 style={{ position: "relative", cursor: "pointer", flexShrink: 0 }}
                 onClick={(e) => {
@@ -186,38 +187,38 @@ function SmoothTaxiMarkerComponent({
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = "/assets/drivers/driver-01.jpg";
                   }}
-                  style={{ height: "40px", width: "40px", borderRadius: "50%", objectFit: "cover", border: "2px solid #FFE600", display: "block" }}
+                  style={{ height: "52px", width: "52px", borderRadius: "50%", objectFit: "cover", border: "2.6px solid #FFE600", display: "block" }}
                 />
                 <span
                   style={{
                     position: "absolute",
-                    bottom: "-2px",
-                    right: "-2px",
+                    bottom: "-2.6px",
+                    right: "-2.6px",
                     background: "#FFE600",
                     borderRadius: "50%",
-                    padding: "2px",
+                    padding: "2.6px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.5)"
+                    boxShadow: "0 2.6px 5.2px rgba(0,0,0,0.5)"
                   }}
                 >
-                  <ZoomIn style={{ width: "9px", height: "9px", color: "#FFFFFF" }} />
+                  <ZoomIn style={{ width: "11.7px", height: "11.7px", color: "#FFFFFF" }} />
                 </span>
               </div>
 
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: 800, fontSize: "13px", color: "#FFFFFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "-0.2px" }}>
+                <div style={{ fontWeight: 800, fontSize: "16.9px", color: "#FFFFFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "-0.3px" }}>
                   {op.nombre}
                 </div>
-                <div style={{ fontSize: "11px", color: "#CBD5E1", marginTop: "2px", fontWeight: 500 }}>
-                  Unidad <span style={{ fontFamily: "monospace", color: "#FBBF24", fontWeight: 800, fontSize: "12px" }}>#{op.vehiculo?.numero_economico || op.placa}</span>
+                <div style={{ fontSize: "14.3px", color: "#CBD5E1", marginTop: "2.6px", fontWeight: 500 }}>
+                  Unidad <span style={{ fontFamily: "monospace", color: "#FBBF24", fontWeight: 800, fontSize: "15.6px" }}>#{op.vehiculo?.numero_economico || op.placa}</span>
                 </div>
               </div>
             </div>
 
             {/* Imagen vehículo */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.06)", borderRadius: "9px", padding: "5px 7px", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10.4px", background: "rgba(255,255,255,0.06)", borderRadius: "11.7px", padding: "6.5px 9.1px", border: "1.3px solid rgba(255,255,255,0.06)" }}>
               <img
                 src={vehicleFotoUrl}
                 alt={op.vehiculo?.modelo || "Vehículo"}
@@ -225,33 +226,33 @@ function SmoothTaxiMarkerComponent({
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/vehicle-types/taxi-estandar.png";
                 }}
-                style={{ height: "30px", width: "50px", objectFit: "contain", flexShrink: 0 }}
+                style={{ height: "39px", width: "65px", objectFit: "contain", flexShrink: 0 }}
               />
-              <div style={{ fontSize: "11px", color: "#FFFFFF", fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: "14.3px", color: "#FFFFFF", fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {op.vehiculo?.marca || ""} {op.vehiculo?.modelo || "Taxi"}
               </div>
             </div>
 
             {/* Estado */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(0,0,0,0.25)", borderRadius: "6px", padding: "3px 6px" }}>
-              <span style={{ height: "8px", width: "8px", borderRadius: "50%", background: ESTADO_COLORS[op.estado], flexShrink: 0 }} />
-              <span style={{ fontSize: "11px", fontWeight: 700, color: ESTADO_COLORS[op.estado] }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "7.8px", background: "rgba(0,0,0,0.25)", borderRadius: "7.8px", padding: "3.9px 7.8px" }}>
+              <span style={{ height: "10.4px", width: "10.4px", borderRadius: "50%", background: ESTADO_COLORS[op.estado], flexShrink: 0 }} />
+              <span style={{ fontSize: "14.3px", fontWeight: 700, color: ESTADO_COLORS[op.estado] }}>
                 {ESTADO_LABEL[op.estado]}
               </span>
-              <span style={{ marginLeft: "auto", fontSize: "10px", color: "#94A3B8", fontFamily: "monospace" }}>
+              <span style={{ marginLeft: "auto", fontSize: "13px", color: "#94A3B8", fontFamily: "monospace" }}>
                 {speedKmh} km/h
               </span>
             </div>
 
             {/* Indicador de viaje foráneo */}
             {(op.es_foraneo || op.destino_foraneo) && (
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(14,165,233,0.18)", border: "1px solid rgba(14,165,233,0.4)", borderRadius: "6px", padding: "4px 7px", fontSize: "11px", color: "#38BDF8", fontWeight: 700 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "7.8px", background: "rgba(14,165,233,0.18)", border: "1.3px solid rgba(14,165,233,0.4)", borderRadius: "7.8px", padding: "5.2px 9.1px", fontSize: "14.3px", color: "#38BDF8", fontWeight: 700 }}>
                 <span>🚗 {op.destino_foraneo || "Servicio Foráneo Regional"}</span>
               </div>
             )}
 
             {/* Contador de servicios del día */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,230,0,0.14)", border: "1px solid rgba(255,230,0,0.3)", borderRadius: "6px", padding: "3px 7px", fontSize: "11px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,230,0,0.14)", border: "1.3px solid rgba(255,230,0,0.3)", borderRadius: "7.8px", padding: "3.9px 9.1px", fontSize: "14.3px" }}>
               <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Servicios hoy:</span>
               <span style={{ fontFamily: "monospace", fontWeight: 800, color: "#FFFFFF" }}>{serviciosHoy}</span>
             </div>
@@ -285,7 +286,7 @@ function SmoothTaxiMarkerComponent({
               width: "100%",
               borderRadius: "20px",
               border: "1px solid rgba(255, 255, 255, 0.15)",
-              backgroundColor: "#17191E",
+              backgroundColor: "#0F1926",
               padding: "24px",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.75)",
               textAlign: "center",
@@ -321,7 +322,7 @@ function SmoothTaxiMarkerComponent({
                 overflow: "hidden",
                 border: "3px solid #FFE600",
                 boxShadow: "0 10px 25px rgba(255,230,0, 0.35)",
-                backgroundColor: "#0B0D10",
+                backgroundColor: "#050B12",
               }}
             >
               <img

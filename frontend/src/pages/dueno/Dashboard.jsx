@@ -87,12 +87,12 @@ export function Dashboard({ liveSignal }) {
         <div className="rounded-2xl border border-border bg-card p-5" data-testid="dueno-focos-zona">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div>
-              <h2 className="text-sm font-bold text-foreground">Focos de Servicios por Zona (Mapa de Calor por Colonia)</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-base font-bold text-foreground">Focos de Servicios por Zona (Mapa de Calor por Colonia)</h2>
+              <p className="text-[13px] text-muted-foreground">
                 Concentración de viajes e ingresos por zona codificada por colores de demanda
               </p>
             </div>
-            <div className="flex items-center gap-2 text-[11px] font-semibold">
+            <div className="flex items-center gap-3 text-[12.5px] font-semibold">
               <span className="inline-flex items-center gap-1 text-rose-400"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Alta</span>
               <span className="inline-flex items-center gap-1 text-amber-400"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Media</span>
               <span className="inline-flex items-center gap-1 text-emerald-400"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Normal</span>
@@ -102,27 +102,28 @@ export function Dashboard({ liveSignal }) {
             {data.focos_por_zona.map((f, idx) => (
               <div
                 key={f.zona || idx}
-                className="rounded-xl border border-border/80 bg-secondary/30 p-3"
-                style={{ borderLeftWidth: 4, borderLeftColor: f.color || "#10b981" }}
+                className="rounded-xl border border-border/80 bg-secondary/30 p-3.5"
+                style={{ borderLeftWidth: 4, borderLeftColor: f.color === "#10B981" ? "#22C55E" : f.color || "#22C55E" }}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-xs font-bold text-foreground">{f.zona}</span>
-                  <span
-                    className="rounded-md px-2 py-0.5 font-mono text-[11px] font-extrabold text-white"
-                    style={{ backgroundColor: f.color || "#10b981" }}
-                  >
+                  <span className="truncate text-[15px] font-bold text-foreground">{f.zona}</span>
+                  <span className="th-insignia3d" data-cero={!f.servicios}>
                     {f.servicios} serv.
                   </span>
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-background/70">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${Math.max(8, f.intensidad_pct || 10)}%`, backgroundColor: f.color || "#10b981" }}
-                  />
+                <div
+                  className="th-barra3d mt-3"
+                  role="meter"
+                  aria-label={`Demanda en ${f.zona}`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(f.intensidad_pct || 0)}
+                >
+                  <span style={{ width: `calc(${Math.max(8, f.intensidad_pct || 10)}% - 3px)` }} />
                 </div>
-                <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>Demanda: <strong className="uppercase text-foreground/90">{f.nivel}</strong></span>
-                  <span className="mono-num font-semibold text-emerald-400">{fmtMXN(f.ingresos)}</span>
+                <div className="mt-2.5 flex items-center justify-between gap-2 text-[13px] text-muted-foreground">
+                  <span>Demanda: <strong className="uppercase text-foreground">{f.nivel}</strong></span>
+                  <span className="mono-num text-[14px] font-bold text-brand">{fmtMXN(f.ingresos)}</span>
                 </div>
               </div>
             ))}

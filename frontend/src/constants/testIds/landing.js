@@ -3,23 +3,43 @@ export const LANDING = {
   page: "taxihub-landing-page",
   nav: "landing-nav",
   navMenuToggle: "landing-nav-menu-toggle",
-  goOperador: "landing-go-operador",
   goTerminal: "landing-go-terminal",
   ctaDemo: "landing-cta-demo",
-  ctaTerminal: "landing-cta-terminal",
-  ctaDueno: "landing-cta-dueno",
-  simulator: "landing-simulator",
-  simulatorPause: "landing-simulator-pause",
-  storyStep: "landing-story-step",
-  video: "landing-video",
-  heroVideo: "landing-hero-video",
+  ctaExplorar: "landing-cta-explorar",
   whatsappFlotante: "landing-whatsapp-flotante",
+
+  // Demo interactiva (datos sintéticos sobre calles reales de Palenque)
+  heroDemo: "landing-hero-demo",
+  demoLista: "landing-demo-lista",
+  demoFila: "landing-demo-fila",                 // + `-${unidad}`
+  demoUnidad: "landing-demo-unidad",             // + `-${unidad}` (marcador en el mapa)
+  demoDetalle: "landing-demo-detalle",
+  demoZoomIn: "landing-demo-zoom-in",
+  demoZoomOut: "landing-demo-zoom-out",
+
+  capacidad: "landing-capacidad",                // + `-${clave}`
+  explorador: "landing-explorador",
+  explorTab: "landing-explorador-tab",           // + `-${clave}`
+  despachoNuevo: "landing-despacho-nuevo",
+  despachoOfrecer: "landing-despacho-ofrecer",
+  despachoRechazar: "landing-despacho-rechazar",
+  despachoAvanzar: "landing-despacho-avanzar",
+  despachoReiniciar: "landing-despacho-reiniciar",
+  despachoFase: "landing-despacho-fase",
+  seguirUnidad: "landing-seguir-unidad",
+  seguimientoChip: "landing-seguimiento-chip",   // + `-${unidad}`
+  waAccion: "landing-wa-accion",
+  waMensajes: "landing-wa-mensajes",
+  hotspot: "landing-hotspot",                    // + `-${clave}`
+  flujo: "landing-flujo",
+  videoAbrir: "landing-video-abrir",
+  videoDialogo: "landing-video-dialogo",
+  beneficioTab: "landing-beneficio-tab",         // + `-${clave}`
+  faqItem: "landing-faq-item",                   // + `-${indice}`
+
   priceCard: "landing-price-card",
   priceUnits: "landing-price-units",
   priceTotal: "landing-price-total",
-  downloadApkOperador: "download-apk-operador",
-  downloadApkSocio: "download-apk-socio",
-  downloadWindows: "download-windows-central",
   leadForm: "landing-lead-form",
   leadNombre: "landing-lead-nombre",
   leadCentral: "landing-lead-central",
@@ -30,8 +50,6 @@ export const LANDING = {
   leadSuccess: "landing-lead-success",
   leadError: "landing-lead-error",
   footerOperadora: "landing-footer-operadora",
-  footerOperador: "landing-footer-operador",
   footerDueno: "landing-footer-dueno",
   footerDev: "landing-footer-dev",
-  webLink: "web-landing-link",
 };

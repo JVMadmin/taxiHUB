@@ -125,7 +125,7 @@ function agregarCapas(map, { relieve }) {
   if (!map.getSource("th-ruta")) {
     map.addSource("th-ruta", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
     const comun = { type: "line", source: "th-ruta", layout: { "line-cap": "round", "line-join": "round" } };
-    map.addLayer({ ...comun, id: "th-ruta-borde", paint: { "line-color": "#070A0F", "line-width": 11, "line-opacity": 0.85 } });
+    map.addLayer({ ...comun, id: "th-ruta-borde", paint: { "line-color": "#03070C", "line-width": 11, "line-opacity": 0.85 } });
     map.addLayer({ ...comun, id: "th-ruta-linea", paint: { "line-color": "#FFE600", "line-width": 6.5 } });
     map.addLayer({
       ...comun,

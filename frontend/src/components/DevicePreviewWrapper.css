@@ -1,16 +1,16 @@
 /* frontend/src/components/DevicePreviewWrapper.css
    Vista de demostración en navegador (celulares lado a lado para grabar videos).
    Identidad Amarillo Luminoso: #FFE600 (hover #FFB800, degradado a #FF9900),
-   carbón #0C0E14 sobre amarillo, superficies #0B0D10 / #11141D / #17191E. */
+   carbón #050B12 sobre amarillo, superficies #050B12 / #0A121D / #0F1926. */
 
 /* Contenedor del simulador de celular para la web */
 .device-preview-backdrop {
   --demo-amarillo: #FFE600;
   --demo-amarillo-hover: #FFB800;
   --demo-ambar: #FF9900;
-  --demo-carbon: #0C0E14;
-  --demo-texto: #F5F5F7;
-  --demo-muted: #9CA0AA;
+  --demo-carbon: #050B12;
+  --demo-texto: #EDF2F8;
+  --demo-muted: #93A4B8;
   --demo-linea: rgba(255, 255, 255, 0.08);
   min-height: 100vh;
   min-height: 100dvh;
@@ -19,7 +19,7 @@
   background:
     radial-gradient(60rem 28rem at 50% -6rem, rgba(255, 230, 0, 0.10), transparent 70%),
     radial-gradient(40rem 30rem at 100% 100%, rgba(255, 153, 0, 0.05), transparent 70%),
-    #070809;
+    #03070C;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -46,7 +46,7 @@
   max-width: 880px;
   margin-bottom: 10px;
   padding: 6px 8px;
-  background: rgba(17, 20, 29, 0.82);
+  background: rgba(10, 18, 29, 0.82);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--demo-linea);
@@ -96,7 +96,7 @@
 
 .device-preview-btn-ghost {
   background: rgba(255, 255, 255, 0.04);
-  color: #D4D7DE;
+  color: #CFD8E3;
   border-color: var(--demo-linea);
 }
 .device-preview-btn-ghost:hover {
@@ -252,8 +252,8 @@
   max-width: 95vw;
   height: 860px;
   max-height: calc(100dvh - var(--demo-reserva, 100px));
-  background: #0B0D10;
-  border: 11px solid #17191E;
+  background: #050B12;
+  border: 11px solid #0F1926;
   border-radius: 46px;
   box-shadow: 
     0 25px 65px -10px rgba(0, 0, 0, 0.85),
@@ -273,9 +273,9 @@
   top: 110px;
   width: 3px;
   height: 48px;
-  background: #2d313d;
+  background: #1F3048;
   border-radius: 3px 0 0 3px;
-  box-shadow: 0 65px 0 #2d313d, 0 125px 0 #2d313d;
+  box-shadow: 0 65px 0 #1F3048, 0 125px 0 #1F3048;
 }
 
 .device-preview-chassis::after {
@@ -285,7 +285,7 @@
   top: 140px;
   width: 3px;
   height: 65px;
-  background: #2d313d;
+  background: #1F3048;
   border-radius: 0 3px 3px 0;
 }
 
@@ -350,7 +350,7 @@
   height: 100%;
   overflow: hidden;
   border-radius: 34px;
-  background: #0b0d10;
+  background: #050B12;
   transform: translateZ(0);
   contain: paint;
   display: flex;
@@ -560,7 +560,7 @@
 }
 
 .device-preview-dual-badge-driver {
-  color: #0C0E14;
+  color: #050B12;
   border-color: #FFE600;
   background: #FFE600;
 }
@@ -581,7 +581,7 @@
   align-items: center;
   gap: 6px;
   padding: 5px 6px;
-  background: rgba(17, 20, 29, 0.88);
+  background: rgba(10, 18, 29, 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.1);

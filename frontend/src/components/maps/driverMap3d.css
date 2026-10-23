@@ -39,7 +39,7 @@
   border-radius: 9999px;
   padding: 3px 10px;
   font: 700 12px/1.2 "Plus Jakarta Sans", system-ui, sans-serif;
-  color: #0C0E14;
+  color: #050B12;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
   white-space: nowrap;
 }
@@ -47,6 +47,6 @@
   width: 14px;
   height: 14px;
   border-radius: 9999px;
-  border: 3px solid #0b0d10;
+  border: 3px solid #050B12;
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18);
 }

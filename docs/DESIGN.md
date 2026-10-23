@@ -1,6 +1,6 @@
 # TaxiHUB — Documento de Diseño e Identidad Visual (`DESIGN.md`)
 
-**Versión:** 2.2 (Edición Amarillo Luminoso / *Electric Taxi Glow*)  
+**Versión:** 2.3 (Amarillo Luminoso sobre azul negro profundo)  
 **Dominio Oficial:** `https://taxihub.cloud`  
 **Última Actualización:** 2026-10-23  
 
@@ -10,7 +10,8 @@
 
 Se descartaron los esquemas genéricos de verdes fluorescentes para adoptar la **identidad emblemática del taxi moderno**:
 - **Color Núcleo:** Amarillo Luminoso (*Luminous Cyber-Taxi Yellow* `#FFE600` / `#FFD000` con gradiente cálido a `#FF9900`).
-- **Superficies:** Carbón profundo y obsidiana (`#070809`, `#0B0D10`, `#11141D`), eliminando interfaces sobrecargadas con marcos blancos o contrastes chillones.
+- **Superficies:** Azul negro profundo (`#050B12` fondo, `#0A121D` y `#0F1926` superficies), con bordes azul grisáceo de baja intensidad.
+- **Verde (`#22C55E`):** exclusivamente para estados operativos positivos (Disponible, En línea, GPS OK, Completado).
 - **Micro-interacciones:** Resplandores suaves (*glow* perimetral `rgba(255, 230, 0, 0.28)`), transiciones de 150-250ms y botones con retroalimentación visual al presionar.
 
 ---
@@ -27,20 +28,21 @@ Se descartaron los esquemas genéricos de verdes fluorescentes para adoptar la *
   --th-primary-light: #FFF8C5;
   --th-primary-soft: rgba(255, 230, 0, 0.15);
 
-  /* Estado Disponible / En Vivo */
+  /* Acento en vivo de la marca (no confundir con estados positivos) */
   --th-live: #FFE600;
-  --th-live-soft: rgba(255, 230, 0, 0.15);
+  --th-success: #22C55E; /* Disponible, En línea, GPS OK, Completado */
 
-  /* Superficies Oscuras */
-  --th-bg: #0B0D10;
-  --th-surface: #17191E;
-  --th-surface-2: #1B1E24;
-  --th-surface-3: #22252C;
+  /* Superficies (azul negro profundo) */
+  --th-bg: #050B12;
+  --th-surface: #0F1926;
+  --th-surface-2: #13202F;
+  --th-surface-3: #162436;
+  --th-border: rgba(148, 172, 204, 0.12);
 
-  /* Tipografía y Contraste */
-  --th-text: #F5F5F7;
-  --th-muted: #9CA0AA;
-  --primary-foreground: #0C0E14; /* Texto negro sobre fondo amarillo */
+  /* Tipografía y contraste */
+  --th-text: #EDF2F8;
+  --th-muted: #93A4B8;
+  --primary-foreground: #050B12; /* Texto sobre fondo amarillo */
 }
 ```
 
@@ -48,7 +50,7 @@ Se descartaron los esquemas genéricos de verdes fluorescentes para adoptar la *
 
 | Estado | Clave | Color HEX | Etiqueta | Aplicación |
 | :--- | :--- | :--- | :--- | :--- |
-| **Disponible** | `libre` | `#FFE600` | "Disponible" | Marcadores en mapa, botón segmented control, pings de radar. |
+| **Disponible** | `libre` | `#22C55E` | "Disponible" | Marcadores en mapa, contadores de flota, botón de estado del chofer. |
 | **Ocupado** | `ocupado` | `#F4544C` | "Ocupado" | Vehículo con pasaje a bordo o viaje en curso. |
 | **Pausado** | `no_disponible` | `#FF9900` | "Pausado" | Operador en descanso o carga de combustible. |
 | **Averiado** | `averiado` | `#9A6BFF` | "Averiado" | Unidad reportada con falla mecánica. |
@@ -72,7 +74,7 @@ Renderiza `taxi` en blanco puro y `HUB` en amarillo luminoso con halo (`text-sha
 
 ### 3.3 Favicon y Metadatos
 - `frontend/public/favicon.svg`: Icono vectorial escalable para navegadores de escritorio y móviles.
-- `frontend/public/manifest.json`: Configurado con tema `#0C0E14` e icono SVG maskable.
+- `frontend/public/manifest.json`: Configurado con tema `#050B12` e icono SVG maskable.
 - `frontend/public/assets/branding/logo.svg`: Logo completo para exportación y uso en documentos.
 
 ---
