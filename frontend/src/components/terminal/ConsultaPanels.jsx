@@ -35,7 +35,7 @@ const DOC_LABEL = {
 
 function vigenciaBadge(estado) {
   if (estado === "vigente") {
-    return { label: "VIGENTE", cls: "border-emerald-500/40 bg-emerald-500/15 text-emerald-300" };
+    return { label: "VIGENTE", cls: "border-[#FFE600]/40 bg-[#FFE600]/15 text-[#FFF27A]" };
   }
   if (estado === "por_vencer") {
     return { label: "POR VENCER", cls: "border-amber-500/40 bg-amber-500/15 text-amber-300" };
@@ -268,7 +268,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
             {fChip.label}
           </button>
         ))}
-        <span className="ml-auto hidden items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 sm:inline-flex">
+        <span className="ml-auto hidden items-center gap-1 rounded-full border border-[#FFE600]/30 bg-[#FFE600]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A] sm:inline-flex">
           <ShieldCheck className="h-3 w-3" /> Solo visible para Operadora
         </span>
       </div>
@@ -503,7 +503,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-400">
                     <BadgeCheck className="h-3.5 w-3.5" /> Datos Oficiales SCT / SEMOVI / IMSS
                   </span>
-                  <span className="rounded bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
+                  <span className="rounded bg-[#FFE600]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#FFF27A]">
                     {cond.antidoping_resultado || "ANTIDOPING: NEGATIVO (APTO)"}
                   </span>
                 </div>
@@ -522,7 +522,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                   </div>
                   <div className="rounded-lg bg-black/25 p-2">
                     <div className="text-[10px] text-muted-foreground">NSS (IMSS) / Sangre</div>
-                    <div className="mt-0.5 font-mono text-[11px] font-bold text-emerald-300">
+                    <div className="mt-0.5 font-mono text-[11px] font-bold text-[#FFF27A]">
                       {cond.nss_imss || "07148920101"} · <span className="text-rose-400">{cond.tipo_sangre || "O+"}</span>
                     </div>
                   </div>
@@ -587,7 +587,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                         </div>
                         <div className="mt-0.5 truncate text-[10px] text-muted-foreground">
                           Socio: <strong className="text-foreground">{unidad.socio || cond.socio_nombre || "Concesionario Central"}</strong> · Cuota:{" "}
-                          <strong className="text-emerald-300">${unidad.cuota_diaria || 420}/día</strong>
+                          <strong className="text-[#FFF27A]">${unidad.cuota_diaria || 420}/día</strong>
                         </div>
                       </div>
                     </div>
@@ -641,7 +641,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                         <span className="truncate text-foreground/90">
                           {sv.origen?.texto || "Origen"} → {sv.destino?.texto || "Destino"}
                         </span>
-                        <span className="shrink-0 font-mono font-bold text-emerald-400">
+                        <span className="shrink-0 font-mono font-bold text-[#FFE600]">
                           {sv.costo ? `$${sv.costo}` : sv.estado}
                         </span>
                       </div>
@@ -837,7 +837,7 @@ export function SociosPanel() {
             {fc.label}
           </button>
         ))}
-        <span className="ml-auto hidden items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 sm:inline-flex">
+        <span className="ml-auto hidden items-center gap-1 rounded-full border border-[#FFE600]/30 bg-[#FFE600]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A] sm:inline-flex">
           <ShieldCheck className="h-3 w-3" /> Expediente exclusivo Operadora
         </span>
       </div>
@@ -986,7 +986,7 @@ export function SociosPanel() {
                   </div>
                   <div className="mt-0.5 flex items-center justify-between text-[10px] text-muted-foreground">
                     <span>{s.unidades} unidad(es) · @{s.usuario}</span>
-                    <span className="text-emerald-400 font-bold">{s.estatus_cuota_sitio || "Al corriente"}</span>
+                    <span className="text-[#FFE600] font-bold">{s.estatus_cuota_sitio || "Al corriente"}</span>
                   </div>
                 </div>
                 <ChevronRight className={cn("h-4 w-4 shrink-0", isSel ? "text-[#FFE600]" : "text-muted-foreground")} />
@@ -1039,7 +1039,7 @@ export function SociosPanel() {
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h4 className="text-base font-extrabold text-white">{socioSel.nombre}</h4>
-                    <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                    <span className="rounded-full border border-[#FFE600]/40 bg-[#FFE600]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A]">
                       {socioSel.estatus_cuota_sitio || "Al corriente"}
                     </span>
                   </div>
@@ -1062,7 +1062,7 @@ export function SociosPanel() {
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-300">
                     <Award className="h-3.5 w-3.5" /> Título de Concesión SCT y Datos Fiscales
                   </span>
-                  <span className="font-mono text-[10px] text-emerald-300">
+                  <span className="font-mono text-[10px] text-[#FFF27A]">
                     Vigencia: {socioSel.vigencia_concesion || "2030-12-31"}
                   </span>
                 </div>
@@ -1093,13 +1093,13 @@ export function SociosPanel() {
                   </div>
                   <div className="rounded-lg bg-black/25 p-2">
                     <div className="text-[10px] text-muted-foreground">Unidades Activas</div>
-                    <div className="mt-0.5 font-mono text-[11px] font-bold text-emerald-400">
+                    <div className="mt-0.5 font-mono text-[11px] font-bold text-[#FFE600]">
                       {detalle?.unidades ?? socioSel.unidades ?? 0} taxis
                     </div>
                   </div>
                   <div className="rounded-lg bg-black/25 p-2">
                     <div className="text-[10px] text-muted-foreground">Cuota Diaria Flota</div>
-                    <div className="mt-0.5 font-mono text-[11px] font-bold text-emerald-300">
+                    <div className="mt-0.5 font-mono text-[11px] font-bold text-[#FFF27A]">
                       ${detalle?.cuota_diaria_flota ?? 2100} MXN/día
                     </div>
                   </div>
@@ -1153,7 +1153,7 @@ export function SociosPanel() {
                           </div>
                         </div>
                         <div className="shrink-0 text-right">
-                          <div className="font-mono text-xs font-bold text-emerald-400">
+                          <div className="font-mono text-xs font-bold text-[#FFE600]">
                             ${v.cuota_diaria || 420}/día
                           </div>
                           <div className="font-mono text-[10px] text-muted-foreground">
@@ -1275,7 +1275,7 @@ export function DashboardPanel() {
             <span className="inline-flex items-center gap-1 text-amber-400">
               <span className="h-2 w-2 rounded-full bg-amber-500" /> Medio
             </span>
-            <span className="inline-flex items-center gap-1 text-emerald-400">
+            <span className="inline-flex items-center gap-1 text-[#FFE600]">
               <span className="h-2 w-2 rounded-full bg-emerald-500" /> Estable
             </span>
           </div>
@@ -1316,7 +1316,7 @@ export function DashboardPanel() {
               </div>
               <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
                 <span>Tarifa base zona: ${f.tarifa_base || 40} MXN</span>
-                <span className="font-mono text-emerald-300">Volumen: {fmtMoney(f.ingresos)}</span>
+                <span className="font-mono text-[#FFF27A]">Volumen: {fmtMoney(f.ingresos)}</span>
               </div>
             </div>
           ))}

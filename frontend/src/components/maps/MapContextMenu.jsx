@@ -86,7 +86,7 @@ export function MapContextMenu({
           <button
             type="button"
             onClick={() => { onDespachoRapido(latlng, taxiMasCercano); onClose(); }}
-            className="flex w-full items-center justify-between gap-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-2 text-left text-xs font-bold text-emerald-200 hover:bg-emerald-500/30 transition-all mb-0.5 shadow-sm"
+            className="flex w-full items-center justify-between gap-2 rounded-xl bg-[#FFE600]/20 border border-[#FFE600]/40 px-2.5 py-2 text-left text-xs font-bold text-[#FFF27A] hover:bg-[#FFE600]/30 transition-all mb-0.5 shadow-sm"
             data-testid="context-despacho-rapido-btn"
           >
             <span className="flex items-center gap-2 min-w-0">
@@ -94,7 +94,7 @@ export function MapContextMenu({
               <span className="truncate">Despachar #{taxiMasCercano.placa || taxiMasCercano.nombre}</span>
             </span>
             {taxiMasCercano.dist != null && (
-              <span className="mono-num shrink-0 rounded bg-black/30 px-1.5 py-0.5 text-[10px] text-emerald-300">
+              <span className="mono-num shrink-0 rounded bg-black/30 px-1.5 py-0.5 text-[10px] text-[#FFF27A]">
                 {taxiMasCercano.dist >= 1000 ? `${(taxiMasCercano.dist / 1000).toFixed(1)}km` : `${Math.round(taxiMasCercano.dist)}m`}
               </span>
             )}
@@ -114,10 +114,10 @@ export function MapContextMenu({
         <button
           type="button"
           onClick={() => { onSetOrigen(latlng); onClose(); }}
-          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs font-semibold text-emerald-300 hover:bg-emerald-500/15 hover:text-emerald-200 transition-colors"
+          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs font-semibold text-[#FFF27A] hover:bg-[#FFE600]/15 hover:text-[#FFF27A] transition-colors"
           data-testid="context-origen-btn"
         >
-          <Navigation className="h-3.5 w-3.5 text-emerald-400" />
+          <Navigation className="h-3.5 w-3.5 text-[#FFE600]" />
           <span>Iniciar servicio aquí (Origen)</span>
         </button>
 

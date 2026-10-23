@@ -11,7 +11,7 @@ export function GpsBadge({
   className,
 }) {
   const ok = active && !stale;
-  const color = ok ? "#22c55e" : stale ? "#eab308" : "#ef4444";
+  const color = ok ? "#FFE600" : stale ? "#FF9900" : "#F4544C";
   const text = stale
     ? label || "GPS sin actualizar"
     : label || `GPS activo${accuracy != null ? ` · ${Math.round(accuracy)} m` : ""}`;

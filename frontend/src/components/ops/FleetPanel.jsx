@@ -116,7 +116,7 @@ export const FleetPanel = memo(function FleetPanel({
                     <div className="flex items-center justify-between gap-2">
                       <div className="truncate text-xs font-semibold text-foreground">{o.nombre}</div>
                       <span
-                        className="shrink-0 rounded-full bg-[#FFE600]/20 border border-[#FFE600]/40 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#8A94FF]"
+                        className="th-pill-y shrink-0 px-1.5 py-0.5 font-mono text-[10px]"
                         title="Servicios realizados hoy"
                       >
                         {servHoy} serv.

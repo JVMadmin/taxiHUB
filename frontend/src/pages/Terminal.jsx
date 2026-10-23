@@ -865,7 +865,7 @@ export default function Terminal() {
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="surface-ui absolute left-3 top-1/2 -translate-y-1/2 z-[510] flex items-center gap-2 rounded-xl border border-[#FFE600]/60 bg-[#17191E]/95 px-3.5 py-2 text-xs font-bold text-foreground shadow-[0_6px_20px_rgba(255, 230, 0,0.35)] backdrop-blur-md transition-all hover:scale-105 hover:bg-[#FFE600] hover:text-white"
+            className="surface-ui absolute left-3 top-1/2 -translate-y-1/2 z-[510] flex items-center gap-2 rounded-xl border border-[#FFE600]/60 bg-[#17191E]/95 px-3.5 py-2 text-xs font-bold text-foreground shadow-[0_6px_20px_rgba(255,230,0,0.35)] backdrop-blur-md transition-all hover:scale-105 hover:bg-[#FFE600] hover:text-white"
             title="Mostrar panel lateral de flota"
             data-testid="expand-sidebar-btn"
           >
@@ -876,16 +876,12 @@ export default function Terminal() {
 
         {/* Controles inferiores separados: Selector de Capas del Mapa + Visibilidad de Pines */}
         <div className="pointer-events-none absolute bottom-5 left-14 z-[450] flex flex-wrap items-center gap-2">
-          <div className="surface-ui pointer-events-auto flex items-center gap-1 rounded-xl border border-border/80 bg-surface/95 p-1 shadow-2xl backdrop-blur-md">
+          <div className="th-seg pointer-events-auto flex items-center gap-1 rounded-xl p-1 backdrop-blur-md">
             <button
               type="button"
               onClick={() => setMapLayer("calles")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
-                mapLayer === "calles"
-                  ? "bg-brand/20 text-brand-bright font-semibold shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-              )}
+              aria-pressed={mapLayer === "calles"}
+              className="th-seg-btn flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs"
               data-testid="layer-calles-btn"
             >
               <Layers className="h-3.5 w-3.5" /> Calles
@@ -893,12 +889,8 @@ export default function Terminal() {
             <button
               type="button"
               onClick={() => setMapLayer("satelite")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
-                mapLayer === "satelite"
-                  ? "bg-brand/20 text-brand-bright font-semibold shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-              )}
+              aria-pressed={mapLayer === "satelite"}
+              className="th-seg-btn flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs"
               data-testid="layer-satelite-btn"
             >
               <Satellite className="h-3.5 w-3.5" /> Satélite
@@ -906,12 +898,8 @@ export default function Terminal() {
             <button
               type="button"
               onClick={() => setMostrarColonias((v) => !v)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
-                mostrarColonias
-                  ? "bg-indigo-500/25 text-indigo-300 font-semibold border border-indigo-500/40 shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-              )}
+              aria-pressed={mostrarColonias}
+              className="th-seg-btn flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs"
               data-testid="layer-colonias-btn"
               title="Activar vista delimitada de colonias por colores"
             >
@@ -1033,7 +1021,7 @@ export default function Terminal() {
           })()}
           {/* Rutas colectivas trazadas en el mapa con sentido vial */}
           {rutas.filter((r) => Array.isArray(r.trazo) && r.trazo.length > 1 && (filtroRuta === "todas" || filtroRuta === r.id)).map((r) => {
-            const routeColor = r.color_hex || r.color || "#10b981";
+            const routeColor = r.color_hex || r.color || PALETA.primary;
             const arrows = buildDirectionalArrows(r.trazo, 8);
             return (
               <span key={`ruta-trazo-wrap-${r.id}`}>
@@ -1073,18 +1061,18 @@ export default function Terminal() {
               />
               <Polyline
                 positions={drawnPoints}
-                pathOptions={{ color: "#10b981", weight: 5, opacity: 0.98, lineCap: "round", lineJoin: "round" }}
+                pathOptions={{ color: PALETA.primary, weight: 5, opacity: 0.98, lineCap: "round", lineJoin: "round" }}
               />
               <RoutePolyline
                 positions={drawnPoints}
                 className="th-route-flow"
-                pathOptions={{ color: "#a7f3d0", weight: 3, opacity: 0.9, dashArray: "1 14", lineCap: "round" }}
+                pathOptions={{ color: PALETA.primaryLight, weight: 3, opacity: 0.9, dashArray: "1 14", lineCap: "round" }}
               />
               {drawnRouteArrows.map((arr, idx) => (
                 <Marker
                   key={`drawn-route-arrow-${idx}`}
                   position={[arr.lat, arr.lng]}
-                  icon={routeArrowIcon(arr.heading, "#10b981")}
+                  icon={routeArrowIcon(arr.heading, PALETA.primary)}
                   interactive={false}
                 />
               ))}
@@ -1104,7 +1092,7 @@ export default function Terminal() {
               radius={idx === 0 || idx === arr.length - 1 ? 8 : 6}
               pathOptions={{
                 color: "#ffffff",
-                fillColor: idx === 0 ? "#10b981" : idx === arr.length - 1 ? "#FFE600" : "#0ea5e9",
+                fillColor: idx === 0 ? PALETA.primary : idx === arr.length - 1 ? PALETA.warning : PALETA.primaryLight,
                 fillOpacity: 1,
                 weight: 2.5,
               }}
@@ -1113,7 +1101,7 @@ export default function Terminal() {
           {drawingMode === "ruta" && routeWaypoints.length >= 1 && (
             <Marker
               position={routeWaypoints[0]}
-              icon={pointIcon("Inicio de Ruta", "#10b981", { size: "sm" })}
+              icon={pointIcon("Inicio de Ruta", PALETA.primary, { size: "sm" })}
               interactive={false}
             />
           )}
@@ -1211,7 +1199,7 @@ export default function Terminal() {
                   setGotoTarget({ lat: 17.80, lng: -92.42, zoom: 9, label: "Flota Regional Foránea" });
                   toast.info("Mostrando unidades foráneas: Villahermosa, Carretera 186 y Playas de Catazajá");
                 }}
-                className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-lg border border-sky-400/40 bg-sky-500/15 text-sky-300 hover:bg-sky-500/25 transition-all"
+                className="th-pill-y px-2 py-0.5 text-[11px] transition-all"
                 title="Ver taxis en viajes foráneos (Villahermosa, Catazajá y Carretera)"
               >
                 <span>🚗 4 Foráneos</span>

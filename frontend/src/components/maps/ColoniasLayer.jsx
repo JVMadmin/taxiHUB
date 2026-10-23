@@ -257,7 +257,7 @@ export function ColoniasLayer({ colonias = null, onSelectColonia = null }) {
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colonia.color || "#10b981" }} />
                     <span>{colonia.nombre}</span>
                   </span>
-                  <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 font-mono text-[11px] font-extrabold text-emerald-300 border border-emerald-400/30">
+                  <span className="rounded bg-[#FFE600]/20 px-1.5 py-0.5 font-mono text-[11px] font-extrabold text-[#FFF27A] border border-[#FFE600]/30">
                     ${tarifaBase} MXN
                   </span>
                 </div>
@@ -286,10 +286,10 @@ export function ColoniasLayer({ colonias = null, onSelectColonia = null }) {
                 </div>
 
                 {/* Tarifas delimitadas por zona */}
-                <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 p-2 text-center">
+                <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-lg bg-[#FFE600]/10 border border-[#FFE600]/25 p-2 text-center">
                   <div>
                     <div className="text-[9px] uppercase text-muted-foreground">Base Día</div>
-                    <div className="font-mono text-xs font-black text-emerald-400">${tarifaBase}</div>
+                    <div className="font-mono text-xs font-black text-[#FFE600]">${tarifaBase}</div>
                   </div>
                   <div>
                     <div className="text-[9px] uppercase text-muted-foreground">Nocturna</div>

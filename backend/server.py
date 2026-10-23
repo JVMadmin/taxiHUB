@@ -674,7 +674,7 @@ class CotizarServicioBody(BaseModel):
 # ---- Rutas (incluye Planificador de Ruta Colectiva con trazo en mapa) ----
 class RutaCreate(BaseModel):
     nombre: str
-    color_hex: str = "#00b894"
+    color_hex: str = "#FFE600"
     tipo: str = "colectiva"
     tarifa_colectiva: Optional[float] = 15.0
     frecuencia_min: Optional[int] = 10
@@ -2635,7 +2635,7 @@ class SitioConfigBody(BaseModel):
     logo_url: Optional[str] = None
     tema: Optional[str] = None
     tema_default: Optional[str] = None
-    color_primario: Optional[str] = "#22d3ee"
+    color_primario: Optional[str] = "#FFE600"
     modo_default: Optional[str] = "dark"
     map_center_lat: float = 17.5099
     map_center_lng: float = -91.9847
@@ -2668,9 +2668,9 @@ async def _obtener_sitio_config(sitio_id: str) -> dict:
             "ciudad": "Palenque, Chiapas",
             "telefono_central": "+52 916 345 0000",
             "logo_url": fallback_logo,
-            "tema": "esmeralda",
-            "tema_default": "esmeralda",
-            "color_primario": "#22d3ee",
+            "tema": "amarillo",
+            "tema_default": "amarillo",
+            "color_primario": "#FFE600",
             "modo_default": "dark",
             "map_center_lat": 17.5099,
             "map_center_lng": -91.9847,
@@ -2691,10 +2691,10 @@ async def _obtener_sitio_config(sitio_id: str) -> dict:
         doc.setdefault("telefono_central", "+52 916 345 0000")
         if not doc.get("logo_url"):
             doc["logo_url"] = fallback_logo
-        tema_val = doc.get("tema") or doc.get("tema_default") or "esmeralda"
+        tema_val = doc.get("tema") or doc.get("tema_default") or "amarillo"
         doc["tema"] = tema_val
         doc["tema_default"] = tema_val
-        doc.setdefault("color_primario", "#22d3ee")
+        doc.setdefault("color_primario", "#FFE600")
         doc.setdefault("modo_default", "dark")
         doc.setdefault("map_center_lat", 17.5099)
         doc.setdefault("map_center_lng", -91.9847)
@@ -2852,6 +2852,13 @@ async def _migraciones():
             "contacto_soporte": "WhatsApp Soporte: +52 916 163 2304",
         }},
     )
+
+    # 8) Identidad Amarillo Luminoso: los valores por defecto anteriores (cian/esmeralda)
+    #    pasan a amarillo; un color elegido a mano por una central no se toca.
+    await db.sitios.update_many({"color_primario": {"$in": ["#22d3ee", None]}}, {"$set": {"color_primario": "#FFE600"}})
+    for campo in ("tema", "tema_default"):
+        await db.sitios.update_many({campo: "esmeralda"}, {"$set": {campo: "amarillo"}})
+    await db.rutas.update_many({"color_hex": "#00b894"}, {"$set": {"color_hex": "#FFE600"}})
 
     logger.info("Migraciones aplicadas (sitios, sitio_id, vehículos backfill, tipos de vehículo)")
 

@@ -118,7 +118,7 @@ export default function TerminalLogin({ isCentralOnly = false }) {
               data-testid="term-submit"
               type="submit"
               loading={loading}
-              className="mt-2 h-12 text-base font-semibold bg-[#FFE600] hover:bg-[#FFB800] text-[#0C0E14] shadow-[0_4px_16px_rgba(255, 230, 0,0.35)]"
+              className="mt-2 h-12 text-base font-semibold bg-[#FFE600] hover:bg-[#FFB800] text-[#0C0E14] shadow-[0_4px_16px_rgba(255,230,0,0.35)]"
             >
               <LogIn className="h-4 w-4" />
               {loading ? "Verificando..." : "Entrar a Central"}

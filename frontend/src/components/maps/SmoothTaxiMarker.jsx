@@ -251,7 +251,7 @@ function SmoothTaxiMarkerComponent({
             )}
 
             {/* Contador de servicios del día */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255, 230, 0,0.14)", border: "1px solid rgba(255, 230, 0,0.3)", borderRadius: "6px", padding: "3px 7px", fontSize: "11px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,230,0,0.14)", border: "1px solid rgba(255,230,0,0.3)", borderRadius: "6px", padding: "3px 7px", fontSize: "11px" }}>
               <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Servicios hoy:</span>
               <span style={{ fontFamily: "monospace", fontWeight: 800, color: "#FFFFFF" }}>{serviciosHoy}</span>
             </div>
@@ -320,7 +320,7 @@ function SmoothTaxiMarkerComponent({
                 borderRadius: "50%",
                 overflow: "hidden",
                 border: "3px solid #FFE600",
-                boxShadow: "0 10px 25px rgba(255, 230, 0, 0.35)",
+                boxShadow: "0 10px 25px rgba(255,230,0, 0.35)",
                 backgroundColor: "#0B0D10",
               }}
             >

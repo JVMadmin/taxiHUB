@@ -89,7 +89,7 @@ export function pointIcon(label, color, { size = "md" } = {}) {
 
 // Flecha de "tú / vehículo" orientada por rumbo (heading) en la Driver App.
 export function driverIcon(color, heading = 0) {
-  const c = color || "#10b981";
+  const c = color || "#FFE600";
   const deg = Number(heading) || 0;
   const html = `
     <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg);filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))">
@@ -108,7 +108,7 @@ export function driverIcon(color, heading = 0) {
 // Carrocería isométrica/3D (vista 3/4 desde arriba, "cochesito 3D"). Master
 // para los tres mapas: pasajero, conductor y despachador. Rotado por rumbo.
 function carBodySvg(color) {
-  const c = color || "#10b981";
+  const c = color || "#FFE600";
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
       <defs>
@@ -147,8 +147,8 @@ function carBodySvg(color) {
 
 // Semáforo de cantidad de servicios realizados en el día:
 // 0 = Gris oscuro (#334155) con 0 blanco legible
-// 1-2 = Verde semáforo (#16A34A)
-// 3-4 = Ámbar semáforo (#D97706)
+// 1-2 = Amarillo de marca (#FFE600, número carbón)
+// 3-4 = Ámbar (#FF9900)
 // 5+ = Rojo semáforo (#DC2626)
 export function semaforoServiciosStyle(count) {
   const n = Math.max(0, Number(count) || 0);
@@ -166,23 +166,23 @@ export function semaforoServiciosStyle(count) {
   if (n <= 2) {
     return {
       count: n,
-      bg: "#16A34A",
-      text: "#FFFFFF",
-      border: "#BBF7D0",
-      glow: "rgba(22,163,74,0.55)",
+      bg: "#FFE600",
+      text: "#0C0E14",
+      border: "#FFF8C5",
+      glow: "rgba(255,230,0,0.5)",
       nivel: "Carga baja",
-      pillClass: "bg-[#16A34A] text-white border-emerald-200/80",
+      pillClass: "bg-[#FFE600] text-[#0C0E14] border-[#FFF8C5]/80",
     };
   }
   if (n <= 4) {
     return {
       count: n,
-      bg: "#D97706",
-      text: "#FFFFFF",
-      border: "#FDE68A",
-      glow: "rgba(217,119,6,0.55)",
+      bg: "#FF9900",
+      text: "#0C0E14",
+      border: "#FFD9A0",
+      glow: "rgba(255,153,0,0.55)",
       nivel: "Carga media",
-      pillClass: "bg-[#D97706] text-white border-amber-200/80",
+      pillClass: "bg-[#FF9900] text-[#0C0E14] border-[#FFD9A0]/80",
     };
   }
   return {
@@ -203,7 +203,7 @@ export function car3dIcon(color, { heading = 0, label = "", selected = false, fo
   const ring = selected
     ? "box-shadow:0 0 0 3px #fff,0 0 0 7px rgba(255,255,255,.25)"
     : following
-      ? "box-shadow:0 0 0 3px var(--brand, #10b981),0 0 0 6px rgba(16,185,129,.25)"
+      ? "box-shadow:0 0 0 3px #FFE600,0 0 0 6px rgba(255,230,0,.28)"
       : "";
   const countVal = serviciosHoy != null ? Number(serviciosHoy) || 0 : 0;
   const sem = semaforoServiciosStyle(countVal);
@@ -371,7 +371,7 @@ export function taxiStateAssetIcon(estado, { heading = 0, selected = false, labe
 }
 
 // (helper) marcador pequeño de dirección en la ruta (flecha orientada sobre el sentido de la calle).
-export function routeArrowIcon(heading = 0, color = "#10b981") {
+export function routeArrowIcon(heading = 0, color = "#FFE600") {
   const deg = Number(heading) || 0;
   const html = `
     <div class="th-route-arrow" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg)">
@@ -396,13 +396,13 @@ export function passengerPulsingIcon(label = "Mi ubicación") {
   const html = `
     <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;user-select:none;">
       <!-- Anillo exterior parpadeante y expansivo (radar pulse 3D) -->
-      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(255, 230, 0,0.22);border:1.5px solid rgba(255, 230, 0,0.75);animation:th-radar-wave 2s cubic-bezier(0.2,0.8,0.2,1) infinite;"></div>
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(255,230,0,0.22);border:1.5px solid rgba(255,230,0,0.75);animation:th-radar-wave 2s cubic-bezier(0.2,0.8,0.2,1) infinite;"></div>
       <!-- Halo medio de resplandor esmeralda -->
-      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:rgba(255, 230, 0,0.4);box-shadow:0 0 16px rgba(255, 230, 0,0.85);"></div>
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:rgba(255,230,0,0.4);box-shadow:0 0 16px rgba(255,230,0,0.85);"></div>
       <!-- Núcleo central 3D con specular reflection -->
-      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);z-index:2;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #FFFFFF 0%, #FFE600 65%, #059669 100%);border:2.5px solid #0B0E14;box-shadow:0 0 10px #FFE600;"></div>
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);z-index:2;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #FFFFFF 0%, #FFE600 65%, #FFB800 100%);border:2.5px solid #0B0E14;box-shadow:0 0 10px #FFE600;"></div>
       <!-- Etiqueta inferior estilo píldora HUD Dark -->
-      <div style="margin-top:36px;display:inline-flex;align-items:center;gap:5px;background:rgba(12,15,22,0.95);color:#FFFFFF;border:1px solid rgba(255, 230, 0,0.5);border-radius:14px;padding:2.5px 9px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.65);backdrop-filter:blur(6px);">
+      <div style="margin-top:36px;display:inline-flex;align-items:center;gap:5px;background:rgba(12,15,22,0.95);color:#FFFFFF;border:1px solid rgba(255,230,0,0.5);border-radius:14px;padding:2.5px 9px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.65);backdrop-filter:blur(6px);">
         <span style="width:6px;height:6px;border-radius:50%;background:#FFE600;box-shadow:0 0 6px #FFE600;"></span>
         ${lbl}
       </div>

@@ -114,7 +114,7 @@ export const TerminalMenu = memo(function TerminalMenu({
                     className={cn(
                       "th-3d flex h-8 w-8 items-center justify-center rounded-xl transition-colors",
                       active === id
-                        ? "bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255, 230, 0,0.35)]"
+                        ? "bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255,230,0,0.35)]"
                         : "text-foreground/80 hover:bg-white/[0.08]"
                     )}
                   >
@@ -825,12 +825,12 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
   return (
     <div className="space-y-3.5" data-testid="reportes-panel-completo">
       {/* Banner de Seguridad & Compresión WebP por Tenant */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs text-emerald-200">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#FFE600]/30 bg-[#FFE600]/10 px-3.5 py-2 text-xs text-[#FFF27A]">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+          <ShieldCheck className="h-4 w-4 shrink-0 text-[#FFE600]" />
           <span>
             <strong>Storage Aislado por Tenant + Escudo Anti-Malware:</strong> Evidencias verificadas y convertidas automáticamente a{" "}
-            <code className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-[11px] text-emerald-300">.webp</code>
+            <code className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-[11px] text-[#FFF27A]">.webp</code>
           </span>
         </div>
         <Button size="sm" onClick={() => setNuevoOpen((v) => !v)} data-testid="nuevo-reporte-btn">
@@ -1018,7 +1018,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/90 via-black/50 to-transparent px-2.5 py-1.5 text-[10px] font-bold text-white">
-                  <span className="inline-flex items-center gap-1 text-emerald-300">
+                  <span className="inline-flex items-center gap-1 text-[#FFF27A]">
                     <ShieldCheck className="h-3 w-3" /> WebP Seguro
                   </span>
                   <span className="inline-flex items-center gap-1 rounded bg-white/20 px-1.5 py-0.5">
@@ -1062,9 +1062,9 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
                   {r.estado === "devuelto" && (
                     <div
                       data-testid={`reporte-devolucion-info-${r.id}`}
-                      className="mt-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs"
+                      className="mt-2 rounded-xl border border-[#FFE600]/30 bg-[#FFE600]/10 px-3 py-2 text-xs"
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-1 font-bold text-emerald-300">
+                      <div className="flex flex-wrap items-center justify-between gap-1 font-bold text-[#FFF27A]">
                         <span>✓ Entregado a: {r.entregado_a || "Propietario acreditado"}</span>
                         {r.fecha_devolucion && (
                           <span className="font-mono text-[10px]">
@@ -1072,7 +1072,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
                           </span>
                         )}
                       </div>
-                      {r.ultima_nota && <div className="mt-0.5 text-[11px] text-emerald-100/80">{r.ultima_nota}</div>}
+                      {r.ultima_nota && <div className="mt-0.5 text-[11px] text-[#FFF27A]/80">{r.ultima_nota}</div>}
                     </div>
                   )}
 
@@ -1118,9 +1118,9 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
       {/* Modal para registrar entrega formal del objeto */}
       {devolviendoReporte && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md space-y-3 rounded-2xl border border-emerald-500/40 bg-[#14161B] p-5 shadow-2xl">
+          <div className="w-full max-w-md space-y-3 rounded-2xl border border-[#FFE600]/40 bg-[#14161B] p-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
-              <div className="text-sm font-bold text-emerald-300">Registrar Devolución de Objeto</div>
+              <div className="text-sm font-bold text-[#FFF27A]">Registrar Devolución de Objeto</div>
               <button onClick={() => setDevolviendoReporte(null)} className="text-muted-foreground hover:text-white">
                 <X className="h-4 w-4" />
               </button>
@@ -1182,7 +1182,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
                 <div className="text-sm font-bold text-foreground">
                   Evidencia Fotográfica — Unidad {lightboxReporte.unidad?.numero_economico || lightboxReporte.operador_placa}
                 </div>
-                <div className="text-[11px] text-emerald-300">
+                <div className="text-[11px] text-[#FFF27A]">
                   Archivo WebP Verificado · Carpeta Tenant: {lightboxReporte.tenant_storage_path || lightboxReporte.storage_path}
                 </div>
               </div>
@@ -1324,7 +1324,7 @@ function RutasPanel({
   onClearDrawnPoints,
 }) {
   const [nombre, setNombre] = useState("");
-  const [color, setColor] = useState("#10B981");
+  const [color, setColor] = useState("#FFE600");
   const [tarifaColectiva, setTarifaColectiva] = useState("15");
   const [frecuenciaMin, setFrecuenciaMin] = useState("10");
   const [horario, setHorario] = useState("05:30 - 22:00");
@@ -1408,8 +1408,8 @@ function RutasPanel({
 
         {/* Controles activos de dibujo punto a punto sobre sentido vial */}
         {isDrawingRuta && (
-          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-2.5 text-xs">
-            <div className="flex flex-wrap items-center justify-between gap-1 font-bold text-emerald-300">
+          <div className="rounded-xl border border-[#FFE600]/40 bg-[#FFE600]/10 p-2.5 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-1 font-bold text-[#FFF27A]">
               <span className="inline-flex items-center gap-1.5">
                 <Navigation className="h-3.5 w-3.5" />
                 Trazado Punto a Punto (Sentido Vial Automático)
@@ -1418,7 +1418,7 @@ function RutasPanel({
                 {routeWaypoints.length || (drawnPoints.length > 0 ? 1 : 0)} paradas · {drawnPoints.length} pts viales
               </span>
             </div>
-            <p className="mt-1 text-[11px] text-emerald-100/85">
+            <p className="mt-1 text-[11px] text-[#FFF27A]/85">
               {routingSegmentLoading
                 ? "Calculando línea sobre el sentido de la calle…"
                 : "Haz clic en el punto de inicio y luego en cada punto siguiente hasta el punto de finalización: la ruta se ajusta sola a las calles."}
@@ -1533,7 +1533,7 @@ function RutasPanel({
               </button>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
-              <span className="font-mono font-bold text-emerald-400">
+              <span className="font-mono font-bold text-[#FFE600]">
                 Tarifa colectiva: ${r.tarifa_colectiva ?? 15} MXN
               </span>
               <span>Horario: {r.horario || "05:30 - 22:00"}</span>
@@ -1573,7 +1573,7 @@ function ColoniasPanel({
 }) {
   const [nombre, setNombre] = useState("");
   const [subtitulo, setSubtitulo] = useState("");
-  const [color, setColor] = useState("#10B981");
+  const [color, setColor] = useState("#FFE600");
   const [tarifaBase, setTarifaBase] = useState("45");
   const [tarifaNocturna, setTarifaNocturna] = useState("60");
   const [tarifaSalida, setTarifaSalida] = useState("50");
@@ -1630,7 +1630,7 @@ function ColoniasPanel({
       await termApi.put(`/colonias/${col.id}`, {
         nombre: col.nombre,
         subtitulo: col.subtitulo || "",
-        color: col.color || "#10B981",
+        color: col.color || "#FFE600",
         tarifa_base: col.tarifa_base ?? 40,
         tarifa_nocturna: col.tarifa_nocturna ?? 55,
         tarifa_salida: col.tarifa_salida ?? 45,
@@ -1660,10 +1660,10 @@ function ColoniasPanel({
   return (
     <div className="space-y-4" data-testid="colonias-cuadrantes-panel">
       {/* Herramienta de dibujo de límites de cuadrante en el mapa */}
-      <div className="space-y-3 rounded-2xl border border-emerald-500/35 bg-surface-2 p-3.5">
+      <div className="space-y-3 rounded-2xl border border-[#FFE600]/35 bg-surface-2 p-3.5">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <div className="text-xs font-bold uppercase tracking-wide text-emerald-400">
+            <div className="text-xs font-bold uppercase tracking-wide text-[#FFE600]">
               Editor de Cuadrantes y Precios Delimitantes
             </div>
             <div className="text-[11px] text-muted-foreground">
@@ -1783,7 +1783,7 @@ function ColoniasPanel({
           <div key={col.id || col.nombre} className="space-y-2 rounded-xl border border-white/[0.08] bg-[#17191E] p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="h-3.5 w-3.5 rounded-full shrink-0" style={{ background: col.color || "#10B981" }} />
+                <span className="h-3.5 w-3.5 rounded-full shrink-0" style={{ background: col.color || "#FFE600" }} />
                 <div>
                   <div className="text-xs font-bold text-foreground">{col.nombre}</div>
                   <div className="text-[10px] text-muted-foreground">
@@ -1813,7 +1813,7 @@ function ColoniasPanel({
                     Number(e.target.value) !== (col.tarifa_base ?? 40) &&
                     actualizarPrecioZona(col, { tarifa_base: Number(e.target.value) })
                   }
-                  className="mt-0.5 w-full bg-transparent font-mono text-xs font-black text-emerald-400 outline-none"
+                  className="mt-0.5 w-full bg-transparent font-mono text-xs font-black text-[#FFE600] outline-none"
                 />
               </div>
               <div className="rounded-lg bg-black/30 p-1.5">
@@ -2083,7 +2083,7 @@ function TarifasPanel({ colonias = [] }) {
                 type="number"
                 defaultValue={t.monto}
                 onBlur={(e) => Number(e.target.value) !== t.monto && actualizar(t, { monto: Number(e.target.value) })}
-                className="input-inset mono-num h-8 w-20 border-border text-xs font-bold text-emerald-400"
+                className="input-inset mono-num h-8 w-20 border-border text-xs font-bold text-[#FFE600]"
               />
               <ConfirmAction
                 title={`Eliminar tarifa "${t.nombre}"`}
@@ -2106,7 +2106,7 @@ function TarifasPanel({ colonias = [] }) {
                 <Clock className="h-2.5 w-2.5" /> {t.hora_inicio || "00:00"} – {t.hora_fin || "23:59"} ({t.horario_tipo || "todo_el_dia"})
               </span>
               {t.zona_nombre && (
-                <span className="rounded bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">
+                <span className="rounded bg-[#FFE600]/15 px-2 py-0.5 font-semibold text-[#FFF27A]">
                   Zona: {t.zona_nombre}
                 </span>
               )}

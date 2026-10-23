@@ -206,7 +206,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                 <MapPin className="h-3.5 w-3.5" /> Marcar en mapa
               </button>
               {coords.tarifaSugerida && (
-                <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                <span className="rounded-full bg-[#FFE600]/15 border border-[#FFE600]/30 px-2.5 py-0.5 text-[10px] font-bold text-[#FFF27A]">
                   Tarifa base sugerida: ${coords.tarifaSugerida}
                 </span>
               )}
@@ -240,7 +240,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                     type="button"
                     data-testid="despacho-sin-destino-btn"
                     onClick={() => setCoords((c) => ({ ...c, destino: null, destinoTexto: "A indicaciones del cliente (Sin destino fijo)" }))}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/20 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#FFE600]/30 bg-[#FFE600]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#FFF27A] hover:bg-[#FFE600]/20 transition-colors"
                   >
                     ⚡ Sin destino fijo (A indicaciones — activo por defecto al asignar)
                   </button>

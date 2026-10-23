@@ -9,6 +9,7 @@ import { ModeToggle } from "@/components/ModeToggle";
 import { TerminalDisplayControls } from "@/components/TerminalDisplayControls";
 import { PhoneCall, ClipboardList, LogOut, Car } from "@/design/icons";
 import { INDICADORES } from "./indicadores";
+import { DISPATCH } from "@/constants/testIds";
 
 const MARCH_LOGO = "/assets/vehicles/march.png";
 
@@ -66,7 +67,7 @@ export const OpsTopbar = memo(function OpsTopbar({
       ? "border-rose-500/50 bg-rose-500/15 text-rose-300"
       : subDays <= 7
         ? "border-amber-500/50 bg-amber-500/15 text-amber-300"
-        : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300";
+        : "th-pill-y";
 
   const avisoVisible = (avisosActivos || []).find((a) => a.id !== dismissedAvisoId);
 
@@ -75,14 +76,14 @@ export const OpsTopbar = memo(function OpsTopbar({
       {avisoVisible && (
         <div
           data-testid="terminal-dev-aviso-banner"
-          className="pointer-events-auto flex items-center justify-between gap-3 rounded-xl border border-indigo-400/40 bg-[#141829]/95 px-3 py-1.5 text-xs text-indigo-100 shadow-lg backdrop-blur-md"
+          className="pointer-events-auto flex items-center justify-between gap-3 rounded-xl border border-[#FFE600]/25 border-l-[3px] border-l-[#FFE600] bg-[#0C0E14]/95 px-3 py-1.5 text-xs text-[#D4D7DE] shadow-lg backdrop-blur-md"
         >
           <div className="flex min-w-0 items-center gap-2">
-            <Megaphone className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+            <Megaphone className="h-3.5 w-3.5 shrink-0 text-[#FFE600]" />
             <span className="font-bold text-white">{avisoVisible.titulo || "Aviso de Soporte SaaS"}:</span>
-            <span className="truncate text-indigo-100/90">{avisoVisible.mensaje}</span>
+            <span className="truncate text-[#D4D7DE]/90">{avisoVisible.mensaje}</span>
             {avisoVisible.contacto_soporte && (
-              <span className="hidden rounded-md bg-white/10 px-2 py-0.5 font-mono text-[10px] text-emerald-300 xl:inline-block">
+              <span className="th-pill-y hidden px-2 py-0.5 font-mono text-[10px] xl:inline-flex">
                 {avisoVisible.contacto_soporte}
               </span>
             )}
@@ -90,7 +91,7 @@ export const OpsTopbar = memo(function OpsTopbar({
           <button
             type="button"
             onClick={() => setDismissedAvisoId(avisoVisible.id)}
-            className="shrink-0 rounded-lg p-1 text-indigo-200/70 hover:bg-white/10 hover:text-white"
+            className="shrink-0 rounded-lg p-1 text-[#9CA0AA] hover:bg-white/10 hover:text-white"
             title="Ocultar aviso"
           >
             <X className="h-3.5 w-3.5" />
@@ -131,17 +132,11 @@ export const OpsTopbar = memo(function OpsTopbar({
 
           {/* Contadores de flota (desktop) */}
           <div className="mx-1.5 hidden h-8 w-px bg-border lg:block" />
-          <div className="hidden items-center gap-3.5 lg:flex">
+          <div className="th-gauges hidden lg:flex" data-testid={DISPATCH.contadoresFlota}>
             {INDICADORES.map((i) => (
-              <div key={i.estado} className="flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping-soft rounded-full" style={{ background: i.color }} />
-                  <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: i.color }} />
-                </span>
-                <div className="leading-tight">
-                  <div className="mono-num text-sm font-bold" style={{ color: i.color }}>{counts[i.estado] || 0}</div>
-                  <div className="text-[10px] text-muted-foreground">{i.label}</div>
-                </div>
+              <div key={i.estado} className="th-gauge" style={{ "--g": i.color }}>
+                <div className="th-gauge-valor mono-num">{counts[i.estado] || 0}</div>
+                <div className="th-gauge-etiqueta">{i.label}</div>
               </div>
             ))}
           </div>
@@ -154,7 +149,7 @@ export const OpsTopbar = memo(function OpsTopbar({
               title="Servicios de hoy"
               aria-label="Servicios"
               className={cn("th-3d hidden h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-semibold transition-colors lg:flex",
-                serviciosOpen ? "bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255, 230, 0,0.3)]" : "border border-white/10 bg-white/[0.04] text-foreground/90 hover:bg-white/[0.1]")}
+                serviciosOpen ? "bg-[#FFE600] text-[#0C0E14]" : "text-foreground/90")}
             >
               <ClipboardList className="th-icon-3d h-4 w-4" />
               <span>Servicios</span>

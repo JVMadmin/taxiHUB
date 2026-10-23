@@ -89,9 +89,9 @@ async def seed_simulation_data():
 
     # 2. Rutas
     rutas_data = [
-        {"nombre": "Palenque - Pakal Ná", "color_hex": "#4F5DFF"},
-        {"nombre": "Centro - La Cañada", "color_hex": "#7CFC3C"},
-        {"nombre": "Circuito Hotelero", "color_hex": "#FFB224"},
+        {"nombre": "Palenque - Pakal Ná", "color_hex": "#FFE600"},
+        {"nombre": "Centro - La Cañada", "color_hex": "#FFB800"},
+        {"nombre": "Circuito Hotelero", "color_hex": "#FF9900"},
     ]
     rutas_ids = []
     for r in rutas_data:

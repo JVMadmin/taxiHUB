@@ -920,7 +920,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                               conversacion: abierta,
                             })
                           }
-                          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#FFE600] py-2 text-xs font-bold text-[#0C0E14] shadow-[0_2px_12px_rgba(255, 230, 0,0.3)] transition-all hover:bg-[#FFB800] active:translate-y-px disabled:opacity-50"
+                          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#FFE600] py-2 text-xs font-bold text-[#0C0E14] shadow-[0_2px_12px_rgba(255,230,0,0.3)] transition-all hover:bg-[#FFB800] active:translate-y-px disabled:opacity-50"
                         >
                           {asignando === masCercano.id ? (
                             "Despachando…"
@@ -1001,7 +1001,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
           type="submit"
           data-testid="wa-enviar"
           disabled={!respuesta.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255, 230, 0,0.3)] transition-all hover:bg-[#FFB800] disabled:opacity-40"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255,230,0,0.3)] transition-all hover:bg-[#FFB800] disabled:opacity-40"
           aria-label="Enviar"
         >
           <Send className="h-4 w-4" />

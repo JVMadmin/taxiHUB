@@ -98,7 +98,7 @@ def build_router(*, DEFAULT_SITIO, JWT_ALGORITHM, JWT_SECRET, SitioConfigBody,
     async def update_config_sitio(body: SitioConfigBody, request: Request):
         actor = await _require_terminal_or_dev(request)
         target_sitio = body.clave or body.sitio_id or actor.get("sitio_id") or DEFAULT_SITIO
-        tema_elegido = body.tema_default or body.tema or "esmeralda"
+        tema_elegido = body.tema_default or body.tema or "amarillo"
         updates = {
             "clave": target_sitio,
             "sitio_id": target_sitio,
@@ -108,7 +108,7 @@ def build_router(*, DEFAULT_SITIO, JWT_ALGORITHM, JWT_SECRET, SitioConfigBody,
             "telefono_central": body.telefono_central,
             "tema": tema_elegido,
             "tema_default": tema_elegido,
-            "color_primario": body.color_primario or "#22d3ee",
+            "color_primario": body.color_primario or "#FFE600",
             "modo_default": body.modo_default or "dark",
             "map_center_lat": body.map_center_lat,
             "map_center_lng": body.map_center_lng,

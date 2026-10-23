@@ -156,7 +156,7 @@ html:root[data-mode="claro"] {
   --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
-  --primary: 160 84% 34%;
+  --primary: 38 92% 40%;
   --primary-foreground: 0 0% 100%;
   --secondary: 214 25% 92%;
   --secondary-foreground: 222 47% 11%;
@@ -168,13 +168,13 @@ html:root[data-mode="claro"] {
   --destructive-foreground: 0 0% 100%;
   --border: 214 24% 83%;
   --input: 214 24% 85%;
-  --ring: 160 84% 34%;
+  --ring: 38 92% 40%;
   --surface: 0 0% 100%;
   --surface-2: 214 28% 96%;
   --surface-3: 214 24% 91%;
-  --brand: 160 84% 34%;
-  --brand-bright: 160 84% 29%;
-  --brand-strong: 160 86% 24%;
+  --brand: 38 92% 40%;
+  --brand-bright: 32 92% 34%;
+  --brand-strong: 26 90% 30%;
   --brand-contrast: 0 0% 100%;
 }
 
@@ -734,3 +734,255 @@ html .taxi-passenger-auth .taxi-passenger-field { color: var(--passenger-ink); }
 html * { scrollbar-color: hsl(222 9% 22%) transparent; }
 html *::-webkit-scrollbar-thumb { background: hsl(222 9% 22%); }
 html *::-webkit-scrollbar-thumb:hover { background: hsl(222 9% 30%); }
+
+/* ==========================================================================
+   Amarillo Luminoso 3D: botones, chips e indicadores con volumen.
+   Amarillo #FFE600 a dorado #FFB800, canto #B37A00, tinta carbón #0C0E14.
+   Prefijo `html` para ganar a las utilidades de Tailwind (que van después).
+   ========================================================================== */
+
+/* Botón primario: degradado, brillo superior y canto inferior que se hunde al presionar */
+html .th-btn-y,
+html .btn-primary-elev {
+  background: linear-gradient(180deg, #FFF27A 0%, #FFE600 45%, #FFC400 100%);
+  color: #0C0E14;
+  border: 1px solid #FFB800;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 0 rgba(179, 122, 0, 0.35),
+    0 3px 0 #B37A00,
+    0 8px 22px rgba(255, 230, 0, 0.28);
+  transition: transform 0.08s ease, box-shadow 0.12s ease, filter 0.15s ease;
+}
+html .th-btn-y:hover:not(:disabled),
+html .btn-primary-elev:hover:not(:disabled) {
+  background: linear-gradient(180deg, #FFF59A 0%, #FFEA1F 45%, #FFC400 100%);
+  filter: saturate(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 0 rgba(179, 122, 0, 0.35),
+    0 3px 0 #B37A00,
+    0 10px 30px rgba(255, 230, 0, 0.42);
+}
+html .th-btn-y:active:not(:disabled),
+html .btn-primary-elev:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 2px 6px rgba(179, 122, 0, 0.35),
+    0 1px 0 #B37A00,
+    0 4px 12px rgba(255, 230, 0, 0.22);
+}
+
+/* Botón de icono / secundario del chasis: bloque grafito con bisel y canto */
+html:not([data-mode="claro"]) .th-3d {
+  background: linear-gradient(180deg, #23262E 0%, #16181D 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 2px 0 #050608,
+    0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.12s ease, border-color 0.15s ease, color 0.15s ease;
+}
+html:not([data-mode="claro"]) .th-3d:hover:not(:disabled) {
+  border-color: rgba(255, 230, 0, 0.45);
+  color: #FFE600;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2px 0 #050608,
+    0 0 0 3px rgba(255, 230, 0, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.4);
+}
+html:not([data-mode="claro"]) .th-3d:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 0 0 #050608;
+}
+/* Botón de chasis activo (fondo amarillo): bloque amarillo en relieve */
+html:not([data-mode="claro"]) .th-3d.bg-\[\#FFE600\] {
+  background: linear-gradient(180deg, #FFF27A 0%, #FFE600 45%, #FFC400 100%);
+  border-color: #FFB800;
+  color: #0C0E14;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 #B37A00, 0 6px 18px rgba(255, 230, 0, 0.3);
+}
+
+/* Chips de filtro: grafito; activo = pastilla amarilla con volumen */
+html .chip {
+  background: linear-gradient(180deg, #1D2027 0%, #15171C 100%);
+  border-color: rgba(255, 255, 255, 0.09);
+  color: #C9CCD3;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 0 #050608;
+}
+html .chip:hover {
+  border-color: rgba(255, 230, 0, 0.45);
+  color: #FFFFFF;
+}
+html .chip-active,
+html .chip-active:hover {
+  background: linear-gradient(180deg, #FFF27A 0%, #FFE600 50%, #FFC400 100%);
+  border-color: #FFB800;
+  color: #0C0E14;
+  font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 #B37A00, 0 4px 14px rgba(255, 230, 0, 0.3);
+}
+
+/* Control segmentado (capas del mapa): riel hundido y opción activa en relieve */
+html .th-seg {
+  background: #0B0D10;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+html .th-seg-btn {
+  color: #9CA0AA;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.08s ease;
+}
+html .th-seg-btn:hover { color: #FFFFFF; background: rgba(255, 255, 255, 0.05); }
+html .th-seg-btn[aria-pressed="true"],
+html .th-seg-btn[aria-pressed="true"]:hover {
+  background: linear-gradient(180deg, #FFF27A 0%, #FFE600 50%, #FFC400 100%);
+  border-color: #FFB800;
+  color: #0C0E14;
+  font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 0 #B37A00, 0 4px 12px rgba(255, 230, 0, 0.28);
+}
+
+/* Pastilla informativa amarilla (licencia, foráneos) */
+html .th-pill-y {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 230, 0, 0.4);
+  background: linear-gradient(180deg, rgba(255, 230, 0, 0.16) 0%, rgba(255, 184, 0, 0.08) 100%);
+  color: #FFE600;
+  font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 14px rgba(255, 230, 0, 0.08);
+}
+html .th-pill-y:is(button):hover { border-color: #FFE600; background: rgba(255, 230, 0, 0.22); }
+
+/* Indicador de conexión en vivo: cápsula carbón, radar pulsante y barras de señal */
+html .th-live {
+  --live: #FFE600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 22px;
+  padding: 0 0.55rem 0 0.45rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #14161B 0%, #0A0B0E 100%);
+  border: 1px solid color-mix(in srgb, var(--live) 45%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 3px color-mix(in srgb, var(--live) 8%, transparent),
+    0 0 16px color-mix(in srgb, var(--live) 18%, transparent);
+  color: var(--live);
+  font-family: "Fira Code", ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+html .th-live--reconnecting { --live: #FF9900; }
+html .th-live--offline { --live: #F4544C; }
+html .th-live-radar {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+}
+html .th-live-radar::before,
+html .th-live-radar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--live);
+}
+html .th-live-radar::before { box-shadow: 0 0 8px var(--live); }
+html .th-live--online .th-live-radar::after,
+html .th-live--reconnecting .th-live-radar::after { animation: th-live-radar 1.8s ease-out infinite; }
+@keyframes th-live-radar {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+html .th-live-barras {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 9px;
+}
+html .th-live-barras i {
+  width: 2px;
+  border-radius: 1px;
+  background: var(--live);
+}
+html .th-live-barras i:nth-child(1) { height: 3px; }
+html .th-live-barras i:nth-child(2) { height: 6px; }
+html .th-live-barras i:nth-child(3) { height: 9px; }
+html .th-live--reconnecting .th-live-barras i { animation: th-live-barra 1s ease-in-out infinite; }
+html .th-live--reconnecting .th-live-barras i:nth-child(2) { animation-delay: 0.15s; }
+html .th-live--reconnecting .th-live-barras i:nth-child(3) { animation-delay: 0.3s; }
+html .th-live--offline .th-live-barras i:nth-child(n + 2) { background: rgba(255, 255, 255, 0.18); }
+@keyframes th-live-barra {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html .th-live-radar::after,
+  html .th-live-barras i { animation: none !important; }
+}
+
+/* Contadores de flota del topbar: módulos de instrumento hundidos */
+html .th-gauges {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 14px;
+  background: #0B0D10;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+}
+html .th-gauge {
+  position: relative;
+  min-width: 58px;
+  padding: 4px 9px 4px 11px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #1C1F26 0%, #14161B 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 0 #050608;
+  overflow: hidden;
+}
+html .th-gauge::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--g);
+  box-shadow: 0 0 10px var(--g);
+}
+html .th-gauge-valor {
+  font-family: "Fira Code", ui-monospace, monospace;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--g);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--g) 45%, transparent);
+}
+html .th-gauge-etiqueta {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8B8F99;
+}
+html[data-mode="claro"] .th-gauges { background: #E2E8F0; box-shadow: inset 0 2px 5px rgba(15, 23, 42, 0.12); }
+html[data-mode="claro"] .th-gauge { background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%); box-shadow: 0 1px 0 #CBD5E1; }
+html[data-mode="claro"] .th-gauge-valor { text-shadow: none; }

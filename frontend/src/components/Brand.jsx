@@ -121,7 +121,7 @@ export function BrandWordmark({
             <span
               className="ml-0.5 text-amber-500 dark:text-[#FFE600]"
               style={{
-                textShadow: "0 0 14px rgba(255, 230, 0, 0.45)",
+                textShadow: "0 0 14px rgba(255,230,0, 0.45)",
               }}
             >
               HUB
