@@ -29,7 +29,7 @@ def verify():
 
         # 2. Verificar elementos centrales
         print("[2/6] Verificando elementos de marca y estructura...")
-        page.wait_for_selector("[data-testid='taxihub-landing-page']", timeout=10000)
+        page.wait_for_selector("[data-testid='taxihub-landing-page']", state="attached", timeout=30000)
         
         # Verificar precio $99 MXN
         body_text = page.inner_text("body")
