@@ -1137,7 +1137,7 @@ export default function OperadorApp() {
           {ruta.latlngs && ruta.latlngs.length > 1 && (
             <>
               <Polyline positions={ruta.latlngs} pathOptions={{ color: "#070A0F", weight: 9, opacity: 0.85, lineCap: "round", lineJoin: "round" }} />
-              <Polyline positions={ruta.latlngs} pathOptions={{ color: "#00D084", weight: 5.5, opacity: 0.95, lineCap: "round", lineJoin: "round" }} />
+              <Polyline positions={ruta.latlngs} pathOptions={{ color: "#FFE600", weight: 5.5, opacity: 0.95, lineCap: "round", lineJoin: "round" }} />
               <Polyline positions={ruta.latlngs} pathOptions={{ color: "#FFFFFF", weight: 2, opacity: 0.85, dashArray: "6, 12", lineCap: "round" }} />
             </>
           )}
@@ -1149,9 +1149,9 @@ export default function OperadorApp() {
         <div className="flex items-center gap-3">
           <div className="relative">
             <button onClick={() => profileRef.current?.click()} data-testid="perfil-foto-btn" className="block focus:outline-none">
-              <img src={driverAvatar} alt="Conductor" className="w-11 h-11 rounded-full object-cover ring-2 ring-[#00D084]" />
+              <img src={driverAvatar} alt="Conductor" className="w-11 h-11 rounded-full object-cover ring-2 ring-[#FFE600]" />
             </button>
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#00D084] rounded-full ring-2 ring-[#14171F]"></span>
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#FFE600] rounded-full ring-2 ring-[#14171F]"></span>
           </div>
           <div>
             <h2 className="text-sm font-bold leading-tight text-white">{op.nombre}</h2>
@@ -1162,7 +1162,7 @@ export default function OperadorApp() {
         {/* Métricas compactas en lugar de ocupar espacio abajo */}
         <div className="flex items-center gap-2">
           <div className="text-right">
-            <div className="text-xs font-mono text-[#00D084] bg-[#00D084]/15 px-2.5 py-1 rounded-full font-semibold">
+            <div className="text-xs font-mono text-[#FFE600] bg-[#FFE600]/15 px-2.5 py-1 rounded-full font-semibold">
               ⏱ {inicio ? elapsed(inicio) : "01:36:51"}
             </div>
             <span className="text-[10px] text-zinc-500 block mt-0.5">{turno?.odometro_inicio ? `${turno.odometro_inicio} km` : "78,433 km"} • GPS OK</span>
@@ -1199,7 +1199,7 @@ export default function OperadorApp() {
         </button>
         {navegacion && (
           <div data-testid="ruta-info" className="bg-[#14171F]/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/5 text-center shadow-lg">
-            <div className="text-xs font-mono font-bold text-[#00D084]">{fmtDist(ruta.distance_m)}</div>
+            <div className="text-xs font-mono font-bold text-[#FFE600]">{fmtDist(ruta.distance_m)}</div>
             <div className="text-[9px] uppercase tracking-wide text-zinc-400">{fmtDuration(ruta.duration_s)}</div>
           </div>
         )}
@@ -1209,8 +1209,8 @@ export default function OperadorApp() {
       {/* 1) Fuera de operación: bienvenida */}
       <BottomSheet open={!enOperacion} dismissible={false} testId="driver-sheet-home">
         <div className="flex flex-col items-center pb-2 text-center text-white">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00D084]/15">
-            <Car className="h-7 w-7 text-[#00D084]" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFE600]/15">
+            <Car className="h-7 w-7 text-[#FFE600]" />
           </div>
           <h2 className="mt-3 text-lg font-bold text-white">Tu turno aún no empieza</h2>
           <p className="mt-1 text-sm text-zinc-400">Conéctate para recibir solicitudes de la central.</p>
@@ -1218,7 +1218,7 @@ export default function OperadorApp() {
         <button
           data-testid="entrar-operacion-btn"
           onClick={entrar}
-          className="mt-4 w-full bg-[#00D084] hover:bg-[#00B572] text-[#05130D] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(0,208,132,0.3)] flex items-center justify-center gap-2 transition"
+          className="mt-4 w-full bg-[#FFE600] hover:bg-[#00B572] text-[#05130D] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(255,230,0,0.35)] flex items-center justify-center gap-2 transition"
         >
           <Power className="h-5 w-5" /> Entrar en operación
         </button>
@@ -1235,7 +1235,7 @@ export default function OperadorApp() {
             <button
               data-testid="estado-libre"
               onClick={() => cambiarEstado("libre")}
-              className={op.estado === "libre" ? "bg-[#00D084] text-[#05130D] font-bold text-xs py-2.5 rounded-xl shadow-sm transition" : "text-zinc-400 hover:text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1 transition"}
+              className={op.estado === "libre" ? "bg-[#FFE600] text-[#05130D] font-bold text-xs py-2.5 rounded-xl shadow-sm transition" : "text-zinc-400 hover:text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1 transition"}
             >
               Disponible
             </button>
@@ -1291,7 +1291,7 @@ export default function OperadorApp() {
           <button
             data-testid="iniciar-servicio-btn"
             onClick={() => setIniciarOpen(true)}
-            className="w-full bg-[#00D084] hover:bg-[#00B572] active:scale-[0.99] text-[#05130D] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(0,208,132,0.3)] flex items-center justify-center gap-2 mb-4 transition"
+            className="w-full bg-[#FFE600] hover:bg-[#00B572] active:scale-[0.99] text-[#05130D] font-extrabold text-base py-3.5 rounded-2xl shadow-[0_0_24px_rgba(255,230,0,0.35)] flex items-center justify-center gap-2 mb-4 transition"
           >
             <Play className="h-4 w-4 fill-current mr-2" /> Iniciar servicio en calle
           </button>
@@ -1465,7 +1465,7 @@ export default function OperadorApp() {
                     toast.error(e.response?.data?.detail || "No se pudo avisar llegada");
                   }
                 }}
-                className="mt-2 w-full border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+                className="mt-2 w-full border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20"
               >
                 <Bell className="h-4 w-4" /> Avisar al pasajero: Ya estoy en el punto
               </Button>
@@ -1767,14 +1767,14 @@ export default function OperadorApp() {
 
             {/* 3. Al cerrar turno: Confirmar entrega de unidad + Efectivo / Cuota */}
             {kmMode === "finalizar" && (
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] p-3 space-y-3" data-testid="turno-liquidacion-section">
+              <div className="rounded-xl border border-amber-400/30 bg-amber-400/[0.06] p-3 space-y-3" data-testid="turno-liquidacion-section">
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-300">
-                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-300">
+                    <ShieldCheck className="h-4 w-4 text-amber-400" />
                     3. Entrega de Unidad y Efectivo / Cuota
                   </span>
                   {(turno?.cuota_diaria || op?.vehiculo?.cuota_diaria) && (
-                    <span className="mono-num text-[11px] font-bold text-emerald-400">
+                    <span className="mono-num text-[11px] font-bold text-amber-400">
                       Cuota fijada: ${turno?.cuota_diaria || op?.vehiculo?.cuota_diaria}
                     </span>
                   )}
@@ -1786,7 +1786,7 @@ export default function OperadorApp() {
                     data-testid="turno-confirmar-entrega-check"
                     checked={entregaUnidadConfirmada}
                     onChange={(e) => setEntregaUnidadConfirmada(e.target.checked)}
-                    className="h-4 w-4 rounded accent-emerald-500"
+                    className="h-4 w-4 rounded accent-amber-400"
                   />
                   <span>Confirmo entrega física de la unidad sin novedades</span>
                 </label>
@@ -1826,7 +1826,7 @@ export default function OperadorApp() {
 
                 <div>
                   <label className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase text-muted-foreground">
-                    <Banknote className="h-3.5 w-3.5 text-emerald-400" />
+                    <Banknote className="h-3.5 w-3.5 text-amber-400" />
                     Efectivo / Cuota entregada ($ MXN):
                   </label>
                   <Input
@@ -1836,7 +1836,7 @@ export default function OperadorApp() {
                     value={cuotaEntregada}
                     onChange={(e) => setCuotaEntregada(e.target.value)}
                     placeholder="Monto entregado ($)"
-                    className="input-inset mono-num border-border text-sm font-bold text-emerald-300"
+                    className="input-inset mono-num border-border text-sm font-bold text-amber-300"
                   />
                 </div>
 
@@ -1898,7 +1898,7 @@ export default function OperadorApp() {
               {chatMsgs.length === 0 && <div className="mt-8 text-center text-xs text-zinc-500">Aún no hay mensajes en esta conversación</div>}
               {chatMsgs.map((m) => (
                 <div key={m.id} className={`flex ${m.remitente === "operador" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${m.remitente === "operador" ? "bg-[#00D084] text-[#05130D] font-medium" : "bg-[#181C26] text-zinc-100 border border-white/10"}`}>
+                  <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${m.remitente === "operador" ? "bg-[#FFE600] text-[#05130D] font-medium" : "bg-[#181C26] text-zinc-100 border border-white/10"}`}>
                     {m.imagen_url && (
                       <img
                         src={m.imagen_url}
@@ -1908,7 +1908,7 @@ export default function OperadorApp() {
                       />
                     )}
                     {m.texto ? <div>{m.texto}</div> : null}
-                    <div className={`text-[9px] mt-1 ${m.remitente === "operador" ? "text-emerald-950/70" : "text-zinc-500"} text-right`}>{timeAgo(m.timestamp)}</div>
+                    <div className={`text-[9px] mt-1 ${m.remitente === "operador" ? "text-slate-950/70" : "text-zinc-500"} text-right`}>{timeAgo(m.timestamp)}</div>
                   </div>
                 </div>
               ))}
@@ -1922,7 +1922,7 @@ export default function OperadorApp() {
                 className="w-10 h-10 rounded-xl bg-[#181C26] hover:bg-[#222736] border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white transition shrink-0"
                 title="Adjuntar foto"
               >
-                {chatUploading ? <Loader2 className="h-4 w-4 animate-spin text-[#00D084]" /> : <Camera className="h-4 w-4" />}
+                {chatUploading ? <Loader2 className="h-4 w-4 animate-spin text-[#FFE600]" /> : <Camera className="h-4 w-4" />}
               </button>
               <Input
                 data-testid="chat-op-input"
@@ -1935,7 +1935,7 @@ export default function OperadorApp() {
               <button
                 data-testid="chat-op-enviar"
                 onClick={enviarChat}
-                className="w-10 h-10 rounded-xl bg-[#00D084] hover:bg-[#00B572] text-[#05130D] flex items-center justify-center transition shrink-0 shadow-[0_0_12px_rgba(0,208,132,0.3)]"
+                className="w-10 h-10 rounded-xl bg-[#FFE600] hover:bg-[#00B572] text-[#05130D] flex items-center justify-center transition shrink-0 shadow-[0_0_16px_rgba(255,230,0,0.35)]"
                 aria-label="Enviar mensaje"
               >
                 <Send className="h-4 w-4" />
@@ -2057,13 +2057,13 @@ export default function OperadorApp() {
                 className="flex w-full items-center justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-left transition-colors hover:border-brand/40"
               >
                 <span className="flex items-center gap-2.5">
-                  <Volume2 className="h-4 w-4 text-emerald-400" />
+                  <Volume2 className="h-4 w-4 text-amber-400" />
                   <div>
                     <span className="block text-sm font-bold text-foreground">Probar Audio y Chime de Alerta</span>
                     <span className="block text-xs text-muted-foreground">Verificar altavoz y volumen de despacho</span>
                   </div>
                 </span>
-                <span className="text-xs font-bold text-emerald-400">Probar</span>
+                <span className="text-xs font-bold text-amber-400">Probar</span>
               </button>
             </div>
 

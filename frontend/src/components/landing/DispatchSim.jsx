@@ -64,7 +64,7 @@ export function DispatchSim() {
             aria-pressed={paused}
             className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
           >
-            {paused ? <Play className="h-3.5 w-3.5 text-emerald-600" /> : <Pause className="h-3.5 w-3.5 text-slate-500" />}
+            {paused ? <Play className="h-3.5 w-3.5 text-amber-500" /> : <Pause className="h-3.5 w-3.5 text-slate-500" />}
             <span>{paused ? "Reanudar radar" : "Pausar radar"}</span>
           </button>
         </div>
@@ -76,13 +76,13 @@ export function DispatchSim() {
         >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
               <span>RADAR DE FLOTA EN VIVO</span>
             </div>
             <div className="flex items-center gap-3 font-mono text-xs text-slate-500">
               <span>Unidades activas: <strong className="text-slate-900">25</strong></span>
               <span>·</span>
-              <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              <span className="text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                 Respuesta: 1.2s
               </span>
             </div>
@@ -101,8 +101,8 @@ export function DispatchSim() {
             />
 
             {/* Anillos concéntricos de radar */}
-            <div className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-500/20" />
-            <div className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-500/30" />
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-400/20" />
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-400/30" />
 
             {/* Calles viales estilizadas en gris claro */}
             <svg className="absolute inset-0 h-full w-full opacity-30" aria-hidden="true">
@@ -126,13 +126,13 @@ export function DispatchSim() {
                   <div
                     className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold shadow-md ${
                       isTarget && pulse
-                        ? "bg-emerald-600 text-white ring-4 ring-emerald-300"
+                        ? "bg-amber-400 text-slate-950 font-bold ring-4 ring-amber-300/50"
                         : u.status === "libre"
-                        ? "bg-white text-emerald-800 border-2 border-emerald-500"
+                        ? "bg-white text-amber-800 border-2 border-amber-400"
                         : "bg-white text-amber-800 border-2 border-amber-500"
                     }`}
                   >
-                    <span className={`h-2 w-2 rounded-full ${isTarget && pulse ? "bg-white" : u.status === "libre" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                    <span className={`h-2 w-2 rounded-full ${isTarget && pulse ? "bg-white" : u.status === "libre" ? "bg-amber-400" : "bg-amber-500"}`} />
                     <span>#{u.id}</span>
                   </div>
                 </div>
@@ -146,10 +146,10 @@ export function DispatchSim() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-xl border border-emerald-300 bg-white/95 px-4 py-3 shadow-xl text-slate-900"
+                  className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-xl border border-amber-300 bg-white/95 px-4 py-3 shadow-xl text-slate-900"
                 >
                   <div>
-                    <div className="flex items-center gap-2 font-bold text-emerald-700 text-sm">
+                    <div className="flex items-center gap-2 font-bold text-amber-700 text-sm">
                       <Zap className="h-4 w-4" />
                       <span>#{selected.unit} asignado a {selected.name}</span>
                     </div>
@@ -157,7 +157,7 @@ export function DispatchSim() {
                       Auto-respuesta enviada por WhatsApp con placas y tiempo estimado ({selected.eta}).
                     </p>
                   </div>
-                  <span className="hidden sm:inline-block rounded-md bg-emerald-100 px-2.5 py-1 font-mono text-[10px] font-bold text-emerald-800">
+                  <span className="hidden sm:inline-block rounded-md bg-amber-100 px-2.5 py-1 font-mono text-[10px] font-bold text-amber-800">
                     EN CAMINO
                   </span>
                 </motion.div>
@@ -180,7 +180,7 @@ export function DispatchSim() {
                     onClick={() => dispatch(poi)}
                     className={`flex flex-col rounded-xl border p-3 text-left transition-all ${
                       active
-                        ? "border-emerald-500 bg-emerald-50/70 shadow-sm"
+                        ? "border-amber-400 bg-amber-50/70 shadow-sm"
                         : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
@@ -188,7 +188,7 @@ export function DispatchSim() {
                       <span className="rounded bg-slate-100 px-1.5 py-0.5 font-bold text-slate-700">
                         [{poi.key}]
                       </span>
-                      <span className="text-emerald-700 font-bold">{poi.eta}</span>
+                      <span className="text-amber-700 font-bold">{poi.eta}</span>
                     </div>
                     <span className="mt-1 font-bold text-sm text-slate-900 truncate">{poi.name}</span>
                   </button>

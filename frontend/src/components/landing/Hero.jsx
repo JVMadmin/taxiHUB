@@ -32,9 +32,9 @@ export function Hero() {
     <section id="inicio" ref={ref} className="mx-auto max-w-6xl px-4 pt-10 pb-16 sm:px-6 sm:pt-16 sm:pb-24">
       <div className="grid items-center gap-10 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <motion.div {...fade(0)} className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 l-ping" aria-hidden="true" />
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+          <motion.div {...fade(0)} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3 py-1">
+            <span className="h-2 w-2 rounded-full bg-amber-400 l-ping" aria-hidden="true" />
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-amber-900">
               Radiodespacho Satelital en Tiempo Real
             </span>
           </motion.div>
@@ -44,7 +44,7 @@ export function Hero() {
             className="font-display mt-5 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-5xl xl:text-6xl"
           >
             Tu central de taxis,{" "}
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-700 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
               sin perder viajes.
             </span>
           </motion.h1>
@@ -57,7 +57,7 @@ export function Hero() {
             <a
               href="#contacto"
               onClick={(e) => { e.preventDefault(); scrollToId("contacto", reduce); }}
-              className="inline-flex min-h-[48px] items-center rounded-full bg-emerald-600 px-6 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]"
+              className="inline-flex min-h-[48px] items-center rounded-full bg-amber-400 px-6 text-sm font-bold text-slate-950 shadow-md shadow-amber-400/25 transition-all hover:bg-amber-300 active:scale-[0.98]"
             >
               Solicitar demo
             </a>
@@ -93,7 +93,7 @@ export function Hero() {
           <motion.ul {...fade(0.36)} className="mt-8 grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             {FACTS.map(({ icon: Icon, k, v }) => (
               <li key={k} className="flex items-start gap-3">
-                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" aria-hidden="true" />
                 <div>
                   <div className="text-sm font-bold text-slate-900">{k}</div>
                   <div className="text-xs text-slate-500">{v}</div>
@@ -114,7 +114,7 @@ export function Hero() {
               <div className="flex items-center gap-2 border-b border-slate-200/80 bg-white px-4 py-2.5" aria-hidden="true">
                 <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                 <span className="ml-3 truncate font-mono text-[11px] text-slate-500 bg-slate-100 px-3 py-0.5 rounded-md border border-slate-200">
                   taxihub.cloud/terminal
                 </span>

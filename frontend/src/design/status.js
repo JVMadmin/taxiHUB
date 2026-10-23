@@ -4,14 +4,14 @@
 // EstadoServicio); los marcados `reservado` se adoptan en fases posteriores.
 
 export const PALETA = {
-  primary: "#4F5DFF",
-  primaryDark: "#3D49D6",
-  primaryLight: "#DDE1FF",
-  live: "#00D084",
-  success: "#00D084",
+  primary: "#FFE600",
+  primaryDark: "#FFB800",
+  primaryLight: "#FFF8C5",
+  live: "#FFE600",
+  success: "#10B981",
   danger: "#F4544C",
-  warning: "#FFB224",
-  info: "#4F5DFF",
+  warning: "#FF9900",
+  info: "#38BDF8",
   purple: "#9A6BFF",
   offline: "#9CA0AA",
 };

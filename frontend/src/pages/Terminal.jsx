@@ -883,7 +883,7 @@ export default function Terminal() {
             className={cn(
               "surface-ui pointer-events-auto flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-2xl backdrop-blur-md transition-colors",
               mostrarFlota
-                ? "border-border/80 bg-surface/95 text-emerald-400 hover:bg-emerald-500/15"
+                ? "border-border/80 bg-surface/95 text-amber-400 hover:bg-amber-400/15"
                 : "border-amber-500/40 bg-amber-500/20 text-amber-300"
             )}
             data-testid="toggle-flota-btn"
@@ -891,7 +891,7 @@ export default function Terminal() {
           >
             {mostrarFlota ? (
               <>
-                <Eye className="h-3.5 w-3.5 text-emerald-400" />
+                <Eye className="h-3.5 w-3.5 text-amber-400" />
                 <span>Unidades en mapa ({visibles.length})</span>
               </>
             ) : (
@@ -973,7 +973,7 @@ export default function Terminal() {
                       {servicioActivo.destino?.texto && <div className="mt-0.5 text-xs text-muted-foreground">{servicioActivo.destino.texto}</div>}
                       {rutaServicio.distance_m != null && (
                         <div className="mt-1.5 rounded-lg bg-secondary/70 px-2 py-1 text-center">
-                          <span className="mono-num font-semibold text-emerald-400">{fmtDist(rutaServicio.distance_m)}</span>
+                          <span className="mono-num font-semibold text-amber-400">{fmtDist(rutaServicio.distance_m)}</span>
                           <span className="mx-1 text-muted-foreground">·</span>
                           <span className="mono-num font-semibold text-foreground">{fmtDuration(rutaServicio.duration_s)}</span>
                         </div>
@@ -1152,7 +1152,7 @@ export default function Terminal() {
                   type="button"
                   data-testid={`poi-1clic-${poi.id || idx}`}
                   onClick={() => handleSelectPuntoCaliente(poi, true)}
-                  className="border-l border-white/[0.08] px-1.5 py-0.5 text-amber-400 hover:bg-emerald-500/25 hover:text-emerald-300 rounded-r-lg transition-colors"
+                  className="border-l border-white/[0.08] px-1.5 py-0.5 text-amber-400 hover:bg-amber-400/25 hover:text-amber-300 rounded-r-lg transition-colors"
                   title={`⚡ Despachar de inmediato el taxi libre más cercano a ${poi.nombre} (1 clic)`}
                 >
                   <Zap className="h-3 w-3" />
@@ -1225,7 +1225,7 @@ export default function Terminal() {
           <button
             type="button"
             onClick={handleStopDrawing}
-            className="rounded-lg bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white hover:bg-emerald-500"
+            className="rounded-lg bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold text-slate-950 hover:bg-amber-300"
           >
             Listo
           </button>
@@ -1281,8 +1281,8 @@ export default function Terminal() {
           <div className="surface-ui absolute top-4 left-1/2 -translate-x-1/2 z-[800] flex items-center gap-2 rounded-2xl border border-white/15 bg-[#13151A]/95 px-4 py-2 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
             <div className="flex items-center gap-2 text-xs font-medium text-foreground">
               {coords.origen ? (
-                <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="flex items-center gap-1.5 text-amber-400 font-semibold">
+                  <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
                   <span className="max-w-[150px] truncate">{coords.origenTexto || "Origen marcado"}</span>
                 </span>
               ) : (
@@ -1306,7 +1306,7 @@ export default function Terminal() {
                 type="button"
                 data-testid="hud-despacho-1clic-btn"
                 onClick={() => handleDespachoRapido(coords.origen, null, coords.origenTexto, coords.tarifaSugerida)}
-                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-950/50"
+                className="flex items-center gap-1.5 rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-amber-300 transition-colors shadow-lg shadow-amber-950/30"
                 title="Asignar de inmediato al taxi libre más cercano sin abrir modal"
               >
                 <Zap className="h-3.5 w-3.5 text-amber-300" /> 1-Clic Cercano
@@ -1316,7 +1316,7 @@ export default function Terminal() {
             <button
               type="button"
               onClick={() => setModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 transition-colors border border-emerald-500/30"
+              className="flex items-center gap-1.5 rounded-xl bg-amber-400/20 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-400/30 transition-colors border border-amber-400/30"
               title="Abrir formulario de despacho y elegir unidad"
             >
               Elegir Taxi

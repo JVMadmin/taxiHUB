@@ -91,21 +91,21 @@ export function ProductStory() {
               onClick={() => setActive(i)}
               className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
                 isSelected
-                  ? "border-emerald-500 bg-emerald-50/80 text-emerald-950 shadow-md ring-2 ring-emerald-500/20"
+                  ? "border-amber-400 bg-amber-50/80 text-amber-950 shadow-md ring-2 ring-amber-400/25"
                   : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
               }`}
             >
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                   isSelected
-                    ? "border-emerald-400 bg-emerald-600 text-white shadow-xs"
+                    ? "border-amber-400 bg-amber-400 text-slate-950 font-bold shadow-xs"
                     : "border-slate-200 bg-slate-50 text-slate-500"
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-800">
                   Paso {String(i + 1).padStart(2, "0")}
                 </div>
                 <div className="text-sm font-bold text-slate-900">{s.tag.split("·")[0].trim()}</div>
@@ -128,8 +128,8 @@ export function ProductStory() {
           >
             {/* Columna de información y beneficios */}
             <div className="lg:col-span-5 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-1 font-mono text-xs font-bold text-emerald-800 shadow-xs">
-                <current.icon className="h-4 w-4 text-emerald-600" />
+              <div className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-white px-3 py-1 font-mono text-xs font-bold text-amber-800 shadow-xs">
+                <current.icon className="h-4 w-4 text-amber-500" />
                 <span>{current.tag}</span>
               </div>
 
@@ -145,7 +145,7 @@ export function ProductStory() {
               <div className="space-y-3 pt-2">
                 {current.highlights.map((h, idx) => (
                   <div key={idx} className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                     <span className="text-sm font-medium text-slate-700">{h}</span>
                   </div>
                 ))}
@@ -196,7 +196,7 @@ export function ProductStory() {
                     <div className="flex items-center gap-2 border-b border-slate-200/80 bg-white px-4 py-2.5" aria-hidden="true">
                       <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
                       <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                       <span className="ml-3 truncate font-mono text-[11px] text-slate-500 bg-slate-100 px-3 py-0.5 rounded-md border border-slate-200">
                         taxihub.cloud/{current.id === "terminal" ? "terminal" : "dueno"}
                       </span>

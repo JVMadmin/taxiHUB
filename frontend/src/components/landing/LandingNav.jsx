@@ -34,11 +34,11 @@ export function LandingNav() {
         <a
           href="#inicio"
           onClick={(e) => go(e, "inicio")}
-          className="flex items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="flex items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:ring-amber-400"
           aria-label="TaxiHUB inicio"
         >
           <BrandLockup markSize="sm" />
-          <span className="hidden font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-700 sm:inline-block bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+          <span className="hidden font-mono text-[11px] font-semibold uppercase tracking-wider text-amber-800 sm:inline-block bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
             taxihub.cloud
           </span>
         </a>
@@ -63,10 +63,10 @@ export function LandingNav() {
             type="button"
             data-testid={LANDING.goTerminal}
             onClick={() => navigate("/terminal/login")}
-            className="group flex min-h-[40px] items-center gap-2 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]"
+            className="group flex min-h-[40px] items-center gap-2 rounded-full bg-amber-400 px-4 py-1.5 text-xs font-bold text-slate-950 shadow-sm shadow-amber-400/25 transition-all hover:bg-amber-300 active:scale-[0.98]"
           >
             <span>Abrir Terminal</span>
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-950/15 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
               <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
             </span>
           </button>
@@ -101,7 +101,7 @@ export function LandingNav() {
               <button
                 type="button"
                 onClick={() => { setOpen(false); navigate("/terminal/login"); }}
-                className="w-full rounded-lg bg-emerald-600 py-2.5 text-center text-xs font-bold text-white"
+                className="w-full rounded-lg bg-amber-400 py-2.5 text-center text-xs font-bold text-slate-950"
               >
                 Abrir Terminal de Despacho
               </button>

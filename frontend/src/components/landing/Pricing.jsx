@@ -29,7 +29,7 @@ export function Pricing({ units, setUnits }) {
               "Cartografía local de tu ciudad y configuración de puntos calientes",
             ].map((feature, idx) => (
               <div key={idx} className="flex items-start gap-2.5 text-sm text-slate-700">
-                <Check className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                <Check className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
                 <span>{feature}</span>
               </div>
             ))}
@@ -44,11 +44,11 @@ export function Pricing({ units, setUnits }) {
         <Reveal delay={0.1} className="lg:col-span-7">
           <div
             data-testid={LANDING.priceCard}
-            className="rounded-3xl border-2 border-emerald-500/30 bg-white p-7 sm:p-9 shadow-2xl shadow-emerald-500/10"
+            className="rounded-3xl border-2 border-amber-400/40 bg-white p-7 sm:p-9 shadow-2xl shadow-amber-400/10"
           >
             <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-100 pb-6">
               <div>
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
                   Plan Central Oficial
                 </span>
                 <div className="mt-3 flex items-baseline gap-2">
@@ -87,7 +87,7 @@ export function Pricing({ units, setUnits }) {
                     value={units}
                     onChange={(e) => setUnits(clamp(e.target.value))}
                     data-testid={LANDING.priceUnits}
-                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-center font-mono text-2xl font-extrabold text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-center font-mono text-2xl font-extrabold text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/25"
                   />
                 </div>
 
@@ -109,29 +109,29 @@ export function Pricing({ units, setUnits }) {
                 step="1"
                 value={units}
                 onChange={(e) => setUnits(Number(e.target.value))}
-                className="mt-4 w-full accent-emerald-600"
+                className="mt-4 w-full accent-amber-500"
               />
             </div>
 
             {/* Total estimado */}
             <div
               data-testid={LANDING.priceTotal}
-              className="mt-7 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 flex items-center justify-between"
+              className="mt-7 rounded-2xl border border-amber-200 bg-amber-50/60 p-5 flex items-center justify-between"
             >
               <div>
-                <span className="text-xs font-semibold text-emerald-900 block">Total mensual estimado:</span>
+                <span className="text-xs font-semibold text-amber-950 block">Total mensual estimado:</span>
                 <span className="font-mono text-xs text-slate-500">{units} unidades activas</span>
               </div>
               <div className="text-right">
-                <div className="font-display font-mono text-3xl sm:text-4xl font-extrabold text-emerald-700">
-                  ${fmt(total)} <span className="text-sm font-semibold text-emerald-900">MXN</span>
+                <div className="font-display font-mono text-3xl sm:text-4xl font-extrabold text-amber-600">
+                  ${fmt(total)} <span className="text-sm font-semibold text-amber-950">MXN</span>
                 </div>
               </div>
             </div>
 
             <a
               href="#contacto"
-              className="mt-6 block w-full rounded-xl bg-emerald-600 py-3.5 text-center text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]"
+              className="mt-6 block w-full rounded-xl bg-amber-400 py-3.5 text-center text-sm font-bold text-slate-950 shadow-md shadow-amber-400/25 transition-all hover:bg-amber-300 active:scale-[0.98]"
             >
               Solicitar cotización e instalación
             </a>

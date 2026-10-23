@@ -46,8 +46,8 @@ export function scrollToId(id, reduce) {
 }
 
 export const Eyebrow = ({ children }) => (
-  <span className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-400">
-    <span aria-hidden="true" className="h-px w-6 bg-emerald-400/60" />
+  <span className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-amber-400">
+    <span aria-hidden="true" className="h-px w-6 bg-amber-400/60" />
     {children}
   </span>
 );

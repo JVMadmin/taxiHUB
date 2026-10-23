@@ -57,7 +57,7 @@ export function Contact() {
           {/* Columna izquierda: Información comercial */}
           <div className="lg:col-span-5">
             <Reveal>
-              <span className="text-emerald-700 font-mono text-xs font-bold tracking-wider uppercase bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <span className="text-amber-800 font-mono text-xs font-bold tracking-wider uppercase bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
                 Implementación e Informes
               </span>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 tracking-tight">
@@ -70,7 +70,7 @@ export function Contact() {
 
               <div className="mt-8 space-y-4">
                 <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 shrink-0">
                     <MessageSquare className="w-5 h-5" />
                   </div>
                   <div>
@@ -82,7 +82,7 @@ export function Contact() {
                 </div>
 
                 <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 shrink-0">
                     <PhoneCall className="w-5 h-5" />
                   </div>
                   <div>
@@ -108,9 +108,9 @@ export function Contact() {
                 {submitted ? (
                   <div
                     data-testid={LANDING.leadSuccess}
-                    className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center"
+                    className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-center"
                   >
-                    <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
+                    <CheckCircle2 className="w-12 h-12 text-amber-500 mx-auto mb-3" />
                     <h4 className="text-lg font-bold text-slate-900 mb-1">¡Solicitud generada con éxito!</h4>
                     <p className="text-sm text-slate-600 mb-4">
                       Se ha abierto tu conversación de WhatsApp con la cotización prellenada.
@@ -152,7 +152,7 @@ export function Contact() {
                           onChange={handleChange}
                           data-testid={LANDING.leadNombre}
                           placeholder="Ej. Roberto Méndez"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25 transition"
                         />
                       </div>
 
@@ -168,7 +168,7 @@ export function Contact() {
                           onChange={handleChange}
                           data-testid={LANDING.leadCentral}
                           placeholder="Ej. Radio Taxis Maya"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25 transition"
                         />
                       </div>
                     </div>
@@ -186,7 +186,7 @@ export function Contact() {
                           onChange={handleChange}
                           data-testid={LANDING.leadTelefono}
                           placeholder="Ej. 916 123 4567"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25 transition"
                         />
                       </div>
 
@@ -202,7 +202,7 @@ export function Contact() {
                           value={formData.unidades}
                           onChange={handleChange}
                           data-testid={LANDING.leadUnidades}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition font-mono"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25 transition font-mono"
                         />
                       </div>
                     </div>
@@ -218,7 +218,7 @@ export function Contact() {
                         onChange={handleChange}
                         data-testid={LANDING.leadMensaje}
                         placeholder="Cuéntanos sobre tu ciudad o si requieren migrar desde radios analógicos..."
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition resize-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25 transition resize-none"
                       />
                     </div>
 
@@ -226,7 +226,7 @@ export function Contact() {
                       type="submit"
                       disabled={submitting}
                       data-testid={LANDING.leadSubmit}
-                      className="w-full mt-2 py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition disabled:opacity-50 active:scale-[0.98]"
+                      className="w-full mt-2 py-3.5 px-6 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-400/25 transition disabled:opacity-50 active:scale-[0.98]"
                     >
                       <Send className="w-4 h-4" />
                       <span>{submitting ? "Enviando..." : "Solicitar Cotización y Abrir WhatsApp"}</span>
