@@ -17,7 +17,7 @@
   position: absolute;
   inset: 6px;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(0, 208, 132, 0.45) 0%, rgba(0, 208, 132, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 230, 0, 0.45) 0%, rgba(255, 230, 0, 0) 70%);
   animation: th-driver3d-pulso 2.2s ease-out infinite;
 }
 @keyframes th-driver3d-pulso {
@@ -39,7 +39,7 @@
   border-radius: 9999px;
   padding: 3px 10px;
   font: 700 12px/1.2 "Plus Jakarta Sans", system-ui, sans-serif;
-  color: #04120c;
+  color: #0C0E14;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
   white-space: nowrap;
 }

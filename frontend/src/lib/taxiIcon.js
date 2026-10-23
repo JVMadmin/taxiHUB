@@ -33,7 +33,7 @@ export function pointIcon(label, color, { size = "md" } = {}) {
   const lbl = String(label || "").trim();
   const isDestino = lbl.toLowerCase().includes("destino");
   const isOrigen = lbl.toLowerCase().includes("origen") || lbl.toLowerCase().includes("cliente");
-  const c = isDestino ? "#F43F5E" : isOrigen ? "#00D084" : (color || "#00D084");
+  const c = isDestino ? "#F43F5E" : isOrigen ? "#FFE600" : (color || "#FFE600");
 
   const scale = size === "lg" ? 1.2 : size === "sm" ? 0.85 : 1.0;
   const w = Math.round(34 * scale);
@@ -304,7 +304,7 @@ export function taxiOrdinarioAssetIcon({ heading = 0, size = "md", label = "", f
   const assetSrc = foto || "/assets/vehicles/taxihub-taxi-azul.png";
   const labelHtml = label
     ? `<span style="margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:rgba(12,15,22,0.95);color:#FFFFFF;border:1px solid rgba(255,255,255,0.18);border-radius:8px;padding:2px 7px;font-size:10px;font-weight:700;line-height:1;white-space:nowrap;font-family:'Inter',system-ui,sans-serif;box-shadow:0 4px 10px rgba(0,0,0,0.6);backdrop-filter:blur(6px);">
-        <span style="width:5px;height:5px;border-radius:50%;background:#00D084;box-shadow:0 0 6px #00D084;"></span>
+        <span style="width:5px;height:5px;border-radius:50%;background:#FFE600;box-shadow:0 0 6px #FFE600;"></span>
         ${label}
        </span>`
     : "";
@@ -396,14 +396,14 @@ export function passengerPulsingIcon(label = "Mi ubicación") {
   const html = `
     <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;user-select:none;">
       <!-- Anillo exterior parpadeante y expansivo (radar pulse 3D) -->
-      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(0,208,132,0.22);border:1.5px solid rgba(0,208,132,0.75);animation:th-radar-wave 2s cubic-bezier(0.2,0.8,0.2,1) infinite;"></div>
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(255, 230, 0,0.22);border:1.5px solid rgba(255, 230, 0,0.75);animation:th-radar-wave 2s cubic-bezier(0.2,0.8,0.2,1) infinite;"></div>
       <!-- Halo medio de resplandor esmeralda -->
-      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:rgba(0,208,132,0.4);box-shadow:0 0 16px rgba(0,208,132,0.85);"></div>
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:rgba(255, 230, 0,0.4);box-shadow:0 0 16px rgba(255, 230, 0,0.85);"></div>
       <!-- Núcleo central 3D con specular reflection -->
-      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);z-index:2;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #FFFFFF 0%, #00D084 65%, #059669 100%);border:2.5px solid #0B0E14;box-shadow:0 0 10px #00D084;"></div>
+      <div style="position:absolute;top:24px;left:50%;transform:translate(-50%,-50%);z-index:2;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #FFFFFF 0%, #FFE600 65%, #059669 100%);border:2.5px solid #0B0E14;box-shadow:0 0 10px #FFE600;"></div>
       <!-- Etiqueta inferior estilo píldora HUD Dark -->
-      <div style="margin-top:36px;display:inline-flex;align-items:center;gap:5px;background:rgba(12,15,22,0.95);color:#FFFFFF;border:1px solid rgba(0,208,132,0.5);border-radius:14px;padding:2.5px 9px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.65);backdrop-filter:blur(6px);">
-        <span style="width:6px;height:6px;border-radius:50%;background:#00D084;box-shadow:0 0 6px #00D084;"></span>
+      <div style="margin-top:36px;display:inline-flex;align-items:center;gap:5px;background:rgba(12,15,22,0.95);color:#FFFFFF;border:1px solid rgba(255, 230, 0,0.5);border-radius:14px;padding:2.5px 9px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.65);backdrop-filter:blur(6px);">
+        <span style="width:6px;height:6px;border-radius:50%;background:#FFE600;box-shadow:0 0 6px #FFE600;"></span>
         ${lbl}
       </div>
     </div>`;

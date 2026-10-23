@@ -27,8 +27,8 @@ function interpolateColor(color1, color2, factor) {
 /**
  * Obtiene el color de gradiente según la antigüedad relativa del punto (0.0 más antiguo -> 1.0 más reciente)
  */
-function getTrackColor(factor, colorReciente = "#7CFC3C") {
-  const COLOR_ANTIGUO = "#4F5DFF";  // Azul índigo (inicio de turno)
+function getTrackColor(factor, colorReciente = "#FFE600") {
+  const COLOR_ANTIGUO = "#38BDF8";  // Azul información (inicio de turno)
   const COLOR_MEDIO = "#FFB224";    // Ámbar (mitad del recorrido)
 
   if (factor < 0.5) {
@@ -43,7 +43,7 @@ function getTrackColor(factor, colorReciente = "#7CFC3C") {
  * con un degradado temporal continuo (antiguo = azul -> reciente = verde/rojo).
  */
 export function RecorridoGradiente({ track, estado = "libre" }) {
-  const colorReciente = estado === "ocupado" ? "#F4544C" : "#7CFC3C";
+  const colorReciente = estado === "ocupado" ? "#F4544C" : "#FFE600";
 
   const segments = useMemo(() => {
     if (!track || track.length < 2) return [];
@@ -110,7 +110,7 @@ export function RecorridoGradiente({ track, estado = "libre" }) {
           center={[inicio.lat, inicio.lng]}
           radius={5}
           pathOptions={{
-            color: "#4F5DFF",
+            color: "#FFE600",
             fillColor: "#0B0D10",
             fillOpacity: 1,
             weight: 2,

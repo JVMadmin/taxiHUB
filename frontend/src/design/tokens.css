@@ -1,7 +1,7 @@
 /* ==========================================================================
    TaxiHUB 2.1 — Design Tokens ("Taxi Operations OS" / dark cálido)
    Identidad: negro casi puro (#0B0D10), superficies #17191E, acento
-   azul-índigo eléctrico (#4F5DFF), verde neón (#8CFF4F) reservado para
+   azul-índigo eléctrico (#FFE600), verde neón (#FFE600) reservado para
    estados "en vivo"/"disponible". Tipografía Inter 400/500/600.
    Capa aditiva: convive con el sistema 1.x hasta completar la migración.
    Dark es el modo por defecto del producto; `data-mode="claro"` activa la
@@ -625,18 +625,18 @@ html .taxi-passenger-dark .taxi-passenger-vehicle-thumb-img {
   border-color: rgba(255, 255, 255, 0.08);
   background: #1B1E24;
 }
-html .taxi-passenger-dark .taxi-passenger-searching-icon { background: rgba(140, 255, 79, 0.12); }
+html .taxi-passenger-dark .taxi-passenger-searching-icon { background: rgba(255, 230, 0, 0.12); }
 
 /* Acciones */
 html .taxi-passenger-dark .taxi-passenger-action-call {
   color: var(--passenger-green-dark);
-  background: rgba(140, 255, 79, 0.12);
-  border-color: rgba(140, 255, 79, 0.3);
+  background: rgba(255, 230, 0, 0.12);
+  border-color: rgba(255, 230, 0, 0.3);
 }
 html .taxi-passenger-dark .taxi-passenger-action-chat {
   color: #8B96FF;
-  background: rgba(79, 93, 255, 0.12);
-  border-color: rgba(79, 93, 255, 0.3);
+  background: rgba(255, 230, 0, 0.12);
+  border-color: rgba(255, 230, 0, 0.3);
 }
 html .taxi-passenger-dark .taxi-passenger-action-cancel {
   color: var(--passenger-red);
@@ -649,7 +649,7 @@ html .taxi-passenger-dark .taxi-passenger-locate-button {
   box-shadow: 0 7px 18px rgba(0, 0, 0, 0.4);
 }
 html .taxi-passenger-dark .taxi-passenger-destination-field { background: #1B1E24; }
-html .taxi-passenger-dark .taxi-passenger-destination-field > span:first-child { background: rgba(140, 255, 79, 0.12); }
+html .taxi-passenger-dark .taxi-passenger-destination-field > span:first-child { background: rgba(255, 230, 0, 0.12); }
 html .taxi-passenger-dark .taxi-passenger-location-button { background: #1B1E24; }
 html .taxi-passenger-dark .taxi-passenger-secondary-button { background: #1B1E24; }
 
@@ -659,7 +659,7 @@ html .taxi-passenger-auth .taxi-passenger-primary-button {
   color: #0B0D10;
   font-weight: 600;
   background: var(--passenger-green);
-  box-shadow: 0 4px 18px rgba(140, 255, 79, 0.2);
+  box-shadow: 0 4px 18px rgba(255, 230, 0, 0.2);
 }
 html .taxi-passenger-dark .taxi-passenger-primary-button:hover { background: #7DEF3E; }
 
@@ -670,10 +670,10 @@ html .taxi-passenger-dark .taxi-passenger-map-hint {
   box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35);
 }
 html .taxi-passenger-dark .taxi-passenger-marked-point {
-  border-color: rgba(140, 255, 79, 0.3);
-  background: rgba(140, 255, 79, 0.1);
+  border-color: rgba(255, 230, 0, 0.3);
+  background: rgba(255, 230, 0, 0.1);
 }
-html .taxi-passenger-dark .taxi-passenger-request-points > div > span { background: rgba(140, 255, 79, 0.12); }
+html .taxi-passenger-dark .taxi-passenger-request-points > div > span { background: rgba(255, 230, 0, 0.12); }
 html .taxi-passenger-dark .taxi-passenger-request-points > div:last-child > span { background: rgba(244, 84, 76, 0.12); }
 html .taxi-passenger-dark .taxi-passenger-destination-input,
 html .taxi-passenger-dark .taxi-passenger-chat-compose input,
@@ -682,7 +682,7 @@ html .taxi-passenger-auth .taxi-passenger-field input {
   background: #121417 !important;
 }
 html .taxi-passenger-dark .taxi-passenger-vehicle-option-selected {
-  box-shadow: 0 0 0 2px rgba(140, 255, 79, 0.16);
+  box-shadow: 0 0 0 2px rgba(255, 230, 0, 0.16);
 }
 html .taxi-passenger-dark .taxi-passenger-vehicle-image { background: #1B1E24; }
 
@@ -694,9 +694,9 @@ html .taxi-passenger-dark .taxi-passenger-chat-layer,
 html .taxi-passenger-dark .taxi-passenger-rating-layer { background: rgba(0, 0, 0, 0.5); }
 html .taxi-passenger-dark .taxi-passenger-menu-heading > button { background: #1B1E24; }
 html .taxi-passenger-dark .taxi-passenger-menu-user > span,
-html .taxi-passenger-dark .taxi-passenger-rating-avatar { background: rgba(140, 255, 79, 0.12); }
+html .taxi-passenger-dark .taxi-passenger-rating-avatar { background: rgba(255, 230, 0, 0.12); }
 html .taxi-passenger-dark .taxi-passenger-menu-links button:hover,
-html .taxi-passenger-dark .taxi-passenger-menu-links .taxi-passenger-menu-link-active { background: rgba(140, 255, 79, 0.1); }
+html .taxi-passenger-dark .taxi-passenger-menu-links .taxi-passenger-menu-link-active { background: rgba(255, 230, 0, 0.1); }
 html .taxi-passenger-dark .taxi-passenger-menu-logout {
   border-color: rgba(244, 84, 76, 0.32);
   color: #F4544C;
@@ -723,7 +723,7 @@ html .taxi-passenger-dark .taxi-passenger-profile-avatar {
 
 /* Login (auth): dark fijo, glow índigo */
 html .taxi-passenger-auth { color: var(--passenger-ink); }
-html .taxi-passenger-auth .taxi-passenger-auth-orb { background: rgba(79, 93, 255, 0.16); }
+html .taxi-passenger-auth .taxi-passenger-auth-orb { background: rgba(255, 230, 0, 0.16); }
 html .taxi-passenger-auth .taxi-passenger-auth-form {
   box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45);
 }

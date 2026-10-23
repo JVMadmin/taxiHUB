@@ -52,7 +52,7 @@ const LiveClock = memo(function LiveClock({ initialHora }) {
 export const OpsTopbar = memo(function OpsTopbar({
   termUser, logo, sitioConfig, termFoto, onFotoClick, fotoInput, connected,
   counts, hora, serviciosOpen, onToggleServicios, onNuevaLlamada,
-  uiAlpha, onAlphaChange, onLogout, avisosActivos = [], children,
+  uiAlpha, onAlphaChange, uiZoom, onZoomChange, onLogout, avisosActivos = [], children,
 }) {
   const [dismissedAvisoId, setDismissedAvisoId] = useState(null);
   const brandLogo = logo || MARCH_LOGO;
@@ -154,7 +154,7 @@ export const OpsTopbar = memo(function OpsTopbar({
               title="Servicios de hoy"
               aria-label="Servicios"
               className={cn("th-3d hidden h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-semibold transition-colors lg:flex",
-                serviciosOpen ? "bg-[#4F5DFF] text-white shadow-[0_2px_10px_rgba(79,93,255,0.3)]" : "border border-white/10 bg-white/[0.04] text-foreground/90 hover:bg-white/[0.1]")}
+                serviciosOpen ? "bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255, 230, 0,0.3)]" : "border border-white/10 bg-white/[0.04] text-foreground/90 hover:bg-white/[0.1]")}
             >
               <ClipboardList className="th-icon-3d h-4 w-4" />
               <span>Servicios</span>
@@ -165,7 +165,7 @@ export const OpsTopbar = memo(function OpsTopbar({
             <div className="hidden lg:contents">
               <ThemeSwitcher />
               <ModeToggle />
-              <TerminalDisplayControls alpha={uiAlpha} onChange={onAlphaChange} />
+              <TerminalDisplayControls alpha={uiAlpha} onChange={onAlphaChange} zoom={uiZoom} onZoomChange={onZoomChange} />
             </div>
             <div className="flex items-center gap-2 border-l border-border pl-2">
               <button

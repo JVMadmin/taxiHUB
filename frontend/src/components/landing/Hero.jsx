@@ -34,8 +34,8 @@ export function Hero() {
       <div className="mx-auto max-w-3xl text-center">
         <motion.div {...fade(0)} className="l-chip mx-auto">
           <span className="relative flex h-2 w-2" aria-hidden="true">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 l-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[#FFE600] l-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FFE600]" />
           </span>
           Software de despacho para centrales de taxi
         </motion.div>
@@ -46,7 +46,7 @@ export function Hero() {
         >
           Que ningún pasajero
           <br className="hidden sm:block" />{" "}
-          <span className="bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-b from-[#FFE600] to-[#FF9900] bg-clip-text text-transparent">
             se quede sin taxi.
           </span>
         </motion.h1>
@@ -130,8 +130,8 @@ export function Hero() {
       <motion.ul {...fade(0.36)} className="mt-14 grid gap-6 sm:grid-cols-3">
         {FACTS.map(({ icon: Icon, k, v }) => (
           <li key={k} className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10">
-              <Icon className="h-5 w-5 text-emerald-300" aria-hidden="true" />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#FFE600]/20 bg-[#FFE600]/10">
+              <Icon className="h-5 w-5 text-[#FFE600]" aria-hidden="true" />
             </span>
             <div>
               <div className="text-[15px] font-bold text-white">{k}</div>

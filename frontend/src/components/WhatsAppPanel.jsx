@@ -348,7 +348,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
     return (
       <div className="flex h-full min-h-0 flex-col" data-testid="wa-lista">
         {/* Barra de Estado del Puente QR + Configuración de Número de Prueba */}
-        <div className="mb-2.5 shrink-0 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.07] p-2.5">
+        <div className="mb-2.5 shrink-0 rounded-xl border border-[#FFE600]/25 bg-[#FFE600]/[0.07] p-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span
@@ -356,7 +356,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                 className={cn(
                   "h-2.5 w-2.5 shrink-0 rounded-full",
                   estadoUi.color === "verde"
-                    ? "bg-[#7CFC3C] shadow-[0_0_8px_#7CFC3C]"
+                    ? "bg-[#FFE600] shadow-[0_0_8px_#FFE600]"
                     : estadoUi.color === "rojo"
                     ? "bg-[#F4544C] shadow-[0_0_8px_#F4544C]"
                     : estadoUi.color === "ambar"
@@ -368,7 +368,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                 <div data-testid={WHATSAPP.estadoTitulo} className="truncate text-[11px] font-bold text-[#F5F5F7]">
                   {estadoUi.titulo}
                 </div>
-                <div className="truncate text-[10px] font-mono text-emerald-300/95">
+                <div className="truncate text-[10px] font-mono text-[#FFE600]/95">
                   {waStatus?.numero_vinculado || "Sin número vinculado"}
                   {waStatus?.conectado ? ` · ${waStatus.mensajes_enviados_hoy || 0} enviados hoy` : ""}
                 </div>
@@ -378,7 +378,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
               type="button"
               data-testid="wa-antiban-toggle"
               onClick={() => setShowAntiBan((v) => !v)}
-              className="shrink-0 rounded-lg border border-emerald-500/40 bg-[#17191E] px-2.5 py-1 text-[10px] font-bold text-emerald-300 hover:border-emerald-400 transition-colors"
+              className="shrink-0 rounded-lg border border-[#FFE600]/40 bg-[#17191E] px-2.5 py-1 text-[10px] font-bold text-[#FFE600] hover:border-[#FFE600] transition-colors"
             >
               {showAntiBan ? "Cerrar Config" : "Configurar Número / QR"}
             </button>
@@ -400,7 +400,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                     className={cn(
                       "rounded-md py-1 text-[10px] font-bold transition-colors",
                       modoVinculacion === tab.id
-                        ? "bg-emerald-500 text-zinc-950"
+                        ? "bg-[#FFE600] text-zinc-950"
                         : "text-[#9CA0AA] hover:text-[#F5F5F7]"
                     )}
                   >
@@ -425,7 +425,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                     value={numeroConfig}
                     onChange={(e) => setNumeroConfig(e.target.value)}
                     placeholder="+52 916 123 4567"
-                    className="h-8 flex-1 rounded-lg border border-white/10 bg-black/30 px-2.5 font-mono text-xs text-[#F5F5F7] focus:border-emerald-400 focus:outline-none"
+                    className="h-8 flex-1 rounded-lg border border-white/10 bg-black/30 px-2.5 font-mono text-xs text-[#F5F5F7] focus:border-[#FFE600] focus:outline-none"
                   />
                   <button
                     type="button"
@@ -440,7 +440,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                           : "vincular"
                       )
                     }
-                    className="shrink-0 rounded-lg bg-emerald-500 px-3 py-1 text-[10px] font-extrabold text-zinc-950 hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                    className="shrink-0 rounded-lg bg-[#FFE600] px-3 py-1 text-[10px] font-extrabold text-zinc-950 hover:bg-[#FFB800] transition-colors disabled:opacity-50"
                   >
                     {vinculandoQr
                       ? "Conectando…"
@@ -464,13 +464,13 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                 )}
 
                 {modoVinculacion === "codigo" && (
-                  <div className="mt-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-center">
+                  <div className="mt-2 rounded-lg border border-[#FFE600]/30 bg-[#FFE600]/10 p-2 text-center">
                     <div className="text-[10px] text-[#9CA0AA]">
                       En tu WhatsApp abre <strong>Dispositivos vinculados → Vincular con el número de teléfono</strong> e ingresa:
                     </div>
                     <div
                       data-testid="wa-pairing-code"
-                      className="mt-1 font-mono text-base font-black tracking-[0.22em] text-emerald-300"
+                      className="mt-1 font-mono text-base font-black tracking-[0.22em] text-[#FFE600]"
                     >
                       {waStatus?.pairing_code || "— — — —"}
                     </div>
@@ -483,7 +483,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                 )}
 
                 {modoVinculacion === "qr" && (
-                  <div className="mt-2 space-y-2 rounded-xl border border-emerald-500/30 bg-black/40 p-3 text-center">
+                  <div className="mt-2 space-y-2 rounded-xl border border-[#FFE600]/30 bg-black/40 p-3 text-center">
                     <div className="text-[11px] font-bold text-white">
                       {waStatus?.demo ? "QR de demostración (no vincula WhatsApp)" : "Vincular con código QR"}
                     </div>
@@ -496,7 +496,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                           data-testid="wa-qr-image"
                           src={waStatus.qr_data_url}
                           alt="Código QR Real WhatsApp"
-                          className="h-44 w-44 rounded-xl bg-white p-2 shadow-2xl ring-2 ring-emerald-500/50"
+                          className="h-44 w-44 rounded-xl bg-white p-2 shadow-2xl ring-2 ring-[#FFE600]/50"
                         />
                       ) : (
                         <div className="flex h-44 w-44 items-center justify-center rounded-xl bg-white/10 p-3 text-xs text-zinc-400">
@@ -507,8 +507,8 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                       )}
                     </div>
                     {waStatus?.qr_data_url && !waStatus?.demo && (
-                      <div className="flex items-center justify-center gap-1.5 text-[9px] font-mono text-emerald-400">
-                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <div className="flex items-center justify-center gap-1.5 text-[9px] font-mono text-[#FFE600]">
+                        <span className="h-2 w-2 rounded-full bg-[#FFE600] animate-pulse" />
                         El código se renueva solo cada ~20 s
                       </div>
                     )}
@@ -517,12 +517,12 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
               </div>
 
               {/* Simulador de Mensaje Entrante con el Número de Prueba */}
-              <div className="space-y-1.5 rounded-xl border border-[#4F5DFF]/35 bg-[#4F5DFF]/[0.08] p-2.5">
+              <div className="space-y-1.5 rounded-xl border border-[#FFE600]/35 bg-[#FFE600]/[0.08] p-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#DDE1FF]">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#FFF8C5]">
                     Simular Mensaje Entrante de mi Número de Prueba
                   </span>
-                  <span className="rounded bg-[#4F5DFF]/25 px-1.5 py-0.5 text-[9px] font-bold text-[#DDE1FF]">
+                  <span className="rounded bg-[#FFE600]/25 px-1.5 py-0.5 text-[9px] font-bold text-[#FFF8C5]">
                     Prueba en 1 Clic
                   </span>
                 </div>
@@ -557,14 +557,14 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                     data-testid="wa-simular-entrante-btn"
                     disabled={enviandoTest}
                     onClick={handleSimularMensajePrueba}
-                    className="shrink-0 rounded-lg bg-[#4F5DFF] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#3D49D6] transition-colors disabled:opacity-50"
+                    className="shrink-0 rounded-lg bg-[#FFE600] px-2.5 py-1 text-[10px] font-bold text-[#0C0E14] hover:bg-[#FFB800] transition-colors disabled:opacity-50"
                   >
                     {enviandoTest ? "Enviando…" : "Probar Chat + GPS"}
                   </button>
                 </div>
               </div>
 
-              <div className="font-semibold text-emerald-300">
+              <div className="font-semibold text-[#FFE600]">
                 Cómo cuidamos el número de la central:
               </div>
               <ul className="space-y-0.5 text-[10px] text-[#9CA0AA]">
@@ -587,7 +587,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar por cliente o teléfono…"
-            className="h-9 w-full rounded-xl border border-white/[0.08] bg-[#17191E] pl-9 pr-3 text-xs text-[#F5F5F7] placeholder:text-[#9CA0AA]/60 focus:border-[#4F5DFF] focus:outline-none focus:ring-1 focus:ring-[#4F5DFF] transition-all"
+            className="h-9 w-full rounded-xl border border-white/[0.08] bg-[#17191E] pl-9 pr-3 text-xs text-[#F5F5F7] placeholder:text-[#9CA0AA]/60 focus:border-[#FFE600] focus:outline-none focus:ring-1 focus:ring-[#FFE600] transition-all"
           />
         </div>
 
@@ -610,11 +610,11 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                 key={c.id}
                 data-testid="wa-conversacion"
                 onClick={() => abrir(c)}
-                className="group relative flex w-full flex-col gap-1.5 rounded-[16px] border border-white/[0.06] bg-[#17191E] p-3 text-left transition-all hover:border-[#4F5DFF]/40 hover:bg-[#1B1E24] hover:shadow-[0_4px_16px_rgba(0,0,0,0.3)] active:translate-y-px"
+                className="group relative flex w-full flex-col gap-1.5 rounded-[16px] border border-white/[0.06] bg-[#17191E] p-3 text-left transition-all hover:border-[#FFE600]/40 hover:bg-[#1B1E24] hover:shadow-[0_4px_16px_rgba(0,0,0,0.3)] active:translate-y-px"
               >
                 <div className="flex items-center gap-3">
                   {/* Avatar iniciales */}
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4F5DFF]/15 text-xs font-bold text-[#4F5DFF] transition-transform group-hover:scale-105">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFE600]/15 text-xs font-bold text-[#FFE600] transition-transform group-hover:scale-105">
                     {(c.cliente_nombre || "?").slice(0, 2).toUpperCase()}
                   </div>
 
@@ -643,14 +643,14 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                     <div className="mt-0.5 flex items-center justify-between gap-1">
                       <div className="flex min-w-0 items-center gap-1 text-xs text-[#9CA0AA]">
                         {conUbicacion && (
-                          <MapPin className="h-3.5 w-3.5 shrink-0 text-[#7CFC3C]" />
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-[#FFE600]" />
                         )}
                         <span className="truncate">
                           {um.texto || (conUbicacion ? "Ubicación compartida" : "—")}
                         </span>
                       </div>
                       {conUbicacion && (
-                        <span className="shrink-0 rounded-full bg-[#7CFC3C]/15 px-1.5 py-0.5 text-[9px] font-bold text-[#7CFC3C]">
+                        <span className="shrink-0 rounded-full bg-[#FFE600]/15 px-1.5 py-0.5 text-[9px] font-bold text-[#FFE600]">
                           GPS
                         </span>
                       )}
@@ -682,7 +682,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
 
       {/* Encabezado del cliente con status */}
       <div className="mb-2.5 flex shrink-0 items-center gap-3 rounded-[16px] border border-white/[0.06] bg-[#17191E] p-3 shadow-sm">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4F5DFF]/15 text-sm font-bold text-[#4F5DFF]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFE600]/15 text-sm font-bold text-[#FFE600]">
           {(abierta.cliente_nombre || "?").slice(0, 2).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
@@ -701,11 +701,11 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
       {/* Lista expandida de taxis cercanos (al pulsar Crear Servicio / Ver más taxis) */}
       {taxiListo && (
         <div
-          className="mb-2.5 shrink-0 rounded-[16px] border border-[#4F5DFF]/40 bg-[#17191E] p-3 shadow-lg"
+          className="mb-2.5 shrink-0 rounded-[16px] border border-[#FFE600]/40 bg-[#17191E] p-3 shadow-lg"
           data-testid="wa-cercanos"
         >
           <div className="mb-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#4F5DFF]">
+            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#FFE600]">
               <Navigation className="h-3.5 w-3.5" /> Taxis más cercanos
             </span>
             <button
@@ -731,7 +731,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-[#7CFC3C]" />
+                      <span className="h-2 w-2 rounded-full bg-[#FFE600]" />
                       <span className="truncate text-xs font-bold text-[#F5F5F7]">
                         {t.placa || t.nombre}
                       </span>
@@ -755,14 +755,14 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                         : "—"}
                     </span>
                     {etaMin && (
-                      <div className="text-[10px] font-medium text-[#7CFC3C]">~{etaMin} min</div>
+                      <div className="text-[10px] font-medium text-[#FFE600]">~{etaMin} min</div>
                     )}
                   </div>
                   <button
                     data-testid={`wa-asignar-${t.id}`}
                     disabled={asignando !== null}
                     onClick={() => crearYAsignar(t)}
-                    className="ml-1 inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#4F5DFF] px-2.5 py-1 text-[11px] font-bold text-white shadow-sm hover:bg-[#3D49D6] transition-all disabled:opacity-50"
+                    className="ml-1 inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#FFE600] px-2.5 py-1 text-[11px] font-bold text-[#0C0E14] shadow-sm hover:bg-[#FFB800] transition-all disabled:opacity-50"
                   >
                     {asignando === t.id ? (
                       "…"
@@ -839,7 +839,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                   "max-w-[88%] rounded-2xl px-3.5 py-2.5 transition-all",
                   esCliente
                     ? "rounded-bl-sm border border-white/[0.06] bg-[#17191E] text-[#F5F5F7]"
-                    : "rounded-br-sm border border-[#4F5DFF]/30 bg-[#1E2235] text-[#F5F5F7]"
+                    : "rounded-br-sm border border-[#FFE600]/30 bg-[#1E2235] text-[#F5F5F7]"
                 )}
               >
                 {/* Texto del mensaje */}
@@ -870,7 +870,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                 {/* Tarjeta de ubicación compartida */}
                 {conUbicacion && (
                   <div className="mt-2 rounded-xl border border-white/[0.08] bg-[#111318]/70 p-2.5">
-                    <div className="flex items-center justify-between gap-1.5 text-xs font-semibold text-[#7CFC3C]">
+                    <div className="flex items-center justify-between gap-1.5 text-xs font-semibold text-[#FFE600]">
                       <span className="flex items-center gap-1.5">
                         <MapPin className="h-3.5 w-3.5" /> Ubicación GPS recibida
                       </span>
@@ -881,12 +881,12 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
 
                     {/* Botón de Despacho Inmediato en 1 clic asistido */}
                     {masCercano && (
-                      <div className="mt-2.5 rounded-lg border border-[#4F5DFF]/30 bg-[#4F5DFF]/10 p-2">
+                      <div className="mt-2.5 rounded-lg border border-[#FFE600]/30 bg-[#FFE600]/10 p-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F5F5F7]">
-                            <span className="h-2 w-2 rounded-full bg-[#7CFC3C] shadow-[0_0_6px_#7CFC3C]" />
+                            <span className="h-2 w-2 rounded-full bg-[#FFE600] shadow-[0_0_6px_#FFE600]" />
                             <span>
-                              Sugerido: <strong className="text-[#7CFC3C]">{masCercano.placa || masCercano.nombre}</strong>
+                              Sugerido: <strong className="text-[#FFE600]">{masCercano.placa || masCercano.nombre}</strong>
                             </span>
                             {masCercanoSem && (
                               <span
@@ -902,7 +902,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                               </span>
                             )}
                           </div>
-                          <div className="mono-num text-[11px] text-[#DDE1FF]">
+                          <div className="mono-num text-[11px] text-[#FFF8C5]">
                             {masCercano.dist >= 1000
                               ? `${(masCercano.dist / 1000).toFixed(1)} km`
                               : `${Math.round(masCercano.dist)} m`}{" "}
@@ -920,7 +920,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                               conversacion: abierta,
                             })
                           }
-                          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#4F5DFF] py-2 text-xs font-bold text-white shadow-[0_2px_12px_rgba(79,93,255,0.3)] transition-all hover:bg-[#3D49D6] active:translate-y-px disabled:opacity-50"
+                          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#FFE600] py-2 text-xs font-bold text-[#0C0E14] shadow-[0_2px_12px_rgba(255, 230, 0,0.3)] transition-all hover:bg-[#FFB800] active:translate-y-px disabled:opacity-50"
                         >
                           {asignando === masCercano.id ? (
                             "Despachando…"
@@ -946,7 +946,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
                       <button
                         data-testid="wa-marcar-mapa"
                         onClick={() => setTaxiListo({ mensaje: m, conversacion: abierta })}
-                        className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/[0.08] bg-[#1B1E24] px-2.5 py-1.5 text-[11px] font-medium text-[#9CA0AA] hover:border-[#4F5DFF]/40 hover:bg-[#22252C] hover:text-[#F5F5F7] transition-all"
+                        className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/[0.08] bg-[#1B1E24] px-2.5 py-1.5 text-[11px] font-medium text-[#9CA0AA] hover:border-[#FFE600]/40 hover:bg-[#22252C] hover:text-[#F5F5F7] transition-all"
                       >
                         <Plus className="h-3 w-3" /> Ver más taxis
                       </button>
@@ -977,7 +977,7 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
               key={idx}
               type="button"
               onClick={() => setRespuesta(chip)}
-              className="shrink-0 rounded-full border border-white/[0.08] bg-[#17191E] px-2.5 py-1 text-[11px] font-medium text-[#9CA0AA] transition-all hover:border-[#4F5DFF]/40 hover:bg-[#1B1E24] hover:text-[#F5F5F7] active:scale-95"
+              className="shrink-0 rounded-full border border-white/[0.08] bg-[#17191E] px-2.5 py-1 text-[11px] font-medium text-[#9CA0AA] transition-all hover:border-[#FFE600]/40 hover:bg-[#1B1E24] hover:text-[#F5F5F7] active:scale-95"
             >
               {chip}
             </button>
@@ -995,13 +995,13 @@ export function WhatsAppPanel({ onVerMapa, onCrearServicio, taxisLibres = [], se
           value={respuesta}
           onChange={(e) => setRespuesta(e.target.value)}
           placeholder="Escribir mensaje o seleccionar respuesta rápida…"
-          className="h-10 flex-1 rounded-xl border border-white/[0.08] bg-[#17191E] px-3.5 text-xs text-[#F5F5F7] placeholder:text-[#9CA0AA]/60 focus:border-[#4F5DFF] focus:outline-none focus:ring-1 focus:ring-[#4F5DFF] transition-all"
+          className="h-10 flex-1 rounded-xl border border-white/[0.08] bg-[#17191E] px-3.5 text-xs text-[#F5F5F7] placeholder:text-[#9CA0AA]/60 focus:border-[#FFE600] focus:outline-none focus:ring-1 focus:ring-[#FFE600] transition-all"
         />
         <button
           type="submit"
           data-testid="wa-enviar"
           disabled={!respuesta.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4F5DFF] text-white shadow-[0_2px_10px_rgba(79,93,255,0.3)] transition-all hover:bg-[#3D49D6] disabled:opacity-40"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255, 230, 0,0.3)] transition-all hover:bg-[#FFB800] disabled:opacity-40"
           aria-label="Enviar"
         >
           <Send className="h-4 w-4" />

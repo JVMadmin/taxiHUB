@@ -62,7 +62,7 @@ export default function TerminalLogin({ isCentralOnly = false }) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0B0D10] px-4 font-sans text-[#F5F5F7]">
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-[#4F5DFF]/15 blur-[120px]" />
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-[#FFE600]/15 blur-[120px]" />
       <div className="relative w-full max-w-sm">
         <form
           onSubmit={submit}
@@ -118,7 +118,7 @@ export default function TerminalLogin({ isCentralOnly = false }) {
               data-testid="term-submit"
               type="submit"
               loading={loading}
-              className="mt-2 h-12 text-base font-semibold bg-[#4F5DFF] hover:bg-[#3D49D6] text-white shadow-[0_4px_16px_rgba(79,93,255,0.35)]"
+              className="mt-2 h-12 text-base font-semibold bg-[#FFE600] hover:bg-[#FFB800] text-[#0C0E14] shadow-[0_4px_16px_rgba(255, 230, 0,0.35)]"
             >
               <LogIn className="h-4 w-4" />
               {loading ? "Verificando..." : "Entrar a Central"}

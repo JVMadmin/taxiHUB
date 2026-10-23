@@ -186,14 +186,14 @@ function SmoothTaxiMarkerComponent({
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = "/assets/drivers/driver-01.jpg";
                   }}
-                  style={{ height: "40px", width: "40px", borderRadius: "50%", objectFit: "cover", border: "2px solid #4F5DFF", display: "block" }}
+                  style={{ height: "40px", width: "40px", borderRadius: "50%", objectFit: "cover", border: "2px solid #FFE600", display: "block" }}
                 />
                 <span
                   style={{
                     position: "absolute",
                     bottom: "-2px",
                     right: "-2px",
-                    background: "#4F5DFF",
+                    background: "#FFE600",
                     borderRadius: "50%",
                     padding: "2px",
                     display: "flex",
@@ -251,7 +251,7 @@ function SmoothTaxiMarkerComponent({
             )}
 
             {/* Contador de servicios del día */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(79,93,255,0.14)", border: "1px solid rgba(79,93,255,0.3)", borderRadius: "6px", padding: "3px 7px", fontSize: "11px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255, 230, 0,0.14)", border: "1px solid rgba(255, 230, 0,0.3)", borderRadius: "6px", padding: "3px 7px", fontSize: "11px" }}>
               <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Servicios hoy:</span>
               <span style={{ fontFamily: "monospace", fontWeight: 800, color: "#FFFFFF" }}>{serviciosHoy}</span>
             </div>
@@ -319,8 +319,8 @@ function SmoothTaxiMarkerComponent({
                 width: "160px",
                 borderRadius: "50%",
                 overflow: "hidden",
-                border: "3px solid #4F5DFF",
-                boxShadow: "0 10px 25px rgba(79, 93, 255, 0.35)",
+                border: "3px solid #FFE600",
+                boxShadow: "0 10px 25px rgba(255, 230, 0, 0.35)",
                 backgroundColor: "#0B0D10",
               }}
             >

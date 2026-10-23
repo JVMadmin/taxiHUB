@@ -2,6 +2,7 @@
 // Convención kebab-case: <feature>-<element>.
 
 export const DISPATCH = {
+  terminalZoom: "terminal-zoom",         // + `-${porcentaje}` (70, 80, 90, 100)
   serviciosTabs: "serv-tab",             // + `-${estado}`  (p.ej. serv-tab-pendiente)
   despacharBtn: "despachar-",            // + servicioId
   asignarBtn: "asignar-",                // + servicioId (data-testid de tarjeta)

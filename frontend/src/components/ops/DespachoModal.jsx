@@ -40,7 +40,7 @@ function GeoInput({ placeholder, onPick }) {
           placeholder={placeholder}
           className="min-w-0 flex-1 bg-transparent text-sm text-[#F5F5F7] outline-none placeholder:text-[#9CA0AA]/60"
         />
-        {res !== null && <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-[#4F5DFF] border-t-transparent" />}
+        {res !== null && <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-[#FFE600] border-t-transparent" />}
       </div>
       {open && res !== null && res.length > 0 && (
         <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-xl border border-white/[0.06] bg-[#17191E] shadow-2xl">
@@ -49,7 +49,7 @@ function GeoInput({ placeholder, onPick }) {
               key={r.id}
               type="button"
               onClick={() => { onPick(r); setQ(`${r.label}${r.sublabel ? `, ${r.sublabel}` : ""}`); setOpen(false); }}
-              className="block w-full border-b border-white/[0.06] px-3 py-2 text-left last:border-0 hover:bg-[#4F5DFF]/15"
+              className="block w-full border-b border-white/[0.06] px-3 py-2 text-left last:border-0 hover:bg-[#FFE600]/15"
             >
               <div className="truncate text-sm font-semibold text-[#F5F5F7]">{r.label}</div>
               {r.sublabel && <div className="truncate text-[11px] text-[#9CA0AA]">{r.sublabel}</div>}
@@ -174,7 +174,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
         <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
           <div className="flex items-center gap-2.5">
             <h3 className="flex items-center gap-2 text-base font-bold text-[#F5F5F7]">
-              <Phone className="h-4 w-4 text-[#4F5DFF]" /> Nueva llamada
+              <Phone className="h-4 w-4 text-[#FFE600]" /> Nueva llamada
             </h3>
             <span className="hidden sm:inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-mono text-[#9CA0AA]">
               Teclas 1-6 / Enter = Despacho directo
@@ -187,10 +187,10 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
           {/* PASO 1 — Origen */}
           <section data-testid="despacho-origen">
             <div className="mb-1.5 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#4F5DFF] text-[10px] font-extrabold text-white">1</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FFE600] text-[10px] font-extrabold text-[#0C0E14]">1</span>
               <span className="text-xs font-bold uppercase tracking-wide text-[#F5F5F7]">¿Dónde está el servicio?</span>
               {coords.origen && (
-                <span className="mono-num ml-auto text-[10px] text-[#7CFC3C]">
+                <span className="mono-num ml-auto text-[10px] text-[#FFE600]">
                   {coords.origenTexto ? `${coords.origenTexto} · ` : ""}{coords.origen.lat.toFixed(4)}, {coords.origen.lng.toFixed(4)}
                 </span>
               )}
@@ -201,7 +201,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                 type="button"
                 data-testid="despacho-marcar-origen"
                 onClick={() => pedirPunto("origen")}
-                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#4F5DFF] hover:text-[#3D49D6] transition-colors"
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#FFE600] hover:text-[#FFB800] transition-colors"
               >
                 <MapPin className="h-3.5 w-3.5" /> Marcar en mapa
               </button>
@@ -248,7 +248,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
               </>
             ) : (
               <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#1B1E24] px-3 py-2 text-sm text-[#F5F5F7]">
-                <Flag className="h-4 w-4 shrink-0 text-[#4F5DFF]" />
+                <Flag className="h-4 w-4 shrink-0 text-[#FFE600]" />
                 <span className="truncate">{coords.destinoTexto || (coords.destino?.lat ? `${coords.destino.lat.toFixed(5)}, ${coords.destino.lng.toFixed(5)}` : "Destino fijado")}</span>
                 <button
                   type="button"
@@ -305,7 +305,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                     <div key={t.id} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#1B1E24] px-3 py-2">
                       <span
                         title={i < 6 ? `Atajo de teclado: presiona ${i + 1}` : undefined}
-                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/[0.06] font-mono text-[10px] font-bold text-[#7CFC3C]"
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/[0.06] font-mono text-[10px] font-bold text-[#FFE600]"
                       >
                         {i + 1}
                       </span>
@@ -325,7 +325,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                           {t.nombre} · {t.vehiculo ? [t.vehiculo.marca, t.vehiculo.modelo].filter(Boolean).join(" ") : (t.marca && t.modelo ? `${t.marca} ${t.modelo}` : "—")}
                         </div>
                       </div>
-                      <span className="mono-num shrink-0 text-xs font-bold text-[#7CFC3C]">
+                      <span className="mono-num shrink-0 text-xs font-bold text-[#FFE600]">
                         {t.dist != null ? (t.dist >= 1000 ? `${(t.dist / 1000).toFixed(1)} km` : `${Math.round(t.dist)} m`) : (coords.origen ? "—" : "Libre")}
                       </span>
                       <Button
@@ -346,7 +346,7 @@ export function DespachoModal({ open, onClose, coords, setCoords, pedirPunto, op
                     type="button"
                     data-testid="despacho-toggle-todos-taxis"
                     onClick={() => setMostrarTodos((v) => !v)}
-                    className="w-full mt-2 py-2 px-3 rounded-xl border border-white/[0.08] bg-[#1B1E24]/80 hover:bg-[#1B1E24] text-xs font-semibold text-[#4F5DFF] hover:text-[#3D49D6] transition-all flex items-center justify-center gap-1.5"
+                    className="w-full mt-2 py-2 px-3 rounded-xl border border-white/[0.08] bg-[#1B1E24]/80 hover:bg-[#1B1E24] text-xs font-semibold text-[#FFE600] hover:text-[#FFB800] transition-all flex items-center justify-center gap-1.5"
                   >
                     {mostrarTodos
                       ? "▲ Mostrar solo los más cercanos (Top 5)"

@@ -34,11 +34,11 @@ export function LandingNav() {
         <a
           href="#inicio"
           onClick={(e) => go(e, "inicio")}
-          className="flex items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:ring-emerald-400"
+          className="flex items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:ring-[#FFE600]"
           aria-label="TaxiHUB inicio"
         >
           <BrandLockup markSize="sm" />
-          <span className="hidden font-mono text-[11px] font-semibold tracking-wide text-emerald-300 sm:inline-block bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/25">
+          <span className="hidden font-mono text-[11px] font-semibold tracking-wide text-[#FFE600] sm:inline-block bg-[#FFE600]/10 px-2 py-0.5 rounded-full border border-[#FFE600]/25">
             taxihub.cloud
           </span>
         </a>
@@ -63,7 +63,7 @@ export function LandingNav() {
             type="button"
             data-testid={LANDING.goTerminal}
             onClick={() => navigate("/terminal/login")}
-            className="group flex min-h-[40px] items-center gap-2 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-[#02130c] transition-all hover:bg-emerald-400 active:scale-[0.98]"
+            className="group flex min-h-[40px] items-center gap-2 rounded-full bg-[#FFE600] px-4 py-1.5 text-xs font-bold text-[#0C0E14] transition-all hover:bg-[#FFB800] active:scale-[0.98]"
           >
             <span>Abrir Terminal</span>
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black/15 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
@@ -101,7 +101,7 @@ export function LandingNav() {
               <button
                 type="button"
                 onClick={() => { setOpen(false); navigate("/terminal/login"); }}
-                className="w-full rounded-lg bg-emerald-500 py-2.5 text-center text-xs font-bold text-[#02130c]"
+                className="w-full rounded-lg bg-[#FFE600] py-2.5 text-center text-xs font-bold text-[#0C0E14]"
               >
                 Abrir Terminal de Despacho
               </button>

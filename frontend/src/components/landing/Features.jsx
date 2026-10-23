@@ -19,7 +19,7 @@ export function Features() {
           {/* Card 1: Windows nativo + Hotkeys (col-span-7) */}
           <Reveal className="rounded-2xl border border-white/10 bg-white/[0.03] p-7 sm:p-8 transition-colors hover:border-white/20 lg:col-span-7">
             <div className="flex items-center justify-between">
-              <span className="rounded-full bg-emerald-400/10 border border-emerald-400/25 px-3 py-1 font-mono text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
+              <span className="rounded-full bg-[#FFE600]/10 border border-[#FFE600]/25 px-3 py-1 font-mono text-[11px] font-bold text-[#FFE600] uppercase tracking-wider">
                 Web y Windows
               </span>
               <Keyboard className="h-5 w-5 text-[#6b7280]" aria-hidden="true" />
@@ -38,7 +38,7 @@ export function Features() {
                 { k: "Esc", d: "Cancelar" },
               ].map((item) => (
                 <div key={item.k} className="rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-center">
-                  <div className="text-emerald-300 font-extrabold text-sm">{item.k}</div>
+                  <div className="text-[#FFE600] font-extrabold text-sm">{item.k}</div>
                   <div className="text-[10px] text-[#8b909c] mt-0.5">{item.d}</div>
                 </div>
               ))}
@@ -48,10 +48,10 @@ export function Features() {
           {/* Card 2: Escudo WhatsApp QR (col-span-5) */}
           <Reveal delay={0.1} className="rounded-2xl border border-white/10 bg-white/[0.03] p-7 sm:p-8 transition-colors hover:border-white/20 lg:col-span-5">
             <div className="flex items-center justify-between">
-              <span className="rounded-full bg-emerald-400/10 border border-emerald-400/25 px-3 py-1 font-mono text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
+              <span className="rounded-full bg-[#FFE600]/10 border border-[#FFE600]/25 px-3 py-1 font-mono text-[11px] font-bold text-[#FFE600] uppercase tracking-wider">
                 WhatsApp por QR
               </span>
-              <ShieldCheck className="h-5 w-5 text-emerald-400" aria-hidden="true" />
+              <ShieldCheck className="h-5 w-5 text-[#FFE600]" aria-hidden="true" />
             </div>
             <h3 className="font-display mt-5 text-2xl font-bold text-white">
               WhatsApp de tu central, en la terminal
@@ -67,7 +67,7 @@ export function Features() {
 "Pausa entre envíos para cuidar el número",
               ].map((text, i) => (
                 <li key={i} className="flex items-center gap-2">
-                  <span className="text-emerald-400 font-bold">✓</span>
+                  <span className="text-[#FFE600] font-bold">✓</span>
                   <span>{text}</span>
                 </li>
               ))}

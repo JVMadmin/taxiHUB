@@ -53,8 +53,8 @@
 }
 
 .taxi-driver-dark .taxi-driver-avatar-button {
-  border-color: rgba(0, 208, 132, 0.35) !important;
-  background: rgba(0, 208, 132, 0.12) !important;
+  border-color: rgba(255, 230, 0, 0.35) !important;
+  background: rgba(255, 230, 0, 0.12) !important;
 }
 
 .taxi-driver-dark .taxi-driver-vehicle-mini {
@@ -87,8 +87,8 @@
 }
 
 .taxi-driver-dark [data-testid="estado-actual"] {
-  border-color: rgba(124, 252, 60, 0.3) !important;
-  background: rgba(124, 252, 60, 0.08) !important;
+  border-color: rgba(255, 230, 0, 0.3) !important;
+  background: rgba(255, 230, 0, 0.08) !important;
 }
 
 .taxi-driver-dark [data-testid="estado-buttons"] button {
@@ -100,8 +100,8 @@
 .taxi-driver-dark [data-testid="estado-buttons"] button[aria-pressed="true"] {
   border-color: #FFE600 !important;
   color: #FFE600 !important;
-  background: rgba(0, 208, 132, 0.12) !important;
-  box-shadow: 0 0 0 2px rgba(0, 208, 132, 0.15) !important;
+  background: rgba(255, 230, 0, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(255, 230, 0, 0.15) !important;
 }
 
 .taxi-driver-dark [data-testid="iniciar-servicio-btn"],
@@ -110,7 +110,7 @@
   background: #FFE600 !important; color: #0C0E14 !important;
   color: #05130D !important;
   font-weight: 800 !important;
-  box-shadow: 0 6px 20px rgba(0, 208, 132, 0.28) !important;
+  box-shadow: 0 6px 20px rgba(255, 230, 0, 0.28) !important;
 }
 
 .taxi-driver-dark [data-testid="rechazar-servicio-btn"] {

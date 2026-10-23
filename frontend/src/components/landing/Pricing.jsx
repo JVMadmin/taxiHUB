@@ -29,7 +29,7 @@ export function Pricing({ units, setUnits }) {
 "Mapa de tu ciudad con tus puntos frecuentes",
             ].map((feature, idx) => (
               <div key={idx} className="flex items-start gap-2.5 text-sm text-[#d4d7de]">
-                <Check className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
+                <Check className="h-4 w-4 shrink-0 text-[#FFE600] mt-0.5" />
                 <span>{feature}</span>
               </div>
             ))}
@@ -44,11 +44,11 @@ export function Pricing({ units, setUnits }) {
         <Reveal delay={0.1} className="lg:col-span-7">
           <div
             data-testid={LANDING.priceCard}
-            className="rounded-3xl border-2 border-emerald-500/30 bg-white/[0.03] p-7 sm:p-9 "
+            className="rounded-3xl border-2 border-[#FFE600]/30 bg-white/[0.03] p-7 sm:p-9 "
           >
             <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/[0.08] pb-6">
               <div>
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-300 bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/25">
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#FFE600] bg-[#FFE600]/10 px-2.5 py-1 rounded-full border border-[#FFE600]/25">
                   Plan Central
                 </span>
                 <div className="mt-3 flex items-baseline gap-2">
@@ -87,7 +87,7 @@ export function Pricing({ units, setUnits }) {
                     value={units}
                     onChange={(e) => setUnits(clamp(e.target.value))}
                     data-testid={LANDING.priceUnits}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-center font-mono text-2xl font-extrabold text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-center font-mono text-2xl font-extrabold text-white focus:border-[#FFE600] focus:outline-none focus:ring-2 focus:ring-[#FFE600]/20"
                   />
                 </div>
 
@@ -109,29 +109,29 @@ export function Pricing({ units, setUnits }) {
                 step="1"
                 value={units}
                 onChange={(e) => setUnits(Number(e.target.value))}
-                className="mt-4 w-full accent-emerald-400"
+                className="mt-4 w-full accent-[#FFE600]"
               />
             </div>
 
             {/* Total estimado */}
             <div
               data-testid={LANDING.priceTotal}
-              className="mt-7 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-5 flex items-center justify-between"
+              className="mt-7 rounded-2xl border border-[#FFE600]/25 bg-[#FFE600]/10 p-5 flex items-center justify-between"
             >
               <div>
-                <span className="text-xs font-semibold text-emerald-200 block">Total mensual estimado:</span>
+                <span className="text-xs font-semibold text-[#FFE600] block">Total mensual estimado:</span>
                 <span className="font-mono text-xs text-[#8b909c]">{units} unidades activas</span>
               </div>
               <div className="text-right">
-                <div className="font-display font-mono text-3xl sm:text-4xl font-extrabold text-emerald-300">
-                  ${fmt(total)} <span className="text-sm font-semibold text-emerald-200">MXN</span>
+                <div className="font-display font-mono text-3xl sm:text-4xl font-extrabold text-[#FFE600]">
+                  ${fmt(total)} <span className="text-sm font-semibold text-[#FFE600]">MXN</span>
                 </div>
               </div>
             </div>
 
             <a
               href="#contacto"
-              className="mt-6 block w-full rounded-xl bg-emerald-500 py-3.5 text-center text-sm font-bold text-[#02130c]  transition-all hover:bg-emerald-400 active:scale-[0.98]"
+              className="mt-6 block w-full rounded-xl bg-[#FFE600] py-3.5 text-center text-sm font-bold text-[#0C0E14]  transition-all hover:bg-[#FFB800] active:scale-[0.98]"
             >
               Solicitar cotización e instalación
             </a>

@@ -22,7 +22,7 @@ export function Footer() {
               app del chofer con navegación 3D, WhatsApp de la central y control de cuotas para dueños.
             </p>
             <div className="flex items-center gap-2 text-xs text-[#8b909c] font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[#FFE600] animate-pulse" />
               <span>taxihub.cloud</span>
             </div>
           </div>
@@ -36,18 +36,18 @@ export function Footer() {
               <li>
                 <Link
                   to="/pasajero"
-                  className="text-[#a1a6b2] hover:text-emerald-300 transition flex items-center gap-1.5"
+                  className="text-[#a1a6b2] hover:text-[#FFE600] transition flex items-center gap-1.5"
                 >
-                  <User className="w-3.5 h-3.5 text-emerald-400" />
+                  <User className="w-3.5 h-3.5 text-[#FFE600]" />
                   <span>App Pasajero / Cliente</span>
                 </Link>
               </li>
               <li>
                 <Link
                   to="/operador"
-                  className="text-[#a1a6b2] hover:text-emerald-300 transition flex items-center gap-1.5"
+                  className="text-[#a1a6b2] hover:text-[#FFE600] transition flex items-center gap-1.5"
                 >
-                  <Car className="w-3.5 h-3.5 text-emerald-400" />
+                  <Car className="w-3.5 h-3.5 text-[#FFE600]" />
                   <span>App Conductor / Operador</span>
                 </Link>
               </li>
@@ -55,9 +55,9 @@ export function Footer() {
                 <Link
                   to="/terminal/login"
                   data-testid={LANDING.footerOperadora}
-                  className="text-[#a1a6b2] hover:text-emerald-300 transition flex items-center gap-1.5"
+                  className="text-[#a1a6b2] hover:text-[#FFE600] transition flex items-center gap-1.5"
                 >
-                  <Radio className="w-3.5 h-3.5 text-emerald-400" />
+                  <Radio className="w-3.5 h-3.5 text-[#FFE600]" />
                   <span>Central de Despacho</span>
                 </Link>
               </li>
@@ -65,9 +65,9 @@ export function Footer() {
                 <Link
                   to="/dueno/login"
                   data-testid={LANDING.footerDueno}
-                  className="text-[#a1a6b2] hover:text-emerald-300 transition flex items-center gap-1.5"
+                  className="text-[#a1a6b2] hover:text-[#FFE600] transition flex items-center gap-1.5"
                 >
-                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                  <Shield className="w-3.5 h-3.5 text-[#FFE600]" />
                   <span>Portal Socios / Flota</span>
                 </Link>
               </li>
@@ -75,9 +75,9 @@ export function Footer() {
                 <Link
                   to="/dev"
                   data-testid={LANDING.footerDev}
-                  className="text-[#a1a6b2] hover:text-emerald-300 transition flex items-center gap-1.5"
+                  className="text-[#a1a6b2] hover:text-[#FFE600] transition flex items-center gap-1.5"
                 >
-                  <Code className="w-3.5 h-3.5 text-emerald-400" />
+                  <Code className="w-3.5 h-3.5 text-[#FFE600]" />
                   <span>Panel de Desarrollador</span>
                 </Link>
               </li>
@@ -96,7 +96,7 @@ export function Footer() {
               <p>
                 Pago único de configuración inicial con mapa local y capacitación completa.
               </p>
-              <p className="text-emerald-300 font-bold">
+              <p className="text-[#FFE600] font-bold">
                 Sin comisiones por viaje.
               </p>
             </div>
@@ -109,11 +109,11 @@ export function Footer() {
             </h4>
             <div className="space-y-2.5 text-xs text-[#a1a6b2]">
               <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-[#FFE600] shrink-0" />
                 <span>Palenque, Chiapas, México</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <Phone className="w-3.5 h-3.5 text-[#FFE600] shrink-0" />
                 <span>Atención a Sitios y Cooperativas</span>
               </div>
               <p className="pt-1">

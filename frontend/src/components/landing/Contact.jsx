@@ -70,7 +70,7 @@ export function Contact() {
           {/* Columna izquierda: Información comercial */}
           <div className="lg:col-span-5">
             <Reveal>
-              <span className="text-emerald-300 font-mono text-xs font-bold tracking-wider uppercase bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/25">
+              <span className="text-[#FFE600] font-mono text-xs font-bold tracking-wider uppercase bg-[#FFE600]/10 px-2.5 py-1 rounded-full border border-[#FFE600]/25">
                 Implementación
               </span>
               <h2 className="font-display l-titulo mt-3">
@@ -83,7 +83,7 @@ export function Contact() {
 
               <div className="mt-8 space-y-4">
                 <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] ">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300 shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFE600]/10 text-[#FFE600] shrink-0">
                     <MessageSquare className="w-5 h-5" />
                   </div>
                   <div>
@@ -95,7 +95,7 @@ export function Contact() {
                 </div>
 
                 <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] ">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300 shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFE600]/10 text-[#FFE600] shrink-0">
                     <PhoneCall className="w-5 h-5" />
                   </div>
                   <div>
@@ -121,9 +121,9 @@ export function Contact() {
                 {submitted ? (
                   <div
                     data-testid={LANDING.leadSuccess}
-                    className="p-6 rounded-2xl bg-emerald-400/10 border border-emerald-400/25 text-center"
+                    className="p-6 rounded-2xl bg-[#FFE600]/10 border border-[#FFE600]/25 text-center"
                   >
-                    <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+                    <CheckCircle2 className="w-12 h-12 text-[#FFE600] mx-auto mb-3" />
                     <h4 className="text-lg font-bold text-white mb-1">¡Listo!</h4>
                     <p className="text-sm text-[#a1a6b2] mb-4">
                       Abrimos WhatsApp con tu mensaje listo para enviar.
@@ -165,7 +165,7 @@ export function Contact() {
                           onChange={handleChange}
                           data-testid={LANDING.leadNombre}
                           placeholder="Ej. Roberto Méndez"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 transition"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition"
                         />
                       </div>
 
@@ -181,7 +181,7 @@ export function Contact() {
                           onChange={handleChange}
                           data-testid={LANDING.leadCentral}
                           placeholder="Ej. Radio Taxis Maya"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 transition"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition"
                         />
                       </div>
                     </div>
@@ -199,7 +199,7 @@ export function Contact() {
                           onChange={handleChange}
                           data-testid={LANDING.leadTelefono}
                           placeholder="Ej. 916 123 4567"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 transition"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition"
                         />
                       </div>
 
@@ -215,7 +215,7 @@ export function Contact() {
                           value={formData.unidades}
                           onChange={handleChange}
                           data-testid={LANDING.leadUnidades}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 transition font-mono"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition font-mono"
                         />
                       </div>
                     </div>
@@ -231,7 +231,7 @@ export function Contact() {
                         onChange={handleChange}
                         data-testid={LANDING.leadMensaje}
                         placeholder="Cuéntanos sobre tu ciudad o si requieren migrar desde radios analógicos..."
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 transition resize-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/15 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/20 transition resize-none"
                       />
                     </div>
 
@@ -239,7 +239,7 @@ export function Contact() {
                       type="submit"
                       disabled={submitting}
                       data-testid={LANDING.leadSubmit}
-                      className="w-full mt-2 py-3.5 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#02130c] font-bold text-sm flex items-center justify-center gap-2  transition disabled:opacity-50 active:scale-[0.98]"
+                      className="w-full mt-2 py-3.5 px-6 rounded-xl bg-[#FFE600] hover:bg-[#FFB800] text-[#0C0E14] font-bold text-sm flex items-center justify-center gap-2  transition disabled:opacity-50 active:scale-[0.98]"
                     >
                       <Send className="w-4 h-4" />
                       <span>{submitting ? "Enviando..." : "Enviar por WhatsApp"}</span>

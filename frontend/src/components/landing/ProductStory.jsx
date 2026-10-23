@@ -91,21 +91,21 @@ export function ProductStory() {
               onClick={() => setActive(i)}
               className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
                 isSelected
-                  ? "border-emerald-400/50 bg-emerald-400/10 text-white"
+                  ? "border-[#FFE600]/50 bg-[#FFE600]/10 text-white"
                   : "border-white/10 bg-white/[0.03] text-[#a1a6b2] hover:border-white/20 hover:bg-white/[0.06]"
               }`}
             >
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                   isSelected
-                    ? "border-emerald-300 bg-emerald-500 text-[#02130c]"
+                    ? "border-[#FFE600] bg-[#FFE600] text-[#0C0E14]"
                     : "border-white/10 bg-white/5 text-[#a1a6b2]"
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#FFE600]">
                   Paso {String(i + 1).padStart(2, "0")}
                 </div>
                 <div className="text-sm font-bold text-white">{s.tag.split("·")[0].trim()}</div>
@@ -145,7 +145,7 @@ export function ProductStory() {
               <div className="space-y-3 pt-2">
                 {current.highlights.map((h, idx) => (
                   <div key={idx} className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#FFE600]" />
                     <span className="text-sm font-medium text-[#d4d7de]">{h}</span>
                   </div>
                 ))}

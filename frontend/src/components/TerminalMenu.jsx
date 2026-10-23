@@ -114,7 +114,7 @@ export const TerminalMenu = memo(function TerminalMenu({
                     className={cn(
                       "th-3d flex h-8 w-8 items-center justify-center rounded-xl transition-colors",
                       active === id
-                        ? "bg-[#4F5DFF] text-white shadow-[0_2px_10px_rgba(79,93,255,0.35)]"
+                        ? "bg-[#FFE600] text-[#0C0E14] shadow-[0_2px_10px_rgba(255, 230, 0,0.35)]"
                         : "text-foreground/80 hover:bg-white/[0.08]"
                     )}
                   >
@@ -139,7 +139,7 @@ export const TerminalMenu = memo(function TerminalMenu({
           <div data-testid={`panel-${active}`} className="flex h-full animate-fade-in flex-col">
             <div className="flex items-center justify-between border-b border-white/[0.06] bg-[#17191E] px-4 py-3">
               <h2 className="flex items-center gap-2 text-sm font-bold text-foreground">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#4F5DFF]/15 text-[#4F5DFF]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFE600]/15 text-[#FFE600]">
                   {(() => { const I = SECTIONS.find((s) => s.id === active)?.icon; return I ? <I className="h-4 w-4" /> : null; })()}
                 </span>
                 {SECTIONS.find((s) => s.id === active)?.label}
@@ -916,7 +916,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
               className={cn(
                 "rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all",
                 filtroEstado === st.k
-                  ? "border-[#4F5DFF] bg-[#4F5DFF] text-white shadow"
+                  ? "border-[#FFE600] bg-[#FFE600] text-[#0C0E14] shadow"
                   : "border-white/10 bg-[#1B1E24] text-muted-foreground hover:text-foreground"
               )}
             >
@@ -1032,7 +1032,7 @@ function ReportesPanel({ liveReporte, operadores = {} }) {
                 <div>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="rounded-md bg-[#4F5DFF]/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-[#9BA3FF]">
+                      <span className="rounded-md bg-[#FFE600]/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-[#9BA3FF]">
                         {r.categoria || "Objeto reportado"}
                       </span>
                       <span className="font-mono text-xs font-extrabold text-amber-300">

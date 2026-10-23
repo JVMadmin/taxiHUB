@@ -32,23 +32,23 @@ export default function LandingPage() {
 
   useEffect(() => {
     const previo = document.title;
-    document.title = "TaxiHUB — Software de despacho para centrales de taxi";
+    document.title = "taxiHUB — Central y Despacho Satelital";
     return () => { document.title = previo; };
   }, []);
 
   return (
     <div
       data-testid={LANDING.page}
-      className="th-landing dark relative min-h-[100dvh] w-full overflow-x-hidden selection:bg-emerald-400/30 selection:text-white"
+      className="th-landing dark relative min-h-[100dvh] w-full overflow-x-hidden selection:bg-[#FFE600]/30 selection:text-white"
     >
       <a href="#contenido-principal" className="l-skip">
         Saltar al contenido principal
       </a>
 
-      {/* Luz ambiental: brillo esmeralda tenue detrás del producto */}
+      {/* Luz ambiental: brillo amarillo tenue detrás del producto */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[60rem] overflow-hidden" aria-hidden="true">
-        <div className="absolute left-1/2 top-[-18rem] h-[44rem] w-[70rem] -translate-x-1/2 rounded-full bg-emerald-500/[0.13] blur-[140px]" />
-        <div className="absolute right-[-10rem] top-[20rem] h-[28rem] w-[28rem] rounded-full bg-teal-400/[0.06] blur-[120px]" />
+        <div className="absolute left-1/2 top-[-18rem] h-[44rem] w-[70rem] -translate-x-1/2 rounded-full bg-[#FFE600]/[0.08] blur-[140px]" />
+        <div className="absolute right-[-10rem] top-[20rem] h-[28rem] w-[28rem] rounded-full bg-[#FF9900]/[0.06] blur-[120px]" />
       </div>
 
       <LandingNav />

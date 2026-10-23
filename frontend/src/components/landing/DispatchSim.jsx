@@ -64,7 +64,7 @@ export function DispatchSim() {
             aria-pressed={paused}
             className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-xs font-semibold text-[#d4d7de] hover:bg-white/10 transition-colors"
           >
-            {paused ? <Play className="h-3.5 w-3.5 text-emerald-300" /> : <Pause className="h-3.5 w-3.5 text-[#a1a6b2]" />}
+            {paused ? <Play className="h-3.5 w-3.5 text-[#FFE600]" /> : <Pause className="h-3.5 w-3.5 text-[#a1a6b2]" />}
             <span>{paused ? "Reanudar" : "Pausar movimiento"}</span>
           </button>
         </div>
@@ -76,7 +76,7 @@ export function DispatchSim() {
         >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
             <div className="flex items-center gap-2 text-xs font-bold text-white">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#FFE600]" />
               <span>Mapa de la central (simulación)</span>
             </div>
             <div className="flex items-center gap-3 font-mono text-xs text-[#a1a6b2]">
@@ -97,8 +97,8 @@ export function DispatchSim() {
             />
 
             {/* Anillos concéntricos de radar */}
-            <div className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-500/20" />
-            <div className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-500/30" />
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#FFE600]/20" />
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#FFE600]/30" />
 
             {/* Calles estilizadas */}
             <svg className="absolute inset-0 h-full w-full opacity-90" aria-hidden="true">
@@ -122,13 +122,13 @@ export function DispatchSim() {
                   <div
                     className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold shadow-md ${
                       isTarget && pulse
-                        ? "bg-emerald-400 text-[#02130c] ring-4 ring-emerald-400/30"
+                        ? "bg-[#FFE600] text-[#0C0E14] ring-4 ring-[#FFE600]/30"
                         : u.status === "libre"
-                        ? "bg-[#0b0d10] text-emerald-300 border border-emerald-400/60"
+                        ? "bg-[#0b0d10] text-[#FFE600] border border-[#FFE600]/60"
                         : "bg-[#0b0d10] text-amber-300 border border-amber-400/60"
                     }`}
                   >
-                    <span className={`h-2 w-2 rounded-full ${isTarget && pulse ? "bg-[#02130c]" : u.status === "libre" ? "bg-emerald-400" : "bg-amber-400"}`} />
+                    <span className={`h-2 w-2 rounded-full ${isTarget && pulse ? "bg-[#0C0E14]" : u.status === "libre" ? "bg-[#FFE600]" : "bg-amber-400"}`} />
                     <span>#{u.id}</span>
                   </div>
                 </div>
@@ -142,10 +142,10 @@ export function DispatchSim() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-xl border border-emerald-400/30 bg-[#0b0d10]/95 px-4 py-3 shadow-2xl text-white backdrop-blur"
+                  className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-xl border border-[#FFE600]/30 bg-[#0b0d10]/95 px-4 py-3 shadow-2xl text-white backdrop-blur"
                 >
                   <div>
-                    <div className="flex items-center gap-2 font-bold text-emerald-300 text-sm">
+                    <div className="flex items-center gap-2 font-bold text-[#FFE600] text-sm">
                       <Zap className="h-4 w-4" />
                       <span>#{selected.unit} asignado a {selected.name}</span>
                     </div>
@@ -153,7 +153,7 @@ export function DispatchSim() {
                       El pasajero recibe por WhatsApp la unidad, el chofer y la llegada estimada ({selected.eta}).
                     </p>
                   </div>
-                  <span className="hidden sm:inline-block rounded-md bg-emerald-400/15 px-2.5 py-1 font-mono text-[10px] font-bold text-emerald-300">
+                  <span className="hidden sm:inline-block rounded-md bg-[#FFE600]/15 px-2.5 py-1 font-mono text-[10px] font-bold text-[#FFE600]">
                     EN CAMINO
                   </span>
                 </motion.div>
@@ -176,7 +176,7 @@ export function DispatchSim() {
                     onClick={() => dispatch(poi)}
                     className={`flex flex-col rounded-xl border p-3 text-left transition-all ${
                       active
-                        ? "border-emerald-400/60 bg-emerald-400/10"
+                        ? "border-[#FFE600]/60 bg-[#FFE600]/10"
                         : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
                     }`}
                   >
@@ -184,7 +184,7 @@ export function DispatchSim() {
                       <span className="rounded bg-white/10 px-1.5 py-0.5 font-bold text-[#d4d7de]">
                         [{poi.key}]
                       </span>
-                      <span className="text-emerald-300 font-bold">{poi.eta}</span>
+                      <span className="text-[#FFE600] font-bold">{poi.eta}</span>
                     </div>
                     <span className="mt-1 font-bold text-sm text-white truncate">{poi.name}</span>
                   </button>

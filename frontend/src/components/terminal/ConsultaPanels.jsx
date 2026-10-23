@@ -261,7 +261,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
             className={cn(
               "rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all",
               filtroEstado === fChip.id
-                ? "border-[#4F5DFF] bg-[#4F5DFF]/20 text-white shadow-sm"
+                ? "border-[#FFE600] bg-[#FFE600]/20 text-white shadow-sm"
                 : "border-white/10 bg-[#17191E] text-muted-foreground hover:text-foreground"
             )}
           >
@@ -385,7 +385,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                 className={cn(
                   "group flex cursor-pointer items-center gap-2.5 rounded-xl border p-2.5 transition-all",
                   isSel
-                    ? "border-[#4F5DFF] bg-[#4F5DFF]/15 shadow-md"
+                    ? "border-[#FFE600] bg-[#FFE600]/15 shadow-md"
                     : "border-white/[0.07] bg-[#17191E] hover:border-white/20 hover:bg-[#1B1E24]"
                 )}
               >
@@ -423,7 +423,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                     {c.socio_nombre ? `Socio: ${c.socio_nombre}` : c.telefono || `@${c.usuario}`}
                   </div>
                 </div>
-                <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", isSel ? "text-[#4F5DFF] translate-x-0.5" : "text-muted-foreground")} />
+                <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", isSel ? "text-[#FFE600] translate-x-0.5" : "text-muted-foreground")} />
               </div>
             );
           })}
@@ -454,11 +454,11 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = "/assets/drivers/driver-01.jpg";
                     }}
-                    className="h-20 w-20 rounded-2xl border-2 border-[#4F5DFF]/50 object-cover shadow-lg"
+                    className="h-20 w-20 rounded-2xl border-2 border-[#FFE600]/50 object-cover shadow-lg"
                   />
                   <label
                     title="Actualizar fotografía del expediente (WebP)"
-                    className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#4F5DFF] text-white shadow-md hover:bg-[#3D49D6]"
+                    className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#FFE600] text-[#0C0E14] shadow-md hover:bg-[#FFB800]"
                   >
                     <Camera className="h-3.5 w-3.5" />
                     <input
@@ -483,7 +483,7 @@ export function ChoferesPanel({ expedienteId, setExpedienteId, rutas = [], onDat
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1 text-foreground/90">
-                      <Phone className="h-3 w-3 text-[#7CFC3C]" /> {cond.telefono || "Sin teléfono"}
+                      <Phone className="h-3 w-3 text-[#FFE600]" /> {cond.telefono || "Sin teléfono"}
                     </span>
                     <span className="inline-flex items-center gap-1 font-mono text-amber-300">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {cond.calificacion || "4.9"} ★
@@ -830,7 +830,7 @@ export function SociosPanel() {
             className={cn(
               "rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all",
               filtro === fc.id
-                ? "border-[#4F5DFF] bg-[#4F5DFF]/20 text-white"
+                ? "border-[#FFE600] bg-[#FFE600]/20 text-white"
                 : "border-white/10 bg-[#17191E] text-muted-foreground hover:text-foreground"
             )}
           >
@@ -966,7 +966,7 @@ export function SociosPanel() {
                 className={cn(
                   "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all",
                   isSel
-                    ? "border-[#4F5DFF] bg-[#4F5DFF]/15 shadow-md"
+                    ? "border-[#FFE600] bg-[#FFE600]/15 shadow-md"
                     : "border-white/[0.07] bg-[#17191E] hover:border-white/20 hover:bg-[#1B1E24]"
                 )}
               >
@@ -989,7 +989,7 @@ export function SociosPanel() {
                     <span className="text-emerald-400 font-bold">{s.estatus_cuota_sitio || "Al corriente"}</span>
                   </div>
                 </div>
-                <ChevronRight className={cn("h-4 w-4 shrink-0", isSel ? "text-[#4F5DFF]" : "text-muted-foreground")} />
+                <ChevronRight className={cn("h-4 w-4 shrink-0", isSel ? "text-[#FFE600]" : "text-muted-foreground")} />
               </div>
             );
           })}
@@ -1024,7 +1024,7 @@ export function SociosPanel() {
                   />
                   <label
                     title="Actualizar fotografía del socio (WebP)"
-                    className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#4F5DFF] text-white shadow-md hover:bg-[#3D49D6]"
+                    className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#FFE600] text-[#0C0E14] shadow-md hover:bg-[#FFB800]"
                   >
                     <Camera className="h-3.5 w-3.5" />
                     <input
@@ -1047,7 +1047,7 @@ export function SociosPanel() {
                     {socioSel.modalidad_sct || "Concesión Servicio Público de Transporte en Taxi"}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span><Phone className="mr-1 inline h-3 w-3 text-[#7CFC3C]" />{socioSel.telefono || "916-345-1001"}</span>
+                    <span><Phone className="mr-1 inline h-3 w-3 text-[#FFE600]" />{socioSel.telefono || "916-345-1001"}</span>
                     <span>{socioSel.email || `@${socioSel.usuario}`}</span>
                   </div>
                   <div className="text-[11px] text-muted-foreground">

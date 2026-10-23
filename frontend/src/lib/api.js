@@ -156,6 +156,9 @@ export const api = mk(opToken);
 export const termApi = mk(termToken);
 export const devApi = mk(devToken);
 export const pasApi = mk(pasToken, () => {
+  // Sin sesión de pasajero no hay nada que cerrar: recargar aquí dejaba la página en un bucle
+  // infinito (p. ej. al pasar de la app del chofer a la del pasajero en la vista de demostración).
+  if (!localStorage.getItem("pas_token")) return;
   localStorage.removeItem("pas_token");
   localStorage.removeItem("pas_data");
   window.location.reload();

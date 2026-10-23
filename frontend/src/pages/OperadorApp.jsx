@@ -1317,7 +1317,7 @@ export default function OperadorApp() {
             data-testid={DRIVER.mapa3dToggle}
             onClick={toggleMapa3d}
             aria-pressed={mapa3d}
-            className={`w-10 h-10 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border transition active:scale-95 text-[11px] font-black ${mapa3d ? "bg-[#00D084] text-[#04120c] border-[#00D084]" : "bg-[#14171F]/90 text-zinc-300 border-white/5 hover:text-white"}`}
+            className={`w-10 h-10 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border transition active:scale-95 text-[11px] font-black ${mapa3d ? "bg-[#FFE600] text-[#04120c] border-[#FFE600]" : "bg-[#14171F]/90 text-zinc-300 border-white/5 hover:text-white"}`}
             title={mapa3d ? "Cambiar a vista plana" : "Cambiar a vista 3D"}
           >
             {mapa3d ? "3D" : <Box className="h-4 w-4" />}

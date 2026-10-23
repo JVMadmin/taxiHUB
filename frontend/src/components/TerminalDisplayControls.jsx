@@ -1,13 +1,18 @@
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { Settings2, MonitorSmartphone } from "lucide-react";
+import { DISPATCH } from "@/constants/testIds";
+
+const TAMANOS = [70, 80, 90, 100];
 
 /**
  * TerminalDisplayControls — ajustes visuales en vivo del dispatcher:
- * transparencia de la interfaz (slider) aplicada por CSS var `--ui-alpha`.
+ * transparencia de la interfaz (slider) aplicada por CSS var `--ui-alpha` y
+ * tamaño de la interfaz (zoom de la página, 80% por defecto).
  */
-export function TerminalDisplayControls({ alpha, onChange }) {
+export function TerminalDisplayControls({ alpha, onChange, zoom = 0.8, onZoomChange }) {
   const pct = Math.round(alpha * 100);
+  const zoomPct = Math.round(zoom * 100);
   return (
     <Popover>
       <PopoverTrigger
@@ -50,6 +55,32 @@ export function TerminalDisplayControls({ alpha, onChange }) {
               Más bajo = más transparente. Los paneles y popups del mapa responden en vivo.
             </p>
           </div>
+
+          {onZoomChange && (
+            <div>
+              <div className="mb-1.5 text-xs font-semibold text-foreground/90">Tamaño de la interfaz</div>
+              <div className="grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="Tamaño de la interfaz">
+                {TAMANOS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    role="radio"
+                    aria-checked={zoomPct === t}
+                    data-testid={`${DISPATCH.terminalZoom}-${t}`}
+                    onClick={() => onZoomChange(t / 100)}
+                    className={`rounded-lg py-1.5 text-xs font-bold transition-colors ${
+                      zoomPct === t ? "bg-[#FFE600] text-[#0C0E14]" : "bg-secondary text-foreground hover:bg-secondary/70"
+                    }`}
+                  >
+                    {t}%
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[10px] text-muted-foreground">
+                80% es el tamaño recomendado: cabe más mapa y más información.
+              </p>
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>

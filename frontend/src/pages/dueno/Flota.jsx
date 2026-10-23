@@ -351,7 +351,7 @@ export function Flota({ liveSignal }) {
             <Polyline
               positions={selectedVehiculo.track.map((p) => [p.lat, p.lng])}
               pathOptions={{
-                color: "#4F5DFF",
+                color: "#FFE600",
                 weight: 4,
                 opacity: 0.75,
                 dashArray: "6 6",

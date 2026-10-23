@@ -205,6 +205,32 @@ export default function Terminal() {
   });
   useEffect(() => { localStorage.setItem("th_ui_alpha", String(uiAlpha)); }, [uiAlpha]);
 
+  // Tamaño de la interfaz de la operadora: 80% por defecto (cabe más mapa y más panel en
+  // monitores de escritorio). Se aplica como zoom de la página solo mientras la Terminal
+  // está abierta; al salir, las demás apps vuelven al 100%.
+  const [uiZoom, setUiZoom] = useState(() => {
+    const v = parseFloat(localStorage.getItem("th_ui_zoom") || "");
+    return Number.isFinite(v) ? Math.min(1, Math.max(0.7, v)) : 0.8;
+  });
+  // Con zoom en la página, 100vw/100vh no llenan la ventana: el tamaño sale de la ventana real.
+  const [ventana, setVentana] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
+  useEffect(() => {
+    const medir = () => setVentana({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("th_ui_zoom", String(uiZoom));
+    const raiz = document.documentElement;
+    raiz.style.zoom = String(uiZoom);
+    raiz.style.setProperty("--th-zoom", String(uiZoom));
+    window.dispatchEvent(new Event("resize")); // Leaflet recalcula su tamaño
+    return () => {
+      raiz.style.zoom = "";
+      raiz.style.removeProperty("--th-zoom");
+    };
+  }, [uiZoom]);
+
   // Ruta del servicio activo del taxi seleccionado (ruta real OSRM).
   const [verRutaServicio, setVerRutaServicio] = useState(true);
   const [servicioActivo, setServicioActivo] = useState(null);
@@ -772,7 +798,17 @@ export default function Terminal() {
   );
 
   return (
-    <div className="taxi-terminal-shell flex h-screen w-screen overflow-hidden bg-background" style={{ "--ui-alpha": uiAlpha }}>
+    <div
+      className="taxi-terminal-shell flex overflow-hidden bg-background"
+      style={{
+        "--ui-alpha": uiAlpha,
+        height: `${ventana.h / uiZoom}px`,
+        width: `${ventana.w / uiZoom}px`,
+        // Terminal.css limita a 100vw/100vh, que con zoom equivalen a solo una parte de la ventana.
+        maxWidth: "none",
+        maxHeight: "none",
+      }}
+    >
       {/* SIDEBAR IZQUIERDA — flota fija con pestaña flotante de colapso rápido */}
       {sidebarOpen && (
         <aside
@@ -829,7 +865,7 @@ export default function Terminal() {
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="surface-ui absolute left-3 top-1/2 -translate-y-1/2 z-[510] flex items-center gap-2 rounded-xl border border-[#4F5DFF]/60 bg-[#17191E]/95 px-3.5 py-2 text-xs font-bold text-foreground shadow-[0_6px_20px_rgba(79,93,255,0.35)] backdrop-blur-md transition-all hover:scale-105 hover:bg-[#4F5DFF] hover:text-white"
+            className="surface-ui absolute left-3 top-1/2 -translate-y-1/2 z-[510] flex items-center gap-2 rounded-xl border border-[#FFE600]/60 bg-[#17191E]/95 px-3.5 py-2 text-xs font-bold text-foreground shadow-[0_6px_20px_rgba(255, 230, 0,0.35)] backdrop-blur-md transition-all hover:scale-105 hover:bg-[#FFE600] hover:text-white"
             title="Mostrar panel lateral de flota"
             data-testid="expand-sidebar-btn"
           >
@@ -1068,7 +1104,7 @@ export default function Terminal() {
               radius={idx === 0 || idx === arr.length - 1 ? 8 : 6}
               pathOptions={{
                 color: "#ffffff",
-                fillColor: idx === 0 ? "#10b981" : idx === arr.length - 1 ? "#4F5DFF" : "#0ea5e9",
+                fillColor: idx === 0 ? "#10b981" : idx === arr.length - 1 ? "#FFE600" : "#0ea5e9",
                 fillOpacity: 1,
                 weight: 2.5,
               }}
@@ -1084,7 +1120,7 @@ export default function Terminal() {
           {drawingMode === "ruta" && routeWaypoints.length >= 2 && (
             <Marker
               position={routeWaypoints[routeWaypoints.length - 1]}
-              icon={pointIcon("Punto Final", "#4F5DFF", { size: "sm" })}
+              icon={pointIcon("Punto Final", "#FFE600", { size: "sm" })}
               interactive={false}
             />
           )}
@@ -1129,6 +1165,8 @@ export default function Terminal() {
         onNuevaLlamada={abrirNuevaLlamada}
         uiAlpha={uiAlpha}
         onAlphaChange={setUiAlpha}
+        uiZoom={uiZoom}
+        onZoomChange={setUiZoom}
         onLogout={salirTerminal}
       >
         {/* Fila inferior del Topbar: Puntos Calientes + Buscador Geográfico sin solapamiento */}

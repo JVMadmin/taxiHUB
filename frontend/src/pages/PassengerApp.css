@@ -37,7 +37,7 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-auth-orb {
-  background: rgba(0, 208, 132, 0.14) !important;
+  background: rgba(255, 230, 0, 0.14) !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-auth-form {
@@ -71,7 +71,7 @@
   background: #FFE600 !important; color: #0C0E14 !important;
   color: #05130D !important;
   font-weight: 800 !important;
-  box-shadow: 0 6px 20px rgba(0, 208, 132, 0.28) !important;
+  box-shadow: 0 6px 20px rgba(255, 230, 0, 0.28) !important;
 }
 
 .taxi-passenger-dark .taxi-passenger-primary-button:hover {
@@ -1623,7 +1623,7 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-tenant-badge {
-  background: rgba(0, 208, 132, 0.14);
+  background: rgba(255, 230, 0, 0.14);
   color: #FFE600;
 }
 
@@ -2003,8 +2003,8 @@
 }
 
 .taxi-passenger-dark .taxi-passenger-quote-banner {
-  border-color: rgba(124, 252, 60, 0.25);
-  background: rgba(124, 252, 60, 0.07);
+  border-color: rgba(255, 230, 0, 0.25);
+  background: rgba(255, 230, 0, 0.07);
 }
 
 .taxi-passenger-quote-left {
@@ -2085,7 +2085,7 @@
 
 .taxi-passenger-pay-option-active {
   border-color: var(--passenger-green);
-  background: rgba(0, 208, 132, 0.1);
+  background: rgba(255, 230, 0, 0.1);
   color: var(--passenger-green-dark);
   font-weight: 700;
 }
@@ -2097,7 +2097,7 @@
 
 .taxi-passenger-dark .taxi-passenger-pay-option-active {
   border-color: #FFE600;
-  background: rgba(0, 208, 132, 0.12);
+  background: rgba(255, 230, 0, 0.12);
   color: #FFE600;
 }
 
